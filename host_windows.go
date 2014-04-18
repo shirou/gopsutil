@@ -3,6 +3,7 @@
 package main
 
 import (
+	"github.com/mitchellh/go-ps"
 	"os"
 	"syscall"
 )
@@ -26,5 +27,13 @@ func (h Host) HostInfo() (HostInfo, error) {
 	uptimemsec, _, err := syscall.Syscall(uintptr(GetTickCount), 0, 0, 0, 0)
 
 	ret.Uptime = int64(uptimemsec) / 1000
+
+	procs, err := ps.Processes()
+	if err != nil {
+		return ret, err
+	}
+
+	ret.Procs = uint64(len(procs))
+
 	return ret, nil
 }
