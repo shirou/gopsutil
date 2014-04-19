@@ -8,8 +8,7 @@ import (
 )
 
 var (
-	modKernel32          = syscall.NewLazyDLL("kernel32.dll")
-	globalMemoryStatusEx = modKernel32.NewProc("GlobalMemoryStatusEx")
+	procGlobalMemoryStatusEx = modKernel32.NewProc("GlobalMemoryStatusEx")
 )
 
 type MEMORYSTATUSEX struct {
@@ -29,7 +28,7 @@ func (m Mem) Virtual_memory() (Virtual_memory, error) {
 
 	var memInfo MEMORYSTATUSEX
 	memInfo.cbSize = uint32(unsafe.Sizeof(memInfo))
-	mem, _, _ := globalMemoryStatusEx.Call(uintptr(unsafe.Pointer(&memInfo)))
+	mem, _, _ := procGlobalMemoryStatusEx.Call(uintptr(unsafe.Pointer(&memInfo)))
 	if mem == 0 {
 		return ret, syscall.GetLastError()
 	}
