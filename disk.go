@@ -10,6 +10,13 @@ type Disk_usage struct {
 	UsedPercent float64 `json:"usedPercent"`
 }
 
+type Disk_partition struct {
+	Device     string `json:"device"`
+	Mountpoint string `json:"mountpoint"`
+	Fstype     string `json:"fstype"`
+	Opts       string `json:"opts"`
+}
+
 type Disk_IO_Counters struct {
 	ReadCount  uint64 `json:"readCount"`
 	WriteCount uint64 `json:"writeCount"`
