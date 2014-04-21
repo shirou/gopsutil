@@ -8,3 +8,5 @@ gopsutil: psutil for golang
 - dstat: https://github.com/dagwieers/dstat
 - gosiger: https://github.com/cloudfoundry/gosigar/
 - goprocinfo: https://github.com/c9s/goprocinfo
+- go-ps: https://github.com/mitchellh/go-ps
+

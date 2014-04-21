@@ -6,9 +6,9 @@ import (
 	"fmt"
 )
 
-func (c CPU) Cpu_times() map[string]string {
-	ret := make(map[string]string)
+func (c CPU) Cpu_times() ([]CPU_Times, error) {
+	ret := make([]CPU_Times, 0)
 
 	fmt.Println("FreeBSD")
-	return ret
+	return ret, nil
 }
