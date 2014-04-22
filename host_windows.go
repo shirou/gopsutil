@@ -37,3 +37,14 @@ func HostInfo() (HostInfoStat, error) {
 
 	return ret, nil
 }
+
+func Boot_time() (int64, error) {
+
+	return 0, nil
+}
+func Users() ([]UserStat, error) {
+
+	ret := make([]UserStat, 0)
+
+	return ret, nil
+}

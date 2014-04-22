@@ -2,8 +2,8 @@
 
 package gopsutil
 
-func (l Load) LoadAvg() (LoadAvg, error) {
-	ret := LoadAvg{}
+func LoadAvg() (LoadAvgStat, error) {
+	ret := LoadAvgStat{}
 
 	return ret, nil
 }
