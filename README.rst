@@ -2,7 +2,9 @@ gopsutil: psutil for golang
 ==============================
 
 This is a port of psutil(http://pythonhosted.org/psutil/). This
-challenges port of all
+challenges porting all psutil functions on some architectures.
+
+
 
 Available archtectures
 ------------------------------------
@@ -48,6 +50,33 @@ Document
 
 see http://godoc.org/github.com/shirou/gopsutil
 
+
+Current Status
+------------------
+
+- done
+
+  - cpu_times (linux)
+  - cpu_count (linux, freebsd, windows)
+  - virtual_memory (linux, windows)
+  - swap_memory (linux)
+  - disk_partitions (windows)
+  - disk_usage (windows)
+  - boot_time (linux, freebsd)
+
+- not yet
+
+  - cpu_percent
+  - cpu_times_percent
+  - disk_io_counters
+  - net_io_counters
+  - net_connections
+  - users
+  - pids
+  - pid_exists
+  - process_iter
+  - wait_procs
+  - process class
 
 License
 ------------
