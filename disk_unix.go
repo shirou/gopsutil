@@ -24,8 +24,3 @@ func Disk_usage(path string) (Disk_usageStat, error) {
 
 	return ret, nil
 }
-
-func Disk_partitions() ([]Disk_partitionStat, error) {
-	ret := make([]Disk_partitionStat, 0)
-	return ret, nil
-}
