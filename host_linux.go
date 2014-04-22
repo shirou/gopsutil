@@ -3,8 +3,8 @@
 package gopsutil
 
 import (
-	"encoding/binary"
 	"bytes"
+	"encoding/binary"
 	"io/ioutil"
 	"os"
 	"syscall"
@@ -75,17 +75,17 @@ func Users() ([]UserStat, error) {
 	for i := 0; i < count; i++ {
 		b := buf[i*entrySize : i*entrySize+entrySize]
 
-        var u utmp
-        br := bytes.NewReader(b)
-        err := binary.Read(br, binary.LittleEndian, &u)
+		var u utmp
+		br := bytes.NewReader(b)
+		err := binary.Read(br, binary.LittleEndian, &u)
 		if err != nil {
 			continue
 		}
 		user := UserStat{
-			User: byteToString(u.Ut_user[:]),
+			User:     byteToString(u.Ut_user[:]),
 			Terminal: byteToString(u.Ut_line[:]),
-			Host: byteToString(u.Ut_host[:]),
-			Started: int(u.Ut_tv.Tv_sec),
+			Host:     byteToString(u.Ut_host[:]),
+			Started:  int(u.Ut_tv.Tv_sec),
 		}
 		ret = append(ret, user)
 	}

@@ -3,10 +3,27 @@
 package gopsutil
 
 import (
+	"bytes"
+	"encoding/binary"
+	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
+	"unsafe"
 )
+
+const (
+	UT_NAMESIZE = 16 /* see MAXLOGNAME in <sys/param.h> */
+	UT_LINESIZE = 8
+	UT_HOSTSIZE = 16
+)
+
+type utmp struct {
+	Ut_line [UT_LINESIZE]byte
+	Ut_name [UT_NAMESIZE]byte
+	Ut_host [UT_HOSTSIZE]byte
+	Ut_time int32
+}
 
 func HostInfo() (HostInfoStat, error) {
 	ret := HostInfoStat{}
@@ -34,4 +51,44 @@ func Boot_time() (int64, error) {
 	}
 
 	return boottime, nil
+}
+
+func Users() ([]UserStat, error) {
+	utmpfile := "/var/run/utmp"
+	ret := make([]UserStat, 0)
+
+	file, err := os.Open(utmpfile)
+	if err != nil {
+		return ret, err
+	}
+
+	buf, err := ioutil.ReadAll(file)
+	if err != nil {
+		return ret, err
+	}
+
+	u := utmp{}
+	entrySize := int(unsafe.Sizeof(u))
+	count := len(buf) / entrySize
+
+	for i := 0; i < count; i++ {
+		b := buf[i*entrySize : i*entrySize+entrySize]
+
+		var u utmp
+		br := bytes.NewReader(b)
+		err := binary.Read(br, binary.LittleEndian, &u)
+		if err != nil {
+			continue
+		}
+		user := UserStat{
+			User:     byteToString(u.Ut_name[:]),
+			Terminal: byteToString(u.Ut_line[:]),
+			Host:     byteToString(u.Ut_host[:]),
+			Started:  int(u.Ut_time),
+		}
+		ret = append(ret, user)
+	}
+
+	return ret, nil
+
 }
