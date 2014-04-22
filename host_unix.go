@@ -16,11 +16,14 @@ func HostInfo() (HostInfoStat, error) {
 		return ret, err
 	}
 
+	return ret, nil
+}
+
+
+func Boot_time() (int64, error){
 	sysinfo := &syscall.Sysinfo_t{}
 	if err := syscall.Sysinfo(sysinfo); err != nil {
-		return ret, err
+		return 0, err
 	}
-	ret.Uptime = sysinfo.Uptime
-
-	return ret, nil
+	return sysinfo.Uptime, nil
 }
