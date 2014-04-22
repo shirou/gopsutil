@@ -1,4 +1,4 @@
-// +build freebsd linux
+// +build linux
 
 package gopsutil
 
