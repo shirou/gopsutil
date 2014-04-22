@@ -24,14 +24,13 @@ func TestBoot_time(t *testing.T) {
 	}
 }
 
-
 func TestUsers(t *testing.T) {
 	v, err := Users()
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
-	for _, u := range v  {
-		if u.User == ""{
+	for _, u := range v {
+		if u.User == "" {
 			t.Errorf("Could not Users %v", v)
 		}
 	}
