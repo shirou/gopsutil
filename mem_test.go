@@ -1,4 +1,4 @@
-package main
+package gopsutil
 
 import (
 	"encoding/json"

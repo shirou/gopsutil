@@ -1,6 +1,6 @@
 // +build windows
 
-package main
+package gopsutil
 
 func (l Load) LoadAvg() (LoadAvg, error) {
 	ret := LoadAvg{}

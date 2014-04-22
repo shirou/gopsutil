@@ -1,6 +1,6 @@
 // +build freebsd
 
-package main
+package gopsutil
 
 import (
 	"fmt"
