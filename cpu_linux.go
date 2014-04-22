@@ -7,8 +7,8 @@ import (
 	"strings"
 )
 
-func (c CPU) Cpu_times() ([]CPU_Times, error) {
-	ret := make([]CPU_Times, 0)
+func Cpu_times() ([]CPU_TimesStat, error) {
+	ret := make([]CPU_TimesStat, 0)
 
 	filename := "/proc/stat"
 	lines, _ := ReadLines(filename)
@@ -31,7 +31,7 @@ func (c CPU) Cpu_times() ([]CPU_Times, error) {
 		irq, _ := strconv.ParseUint(fields[6], 10, 64)
 		softirq, _ := strconv.ParseUint(fields[7], 10, 64)
 		stolen, _ := strconv.ParseUint(fields[8], 10, 64)
-		ct := CPU_Times{
+		ct := CPU_TimesStat{
 			Cpu:     cpu,
 			User:    user,
 			Nice:    nice,

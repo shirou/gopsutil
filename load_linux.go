@@ -8,29 +8,29 @@ import (
 	"strings"
 )
 
-func (l Load) LoadAvg() (LoadAvg, error) {
+func LoadAvg() (LoadAvgStat, error) {
 	filename := "/proc/loadavg"
 	line, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return LoadAvg{}, err
+		return LoadAvgStat{}, err
 	}
 
 	values := strings.Fields(string(line))
 
 	load1, err := strconv.ParseFloat(values[0], 64)
 	if err != nil {
-		return LoadAvg{}, err
+		return LoadAvgStat{}, err
 	}
 	load5, err := strconv.ParseFloat(values[1], 64)
 	if err != nil {
-		return LoadAvg{}, err
+		return LoadAvgStat{}, err
 	}
 	load15, err := strconv.ParseFloat(values[2], 64)
 	if err != nil {
-		return LoadAvg{}, err
+		return LoadAvgStat{}, err
 	}
 
-	ret := LoadAvg{
+	ret := LoadAvgStat{
 		Load1:  load1,
 		Load5:  load5,
 		Load15: load15,

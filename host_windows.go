@@ -8,8 +8,8 @@ import (
 	"syscall"
 )
 
-func (h Host) HostInfo() (HostInfo, error) {
-	ret := HostInfo{}
+func HostInfo() (HostInfoStat, error) {
+	ret := HostInfoStat{}
 	hostname, err := os.Hostname()
 	if err != nil {
 		return ret, err

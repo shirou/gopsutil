@@ -7,9 +7,7 @@ import (
 )
 
 func TestVirtual_memory(t *testing.T) {
-	mem := NewMem()
-
-	v, err := mem.Virtual_memory()
+	v, err := Virtual_memory()
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -18,9 +16,7 @@ func TestVirtual_memory(t *testing.T) {
 }
 
 func TestSwap_memory(t *testing.T) {
-	mem := NewMem()
-
-	v, err := mem.Swap_memory()
+	v, err := Swap_memory()
 	if err != nil {
 		t.Errorf("error %v", err)
 	}

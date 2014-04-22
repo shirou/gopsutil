@@ -23,7 +23,7 @@ type MEMORYSTATUSEX struct {
 	ullAvailExtendedVirtual uint64
 }
 
-func (m Mem) Virtual_memory() (Virtual_memory, error) {
+func Virtual_memory() (Virtual_memory, error) {
 	ret := Virtual_memory{}
 
 	var memInfo MEMORYSTATUSEX
@@ -40,7 +40,7 @@ func (m Mem) Virtual_memory() (Virtual_memory, error) {
 	return ret, nil
 }
 
-func (m Mem) Swap_memory() (Swap_memory, error) {
+func Swap_memory() (Swap_memory, error) {
 	ret := Swap_memory{}
 
 	return ret, nil

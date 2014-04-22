@@ -1,8 +1,6 @@
 package gopsutil
 
-type Mem struct{}
-
-type Virtual_memory struct {
+type Virtual_memoryStat struct {
 	Total       uint64  `json:"total"`
 	Available   uint64  `json:"available"`
 	Used        uint64  `json:"used"`
@@ -16,16 +14,11 @@ type Virtual_memory struct {
 	Shared      uint64  `json:"shared"`
 }
 
-type Swap_memory struct {
+type Swap_memoryStat struct {
 	Total       uint64  `json:"total"`
 	Used        uint64  `json:"used"`
 	Free        uint64  `json:"free"`
 	UsedPercent float64 `json:"usedPercent"`
 	Sin         uint64  `json:"sin"`
 	Sout        uint64  `json:"sout"`
-}
-
-func NewMem() Mem {
-	m := Mem{}
-	return m
 }

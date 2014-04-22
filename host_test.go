@@ -5,9 +5,7 @@ import (
 )
 
 func TestHostInfo(t *testing.T) {
-	host := NewHost()
-
-	v, err := host.HostInfo()
+	v, err := HostInfo()
 	if err != nil {
 		t.Errorf("error %v", err)
 	}

@@ -7,9 +7,7 @@ import (
 )
 
 func TestLoad(t *testing.T) {
-	load := NewLoad()
-
-	v, err := load.LoadAvg()
+	v, err := LoadAvg()
 	if err != nil {
 		t.Errorf("error %v", err)
 	}

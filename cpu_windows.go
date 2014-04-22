@@ -17,8 +17,8 @@ type FILETIME struct {
 	DwHighDateTime uint32
 }
 
-func (c CPU) Cpu_times() ([]CPU_Times, error) {
-	ret := make([]CPU_Times, 0)
+func Cpu_times() ([]CPU_TimesStat, error) {
+	ret := make([]CPU_TimesStat, 0)
 
 	var lpIdleTime FILETIME
 	var lpKernelTime FILETIME
@@ -38,7 +38,7 @@ func (c CPU) Cpu_times() ([]CPU_Times, error) {
 	kernel := ((HI_T * float64(lpKernelTime.DwHighDateTime)) + (LO_T * float64(lpKernelTime.DwLowDateTime)))
 	system := (kernel - idle)
 
-	ret = append(ret, CPU_Times{
+	ret = append(ret, CPU_TimesStat{
 		Idle:   uint64(idle),
 		User:   uint64(user),
 		System: uint64(system),

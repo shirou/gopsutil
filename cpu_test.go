@@ -5,9 +5,7 @@ import (
 )
 
 func TestCpu_times(t *testing.T) {
-	cpu := NewCPU()
-
-	v, err := cpu.Cpu_times()
+	v, err := Cpu_times()
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -23,9 +21,7 @@ func TestCpu_times(t *testing.T) {
 }
 
 func TestCpu_counts(t *testing.T) {
-	cpu := NewCPU()
-
-	v, err := cpu.Cpu_counts()
+	v, err := Cpu_counts()
 	if err != nil {
 		t.Errorf("error %v", err)
 	}

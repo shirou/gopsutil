@@ -4,9 +4,7 @@ import (
 	"runtime"
 )
 
-type CPU struct{}
-
-type CPU_Times struct {
+type CPU_TimesStat struct {
 	Cpu        string `json:"cpu"`
 	User       uint64 `json:"user"`
 	System     uint64 `json:"system"`
@@ -21,11 +19,6 @@ type CPU_Times struct {
 	Stolen     uint64 `json:"stolen"`
 }
 
-func NewCPU() CPU {
-	p := CPU{}
-	return p
-}
-
-func (c CPU) Cpu_counts() (int, error) {
+func Cpu_counts() (int, error) {
 	return runtime.NumCPU(), nil
 }

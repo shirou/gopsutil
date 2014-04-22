@@ -8,13 +8,11 @@ import (
 )
 
 func TestDisk_usage(t *testing.T) {
-	disk := NewDisk()
-
 	path := "/"
 	if runtime.GOOS == "windows" {
 		path = "C:"
 	}
-	v, err := disk.Disk_usage(path)
+	v, err := Disk_usage(path)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -23,9 +21,7 @@ func TestDisk_usage(t *testing.T) {
 }
 
 func TestDisk_partitions(t *testing.T) {
-	disk := NewDisk()
-
-	v, err := disk.Disk_partitions()
+	v, err := Disk_partitions()
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
