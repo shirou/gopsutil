@@ -34,7 +34,16 @@ func ReadLines(filename string) ([]string, error) {
 
 func byteToString(orig []byte) string {
 	n := -1
-	for i, b := range orig {
+	l := -1
+	for i, b := range orig{
+		// skip left side null
+		if l == -1 && b == 0{
+			continue
+		}
+		if l == -1{
+			l = i
+		}
+
 		if b == 0 {
 			break
 		}
@@ -43,7 +52,6 @@ func byteToString(orig []byte) string {
 	if n == -1 {
 		return string(orig)
 	} else {
-		return string(orig[:n])
+		return string(orig[l:n])
 	}
-
 }
