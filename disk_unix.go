@@ -17,11 +17,15 @@ func (d Disk) Disk_usage(path string) (Disk_usage, error) {
 		Path:      path,
 		Total:     (uint64(stat.Blocks) * uint64(bsize)) >> 1,
 		Free:      (uint64(stat.Bfree) * uint64(bsize)) >> 1,
-		Available: (uint64(stat.Bavail) * uint64(bsize)) >> 1,
 	}
 
 	ret.Used = (ret.Total - ret.Free)
-	ret.Percent = (float64(ret.Used) / float64(ret.Total)) * 100.0
+	ret.UsedPercent = (float64(ret.Used) / float64(ret.Total)) * 100.0
 
+	return ret, nil
+}
+
+func (d Disk) Disk_partitions() ([]Disk_partition, error) {
+	ret := make([]Disk_partition, 0)
 	return ret, nil
 }
