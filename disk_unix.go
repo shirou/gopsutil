@@ -14,9 +14,9 @@ func Disk_usage(path string) (Disk_usageStat, error) {
 	bsize := stat.Bsize / 512
 
 	ret := Disk_usageStat{
-		Path:      path,
-		Total:     (uint64(stat.Blocks) * uint64(bsize)) >> 1,
-		Free:      (uint64(stat.Bfree) * uint64(bsize)) >> 1,
+		Path:  path,
+		Total: (uint64(stat.Blocks) * uint64(bsize)) >> 1,
+		Free:  (uint64(stat.Bfree) * uint64(bsize)) >> 1,
 	}
 
 	ret.Used = (ret.Total - ret.Free)
