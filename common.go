@@ -1,3 +1,9 @@
+//
+// gopsutil is a port of psutil(http://pythonhosted.org/psutil/).
+// This covers these architectures.
+//  - linux
+//  - freebsd
+//  - window
 package gopsutil
 
 import (
