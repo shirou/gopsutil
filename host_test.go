@@ -23,3 +23,16 @@ func TestBoot_time(t *testing.T) {
 		t.Errorf("Could not boot time %v", v)
 	}
 }
+
+
+func TestUsers(t *testing.T) {
+	v, err := Users()
+	if err != nil {
+		t.Errorf("error %v", err)
+	}
+	for _, u := range v  {
+		if u.User == ""{
+			t.Errorf("Could not Users %v", v)
+		}
+	}
+}
