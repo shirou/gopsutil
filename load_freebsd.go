@@ -3,7 +3,7 @@
 package gopsutil
 
 import (
-	"exec"
+	"os/exec"
 	"strconv"
 	"strings"
 )
@@ -17,23 +17,23 @@ func LoadAvg() (LoadAvgStat, error) {
 	v = strings.Replace(string(v), " }", "", 1)
 	values := strings.Fields(string(v))
 
-	load1, err := strconv.ParseFloat(values[0], 32)
+	load1, err := strconv.ParseFloat(values[0], 64)
 	if err != nil {
 		return LoadAvgStat{}, err
 	}
-	load5, err := strconv.ParseFloat(values[1], 32)
+	load5, err := strconv.ParseFloat(values[1], 64)
 	if err != nil {
 		return LoadAvgStat{}, err
 	}
-	load15, err := strconv.ParseFloat(values[2], 32)
+	load15, err := strconv.ParseFloat(values[2], 64)
 	if err != nil {
 		return LoadAvgStat{}, err
 	}
 
 	ret := LoadAvgStat{
-		Load1:  float32(load1),
-		Load5:  float32(load5),
-		Load15: float32(load15),
+		Load1:  float64(load1),
+		Load5:  float64(load5),
+		Load15: float64(load15),
 	}
 
 	return ret, nil
