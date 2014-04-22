@@ -3,19 +3,14 @@
 package gopsutil
 
 import (
-	"os/exec"
 	"strconv"
-	"strings"
 )
 
 func LoadAvg() (LoadAvgStat, error) {
-	out, err := exec.Command("/sbin/sysctl", "-n", "vm.loadavg").Output()
+	values,err := do_sysctrl("vm.loadavg")
 	if err != nil {
 		return LoadAvgStat{}, err
 	}
-	v := strings.Replace(string(out), "{ ", "", 1)
-	v = strings.Replace(string(v), " }", "", 1)
-	values := strings.Fields(string(v))
 
 	load1, err := strconv.ParseFloat(values[0], 64)
 	if err != nil {
