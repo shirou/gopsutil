@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func do_sysctrl(mib string) ([]string, error){
+func do_sysctrl(mib string) ([]string, error) {
 	out, err := exec.Command("/sbin/sysctl", "-n", mib).Output()
 	if err != nil {
 		return []string{}, err

@@ -19,8 +19,7 @@ func HostInfo() (HostInfoStat, error) {
 	return ret, nil
 }
 
-
-func Boot_time() (int64, error){
+func Boot_time() (int64, error) {
 	sysinfo := &syscall.Sysinfo_t{}
 	if err := syscall.Sysinfo(sysinfo); err != nil {
 		return 0, err
