@@ -10,8 +10,8 @@ Available archtectures
 ------------------------------------
 
 - FreeBSD/amd64
-- Linux
-- Windows
+- Linux/amd64
+- Windows/amd64
 
 (I do not have a darwin machine)
 
@@ -62,7 +62,7 @@ Current Status
   - swap_memory (linux)
   - disk_partitions (freebsd, windows)
   - disk_usage (linux, freebsd, windows)
-  - boot_time (linux, freebsd)
+  - boot_time (linux, freebsd, windows(but little broken))
   - users (linux, freebsd)
 
 - not yet

@@ -35,12 +35,12 @@ func ReadLines(filename string) ([]string, error) {
 func byteToString(orig []byte) string {
 	n := -1
 	l := -1
-	for i, b := range orig{
+	for i, b := range orig {
 		// skip left side null
-		if l == -1 && b == 0{
+		if l == -1 && b == 0 {
 			continue
 		}
-		if l == -1{
+		if l == -1 {
 			l = i
 		}
 
