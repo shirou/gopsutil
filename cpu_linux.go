@@ -40,7 +40,19 @@ func Cpu_times() ([]CPU_TimesStat, error) {
 			Iowait:  iowait,
 			Irq:     irq,
 			Softirq: softirq,
-			Stolen:  stolen,
+			Stolen: stolen,
+		}
+		if len(fields) > 9 { // Linux >= 2.6.11
+			steal, _ := strconv.ParseUint(fields[9], 10, 64)
+			ct.Steal = steal
+		}
+		if len(fields) > 10 { // Linux >= 2.6.24
+			guest, _ := strconv.ParseUint(fields[10], 10, 64)
+			ct.Guest = guest
+		}
+		if len(fields) > 11 { // Linux >= 3.2.0
+			guest_nice, _ := strconv.ParseUint(fields[11], 10, 64)
+			ct.Guest_nice = guest_nice
 		}
 
 		ret = append(ret, ct)
