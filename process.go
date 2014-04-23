@@ -65,3 +65,32 @@ type Io_countersStat struct {
 	Read_bytes  int32
 	Write_bytes int32
 }
+
+func Pids() ([]int32, error) {
+	ret := make([]int32, 0)
+	procs, err := processes()
+	if err != nil {
+		return ret, nil
+	}
+
+	for _, p := range procs {
+		ret = append(ret, p.Pid)
+	}
+
+	return ret, nil
+}
+
+func Pid_exists(pid int32) (bool, error) {
+	pids, err := Pids()
+	if err != nil {
+		return false, err
+	}
+
+	for _, i := range pids {
+		if i == pid {
+			return true, err
+		}
+	}
+
+	return false, err
+}

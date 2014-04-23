@@ -1,16 +1,27 @@
 package gopsutil
 
 import (
-	"encoding/json"
-	"fmt"
 	"testing"
 )
 
-func Test(t *testing.T) {
-	v, err := findProcess(0)
+func Test_Pids(t *testing.T) {
+	ret, err := Pids()
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
-	d, _ := json.Marshal(v)
-	fmt.Printf("%s\n", d)
+	if len(ret) == 0 {
+		t.Errorf("could not get pids %v", ret)
+	}
+}
+
+func Test_Pid_exists(t *testing.T) {
+	ret, err := Pid_exists(1)
+	if err != nil {
+		t.Errorf("error %v", err)
+	}
+
+	if ret == false {
+		t.Errorf("could not get init process %v", ret)
+	}
+
 }
