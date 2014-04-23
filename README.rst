@@ -64,6 +64,8 @@ Current Status
   - disk_usage (linux, freebsd, windows)
   - boot_time (linux, freebsd, windows(but little broken))
   - users (linux, freebsd)
+  - pids (freebsd)
+  - pid_exists (freebsd)
 
 - not yet
 
@@ -72,11 +74,14 @@ Current Status
   - disk_io_counters
   - net_io_counters
   - net_connections
-  - pids
-  - pid_exists
+  - Process class
+
+- future work
+
   - process_iter
   - wait_procs
-  - process class
+
+
 
 License
 ------------
