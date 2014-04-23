@@ -4,8 +4,6 @@ gopsutil: psutil for golang
 This is a port of psutil(http://pythonhosted.org/psutil/). This
 challenges porting all psutil functions on some architectures.
 
-
-
 Available archtectures
 ------------------------------------
 
@@ -14,6 +12,10 @@ Available archtectures
 - Windows/amd64
 
 (I do not have a darwin machine)
+
+
+All works are implemented without cgo by porting c struct to golang struct.
+
 
 usage
 ---------
