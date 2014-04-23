@@ -9,6 +9,20 @@ import (
 	"unsafe"
 )
 
+func Pids() ([]int32, error) {
+	ret := make([]int32, 0)
+	procs, err := processes()
+	if err != nil {
+		return ret, nil
+	}
+
+	for _, p := range procs {
+		ret = append(ret, p.Pid)
+	}
+
+	return ret, nil
+}
+
 // Refresh reloads all the data associated with this process.
 func (p *Process) Refresh() error {
 

@@ -1,6 +1,8 @@
 package gopsutil
 
 import (
+	"encoding/json"
+	"fmt"
 	"testing"
 )
 
@@ -23,5 +25,14 @@ func Test_Pid_exists(t *testing.T) {
 	if ret == false {
 		t.Errorf("could not get init process %v", ret)
 	}
+}
 
+func Test_NewProcess(t *testing.T) {
+	ret, err := NewProcess(1)
+	if err != nil {
+		t.Errorf("error %v", err)
+	}
+
+	d, _ := json.Marshal(ret)
+	fmt.Println(string(d))
 }
