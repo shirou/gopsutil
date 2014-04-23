@@ -32,17 +32,8 @@ type Process struct {
 	Memory_maps    []Memory_mapsStat
 	//	Children       []Process // FIXME: recursive
 	Open_files  []Open_filesStat
-	Connections []ConnectionStat
+	Connections []Net_connectionStat
 	Is_running  bool
-}
-
-type ConnectionStat struct {
-	Fd     uint32
-	Family uint32
-	Type   uint32
-	Laddr  string // FIXME
-	Raddr  string // FIXME
-	Status string
 }
 
 type Open_filesStat struct {
