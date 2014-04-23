@@ -23,45 +23,11 @@ func Pids() ([]int32, error) {
 	return ret, nil
 }
 
-// Refresh reloads all the data associated with this process.
-func (p *Process) Refresh() error {
-
-	mib := []int32{CTL_KERN, KERN_PROC, KERN_PROC_PID, p.Pid}
-
-	buf, length, err := call_syscall(mib)
-	if err != nil {
-		return err
-	}
-	proc_k := Kinfo_proc{}
-	if length != uint64(unsafe.Sizeof(proc_k)) {
-		return err
-	}
-
-	k, err := parse_kinfo_proc(buf)
-	if err != nil {
-		return err
-	}
-
-	copy_params(&k, p)
-	return nil
-}
-
 func copy_params(k *Kinfo_proc, p *Process) error {
 	p.Exe = byteToString(k.Ki_comm[:])
 	p.Ppid = k.Ki_ppid
 
 	return nil
-}
-
-func findProcess(pid int32) (*Process, error) {
-	mib := []int32{CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, pid}
-
-	_, _, err := call_syscall(mib)
-	if err != nil {
-		return &Process{}, err
-	}
-
-	return newProcess(pid)
 }
 
 func processes() ([]Process, error) {
@@ -85,7 +51,7 @@ func processes() ([]Process, error) {
 		if err != nil {
 			continue
 		}
-		p, err := newProcess(int32(k.Ki_pid))
+		p, err := NewProcess(int32(k.Ki_pid))
 		if err != nil {
 			continue
 		}
@@ -146,7 +112,24 @@ func call_syscall(mib []int32) ([]byte, uint64, error) {
 	return buf, length, nil
 }
 
-func newProcess(pid int32) (*Process, error) {
+func NewProcess(pid int32) (*Process, error) {
 	p := &Process{Pid: pid}
-	return p, p.Refresh()
+	mib := []int32{CTL_KERN, KERN_PROC, KERN_PROC_PID, p.Pid}
+
+	buf, length, err := call_syscall(mib)
+	if err != nil {
+		return nil, err
+	}
+	proc_k := Kinfo_proc{}
+	if length != uint64(unsafe.Sizeof(proc_k)) {
+		return nil, err
+	}
+
+	k, err := parse_kinfo_proc(buf)
+	if err != nil {
+		return nil, err
+	}
+
+	copy_params(&k, p)
+	return p, nil
 }
