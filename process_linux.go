@@ -10,11 +10,11 @@ import (
 	"strings"
 )
 
-func NewProcess(pid int32) (Process, error) {
-	p := Process{
+func NewProcess(pid int32) (*Process, error) {
+	p := &Process{
 		Pid: int32(pid),
 	}
-	go fillFromStat(pid, &p)
+	go fillFromStat(pid, p)
 
 	/*
 	   //	user := parseInt32(fields[13])
@@ -101,8 +101,8 @@ func getState(status uint8) (string, error) {
 	return "running", nil
 }
 
-func processes() ([]Process, error) {
-	ret := make([]Process, 0)
+func processes() ([]*Process, error) {
+	ret := make([]*Process, 0)
 
 	pids, err := Pids()
 	if err != nil {
