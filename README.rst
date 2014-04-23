@@ -56,7 +56,7 @@ Current Status
 
 - done
 
-  - cpu_times (linux)
+  - cpu_times (linux, freebsd)
   - cpu_count (linux, freebsd, windows)
   - virtual_memory (linux, windows)
   - swap_memory (linux)
