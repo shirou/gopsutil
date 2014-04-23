@@ -3,6 +3,7 @@ package gopsutil
 import (
 	"encoding/json"
 	"fmt"
+	"runtime"
 	"testing"
 )
 
@@ -17,7 +18,12 @@ func Test_Pids(t *testing.T) {
 }
 
 func Test_Pid_exists(t *testing.T) {
-	ret, err := Pid_exists(1)
+	check_pid := 1
+	if runtime.GOOS == "windows" {
+		check_pid = 0
+	}
+
+	ret, err := Pid_exists(int32(check_pid))
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -28,7 +34,12 @@ func Test_Pid_exists(t *testing.T) {
 }
 
 func Test_NewProcess(t *testing.T) {
-	ret, err := NewProcess(1)
+	check_pid := 1
+	if runtime.GOOS == "windows" {
+		check_pid = 0
+	}
+
+	ret, err := NewProcess(int32(check_pid))
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
