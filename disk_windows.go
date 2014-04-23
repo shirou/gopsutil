@@ -20,8 +20,8 @@ var (
 	FILE_READ_ONLY_VOLUME = int64(524288) // 0x00080000
 )
 
-func (d Disk) Disk_usage(path string) (Disk_usage, error) {
-	ret := Disk_usage{}
+func Disk_usage(path string) (Disk_usageStat, error) {
+	ret := Disk_usageStat{}
 
 	ret.Path = path
 	lpFreeBytesAvailable := int64(0)
@@ -44,8 +44,8 @@ func (d Disk) Disk_usage(path string) (Disk_usage, error) {
 	return ret, nil
 }
 
-func (d Disk) Disk_partitions() ([]Disk_partition, error) {
-	ret := make([]Disk_partition, 0)
+func Disk_partitions() ([]Disk_partitionStat, error) {
+	ret := make([]Disk_partitionStat, 0)
 	lpBuffer := make([]byte, 254)
 	diskret, _, err := procGetLogicalDriveStringsW.Call(
 		uintptr(len(lpBuffer)),
@@ -93,7 +93,7 @@ func (d Disk) Disk_partitions() ([]Disk_partition, error) {
 					opts += ".compress"
 				}
 
-				d := Disk_partition{
+				d := Disk_partitionStat{
 					Mountpoint: path,
 					Device:     path,
 					Fstype:     string(bytes.Replace(lpFileSystemNameBuffer, []byte("\x00"), []byte(""), -1)),

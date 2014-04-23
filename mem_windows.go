@@ -23,8 +23,8 @@ type MEMORYSTATUSEX struct {
 	ullAvailExtendedVirtual uint64
 }
 
-func Virtual_memory() (Virtual_memory, error) {
-	ret := Virtual_memory{}
+func Virtual_memory() (Virtual_memoryStat, error) {
+	ret := Virtual_memoryStat{}
 
 	var memInfo MEMORYSTATUSEX
 	memInfo.cbSize = uint32(unsafe.Sizeof(memInfo))
@@ -40,8 +40,8 @@ func Virtual_memory() (Virtual_memory, error) {
 	return ret, nil
 }
 
-func Swap_memory() (Swap_memory, error) {
-	ret := Swap_memory{}
+func Swap_memory() (Swap_memoryStat, error) {
+	ret := Swap_memoryStat{}
 
 	return ret, nil
 }

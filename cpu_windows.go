@@ -12,11 +12,6 @@ var (
 	procGetSystemTimes = modkernel32.NewProc("GetSystemTimes")
 )
 
-type FILETIME struct {
-	DwLowDateTime  uint32
-	DwHighDateTime uint32
-}
-
 func Cpu_times() ([]CPU_TimesStat, error) {
 	ret := make([]CPU_TimesStat, 0)
 
