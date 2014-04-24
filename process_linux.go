@@ -63,6 +63,7 @@ func parseInt32(val string) int32 {
 	vv, _ := strconv.ParseInt(val, 10, 32)
 	return int32(vv)
 }
+
 // Parse to uint64 without error
 func parseUint64(val string) uint64 {
 	vv, _ := strconv.ParseInt(val, 10, 64)
@@ -115,7 +116,7 @@ func fillFromStatus(pid int32, p *Process) error {
 		if len(field) < 2 {
 			continue
 		}
-//		fmt.Printf("%s ->__%s__\n", field[0], strings.Trim(field[1], " \t"))
+		//		fmt.Printf("%s ->__%s__\n", field[0], strings.Trim(field[1], " \t"))
 		switch field[0] {
 		case "Name":
 			p.Name = strings.Trim(field[1], " \t")
@@ -150,7 +151,7 @@ func fillFromStat(pid int32, p *Process) error {
 	fields := strings.Fields(string(contents))
 
 	termmap, err := getTerminalMap()
-	if err == nil{
+	if err == nil {
 		p.Terminal = termmap[parseUint64(fields[6])]
 	}
 

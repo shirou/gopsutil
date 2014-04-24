@@ -5,7 +5,7 @@ import (
 )
 
 type CPU_TimesStat struct {
-	Cpu        string `json:"cpu"`
+	Cpu        string  `json:"cpu"`
 	User       float32 `json:"user"`
 	System     float32 `json:"system"`
 	Idle       float32 `json:"idle"`
