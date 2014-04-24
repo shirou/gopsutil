@@ -8,13 +8,38 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
+	"syscall"
+)
+
+const (
+	PRIO_PROCESS = 0 // linux/resource.h
 )
 
 func NewProcess(pid int32) (*Process, error) {
 	p := &Process{
 		Pid: int32(pid),
 	}
-	go fillFromStat(pid, p)
+
+	var wg sync.WaitGroup
+	wg.Add(4)
+	go func() {
+		wg.Done()
+		fillFromStat(pid, p)
+	}()
+	go func() {
+		defer wg.Done()
+		fillFromStatus(pid, p)
+	}()
+	go func() {
+		defer wg.Done()
+		go fillFromfd(pid, p)
+	}()
+	go func() {
+		defer wg.Done()
+		go fillFromCmdline(pid, p)
+	}()
+	wg.Wait()
 
 	/*
 	   //	user := parseInt32(fields[13])
@@ -33,22 +58,88 @@ func NewProcess(pid int32) (*Process, error) {
 	return p, nil
 }
 
+// Parse to int32 without error
 func parseInt32(val string) int32 {
 	vv, _ := strconv.ParseInt(val, 10, 32)
 	return int32(vv)
 }
+// Parse to uint64 without error
+func parseUint64(val string) uint64 {
+	vv, _ := strconv.ParseInt(val, 10, 64)
+	return uint64(vv)
+}
 
-/*
-func fillFromStatm(pid int32, p *Process) error{
-	statPath := filepath.Join("/", "proc", strconv.Itoa(int(pid)), "statm")
+// Get num_fds from /proc/(pid)/fd
+func fillFromfd(pid int32, p *Process) error {
+	statPath := filepath.Join("/", "proc", strconv.Itoa(int(pid)), "fd")
+	d, err := os.Open(statPath)
+	if err != nil {
+		return err
+	}
+	defer d.Close()
+	fnames, err := d.Readdirnames(-1)
+	p.Num_fds = int32(len(fnames))
+
+	return nil
+}
+
+// Get cmdline from /proc/(pid)/cmdline
+func fillFromCmdline(pid int32, p *Process) error {
+	cmdPath := filepath.Join("/", "proc", strconv.Itoa(int(pid)), "cmdline")
+	cmdline, err := ioutil.ReadFile(cmdPath)
+	if err != nil {
+		return err
+	}
+	// remove \u0000
+	p.Cmdline = strings.TrimFunc(string(cmdline), func(r rune) bool {
+		if r == '\u0000' {
+			return true
+		}
+		return false
+	})
+
+	return nil
+}
+
+// get various status from /proc/(pid)/status
+func fillFromStatus(pid int32, p *Process) error {
+	statPath := filepath.Join("/", "proc", strconv.Itoa(int(pid)), "status")
 	contents, err := ioutil.ReadFile(statPath)
 	if err != nil {
 		return err
 	}
-	fields := strings.Fields(string(contents))
+	lines := strings.Split(string(contents), "\n")
 
+	for _, line := range lines {
+		field := strings.Split(line, ":")
+		if len(field) < 2 {
+			continue
+		}
+//		fmt.Printf("%s ->__%s__\n", field[0], strings.Trim(field[1], " \t"))
+		switch field[0] {
+		case "Name":
+			p.Name = strings.Trim(field[1], " \t")
+		case "State":
+			// get between "(" and ")"
+			s := strings.Index(field[1], "(") + 1
+			e := strings.Index(field[1], "(") + 1
+			p.Status = field[1][s:e]
+			//		case "PPid":  // filled by fillFromStat
+		case "Uid":
+			for _, i := range strings.Split(field[1], "\t") {
+				p.Uids = append(p.Uids, parseInt32(i))
+			}
+		case "Gid":
+			for _, i := range strings.Split(field[1], "\t") {
+				p.Gids = append(p.Uids, parseInt32(i))
+			}
+		case "Threads":
+			p.Num_Threads = parseInt32(field[1])
+		}
+	}
+
+	return nil
 }
-*/
 
 func fillFromStat(pid int32, p *Process) error {
 	statPath := filepath.Join("/", "proc", strconv.Itoa(int(pid)), "stat")
@@ -58,47 +149,26 @@ func fillFromStat(pid int32, p *Process) error {
 	}
 	fields := strings.Fields(string(contents))
 
-	p.Name = strings.Trim(fields[1], "()") // remove "(" and ")"
-	p.Status, _ = getState(fields[2][0])
+	termmap, err := getTerminalMap()
+	if err == nil{
+		p.Terminal = termmap[parseUint64(fields[6])]
+	}
+
 	p.Ppid = parseInt32(fields[3])
-	//	p.Terminal, _ = strconv.Atoi(fields[6])
-	//	p.Priority, _ = strconv.Atoi(fields[17])
-	p.Nice = parseInt32(fields[18])
-	//	p.Processor, _ = strconv.Atoi(fields[38])
+	utime, _ := strconv.ParseFloat(fields[11], 64)
+	stime, _ := strconv.ParseFloat(fields[11], 64)
+
+	p.Cpu_times = CPU_TimesStat{
+		User:   float32(utime / CLOCK_TICKS),
+		System: float32(stime / CLOCK_TICKS),
+	}
+
+	//	p.Nice = parseInt32(fields[18])
+	// use syscall instead of parse Stat file
+	nice, _ := syscall.Getpriority(PRIO_PROCESS, int(pid))
+	p.Nice = int32(nice) // FIXME: is this true?
+
 	return nil
-}
-
-func getState(status uint8) (string, error) {
-
-	/*
-	   >>> psutil.STATUS_RUNNING
-	   'running'
-	   >>> psutil.STATUS_SLEEPING
-	   'sleeping'
-	   >>> psutil.STATUS_DISK_SLEEP
-	   'disk-sleep'
-	   >>> psutil.STATUS_STOPPED
-	   'stopped'
-	   >>> psutil.STATUS_TRACING_STOP
-	   'tracing-stop'
-	   >>> psutil.STATUS_ZOMBIE
-	   'zombie'
-	   >>> psutil.STATUS_DEAD
-	   'dead'
-	   >>> psutil.STATUS_WAKE_KILL
-	   Traceback (most recent call last):
-	     File "<stdin>", line 1, in <module>
-	   AttributeError: 'ModuleWrapper' object has no attribute 'STATUS_WAKE_KILL'
-	   >>> psutil.STATUS_WAKING
-	   'waking'
-	   >>> psutil.STATUS_IDLE
-	   'idle'
-	   >>> psutil.STATUS_LOCKED
-	   'locked'
-	   >>> psutil.STATUS_WAITING
-	   'waiting'
-	*/
-	return "running", nil
 }
 
 func processes() ([]*Process, error) {
