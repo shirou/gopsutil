@@ -16,8 +16,7 @@ const (
 	PRIO_PROCESS = 0 // linux/resource.h
 )
 
-type fillFunc func(pid int32, p *Process) (error)
-
+type fillFunc func(pid int32, p *Process) error
 
 func NewProcess(pid int32) (*Process, error) {
 	p := &Process{
@@ -29,28 +28,14 @@ func NewProcess(pid int32) (*Process, error) {
 	funcs := []fillFunc{fillFromStat, fillFromStatus, fillFromfd, fillFromCmdline}
 
 	wg.Add(len(funcs))
-	for _, f := range funcs{
-		go func(){
+	for _, f := range funcs {
+		go func(f fillFunc) {
 			wg.Done()
 			f(pid, p)
-		}()
+		}(f)
 	}
 	wg.Wait()
 
-	/*
-	   //	user := parseInt32(fields[13])
-	   	//sys := parseInt32(fields[14])
-	   	// convert to millis
-	   	self.User = user * (1000 / system.ticks)
-	   	self.Sys = sys * (1000 / system.ticks)
-	   	self.Total = self.User + self.Sys
-
-	   	// convert to millis
-	   	self.StartTime, _ = strtoull(fields[21])
-	   	self.StartTime /= system.ticks
-	   	self.StartTime += system.btime
-	   	self.StartTime *= 1000
-	*/
 	return p, nil
 }
 
