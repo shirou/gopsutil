@@ -66,8 +66,8 @@ Current Status
   - disk_usage (linux, freebsd, windows)
   - boot_time (linux, freebsd, windows(but little broken))
   - users (linux, freebsd)
-  - pids (freebsd)
-  - pid_exists (freebsd)
+  - pids (linux, freebsd)
+  - pid_exists (linux, freebsd)
 
 - not yet
 

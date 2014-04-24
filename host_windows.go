@@ -22,15 +22,10 @@ func HostInfo() (HostInfoStat, error) {
 	}
 
 	ret.Hostname = hostname
-
-	kernel32, err := syscall.LoadLibrary("kernel32.dll")
-	if err != nil {
-		return ret, err
+	uptimemsec, _, err := procGetTickCount.Call()
+	if uptimemsec == 0 {
+		return ret, syscall.GetLastError()
 	}
-	defer syscall.FreeLibrary(kernel32)
-	GetTickCount, _ := syscall.GetProcAddress(kernel32, "GetTickCount")
-
-	uptimemsec, _, err := syscall.Syscall(uintptr(GetTickCount), 0, 0, 0, 0)
 
 	ret.Uptime = int64(uptimemsec) / 1000
 
