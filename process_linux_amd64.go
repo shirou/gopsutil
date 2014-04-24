@@ -4,5 +4,5 @@
 package gopsutil
 
 const (
-	CLOCK_TICKS = 2 // FIXME: /usr/include/x86_64-linux-gnu/bits/time.h
+	CLOCK_TICKS = 100 // C.sysconf(C._SC_CLK_TCK)
 )
