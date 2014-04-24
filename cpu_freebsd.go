@@ -30,18 +30,18 @@ func Cpu_times() ([]CPU_TimesStat, error) {
 		return ret, err
 	}
 
-	user, _ := strconv.ParseInt(cpu_time[CP_USER], 10, 64)
-	nice, _ := strconv.ParseInt(cpu_time[CP_NICE], 10, 64)
-	sys, _ := strconv.ParseInt(cpu_time[CP_SYS], 10, 64)
-	idle, _ := strconv.ParseInt(cpu_time[CP_IDLE], 10, 64)
-	intr, _ := strconv.ParseInt(cpu_time[CP_INTR], 10, 64)
+	user, _ := strconv.ParseFloat(cpu_time[CP_USER], 32)
+	nice, _ := strconv.ParseFloat(cpu_time[CP_NICE], 32)
+	sys, _ := strconv.ParseFloat(cpu_time[CP_SYS], 32)
+	idle, _ := strconv.ParseFloat(cpu_time[CP_IDLE], 32)
+	intr, _ := strconv.ParseFloat(cpu_time[CP_INTR], 32)
 
 	c := CPU_TimesStat{
-		User:   uint64(user / CLOCKS_PER_SEC),
-		Nice:   uint64(nice / CLOCKS_PER_SEC),
-		System: uint64(sys / CLOCKS_PER_SEC),
-		Idle:   uint64(idle / CLOCKS_PER_SEC),
-		Irq:    uint64(intr / CLOCKS_PER_SEC), // FIXME: correct?
+		User:   float32(user / CLOCKS_PER_SEC),
+		Nice:   float32(nice / CLOCKS_PER_SEC),
+		System: float32(sys / CLOCKS_PER_SEC),
+		Idle:   float32(idle / CLOCKS_PER_SEC),
+		Irq:    float32(intr / CLOCKS_PER_SEC), // FIXME: correct?
 	}
 
 	ret = append(ret, c)

@@ -34,9 +34,9 @@ func Cpu_times() ([]CPU_TimesStat, error) {
 	system := (kernel - idle)
 
 	ret = append(ret, CPU_TimesStat{
-		Idle:   uint64(idle),
-		User:   uint64(user),
-		System: uint64(system),
+		Idle:   float32(idle),
+		User:   float32(user),
+		System: float32(system),
 	})
 	return ret, nil
 }

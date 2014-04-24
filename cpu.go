@@ -6,17 +6,17 @@ import (
 
 type CPU_TimesStat struct {
 	Cpu        string `json:"cpu"`
-	User       uint64 `json:"user"`
-	System     uint64 `json:"system"`
-	Idle       uint64 `json:"idle"`
-	Nice       uint64 `json:"nice"`
-	Iowait     uint64 `json:"iowait"`
-	Irq        uint64 `json:"irq"`
-	Softirq    uint64 `json:"softirq"`
-	Steal      uint64 `json:"steal"`
-	Guest      uint64 `json:"guest"`
-	Guest_nice uint64 `json:"guest_nice"`
-	Stolen     uint64 `json:"stolen"`
+	User       float32 `json:"user"`
+	System     float32 `json:"system"`
+	Idle       float32 `json:"idle"`
+	Nice       float32 `json:"nice"`
+	Iowait     float32 `json:"iowait"`
+	Irq        float32 `json:"irq"`
+	Softirq    float32 `json:"softirq"`
+	Steal      float32 `json:"steal"`
+	Guest      float32 `json:"guest"`
+	Guest_nice float32 `json:"guest_nice"`
+	Stolen     float32 `json:"stolen"`
 }
 
 func Cpu_counts() (int, error) {
