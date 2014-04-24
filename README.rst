@@ -1,6 +1,8 @@
 gopsutil: psutil for golang
 ==============================
 
+https://drone.io/github.com/shirou/gopsutil/status.png
+
 This is a port of psutil(http://pythonhosted.org/psutil/). This
 challenges porting all psutil functions on some architectures.
 
