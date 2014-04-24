@@ -137,13 +137,18 @@ func fillFromStat(pid int32, p *Process) error {
 	}
 
 	p.Ppid = parseInt32(fields[3])
-	utime, _ := strconv.ParseFloat(fields[11], 64)
-	stime, _ := strconv.ParseFloat(fields[11], 64)
+	utime, _ := strconv.ParseFloat(fields[13], 64)
+	stime, _ := strconv.ParseFloat(fields[14], 64)
 
 	p.Cpu_times = CPU_TimesStat{
-		User:   float32(utime / CLOCK_TICKS),
-		System: float32(stime / CLOCK_TICKS),
+		Cpu:    "cpu",
+		User:   float32(utime * (1000 / CLOCK_TICKS)),
+		System: float32(stime * (1000 / CLOCK_TICKS)),
 	}
+
+	boot_time, _ := Boot_time()
+	ctime := ((parseUint64(fields[21]) / uint64(CLOCK_TICKS)) + uint64(boot_time)) * 1000
+	p.Create_time = int64(ctime)
 
 	//	p.Nice = parseInt32(fields[18])
 	// use syscall instead of parse Stat file
