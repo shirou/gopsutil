@@ -16,29 +16,25 @@ const (
 	PRIO_PROCESS = 0 // linux/resource.h
 )
 
+type fillFunc func(pid int32, p *Process) (error)
+
+
 func NewProcess(pid int32) (*Process, error) {
 	p := &Process{
 		Pid: int32(pid),
 	}
 
+	// Fill Process information from fillFuncs
 	var wg sync.WaitGroup
-	wg.Add(4)
-	go func() {
-		wg.Done()
-		fillFromStat(pid, p)
-	}()
-	go func() {
-		defer wg.Done()
-		fillFromStatus(pid, p)
-	}()
-	go func() {
-		defer wg.Done()
-		go fillFromfd(pid, p)
-	}()
-	go func() {
-		defer wg.Done()
-		go fillFromCmdline(pid, p)
-	}()
+	funcs := []fillFunc{fillFromStat, fillFromStatus, fillFromfd, fillFromCmdline}
+
+	wg.Add(len(funcs))
+	for _, f := range funcs{
+		go func(){
+			wg.Done()
+			f(pid, p)
+		}()
+	}
 	wg.Wait()
 
 	/*
