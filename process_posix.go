@@ -4,6 +4,8 @@ package gopsutil
 
 import (
 	"os"
+	"os/exec"
+	"strconv"
 	"strings"
 	"syscall"
 )
@@ -44,4 +46,40 @@ func getTerminalMap() (map[uint64]string, error) {
 		ret[rdev] = strings.Replace(name, "/dev", "", -1)
 	}
 	return ret, nil
+}
+
+func (p *Process) Send_signal(sig syscall.Signal) error {
+	sig_as_str := "INT"
+	switch sig {
+	case syscall.SIGSTOP:
+		sig_as_str = "STOP"
+	case syscall.SIGCONT:
+		sig_as_str = "CONT"
+	case syscall.SIGTERM:
+		sig_as_str = "TERM"
+	case syscall.SIGKILL:
+		sig_as_str = "KILL"
+	}
+
+	cmd := exec.Command("kill", "-s", sig_as_str, strconv.Itoa(int(p.Pid)))
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *Process) Suspend() error {
+	return p.Send_signal(syscall.SIGSTOP)
+}
+func (p *Process) Resume() error {
+	return p.Send_signal(syscall.SIGCONT)
+}
+func (p *Process) Terminate() error {
+	return p.Send_signal(syscall.SIGTERM)
+}
+func (p *Process) Kill() error {
+	return p.Send_signal(syscall.SIGKILL)
 }

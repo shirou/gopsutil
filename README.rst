@@ -92,6 +92,11 @@ Current Status
     - memory_info_ex (linux)
     - Memory_maps() (linux)  <- this is a function
     - open_files (linux)
+    - send_signal (linux, freebsd)
+    - suspend (linux, freebsd)
+    - resume (linux, freebsd)
+    - terminate (linux, freebsd)
+    - kill (linux, freebsd)
 
 - not yet
 
@@ -125,11 +130,6 @@ Current Status
 
     - parent (use ppid instead)
     - as_dict
-    - send_signal()
-    - suspend()
-    - resume()
-    - terminate()
-    - kill()
     - wait
 
 
