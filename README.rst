@@ -79,6 +79,7 @@ Current Status
     - cmdline (linux)
     - create_time (linux)
     - status (linux)
+    - cwd (linux)
     - exe (freebsd)
     - uids (linux)
     - gids (linux)
@@ -99,7 +100,6 @@ Current Status
   - Process class
 
     - parent
-    - cwd
     - username
     - ionice
     - rlimit

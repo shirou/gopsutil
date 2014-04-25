@@ -37,7 +37,7 @@ func NewProcess(pid int32) (*Process, error) {
 	// Fill Process information from fillFuncs
 	var wg sync.WaitGroup
 	funcs := []fillFunc{fillFromStat, fillFromStatus, fillFromfd,
-		fillFromCmdline, fillFromStatm}
+		fillFromCmdline, fillFromStatm, fillFromCwd}
 
 	wg.Add(len(funcs))
 	for _, f := range funcs {
@@ -73,6 +73,18 @@ func fillFromfd(pid int32, p *Process) error {
 	defer d.Close()
 	fnames, err := d.Readdirnames(-1)
 	p.Num_fds = int32(len(fnames))
+
+	return nil
+}
+
+// Get cwd from /proc/(pid)/cwd
+func fillFromCwd(pid int32, p *Process) error {
+	cwdPath := filepath.Join("/", "proc", strconv.Itoa(int(pid)), "cwd")
+	cwd, err := os.Readlink(cwdPath)
+	if err != nil {
+		return err
+	}
+	p.Cwd = string(cwd)
 
 	return nil
 }
