@@ -99,7 +99,6 @@ Current Status
   - net_connections
   - Process class
 
-    - parent
     - username
     - ionice
     - rlimit
@@ -123,6 +122,7 @@ Current Status
   - wait_procs
   - Process class
 
+    - parent (use ppid instead)
     - as_dict
     - send_signal()
     - suspend()
