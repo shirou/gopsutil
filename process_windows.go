@@ -13,6 +13,7 @@ var (
 	procCreateToolhelp32Snapshot = modKernel32.NewProc("CreateToolhelp32Snapshot")
 	procProcess32First           = modKernel32.NewProc("Process32FirstW")
 	procProcess32Next            = modKernel32.NewProc("Process32NextW")
+	procNtQuerySystemInformation = modNt.NewProc("NtQuerySystemInformation")
 )
 
 const (
@@ -33,22 +34,20 @@ type PROCESSENTRY32 struct {
 	SzExeFile           [MAX_PATH]uint16
 }
 
-/*
 type SYSTEM_PROCESS_INFORMATION struct {
-	ULONG NextEntryOffset;
-    ULONG NumberOfThreads;
-    BYTE Reserved1[48];
-    PVOID Reserved2[3];
-    HANDLE UniqueProcessId;
-    PVOID Reserved3;
-    ULONG HandleCount;
-    BYTE Reserved4[4];
-    PVOID Reserved5[11];
-    SIZE_T PeakPagefileUsage;
-    SIZE_T PrivatePageCount;
-    LARGE_INTEGER Reserved6[6];
+	NextEntryOffset   uint64
+	NumberOfThreads   uint64
+	Reserved1         [48]byte
+	Reserved2         [3]byte
+	UniqueProcessId   uintptr
+	Reserved3         uintptr
+	HandleCount       uint64
+	Reserved4         [4]byte
+	Reserved5         [11]byte
+	PeakPagefileUsage uint64
+	PrivatePageCount  uint64
+	Reserved6         [6]uint64
 }
-*/
 
 // Memory_info_ex is different between OSes
 type Memory_info_exStat struct {
@@ -82,6 +81,12 @@ func NewProcess(pid int32) (*Process, error) {
 	if (pid == 0) || (pid == 4) {
 		p.Cmdline = ""
 	}
+
+	r, err := get_proc_info(pid)
+	if r == nil {
+		return p, err
+	}
+
 	return p, nil
 }
 
@@ -142,4 +147,22 @@ func processes() ([]*Process, error) {
 	}
 
 	return results, nil
+}
+
+func get_proc_info(pid int32) (*SYSTEM_PROCESS_INFORMATION, error) {
+	initialBufferSize := uint64(0x4000)
+	bufferSize := initialBufferSize
+	buffer := make([]byte, bufferSize)
+
+	var sys_proc_info SYSTEM_PROCESS_INFORMATION
+	ret, _, _ := procNtQuerySystemInformation.Call(
+		uintptr(unsafe.Pointer(&sys_proc_info)),
+		uintptr(unsafe.Pointer(&buffer[0])),
+		uintptr(unsafe.Pointer(&bufferSize)),
+		uintptr(unsafe.Pointer(&bufferSize)))
+	if ret != 0 {
+		return nil, syscall.GetLastError()
+	}
+
+	return &sys_proc_info, nil
 }
