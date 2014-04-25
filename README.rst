@@ -80,7 +80,7 @@ Current Status
     - create_time (linux)
     - status (linux)
     - cwd (linux)
-    - exe (freebsd)
+    - exe (linux, freebsd)
     - uids (linux)
     - gids (linux)
     - terminal (linux)
