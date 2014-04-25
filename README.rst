@@ -3,7 +3,7 @@ gopsutil: psutil for golang
 
 .. image:: https://drone.io/github.com/shirou/gopsutil/status.png
         :target: https://drone.io/github.com/shirou/gopsutil
-		
+
 This is a port of psutil(http://pythonhosted.org/psutil/). This
 challenges porting all psutil functions on some architectures.
 
@@ -20,7 +20,7 @@ Available archtectures
 All works are implemented without cgo by porting c struct to golang struct.
 
 
-usage
+Usage
 ---------
 
 ::
@@ -71,6 +71,21 @@ Current Status
   - users (linux, freebsd)
   - pids (linux, freebsd)
   - pid_exists (linux, freebsd)
+  - Process class
+
+    - pid (linux, freebsd, windows)
+    - ppid (linux)
+    - name (linux)
+    - cmdline (linux)
+    - create_time (linux)
+    - status (linux)
+    - exe (freebsd)
+    - uids (linux)
+    - gids (linux)
+    - terminal (linux)
+    - nice (linux)
+    - num_fds (linux)
+    - cpu_times (linux)
 
 - not yet
 
@@ -81,11 +96,40 @@ Current Status
   - net_connections
   - Process class
 
+    - parent
+    - cwd
+    - username
+    - ionice
+    - rlimit
+    - io_counters
+    - num_ctx_switches
+    - num_handlers
+    - threads
+    - cpu_percent
+    - cpu_affinity
+    - memory_info
+    - memory_info_ex
+    - memory_percent
+    - memory_maps
+    - children
+    - open_files
+    - connections
+    - is_running
+
+
 - future work
 
   - process_iter
   - wait_procs
+  - Process class
 
+    - as_dict
+    - send_signal()
+    - suspend()
+    - resume()
+    - terminate()
+    - kill()
+    - wait
 
 
 License
