@@ -6,7 +6,6 @@ import (
 	"os"
 	"runtime"
 	"testing"
-	"syscall"
 )
 
 func Test_Pids(t *testing.T) {
@@ -65,15 +64,4 @@ func Test_Process_memory_maps(t *testing.T) {
 		fmt.Println(m)
 	}
 
-}
-
-
-func Test_SendSignal(t *testing.T){
-	check_pid := os.Getpid()
-
-	p, _ := NewProcess(int32(check_pid))
-	err := p.Send_signal(syscall.SIGCONT)
-	if err != nil{
-		t.Errorf("send signal %v", err)
-	}
 }

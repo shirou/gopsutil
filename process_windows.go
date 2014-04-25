@@ -85,6 +85,22 @@ func NewProcess(pid int32) (*Process, error) {
 	return p, nil
 }
 
+func (p *Process) Send_signal(sig syscall.Signal) error {
+	return nil
+}
+
+func (p *Process) Suspend() error {
+	return nil
+}
+func (p *Process) Resume() error {
+	return nil
+}
+func (p *Process) Terminate() error {
+	return nil
+}
+func (p *Process) Kill() error {
+	return nil
+}
 func copy_params(pe32 *PROCESSENTRY32, p *Process) error {
 	p.Ppid = int32(pe32.Th32ParentProcessID)
 
