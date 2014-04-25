@@ -91,6 +91,7 @@ Current Status
     - memory_info (linux)
     - memory_info_ex (linux)
     - Memory_maps() (linux)  <- this is a function
+    - open_files (linux)
 
 - not yet
 
@@ -112,7 +113,6 @@ Current Status
     - cpu_affinity
     - memory_percent
     - children
-    - open_files
     - connections
     - is_running
 

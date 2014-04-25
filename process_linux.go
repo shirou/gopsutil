@@ -153,7 +153,24 @@ func fillFromfd(pid int32, p *Process) error {
 	}
 	defer d.Close()
 	fnames, err := d.Readdirnames(-1)
-	p.Num_fds = int32(len(fnames))
+	num_fds := 	len(fnames)
+	p.Num_fds = int32(num_fds)
+
+	openfiles := make([]Open_filesStat, num_fds)
+	for _, fd := range fnames{
+		fpath := filepath.Join(statPath, fd)
+		filepath, err := os.Readlink(fpath)
+		if err != nil {
+			continue
+		}
+		o := Open_filesStat{
+			Path: filepath,
+			Fd: parseUint64(fd),
+		}
+		openfiles = append(openfiles, o)
+	}
+
+	p.Open_files = openfiles
 
 	return nil
 }
