@@ -25,11 +25,11 @@ type Process struct {
 	//	Threads  map[string]string `json:"threads"`
 	Cpu_times CPU_TimesStat `json:"cpu_times"`
 	//	Cpu_percent `json:"cpu_percent"`
-	Cpu_affinity   []int32           `json:"cpu_affinity"`
-	Memory_info    Memory_infoStat   `json:"memory_info"`
-	Memory_info_ex map[string]string `json:"memori_info_ex"`
-	Memory_percent float32           `json:"memory_percent"`
-	Memory_maps    []Memory_mapsStat `json:"memory_maps"`
+	Cpu_affinity   []int32            `json:"cpu_affinity"`
+	Memory_info    Memory_infoStat    `json:"memory_info"`
+	Memory_info_ex Memory_info_exStat `json:"memori_info_ex"`
+	Memory_percent float32            `json:"memory_percent"`
+	Memory_maps    []Memory_mapsStat  `json:"memory_maps"`
 	//	Children       []Process // FIXME: recursive `json:"children"`
 	Open_files  []Open_filesStat     `json:"open_files"`
 	Connections []Net_connectionStat `json:"connections"`
@@ -38,12 +38,12 @@ type Process struct {
 
 type Open_filesStat struct {
 	Path string `json:"path"`
-	Fd   uint32 `json:"fd"`
+	Fd   uint64 `json:"fd"`
 }
 
 type Memory_infoStat struct {
-	RSS int32 `json:"rss"` // bytes
-	VMS int32 `json:"vms"` // bytes
+	RSS uint64 `json:"rss"` // bytes
+	VMS uint64 `json:"vms"` // bytes
 }
 
 type Memory_mapsStat struct {

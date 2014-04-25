@@ -16,6 +16,17 @@ const (
 	PRIO_PROCESS = 0 // linux/resource.h
 )
 
+// Memory_info_ex is different between OSes
+type Memory_info_exStat struct {
+	RSS    uint64 `json:"rss"`    // bytes
+	VMS    uint64 `json:"vms"`    // bytes
+	Shared uint64 `json:"shared"` // bytes
+	Text   uint64 `json:"text"`   // bytes
+	Lib    uint64 `json:"lib"`    // bytes
+	Data   uint64 `json:"data"`   // bytes
+	Dirty  uint64 `json:"dirty"`  // bytes
+}
+
 type fillFunc func(pid int32, p *Process) error
 
 func NewProcess(pid int32) (*Process, error) {
@@ -25,7 +36,8 @@ func NewProcess(pid int32) (*Process, error) {
 
 	// Fill Process information from fillFuncs
 	var wg sync.WaitGroup
-	funcs := []fillFunc{fillFromStat, fillFromStatus, fillFromfd, fillFromCmdline}
+	funcs := []fillFunc{fillFromStat, fillFromStatus, fillFromfd,
+		fillFromCmdline, fillFromStatm}
 
 	wg.Add(len(funcs))
 	for _, f := range funcs {
@@ -79,6 +91,33 @@ func fillFromCmdline(pid int32, p *Process) error {
 		}
 		return false
 	})
+
+	return nil
+}
+
+// Get memory info from /proc/(pid)/statm
+func fillFromStatm(pid int32, p *Process) error {
+	memPath := filepath.Join("/", "proc", strconv.Itoa(int(pid)), "statm")
+	contents, err := ioutil.ReadFile(memPath)
+	if err != nil {
+		return err
+	}
+	fields := strings.Split(string(contents), " ")
+
+	rss := parseUint64(fields[0]) * PAGESIZE
+	vms := parseUint64(fields[1]) * PAGESIZE
+	p.Memory_info = Memory_infoStat{
+		RSS: rss,
+		VMS: vms,
+	}
+	p.Memory_info_ex = Memory_info_exStat{
+		RSS:    rss,
+		VMS:    vms,
+		Shared: parseUint64(fields[2]) * PAGESIZE,
+		Text:   parseUint64(fields[3]) * PAGESIZE,
+		Lib:    parseUint64(fields[4]) * PAGESIZE,
+		Dirty:  parseUint64(fields[5]) * PAGESIZE,
+	}
 
 	return nil
 }

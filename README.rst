@@ -86,6 +86,8 @@ Current Status
     - nice (linux)
     - num_fds (linux)
     - cpu_times (linux)
+    - memory_info (linux)
+    - memory_info_ex (linux)
 
 - not yet
 
@@ -107,8 +109,6 @@ Current Status
     - threads
     - cpu_percent
     - cpu_affinity
-    - memory_info
-    - memory_info_ex
     - memory_percent
     - memory_maps
     - children
