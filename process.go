@@ -46,13 +46,6 @@ type Memory_infoStat struct {
 	VMS uint64 `json:"vms"` // bytes
 }
 
-type Memory_mapsStat struct {
-	Path      string `json:"path"`
-	RSS       int32  `json:"rss"`
-	Anonymous int32  `json:"anonymous"`
-	Swap      int32  `json:"swap"`
-}
-
 type RlimitStat struct {
 	Resource int32 `json:"resource"`
 	Soft     int32 `json:"soft"`

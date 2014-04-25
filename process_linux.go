@@ -27,6 +27,20 @@ type Memory_info_exStat struct {
 	Dirty  uint64 `json:"dirty"`  // bytes
 }
 
+type Memory_mapsStat struct {
+	Path          string `json:"path"`
+	Rss           uint64 `json:"rss"`
+	Size          uint64 `json:"size"`
+	Pss           uint64 `json:"pss"`
+	Shared_clean  uint64 `json:"shared_clean"`
+	Shared_dirty  uint64 `json:"shared_dirty"`
+	Private_clean uint64 `json:"private_clean"`
+	Private_dirty uint64 `json:"private_dirty"`
+	Referenced    uint64 `json:"referenced"`
+	Anonymous     uint64 `json:"anonymous"`
+	Swap          uint64 `json:"swap"`
+}
+
 type fillFunc func(pid int32, p *Process) error
 
 func NewProcess(pid int32) (*Process, error) {
@@ -49,6 +63,73 @@ func NewProcess(pid int32) (*Process, error) {
 	wg.Wait()
 
 	return p, nil
+}
+
+// Get memory maps from /proc/(pid)/smaps
+// This is a function.  Because Memory map information is very big.
+func (p *Process) Memory_Maps() (*[]Memory_mapsStat, error) {
+	pid := p.Pid
+	ret := make([]Memory_mapsStat, 0)
+	smapsPath := filepath.Join("/", "proc", strconv.Itoa(int(pid)), "smaps")
+	contents, err := ioutil.ReadFile(smapsPath)
+	if err != nil {
+		return nil, err
+	}
+	lines := strings.Split(string(contents), "\n")
+
+	// function of parsing a block
+	get_block := func(first_line []string, block []string) Memory_mapsStat {
+		m := Memory_mapsStat{}
+		m.Path = first_line[len(first_line)-1]
+
+		for _, line := range block {
+			field := strings.Split(line, ":")
+			if len(field) < 2 {
+				continue
+			}
+			v := strings.Trim(field[1], " kB") // remove last "kB"
+			switch field[0] {
+			case "Size":
+				m.Size = parseUint64(v)
+			case "Rss":
+				m.Rss = parseUint64(v)
+			case "Pss":
+				m.Pss = parseUint64(v)
+			case "Shared_Clean":
+				m.Shared_clean = parseUint64(v)
+			case "Shared_Dirty":
+				m.Shared_dirty = parseUint64(v)
+			case "Private_Clean":
+				m.Private_clean = parseUint64(v)
+			case "Private_Dirty":
+				m.Private_dirty = parseUint64(v)
+			case "Referenced":
+				m.Referenced = parseUint64(v)
+			case "Anonymous":
+				m.Anonymous = parseUint64(v)
+			case "Swap":
+				m.Swap = parseUint64(v)
+			}
+		}
+		return m
+	}
+
+	blocks := make([]string, 16)
+	for _, line := range lines {
+		field := strings.Split(line, " ")
+		if strings.HasSuffix(field[0], ":") == false {
+			// new block section
+			if len(blocks) > 0 {
+				ret = append(ret, get_block(field, blocks))
+			}
+			// starts new block
+			blocks = make([]string, 16)
+		} else {
+			blocks = append(blocks, line)
+		}
+	}
+
+	return &ret, nil
 }
 
 // Parse to int32 without error
@@ -146,7 +227,7 @@ func fillFromStatm(pid int32, p *Process) error {
 	return nil
 }
 
-// get various status from /proc/(pid)/status
+// Get various status from /proc/(pid)/status
 func fillFromStatus(pid int32, p *Process) error {
 	statPath := filepath.Join("/", "proc", strconv.Itoa(int(pid)), "status")
 	contents, err := ioutil.ReadFile(statPath)

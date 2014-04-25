@@ -86,9 +86,11 @@ Current Status
     - terminal (linux)
     - nice (linux)
     - num_fds (linux)
+    - num_threads (linux)
     - cpu_times (linux)
     - memory_info (linux)
     - memory_info_ex (linux)
+    - Memory_maps() (linux)  <- this is a function
 
 - not yet
 
@@ -109,7 +111,6 @@ Current Status
     - cpu_percent
     - cpu_affinity
     - memory_percent
-    - memory_maps
     - children
     - open_files
     - connections

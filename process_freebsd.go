@@ -9,6 +9,13 @@ import (
 	"unsafe"
 )
 
+// Memory_info_ex is different between OSes
+type Memory_info_exStat struct {
+}
+
+type Memory_mapsStat struct {
+}
+
 func Pids() ([]int32, error) {
 	ret := make([]int32, 0)
 	procs, err := processes()
@@ -20,6 +27,11 @@ func Pids() ([]int32, error) {
 		ret = append(ret, p.Pid)
 	}
 
+	return ret, nil
+}
+
+func (p *Process) Memory_Maps() (*[]Memory_mapsStat, error) {
+	ret := make([]Memory_mapsStat, 0)
 	return ret, nil
 }
 

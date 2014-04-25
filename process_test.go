@@ -34,7 +34,7 @@ func Test_Pid_exists(t *testing.T) {
 }
 
 func Test_NewProcess(t *testing.T) {
-	check_pid := 1
+	check_pid := 19472
 	if runtime.GOOS == "windows" {
 		check_pid = 0
 	}
@@ -46,4 +46,21 @@ func Test_NewProcess(t *testing.T) {
 
 	d, _ := json.Marshal(ret)
 	fmt.Println(string(d))
+}
+
+func Test_Process_memory_maps(t *testing.T) {
+	check_pid := 19472
+	if runtime.GOOS == "windows" {
+		check_pid = 0
+	}
+	ret, err := NewProcess(int32(check_pid))
+
+	mmaps, err := ret.Memory_Maps()
+	if err != nil {
+		t.Errorf("memory map get error %v", err)
+	}
+	for _, m := range *mmaps {
+		fmt.Println(m)
+	}
+
 }
