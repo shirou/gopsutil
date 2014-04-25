@@ -32,7 +32,7 @@ func Pids() ([]int32, error) {
 
 func (p *Process) Memory_Maps() (*[]Memory_mapsStat, error) {
 	ret := make([]Memory_mapsStat, 0)
-	return ret, nil
+	return &ret, nil
 }
 
 func copy_params(k *Kinfo_proc, p *Process) error {

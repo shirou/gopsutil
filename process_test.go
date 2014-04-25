@@ -3,9 +3,9 @@ package gopsutil
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"runtime"
 	"testing"
-	"os"
 )
 
 func Test_Pids(t *testing.T) {
@@ -35,7 +35,7 @@ func Test_Pid_exists(t *testing.T) {
 }
 
 func Test_NewProcess(t *testing.T) {
-	check_pid := 19472
+	check_pid := 1
 	if runtime.GOOS == "windows" {
 		check_pid = 0
 	}
