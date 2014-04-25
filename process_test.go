@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"runtime"
 	"testing"
+	"os"
 )
 
 func Test_Pids(t *testing.T) {
@@ -49,7 +50,7 @@ func Test_NewProcess(t *testing.T) {
 }
 
 func Test_Process_memory_maps(t *testing.T) {
-	check_pid := 19472
+	check_pid := os.Getpid()
 	if runtime.GOOS == "windows" {
 		check_pid = 0
 	}
