@@ -65,3 +65,21 @@ func Test_Process_memory_maps(t *testing.T) {
 	}
 
 }
+
+
+func Test_Process_Ppid(t *testing.T) {
+	check_pid := os.Getpid()
+	if runtime.GOOS == "windows" {
+		check_pid = 0
+	}
+	ret, err := NewProcess(int32(check_pid))
+
+	v, err := ret.Ppid()
+	if err != nil {
+		t.Errorf("memory map get error %v", err)
+	}
+	if v == 0 {
+		t.Errorf("memory map get error %v", v)
+	}
+
+}
