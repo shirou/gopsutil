@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	procGetSystemTimeAsFileTime = modKernel32.NewProc("GetSystemTimeAsFileTime")
-	procGetTickCount            = modKernel32.NewProc("GetTickCount")
+	procGetSystemTimeAsFileTime = modkernel32.NewProc("GetSystemTimeAsFileTime")
+	procGetTickCount            = modkernel32.NewProc("GetTickCount")
 )
 
 func HostInfo() (HostInfoStat, error) {

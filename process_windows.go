@@ -3,17 +3,12 @@
 package gopsutil
 
 import (
+	"errors"
 	"fmt"
 	"syscall"
 	"unsafe"
-)
 
-var (
-	procCloseHandle              = modKernel32.NewProc("CloseHandle")
-	procCreateToolhelp32Snapshot = modKernel32.NewProc("CreateToolhelp32Snapshot")
-	procProcess32First           = modKernel32.NewProc("Process32FirstW")
-	procProcess32Next            = modKernel32.NewProc("Process32NextW")
-	procNtQuerySystemInformation = modNt.NewProc("NtQuerySystemInformation")
+	"github.com/shirou/w32"
 )
 
 const (
@@ -57,6 +52,7 @@ type Memory_mapsStat struct {
 }
 
 func Pids() ([]int32, error) {
+
 	ret := make([]int32, 0)
 
 	procs, err := processes()
@@ -199,37 +195,54 @@ func copy_params(pe32 *PROCESSENTRY32, p *Process) error {
 	return nil
 }
 
-// Get processes
-// This is borrowed from go-ps
-func processes() ([]*Process, error) {
-	handle, _, _ := procCreateToolhelp32Snapshot.Call(
-		0x00000002,
-		0)
-	if handle < 0 {
-		return nil, syscall.GetLastError()
-	}
-	defer procCloseHandle.Call(handle)
+func printModuleInfo(me32 *w32.MODULEENTRY32) {
+	fmt.Printf("Exe: %s\n", syscall.UTF16ToString(me32.SzExePath[:]))
+}
 
-	var entry PROCESSENTRY32
-	entry.DwSize = uint32(unsafe.Sizeof(entry))
-	ret, _, _ := procProcess32First.Call(handle, uintptr(unsafe.Pointer(&entry)))
-	if ret == 0 {
-		return nil, fmt.Errorf("Error retrieving process info.")
+func printProcessInfo(pid uint32) error {
+	snap := w32.CreateToolhelp32Snapshot(w32.TH32CS_SNAPMODULE, pid)
+	if snap == 0 {
+		return errors.New("snapshot could not be created")
+	}
+	defer w32.CloseHandle(snap)
+
+	var me32 w32.MODULEENTRY32
+	me32.Size = uint32(unsafe.Sizeof(me32))
+	if !w32.Module32First(snap, &me32) {
+		return errors.New("module information retrieval failed")
+	}
+
+	fmt.Printf("pid:%d\n", pid)
+	printModuleInfo(&me32)
+	for w32.Module32Next(snap, &me32) {
+		printModuleInfo(&me32)
+	}
+
+	return nil
+}
+
+// Get processes
+func processes() ([]*Process, error) {
+	ps := make([]uint32, 255)
+	var read uint32 = 0
+	if w32.EnumProcesses(ps, uint32(len(ps)), &read) == false {
+		println("could not read processes")
+		return nil, syscall.GetLastError()
 	}
 
 	results := make([]*Process, 0)
-	for {
-		pid := int32(entry.Th32ProcessID)
-		p, err := NewProcess(pid)
+	for _, pid := range ps[:read/4] {
+		if pid == 0 {
+			continue
+		}
+
+		p, err := NewProcess(int32(pid))
 		if err != nil {
 			break
 		}
 		results = append(results, p)
 
-		ret, _, _ := procProcess32Next.Call(handle, uintptr(unsafe.Pointer(&entry)))
-		if ret == 0 {
-			break
-		}
+		//		printProcessInfo(pid)
 	}
 
 	return results, nil

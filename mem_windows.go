@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	procGlobalMemoryStatusEx = modKernel32.NewProc("GlobalMemoryStatusEx")
+	procGlobalMemoryStatusEx = modkernel32.NewProc("GlobalMemoryStatusEx")
 )
 
 type MEMORYSTATUSEX struct {
