@@ -4,30 +4,15 @@ package gopsutil
 
 import (
 	"errors"
-	"fmt"
+	"github.com/shirou/w32"
 	"syscall"
 	"unsafe"
-
-	"github.com/shirou/w32"
 )
 
 const (
 	ERROR_NO_MORE_FILES = 0x12
 	MAX_PATH            = 260
 )
-
-type PROCESSENTRY32 struct {
-	DwSize              uint32
-	CntUsage            uint32
-	Th32ProcessID       uint32
-	Th32DefaultHeapID   uintptr
-	Th32ModuleID        uint32
-	CntThreads          uint32
-	Th32ParentProcessID uint32
-	PcPriClassBase      int32
-	DwFlags             uint32
-	SzExeFile           [MAX_PATH]uint16
-}
 
 type SYSTEM_PROCESS_INFORMATION struct {
 	NextEntryOffset   uint64
@@ -67,14 +52,22 @@ func Pids() ([]int32, error) {
 }
 
 func (p *Process) Ppid() (int32, error) {
-	return 0, nil
+	ret, _, _, err := p.getFromSnapProcess(p.Pid)
+	if err != nil {
+		return 0, err
+	}
+	return ret, nil
 }
 func (p *Process) Name() (string, error) {
 	name := ""
 	return name, nil
 }
 func (p *Process) Exe() (string, error) {
-	return "", nil
+	_, _, ret, err := p.getFromSnapProcess(p.Pid)
+	if err != nil {
+		return "", err
+	}
+	return ret, nil
 }
 func (p *Process) Cmdline() (string, error) {
 	return "", nil
@@ -122,7 +115,11 @@ func (p *Process) Num_fds() (int32, error) {
 	return 0, nil
 }
 func (p *Process) Num_Threads() (int32, error) {
-	return 0, nil
+	_, ret, _, err := p.getFromSnapProcess(p.Pid)
+	if err != nil {
+		return 0, err
+	}
+	return ret, nil
 }
 func (p *Process) Threads() (map[string]string, error) {
 	ret := make(map[string]string, 0)
@@ -164,7 +161,7 @@ func (p *Process) Is_running() (bool, error) {
 }
 
 func (p *Process) Memory_Maps() (*[]Memory_mapsStat, error) {
-	return nil, nil
+	return nil, errors.New("Not implemented yet")
 }
 
 func NewProcess(pid int32) (*Process, error) {
@@ -189,36 +186,31 @@ func (p *Process) Terminate() error {
 func (p *Process) Kill() error {
 	return nil
 }
-func copy_params(pe32 *PROCESSENTRY32, p *Process) error {
-	// p.Ppid = int32(pe32.Th32ParentProcessID)
 
-	return nil
-}
-
-func printModuleInfo(me32 *w32.MODULEENTRY32) {
-	fmt.Printf("Exe: %s\n", syscall.UTF16ToString(me32.SzExePath[:]))
-}
-
-func printProcessInfo(pid uint32) error {
-	snap := w32.CreateToolhelp32Snapshot(w32.TH32CS_SNAPMODULE, pid)
+func (p *Process) getFromSnapProcess(pid int32) (int32, int32, string, error) {
+	snap := w32.CreateToolhelp32Snapshot(w32.TH32CS_SNAPPROCESS, uint32(pid))
 	if snap == 0 {
-		return errors.New("snapshot could not be created")
+		return 0, 0, "", syscall.GetLastError()
 	}
 	defer w32.CloseHandle(snap)
-
-	var me32 w32.MODULEENTRY32
-	me32.Size = uint32(unsafe.Sizeof(me32))
-	if !w32.Module32First(snap, &me32) {
-		return errors.New("module information retrieval failed")
+	var pe32 w32.PROCESSENTRY32
+	pe32.DwSize = uint32(unsafe.Sizeof(pe32))
+	if w32.Process32First(snap, &pe32) == false {
+		return 0, 0, "", syscall.GetLastError()
 	}
 
-	fmt.Printf("pid:%d\n", pid)
-	printModuleInfo(&me32)
-	for w32.Module32Next(snap, &me32) {
-		printModuleInfo(&me32)
+	if pe32.Th32ProcessID == uint32(pid) {
+		szexe := syscall.UTF16ToString(pe32.SzExeFile[:])
+		return int32(pe32.Th32ParentProcessID), int32(pe32.CntThreads), szexe, nil
 	}
 
-	return nil
+	for w32.Process32Next(snap, &pe32) {
+		if pe32.Th32ProcessID == uint32(pid) {
+			szexe := syscall.UTF16ToString(pe32.SzExeFile[:])
+			return int32(pe32.Th32ParentProcessID), int32(pe32.CntThreads), szexe, nil
+		}
+	}
+	return 0, 0, "", errors.New("Cloud not find pid:" + string(pid))
 }
 
 // Get processes
@@ -226,23 +218,20 @@ func processes() ([]*Process, error) {
 	ps := make([]uint32, 255)
 	var read uint32 = 0
 	if w32.EnumProcesses(ps, uint32(len(ps)), &read) == false {
-		println("could not read processes")
 		return nil, syscall.GetLastError()
 	}
 
 	results := make([]*Process, 0)
-	for _, pid := range ps[:read/4] {
+	dward_size := uint32(4)
+	for _, pid := range ps[:read/dward_size] {
 		if pid == 0 {
 			continue
 		}
-
 		p, err := NewProcess(int32(pid))
 		if err != nil {
 			break
 		}
 		results = append(results, p)
-
-		//		printProcessInfo(pid)
 	}
 
 	return results, nil
