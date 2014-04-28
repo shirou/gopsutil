@@ -30,7 +30,7 @@ func ReadLines(filename string) ([]string, error) {
 		line, err = r.ReadString('\n')
 	}
 
-	return ret, err
+	return ret, nil
 }
 
 func byteToString(orig []byte) string {
