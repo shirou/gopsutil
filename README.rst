@@ -67,6 +67,7 @@ Current Status
   - swap_memory (linux)
   - disk_partitions (freebsd, windows)
   - disk_usage (linux, freebsd, windows)
+  - net_io_counters (linux)
   - boot_time (linux, freebsd, windows(but little broken))
   - users (linux, freebsd)
   - pids (linux, freebsd)
@@ -103,7 +104,6 @@ Current Status
   - cpu_percent
   - cpu_times_percent
   - disk_io_counters
-  - net_io_counters
   - net_connections
   - Process class
 
