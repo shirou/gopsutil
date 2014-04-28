@@ -6,7 +6,6 @@ import (
 	"os"
 	"runtime"
 	"testing"
-	"syscall"
 )
 
 func Test_Pids(t *testing.T) {
@@ -68,12 +67,19 @@ func Test_Process_memory_maps(t *testing.T) {
 }
 
 
-func Test_SendSignal(t *testing.T){
+func Test_Process_Ppid(t *testing.T) {
 	check_pid := os.Getpid()
-
-	p, _ := NewProcess(int32(check_pid))
-	err := p.Send_signal(syscall.SIGCONT)
-	if err != nil{
-		t.Errorf("send signal %v", err)
+	if runtime.GOOS == "windows" {
+		check_pid = 0
 	}
+	ret, err := NewProcess(int32(check_pid))
+
+	v, err := ret.Ppid()
+	if err != nil {
+		t.Errorf("memory map get error %v", err)
+	}
+	if v == 0 {
+		t.Errorf("memory map get error %v", v)
+	}
+
 }

@@ -7,11 +7,6 @@ import (
 	"unsafe"
 )
 
-var (
-	modkernel32        = syscall.NewLazyDLL("kernel32.dll")
-	procGetSystemTimes = modkernel32.NewProc("GetSystemTimes")
-)
-
 func Cpu_times() ([]CPU_TimesStat, error) {
 	ret := make([]CPU_TimesStat, 0)
 

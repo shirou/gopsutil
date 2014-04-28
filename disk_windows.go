@@ -12,7 +12,7 @@ var (
 	procGetDiskFreeSpaceExW     = modkernel32.NewProc("GetDiskFreeSpaceExW")
 	procGetLogicalDriveStringsW = modkernel32.NewProc("GetLogicalDriveStringsW")
 	procGetDriveType            = modkernel32.NewProc("GetDriveTypeW")
-	provGetVolumeInformation    = modKernel32.NewProc("GetVolumeInformationW")
+	provGetVolumeInformation    = modkernel32.NewProc("GetVolumeInformationW")
 )
 
 var (

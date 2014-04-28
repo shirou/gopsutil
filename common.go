@@ -9,6 +9,7 @@ package gopsutil
 import (
 	"bufio"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -54,4 +55,16 @@ func byteToString(orig []byte) string {
 	} else {
 		return string(orig[l:n])
 	}
+}
+
+// Parse to int32 without error
+func parseInt32(val string) int32 {
+	vv, _ := strconv.ParseInt(val, 10, 32)
+	return int32(vv)
+}
+
+// Parse to uint64 without error
+func parseUint64(val string) uint64 {
+	vv, _ := strconv.ParseInt(val, 10, 64)
+	return uint64(vv)
 }

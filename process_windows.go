@@ -3,16 +3,12 @@
 package gopsutil
 
 import (
+	"errors"
 	"fmt"
 	"syscall"
 	"unsafe"
-)
 
-var (
-	procCloseHandle              = modKernel32.NewProc("CloseHandle")
-	procCreateToolhelp32Snapshot = modKernel32.NewProc("CreateToolhelp32Snapshot")
-	procProcess32First           = modKernel32.NewProc("Process32FirstW")
-	procProcess32Next            = modKernel32.NewProc("Process32NextW")
+	"github.com/shirou/w32"
 )
 
 const (
@@ -33,22 +29,20 @@ type PROCESSENTRY32 struct {
 	SzExeFile           [MAX_PATH]uint16
 }
 
-/*
 type SYSTEM_PROCESS_INFORMATION struct {
-	ULONG NextEntryOffset;
-    ULONG NumberOfThreads;
-    BYTE Reserved1[48];
-    PVOID Reserved2[3];
-    HANDLE UniqueProcessId;
-    PVOID Reserved3;
-    ULONG HandleCount;
-    BYTE Reserved4[4];
-    PVOID Reserved5[11];
-    SIZE_T PeakPagefileUsage;
-    SIZE_T PrivatePageCount;
-    LARGE_INTEGER Reserved6[6];
+	NextEntryOffset   uint64
+	NumberOfThreads   uint64
+	Reserved1         [48]byte
+	Reserved2         [3]byte
+	UniqueProcessId   uintptr
+	Reserved3         uintptr
+	HandleCount       uint64
+	Reserved4         [4]byte
+	Reserved5         [11]byte
+	PeakPagefileUsage uint64
+	PrivatePageCount  uint64
+	Reserved6         [6]uint64
 }
-*/
 
 // Memory_info_ex is different between OSes
 type Memory_info_exStat struct {
@@ -58,6 +52,7 @@ type Memory_mapsStat struct {
 }
 
 func Pids() ([]int32, error) {
+
 	ret := make([]int32, 0)
 
 	procs, err := processes()
@@ -71,59 +66,202 @@ func Pids() ([]int32, error) {
 	return ret, nil
 }
 
+func (p *Process) Ppid() (int32, error) {
+	return 0, nil
+}
+func (p *Process) Name() (string, error) {
+	name := ""
+	return name, nil
+}
+func (p *Process) Exe() (string, error) {
+	return "", nil
+}
+func (p *Process) Cmdline() (string, error) {
+	return "", nil
+}
+func (p *Process) Cwd() (string, error) {
+	return "", nil
+}
+func (p *Process) Parent() (*Process, error) {
+	return p, nil
+}
+func (p *Process) Status() (string, error) {
+	return "", nil
+}
+func (p *Process) Username() (string, error) {
+	return "", nil
+}
+func (p *Process) Uids() ([]int32, error) {
+	uids := make([]int32, 0)
+	return uids, nil
+}
+func (p *Process) Gids() ([]int32, error) {
+	gids := make([]int32, 0)
+	return gids, nil
+}
+func (p *Process) Terminal() (string, error) {
+	return "", nil
+}
+func (p *Process) Nice() (int32, error) {
+	return 0, nil
+}
+func (p *Process) Ionice() (int32, error) {
+	return 0, nil
+}
+func (p *Process) Rlimit() ([]RlimitStat, error) {
+	rlimit := make([]RlimitStat, 0)
+	return rlimit, nil
+}
+func (p *Process) Io_counters() (*Io_countersStat, error) {
+	return nil, nil
+}
+func (p *Process) Num_ctx_switches() (int32, error) {
+	return 0, nil
+}
+func (p *Process) Num_fds() (int32, error) {
+	return 0, nil
+}
+func (p *Process) Num_Threads() (int32, error) {
+	return 0, nil
+}
+func (p *Process) Threads() (map[string]string, error) {
+	ret := make(map[string]string, 0)
+	return ret, nil
+}
+func (p *Process) Cpu_times() (*CPU_TimesStat, error) {
+	return nil, nil
+}
+func (p *Process) Cpu_percent() (int32, error) {
+	return 0, nil
+}
+func (p *Process) Cpu_affinity() ([]int32, error) {
+	return nil, nil
+}
+func (p *Process) Memory_info() (*Memory_infoStat, error) {
+	return nil, nil
+}
+func (p *Process) Memory_info_ex() (*Memory_info_exStat, error) {
+	return nil, nil
+}
+func (p *Process) Memory_percent() (float32, error) {
+	return 0, nil
+}
+
+func (p *Process) Children() ([]*Process, error) {
+	return nil, nil
+}
+
+func (p *Process) Open_files() ([]Open_filesStat, error) {
+	return nil, nil
+}
+
+func (p *Process) Connections() ([]Net_connectionStat, error) {
+	return nil, nil
+}
+
+func (p *Process) Is_running() (bool, error) {
+	return true, nil
+}
+
 func (p *Process) Memory_Maps() (*[]Memory_mapsStat, error) {
-	ret := make([]Memory_mapsStat, 0)
-	return &ret, nil
+	return nil, nil
 }
 
 func NewProcess(pid int32) (*Process, error) {
 	p := &Process{Pid: pid}
 
-	if (pid == 0) || (pid == 4) {
-		p.Cmdline = ""
-	}
 	return p, nil
 }
 
+func (p *Process) Send_signal(sig syscall.Signal) error {
+	return nil
+}
+
+func (p *Process) Suspend() error {
+	return nil
+}
+func (p *Process) Resume() error {
+	return nil
+}
+func (p *Process) Terminate() error {
+	return nil
+}
+func (p *Process) Kill() error {
+	return nil
+}
 func copy_params(pe32 *PROCESSENTRY32, p *Process) error {
-	p.Ppid = int32(pe32.Th32ParentProcessID)
+	// p.Ppid = int32(pe32.Th32ParentProcessID)
+
+	return nil
+}
+
+func printModuleInfo(me32 *w32.MODULEENTRY32) {
+	fmt.Printf("Exe: %s\n", syscall.UTF16ToString(me32.SzExePath[:]))
+}
+
+func printProcessInfo(pid uint32) error {
+	snap := w32.CreateToolhelp32Snapshot(w32.TH32CS_SNAPMODULE, pid)
+	if snap == 0 {
+		return errors.New("snapshot could not be created")
+	}
+	defer w32.CloseHandle(snap)
+
+	var me32 w32.MODULEENTRY32
+	me32.Size = uint32(unsafe.Sizeof(me32))
+	if !w32.Module32First(snap, &me32) {
+		return errors.New("module information retrieval failed")
+	}
+
+	fmt.Printf("pid:%d\n", pid)
+	printModuleInfo(&me32)
+	for w32.Module32Next(snap, &me32) {
+		printModuleInfo(&me32)
+	}
 
 	return nil
 }
 
 // Get processes
-// This is borrowed from go-ps
 func processes() ([]*Process, error) {
-	handle, _, _ := procCreateToolhelp32Snapshot.Call(
-		0x00000002,
-		0)
-	if handle < 0 {
+	ps := make([]uint32, 255)
+	var read uint32 = 0
+	if w32.EnumProcesses(ps, uint32(len(ps)), &read) == false {
+		println("could not read processes")
 		return nil, syscall.GetLastError()
-	}
-	defer procCloseHandle.Call(handle)
-
-	var entry PROCESSENTRY32
-	entry.DwSize = uint32(unsafe.Sizeof(entry))
-	ret, _, _ := procProcess32First.Call(handle, uintptr(unsafe.Pointer(&entry)))
-	if ret == 0 {
-		return nil, fmt.Errorf("Error retrieving process info.")
 	}
 
 	results := make([]*Process, 0)
-	for {
-		pid := int32(entry.Th32ProcessID)
-		p, err := NewProcess(pid)
+	for _, pid := range ps[:read/4] {
+		if pid == 0 {
+			continue
+		}
+
+		p, err := NewProcess(int32(pid))
 		if err != nil {
 			break
 		}
-		copy_params(&entry, p)
 		results = append(results, p)
 
-		ret, _, _ := procProcess32Next.Call(handle, uintptr(unsafe.Pointer(&entry)))
-		if ret == 0 {
-			break
-		}
+		//		printProcessInfo(pid)
 	}
 
 	return results, nil
+}
+
+func get_proc_info(pid int32) (*SYSTEM_PROCESS_INFORMATION, error) {
+	initialBufferSize := uint64(0x4000)
+	bufferSize := initialBufferSize
+	buffer := make([]byte, bufferSize)
+
+	var sys_proc_info SYSTEM_PROCESS_INFORMATION
+	ret, _, _ := procNtQuerySystemInformation.Call(
+		uintptr(unsafe.Pointer(&sys_proc_info)),
+		uintptr(unsafe.Pointer(&buffer[0])),
+		uintptr(unsafe.Pointer(&bufferSize)),
+		uintptr(unsafe.Pointer(&bufferSize)))
+	if ret != 0 {
+		return nil, syscall.GetLastError()
+	}
+
+	return &sys_proc_info, nil
 }
