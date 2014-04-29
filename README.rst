@@ -142,11 +142,22 @@ New BSD License (same as psutil)
 Related works
 -----------------------
 
-So many thanks!
-
 - psutil: http://pythonhosted.org/psutil/
 - dstat: https://github.com/dagwieers/dstat
 - gosiger: https://github.com/cloudfoundry/gosigar/
 - goprocinfo: https://github.com/c9s/goprocinfo
 - go-ps: https://github.com/mitchellh/go-ps
 
+I have referenced these great works.
+
+How to Contributing
+---------------------------
+
+1. Fork it
+2. Create your feature branch (git checkout -b my-new-feature)
+3. Commit your changes (git commit -am 'Add some feature')
+4. Push to the branch (git push origin my-new-feature)
+5. Create new Pull Request
+
+My engilsh is terrible, documentation or correcting comments are also
+welcome.
