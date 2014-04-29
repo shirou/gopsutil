@@ -60,7 +60,7 @@ func (p *Process) Ppid() (int32, error) {
 }
 func (p *Process) Name() (string, error) {
 	name := ""
-	return name, nil
+	return name, errors.New("Not implemented yet")
 }
 func (p *Process) Exe() (string, error) {
 	_, _, ret, err := p.getFromSnapProcess(p.Pid)
@@ -70,49 +70,49 @@ func (p *Process) Exe() (string, error) {
 	return ret, nil
 }
 func (p *Process) Cmdline() (string, error) {
-	return "", nil
+	return "", errors.New("Not implemented yet")
 }
 func (p *Process) Cwd() (string, error) {
-	return "", nil
+	return "", errors.New("Not implemented yet")
 }
 func (p *Process) Parent() (*Process, error) {
-	return p, nil
+	return p, errors.New("Not implemented yet")
 }
 func (p *Process) Status() (string, error) {
-	return "", nil
+	return "", errors.New("Not implemented yet")
 }
 func (p *Process) Username() (string, error) {
-	return "", nil
+	return "", errors.New("Not implemented yet")
 }
 func (p *Process) Uids() ([]int32, error) {
 	uids := make([]int32, 0)
-	return uids, nil
+	return uids, errors.New("Not implemented yet")
 }
 func (p *Process) Gids() ([]int32, error) {
 	gids := make([]int32, 0)
-	return gids, nil
+	return gids, errors.New("Not implemented yet")
 }
 func (p *Process) Terminal() (string, error) {
-	return "", nil
+	return "", errors.New("Not implemented yet")
 }
 func (p *Process) Nice() (int32, error) {
-	return 0, nil
+	return 0, errors.New("Not implemented yet")
 }
 func (p *Process) Ionice() (int32, error) {
-	return 0, nil
+	return 0, errors.New("Not implemented yet")
 }
 func (p *Process) Rlimit() ([]RlimitStat, error) {
 	rlimit := make([]RlimitStat, 0)
-	return rlimit, nil
+	return rlimit, errors.New("Not implemented yet")
 }
 func (p *Process) Io_counters() (*Io_countersStat, error) {
-	return nil, nil
+	return nil, errors.New("Not implemented yet")
 }
 func (p *Process) Num_ctx_switches() (int32, error) {
-	return 0, nil
+	return 0, errors.New("Not implemented yet")
 }
 func (p *Process) Num_fds() (int32, error) {
-	return 0, nil
+	return 0, errors.New("Not implemented yet")
 }
 func (p *Process) Num_Threads() (int32, error) {
 	_, ret, _, err := p.getFromSnapProcess(p.Pid)
@@ -123,41 +123,41 @@ func (p *Process) Num_Threads() (int32, error) {
 }
 func (p *Process) Threads() (map[string]string, error) {
 	ret := make(map[string]string, 0)
-	return ret, nil
+	return ret, errors.New("Not implemented yet")
 }
 func (p *Process) Cpu_times() (*CPU_TimesStat, error) {
-	return nil, nil
+	return nil, errors.New("Not implemented yet")
 }
 func (p *Process) Cpu_percent() (int32, error) {
-	return 0, nil
+	return 0, errors.New("Not implemented yet")
 }
 func (p *Process) Cpu_affinity() ([]int32, error) {
-	return nil, nil
+	return nil, errors.New("Not implemented yet")
 }
 func (p *Process) Memory_info() (*Memory_infoStat, error) {
-	return nil, nil
+	return nil, errors.New("Not implemented yet")
 }
 func (p *Process) Memory_info_ex() (*Memory_info_exStat, error) {
-	return nil, nil
+	return nil, errors.New("Not implemented yet")
 }
 func (p *Process) Memory_percent() (float32, error) {
-	return 0, nil
+	return 0, errors.New("Not implemented yet")
 }
 
 func (p *Process) Children() ([]*Process, error) {
-	return nil, nil
+	return nil, errors.New("Not implemented yet")
 }
 
 func (p *Process) Open_files() ([]Open_filesStat, error) {
-	return nil, nil
+	return nil, errors.New("Not implemented yet")
 }
 
 func (p *Process) Connections() ([]Net_connectionStat, error) {
-	return nil, nil
+	return nil, errors.New("Not implemented yet")
 }
 
 func (p *Process) Is_running() (bool, error) {
-	return true, nil
+	return true, errors.New("Not implemented yet")
 }
 
 func (p *Process) Memory_Maps() (*[]Memory_mapsStat, error) {
@@ -171,20 +171,20 @@ func NewProcess(pid int32) (*Process, error) {
 }
 
 func (p *Process) Send_signal(sig syscall.Signal) error {
-	return nil
+	return errors.New("Not implemented yet")
 }
 
 func (p *Process) Suspend() error {
-	return nil
+	return errors.New("Not implemented yet")
 }
 func (p *Process) Resume() error {
-	return nil
+	return errors.New("Not implemented yet")
 }
 func (p *Process) Terminate() error {
-	return nil
+	return errors.New("Not implemented yet")
 }
 func (p *Process) Kill() error {
-	return nil
+	return errors.New("Not implemented yet")
 }
 
 func (p *Process) getFromSnapProcess(pid int32) (int32, int32, string, error) {

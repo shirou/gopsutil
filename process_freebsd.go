@@ -5,6 +5,7 @@ package gopsutil
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"syscall"
 	"unsafe"
 )
@@ -30,106 +31,105 @@ func Pids() ([]int32, error) {
 	return ret, nil
 }
 
-
 func (p *Process) Ppid() (int32, error) {
-	return 0, nil
+	return 0, errors.New("Not implemented yet")
 }
 func (p *Process) Name() (string, error) {
 	name := ""
-	return name, nil
+	return name, errors.New("Not implemented yet")
 }
 func (p *Process) Exe() (string, error) {
-	return "", nil
+	return "", errors.New("Not implemented yet")
 }
 func (p *Process) Cmdline() (string, error) {
-	return "", nil
+	return "", errors.New("Not implemented yet")
 }
 func (p *Process) Cwd() (string, error) {
-	return "", nil
+	return "", errors.New("Not implemented yet")
 }
 func (p *Process) Parent() (*Process, error) {
-	return p, nil
+	return p, errors.New("Not implemented yet")
 }
 func (p *Process) Status() (string, error) {
-	return "", nil
+	return "", errors.New("Not implemented yet")
 }
 func (p *Process) Username() (string, error) {
-	return "", nil
+	return "", errors.New("Not implemented yet")
 }
 func (p *Process) Uids() ([]int32, error) {
 	uids := make([]int32, 0)
-	return uids, nil
+	return uids, errors.New("Not implemented yet")
 }
 func (p *Process) Gids() ([]int32, error) {
 	gids := make([]int32, 0)
-	return gids, nil
+	return gids, errors.New("Not implemented yet")
 }
 func (p *Process) Terminal() (string, error) {
-	return "", nil
+	return "", errors.New("Not implemented yet")
 }
 func (p *Process) Nice() (int32, error) {
-	return 0, nil
+	return 0, errors.New("Not implemented yet")
 }
 func (p *Process) Ionice() (int32, error) {
-	return 0, nil
+	return 0, errors.New("Not implemented yet")
 }
 func (p *Process) Rlimit() ([]RlimitStat, error) {
 	rlimit := make([]RlimitStat, 0)
-	return rlimit, nil
+	return rlimit, errors.New("Not implemented yet")
 }
 func (p *Process) Io_counters() (*Io_countersStat, error) {
-	return nil, nil
+	return nil, errors.New("Not implemented yet")
 }
 func (p *Process) Num_ctx_switches() (int32, error) {
-	return 0, nil
+	return 0, errors.New("Not implemented yet")
 }
 func (p *Process) Num_fds() (int32, error) {
-	return 0, nil
+	return 0, errors.New("Not implemented yet")
 }
 func (p *Process) Num_Threads() (int32, error) {
-	return 0, nil
+	return 0, errors.New("Not implemented yet")
 }
 func (p *Process) Threads() (map[string]string, error) {
 	ret := make(map[string]string, 0)
-	return ret, nil
+	return ret, errors.New("Not implemented yet")
 }
 func (p *Process) Cpu_times() (*CPU_TimesStat, error) {
-	return nil, nil
+	return nil, errors.New("Not implemented yet")
 }
 func (p *Process) Cpu_percent() (int32, error) {
-	return 0, nil
+	return 0, errors.New("Not implemented yet")
 }
 func (p *Process) Cpu_affinity() ([]int32, error) {
-	return nil, nil
+	return nil, errors.New("Not implemented yet")
 }
 func (p *Process) Memory_info() (*Memory_infoStat, error) {
-	return nil, nil
+	return nil, errors.New("Not implemented yet")
 }
 func (p *Process) Memory_info_ex() (*Memory_info_exStat, error) {
-	return nil, nil
+	return nil, errors.New("Not implemented yet")
 }
 func (p *Process) Memory_percent() (float32, error) {
-	return 0, nil
+	return 0, errors.New("Not implemented yet")
 }
 
 func (p *Process) Children() ([]*Process, error) {
-	return nil, nil
+	return nil, errors.New("Not implemented yet")
 }
 
 func (p *Process) Open_files() ([]Open_filesStat, error) {
-	return nil, nil
+	return nil, errors.New("Not implemented yet")
 }
 
 func (p *Process) Connections() ([]Net_connectionStat, error) {
-	return nil, nil
+	return nil, errors.New("Not implemented yet")
 }
 
 func (p *Process) Is_running() (bool, error) {
-	return true, nil
+	return true, errors.New("Not implemented yet")
 }
 func (p *Process) Memory_Maps() (*[]Memory_mapsStat, error) {
 	ret := make([]Memory_mapsStat, 0)
-	return &ret, nil
+	return &ret, errors.New("Not implemented yet")
 }
 
 func copy_params(k *Kinfo_proc, p *Process) error {
