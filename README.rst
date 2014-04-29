@@ -65,7 +65,7 @@ Current Status
   - cpu_count (linux, freebsd, windows)
   - virtual_memory (linux, windows)
   - swap_memory (linux)
-  - disk_partitions (freebsd, windows)
+  - disk_partitions (linux, freebsd, windows)
   - disk_usage (linux, freebsd, windows)
   - net_io_counters (linux)
   - boot_time (linux, freebsd, windows(but little broken))
