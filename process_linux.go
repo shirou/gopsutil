@@ -188,7 +188,7 @@ func (p *Process) Is_running() (bool, error) {
 }
 
 // Get memory maps from /proc/(pid)/smaps
-func (p *Process) Memory_Maps() (*[]Memory_mapsStat, error) {
+func (p *Process) Memory_Maps(grouped bool) (*[]Memory_mapsStat, error) {
 	pid := p.Pid
 	ret := make([]Memory_mapsStat, 0)
 	smapsPath := filepath.Join("/", "proc", strconv.Itoa(int(pid)), "smaps")

@@ -127,7 +127,7 @@ func (p *Process) Connections() ([]Net_connectionStat, error) {
 func (p *Process) Is_running() (bool, error) {
 	return true, errors.New("Not implemented yet")
 }
-func (p *Process) Memory_Maps() (*[]Memory_mapsStat, error) {
+func (p *Process) Memory_Maps(grouped bool) (*[]Memory_mapsStat, error) {
 	ret := make([]Memory_mapsStat, 0)
 	return &ret, errors.New("Not implemented yet")
 }

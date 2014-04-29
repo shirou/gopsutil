@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func Cpu_times() ([]CPU_TimesStat, error) {
+func Cpu_times(percpu bool) ([]CPU_TimesStat, error) {
 	ret := make([]CPU_TimesStat, 0)
 
 	filename := "/proc/stat"

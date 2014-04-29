@@ -7,7 +7,7 @@ import (
 	"unsafe"
 )
 
-func Disk_partitions() ([]Disk_partitionStat, error) {
+func Disk_partitions(all bool) ([]Disk_partitionStat, error) {
 	ret := make([]Disk_partitionStat, 0)
 
 	// get length

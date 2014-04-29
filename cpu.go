@@ -19,6 +19,6 @@ type CPU_TimesStat struct {
 	Stolen     float32 `json:"stolen"`
 }
 
-func Cpu_counts() (int, error) {
+func Cpu_counts(logical bool) (int, error) {
 	return runtime.NumCPU(), nil
 }

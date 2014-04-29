@@ -21,7 +21,7 @@ func TestDisk_usage(t *testing.T) {
 }
 
 func TestDisk_partitions(t *testing.T) {
-	v, err := Disk_partitions()
+	v, err := Disk_partitions(false)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
