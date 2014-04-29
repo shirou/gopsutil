@@ -4,6 +4,7 @@ package gopsutil
 
 import (
 	"bytes"
+	"errors"
 	"syscall"
 	"unsafe"
 )
@@ -104,4 +105,9 @@ func Disk_partitions(all bool) ([]Disk_partitionStat, error) {
 		}
 	}
 	return ret, nil
+}
+
+func Disk_io_counters() (map[string]Disk_IO_CountersStat, error) {
+	ret := make(map[string]Disk_IO_CountersStat, 0)
+	return ret, errors.New("Not implemented yet")
 }

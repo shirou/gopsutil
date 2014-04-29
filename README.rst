@@ -66,6 +66,7 @@ Current Status
   - virtual_memory (linux, windows)
   - swap_memory (linux)
   - disk_partitions (linux, freebsd, windows)
+  - disk_io_counters (linux)
   - disk_usage (linux, freebsd, windows)
   - net_io_counters (linux)
   - boot_time (linux, freebsd, windows(but little broken))
@@ -103,7 +104,6 @@ Current Status
 
   - cpu_percent
   - cpu_times_percent
-  - disk_io_counters
   - net_connections
   - Process class
 
