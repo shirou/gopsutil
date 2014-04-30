@@ -4,6 +4,7 @@ package gopsutil
 
 import (
 	"bytes"
+	"errors"
 	"syscall"
 	"unsafe"
 )
@@ -44,7 +45,7 @@ func Disk_usage(path string) (Disk_usageStat, error) {
 	return ret, nil
 }
 
-func Disk_partitions() ([]Disk_partitionStat, error) {
+func Disk_partitions(all bool) ([]Disk_partitionStat, error) {
 	ret := make([]Disk_partitionStat, 0)
 	lpBuffer := make([]byte, 254)
 	diskret, _, err := procGetLogicalDriveStringsW.Call(
@@ -104,4 +105,9 @@ func Disk_partitions() ([]Disk_partitionStat, error) {
 		}
 	}
 	return ret, nil
+}
+
+func Disk_io_counters() (map[string]Disk_IO_CountersStat, error) {
+	ret := make(map[string]Disk_IO_CountersStat, 0)
+	return ret, errors.New("Not implemented yet")
 }

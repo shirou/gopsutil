@@ -9,7 +9,7 @@ import (
 func Net_io_counters() ([]Net_io_countersStat, error) {
 	filename := "/proc/net/dev"
 	lines, err := ReadLines(filename)
-	if err != nil{
+	if err != nil {
 		return make([]Net_io_countersStat, 0), err
 	}
 
@@ -19,7 +19,7 @@ func Net_io_counters() ([]Net_io_countersStat, error) {
 
 	for _, line := range lines[2:] {
 		fields := strings.Fields(line)
-		if fields[0] == ""{
+		if fields[0] == "" {
 			continue
 		}
 		nic := Net_io_countersStat{

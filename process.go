@@ -1,7 +1,7 @@
 package gopsutil
 
 type Process struct {
-	Pid         int32  `json:"pid"`
+	Pid int32 `json:"pid"`
 }
 
 type Open_filesStat struct {

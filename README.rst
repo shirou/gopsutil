@@ -65,8 +65,10 @@ Current Status
   - cpu_count (linux, freebsd, windows)
   - virtual_memory (linux, windows)
   - swap_memory (linux)
-  - disk_partitions (freebsd, windows)
+  - disk_partitions (linux, freebsd, windows)
+  - disk_io_counters (linux)
   - disk_usage (linux, freebsd, windows)
+  - net_io_counters (linux)
   - boot_time (linux, freebsd, windows(but little broken))
   - users (linux, freebsd)
   - pids (linux, freebsd)
@@ -74,19 +76,19 @@ Current Status
   - Process class
 
     - Pid (linux, freebsd, windows)
-    - Ppid (linux)
+    - Ppid (linux, windows)
     - Name (linux)
     - Cmdline (linux)
     - Create_time (linux)
     - Status (linux)
     - Cwd (linux)
-    - Exe (linux, freebsd)
+    - Exe (linux, freebsd, windows)
     - Uids (linux)
     - Gids (linux)
     - Terminal (linux)
     - Nice (linux)
     - Num_fds (linux)
-    - Num_threads (linux)
+    - Num_threads (linux, windows)
     - Cpu_times (linux)
     - Memory_info (linux)
     - Memory_info_ex (linux)
@@ -102,8 +104,6 @@ Current Status
 
   - cpu_percent
   - cpu_times_percent
-  - disk_io_counters
-  - net_io_counters
   - net_connections
   - Process class
 
@@ -142,11 +142,22 @@ New BSD License (same as psutil)
 Related works
 -----------------------
 
-So many thanks!
-
 - psutil: http://pythonhosted.org/psutil/
 - dstat: https://github.com/dagwieers/dstat
 - gosiger: https://github.com/cloudfoundry/gosigar/
 - goprocinfo: https://github.com/c9s/goprocinfo
 - go-ps: https://github.com/mitchellh/go-ps
 
+I have referenced these great works.
+
+How to Contributing
+---------------------------
+
+1. Fork it
+2. Create your feature branch (git checkout -b my-new-feature)
+3. Commit your changes (git commit -am 'Add some feature')
+4. Push to the branch (git push origin my-new-feature)
+5. Create new Pull Request
+
+My engilsh is terrible, documentation or correcting comments are also
+welcome.

@@ -3,11 +3,12 @@
 package gopsutil
 
 import (
+	"errors"
 	"syscall"
 	"unsafe"
 )
 
-func Disk_partitions() ([]Disk_partitionStat, error) {
+func Disk_partitions(all bool) ([]Disk_partitionStat, error) {
 	ret := make([]Disk_partitionStat, 0)
 
 	// get length
@@ -79,6 +80,11 @@ func Disk_partitions() ([]Disk_partitionStat, error) {
 	}
 
 	return ret, nil
+}
+
+func Disk_io_counters() (map[string]Disk_IO_CountersStat, error) {
+	ret := make(map[string]Disk_IO_CountersStat, 0)
+	return ret, errors.New("Not implemented yet")
 }
 
 // This is borrowed from pkg/syscall/syscall_freebsd.go

@@ -22,4 +22,5 @@ type Disk_IO_CountersStat struct {
 	WriteBytes uint64 `json:"writeBytes"`
 	ReadTime   uint64 `json:"readTime"`
 	WriteTime  uint64 `json:"writeTime"`
+	Name       string `json:"name"`
 }
