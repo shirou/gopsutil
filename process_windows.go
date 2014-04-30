@@ -4,9 +4,10 @@ package gopsutil
 
 import (
 	"errors"
-	"github.com/shirou/w32"
 	"syscall"
 	"unsafe"
+
+	"github.com/shirou/w32"
 )
 
 const (

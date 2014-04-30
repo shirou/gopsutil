@@ -3,10 +3,11 @@
 package gopsutil
 
 import (
-	"github.com/mitchellh/go-ps"
 	"os"
 	"syscall"
 	"unsafe"
+
+	"github.com/shirou/go-ps"
 )
 
 var (
