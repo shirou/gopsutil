@@ -70,7 +70,7 @@ func (p *Process) Terminal() (string, error) {
 func (p *Process) Nice() (int32, error) {
 	return 0, errors.New("not implemented yet")
 }
-func (p *Process) Ionice() (int32, error) {
+func (p *Process) IOnice() (int32, error) {
 	return 0, errors.New("not implemented yet")
 }
 func (p *Process) Rlimit() ([]RlimitStat, error) {

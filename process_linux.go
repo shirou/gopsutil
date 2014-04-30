@@ -114,7 +114,7 @@ func (p *Process) Nice() (int32, error) {
 	}
 	return nice, nil
 }
-func (p *Process) Ionice() (int32, error) {
+func (p *Process) IOnice() (int32, error) {
 	return 0, errors.New("not implemented yet")
 }
 func (p *Process) Rlimit() ([]RlimitStat, error) {
@@ -179,7 +179,7 @@ func (p *Process) OpenFiles() ([]OpenFilesStat, error) {
 	return nil, errors.New("not implemented yet")
 }
 
-func (p *Process) Connections() ([]Net_connectionStat, error) {
+func (p *Process) Connections() ([]NetConnectionStat, error) {
 	return nil, errors.New("not implemented yet")
 }
 
@@ -258,7 +258,7 @@ func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 **/
 
 // Get num_fds from /proc/(pid)/fd
-func (p *Process) fillFromfd() (int32, []*Open_filesStat, error) {
+func (p *Process) fillFromfd() (int32, []*OpenFilesStat, error) {
 	pid := p.Pid
 	statPath := filepath.Join("/", "proc", strconv.Itoa(int(pid)), "fd")
 	d, err := os.Open(statPath)
@@ -276,7 +276,7 @@ func (p *Process) fillFromfd() (int32, []*Open_filesStat, error) {
 		if err != nil {
 			continue
 		}
-		o := &Open_filesStat{
+		o := &OpenFilesStat{
 			Path: filepath,
 			Fd:   parseUint64(fd),
 		}
@@ -328,7 +328,7 @@ func (p *Process) fillFromCmdline() (string, error) {
 }
 
 // Get memory info from /proc/(pid)/statm
-func (p *Process) fillFromStatm() (*Memory_infoStat, *Memory_info_exStat, error) {
+func (p *Process) fillFromStatm() (*MemoryInfoStat, *MemoryInfoExStat, error) {
 	pid := p.Pid
 	memPath := filepath.Join("/", "proc", strconv.Itoa(int(pid)), "statm")
 	contents, err := ioutil.ReadFile(memPath)
@@ -421,7 +421,7 @@ func (p *Process) fillFromStat() (string, int32, *CPUTimesStat, int64, int32, er
 	stime, _ := strconv.ParseFloat(fields[14], 64)
 
 	cpuTimes := &CPUTimesStat{
-		Cpu:    "cpu",
+		CPU:    "cpu",
 		User:   float32(utime * (1000 / CLOCK_TICKS)),
 		System: float32(stime * (1000 / CLOCK_TICKS)),
 	}

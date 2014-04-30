@@ -8,11 +8,11 @@ import (
 	"testing"
 )
 
-func Test_SendSignal(t *testing.T) {
-	check_pid := os.Getpid()
+func TestSendSignal(t *testing.T) {
+	checkPid := os.Getpid()
 
-	p, _ := NewProcess(int32(check_pid))
-	err := p.Send_signal(syscall.SIGCONT)
+	p, _ := NewProcess(int32(checkPid))
+	err := p.SendSignal(syscall.SIGCONT)
 	if err != nil {
 		t.Errorf("send signal %v", err)
 	}

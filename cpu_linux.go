@@ -8,8 +8,8 @@ import (
 	"strings"
 )
 
-func Cpu_times(percpu bool) ([]CPU_TimesStat, error) {
-	ret := make([]CPU_TimesStat, 0)
+func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
+	var ret []CPUTimesStat
 
 	filename := "/proc/stat"
 	lines, _ := ReadLines(filename)
@@ -24,12 +24,12 @@ func Cpu_times(percpu bool) ([]CPU_TimesStat, error) {
 	return ret, nil
 }
 
-func parseStatLine(line string) (CPU_TimesStat, error) {
+func parseStatLine(line string) (CPUTimesStat, error) {
 	fields := strings.Fields(line)
 
 	if strings.HasPrefix(fields[0], "cpu") == false {
-		//		return CPU_TimesStat{}, e
-		return CPU_TimesStat{}, errors.New("not contain cpu")
+		//		return CPUTimesStat{}, e
+		return CPUTimesStat{}, errors.New("not contain cpu")
 	}
 
 	cpu := fields[0]
@@ -44,8 +44,8 @@ func parseStatLine(line string) (CPU_TimesStat, error) {
 	irq, _ := strconv.ParseFloat(fields[6], 32)
 	softirq, _ := strconv.ParseFloat(fields[7], 32)
 	stolen, _ := strconv.ParseFloat(fields[8], 32)
-	ct := CPU_TimesStat{
-		Cpu:     cpu,
+	ct := CPUTimesStat{
+		CPU:     cpu,
 		User:    float32(user),
 		Nice:    float32(nice),
 		System:  float32(system),
@@ -64,8 +64,8 @@ func parseStatLine(line string) (CPU_TimesStat, error) {
 		ct.Guest = float32(guest)
 	}
 	if len(fields) > 11 { // Linux >= 3.2.0
-		guest_nice, _ := strconv.ParseFloat(fields[11], 32)
-		ct.Guest_nice = float32(guest_nice)
+		guestNice, _ := strconv.ParseFloat(fields[11], 32)
+		ct.GuestNice = float32(guestNice)
 	}
 
 	return ct, nil

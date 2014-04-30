@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-// Read contents from file and split by new line.
+// ReadLines read contents from file and split by new line.
 func ReadLines(filename string) ([]string, error) {
 	f, err := os.Open(filename)
 	if err != nil {
@@ -21,7 +21,7 @@ func ReadLines(filename string) ([]string, error) {
 	}
 	defer f.Close()
 
-	ret := make([]string, 0)
+	var ret []string
 
 	r := bufio.NewReader(f)
 	line, err := r.ReadString('\n')
@@ -52,9 +52,8 @@ func byteToString(orig []byte) string {
 	}
 	if n == -1 {
 		return string(orig)
-	} else {
-		return string(orig[l:n])
 	}
+	return string(orig[l:n])
 }
 
 // Parse to int32 without error

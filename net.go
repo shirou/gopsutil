@@ -13,7 +13,7 @@ type NetIOCountersStat struct {
 }
 
 type Addr struct {
-	Ip   string `json:"ip""`
+	IP   string `json:"ip""`
 	Port uint32 `json:"port""`
 }
 

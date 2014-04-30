@@ -19,12 +19,12 @@ func Test_Pids(t *testing.T) {
 }
 
 func Test_Pid_exists(t *testing.T) {
-	check_pid := 1
+	checkPid := 1
 	if runtime.GOOS == "windows" {
-		check_pid = 0
+		checkPid = 0
 	}
 
-	ret, err := PidExists(int32(check_pid))
+	ret, err := PidExists(int32(checkPid))
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -35,12 +35,12 @@ func Test_Pid_exists(t *testing.T) {
 }
 
 func Test_NewProcess(t *testing.T) {
-	check_pid := 1
+	checkPid := 1
 	if runtime.GOOS == "windows" {
-		check_pid = 0
+		checkPid = 0
 	}
 
-	ret, err := NewProcess(int32(check_pid))
+	ret, err := NewProcess(int32(checkPid))
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -50,12 +50,12 @@ func Test_NewProcess(t *testing.T) {
 }
 
 func Test_Process_memory_maps(t *testing.T) {
-	check_pid := os.Getpid()
+	checkPid := os.Getpid()
 	if runtime.GOOS == "windows" {
-		check_pid = 0
+		checkPid = 0
 	}
 	return
-	ret, err := NewProcess(int32(check_pid))
+	ret, err := NewProcess(int32(checkPid))
 
 	mmaps, err := ret.MemoryMaps(false)
 	if err != nil {
@@ -68,11 +68,11 @@ func Test_Process_memory_maps(t *testing.T) {
 }
 
 func Test_Process_Ppid(t *testing.T) {
-	check_pid := os.Getpid()
+	checkPid := os.Getpid()
 	if runtime.GOOS == "windows" {
-		check_pid = 7960
+		checkPid = 7960
 	}
-	ret, err := NewProcess(int32(check_pid))
+	ret, err := NewProcess(int32(checkPid))
 
 	v, err := ret.Ppid()
 	if err != nil {

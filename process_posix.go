@@ -13,7 +13,7 @@ import (
 // POSIX
 func getTerminalMap() (map[uint64]string, error) {
 	ret := make(map[uint64]string)
-	termfiles := make([]string, 0)
+	var termfiles []string
 
 	d, err := os.Open("/dev")
 	if err != nil {
@@ -48,20 +48,20 @@ func getTerminalMap() (map[uint64]string, error) {
 	return ret, nil
 }
 
-func (p *Process) Send_signal(sig syscall.Signal) error {
-	sig_as_str := "INT"
+func (p *Process) SendSignal(sig syscall.Signal) error {
+	sigAsStr := "INT"
 	switch sig {
 	case syscall.SIGSTOP:
-		sig_as_str = "STOP"
+		sigAsStr = "STOP"
 	case syscall.SIGCONT:
-		sig_as_str = "CONT"
+		sigAsStr = "CONT"
 	case syscall.SIGTERM:
-		sig_as_str = "TERM"
+		sigAsStr = "TERM"
 	case syscall.SIGKILL:
-		sig_as_str = "KILL"
+		sigAsStr = "KILL"
 	}
 
-	cmd := exec.Command("kill", "-s", sig_as_str, strconv.Itoa(int(p.Pid)))
+	cmd := exec.Command("kill", "-s", sigAsStr, strconv.Itoa(int(p.Pid)))
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
@@ -72,14 +72,14 @@ func (p *Process) Send_signal(sig syscall.Signal) error {
 }
 
 func (p *Process) Suspend() error {
-	return p.Send_signal(syscall.SIGSTOP)
+	return p.SendSignal(syscall.SIGSTOP)
 }
 func (p *Process) Resume() error {
-	return p.Send_signal(syscall.SIGCONT)
+	return p.SendSignal(syscall.SIGCONT)
 }
 func (p *Process) Terminate() error {
-	return p.Send_signal(syscall.SIGTERM)
+	return p.SendSignal(syscall.SIGTERM)
 }
 func (p *Process) Kill() error {
-	return p.Send_signal(syscall.SIGKILL)
+	return p.SendSignal(syscall.SIGKILL)
 }

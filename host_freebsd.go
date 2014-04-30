@@ -25,7 +25,7 @@ func HostInfo() (HostInfoStat, error) {
 }
 
 func BootTime() (int64, error) {
-	values, err := do_sysctrl("kern.boottime")
+	values, err := doSysctrl("kern.boottime")
 	if err != nil {
 		return 0, err
 	}
@@ -42,7 +42,7 @@ func BootTime() (int64, error) {
 
 func Users() ([]UserStat, error) {
 	utmpfile := "/var/run/utmp"
-	ret := make([]UserStat, 0)
+	var ret []UserStat
 
 	file, err := os.Open(utmpfile)
 	if err != nil {

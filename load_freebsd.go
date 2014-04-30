@@ -7,7 +7,7 @@ import (
 )
 
 func LoadAvg() (LoadAvgStat, error) {
-	values, err := do_sysctrl("vm.loadavg")
+	values, err := doSysctrl("vm.loadavg")
 	if err != nil {
 		return LoadAvgStat{}, err
 	}

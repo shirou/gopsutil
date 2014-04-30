@@ -20,7 +20,7 @@ type RlimitStat struct {
 	Hard     int32 `json:"hard"`
 }
 
-type IoCountersStat struct {
+type IOCountersStat struct {
 	ReadCount  int32 `json:"read_count"`
 	WriteCount int32 `json:"write_count"`
 	ReadBytes  int32 `json:"read_bytes"`

@@ -14,7 +14,7 @@ const (
 // Get disk partitions.
 // should use setmntent(3) but this implement use /etc/mtab file
 func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
-	ret := make([]Disk_partitionStat, 0)
+	var ret []DiskPartitionStat
 
 	filename := "/etc/mtab"
 	lines, err := ReadLines(filename)
@@ -24,7 +24,7 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 
 	for _, line := range lines {
 		fields := strings.Fields(line)
-		d := Disk_partitionStat{
+		d := DiskPartitionStat{
 			Mountpoint: fields[1],
 			Fstype:     fields[2],
 			Opts:       fields[3],
@@ -36,7 +36,7 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 }
 
 func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
-	ret := make(map[string]Disk_IO_CountersStat, 0)
+	ret := make(map[string]DiskIOCountersStat, 0)
 
 	// determine partitions we want to look for
 	filename := "/proc/partitions"
@@ -44,7 +44,7 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 	if err != nil {
 		return ret, err
 	}
-	partitions := make([]string, 0)
+	var partitions []string
 
 	for _, line := range lines[2:] {
 		fields := strings.Fields(line)
@@ -76,7 +76,7 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 		wbytes := parseUint64(fields[9])
 		wtime := parseUint64(fields[10])
 		if stringContains(partitions, name) {
-			d := Disk_IO_CountersStat{
+			d := DiskIOCountersStat{
 				Name:       name,
 				ReadBytes:  rbytes * SECTOR_SIZE,
 				WriteBytes: wbytes * SECTOR_SIZE,

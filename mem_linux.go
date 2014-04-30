@@ -7,7 +7,7 @@ import (
 )
 
 func VirtualMemory() (VirtualMemoryStat, error) {
-	ret := Virtual_memoryStat{}
+	ret := VirtualMemoryStat{}
 	sysinfo := &syscall.Sysinfo_t{}
 
 	if err := syscall.Sysinfo(sysinfo); err != nil {
@@ -36,7 +36,7 @@ func VirtualMemory() (VirtualMemoryStat, error) {
 }
 
 func SwapMemory() (SwapMemoryStat, error) {
-	ret := Swap_memoryStat{}
+	ret := SwapMemoryStat{}
 	sysinfo := &syscall.Sysinfo_t{}
 
 	if err := syscall.Sysinfo(sysinfo); err != nil {

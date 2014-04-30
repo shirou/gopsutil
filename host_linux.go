@@ -23,7 +23,7 @@ func HostInfo() (HostInfoStat, error) {
 	return ret, nil
 }
 
-func Boot_time() (int64, error) {
+func BootTime() (int64, error) {
 	sysinfo := &syscall.Sysinfo_t{}
 	if err := syscall.Sysinfo(sysinfo); err != nil {
 		return 0, err
@@ -33,7 +33,7 @@ func Boot_time() (int64, error) {
 
 func Users() ([]UserStat, error) {
 	utmpfile := "/var/run/utmp"
-	ret := make([]UserStat, 0)
+	var ret []UserStat
 
 	file, err := os.Open(utmpfile)
 	if err != nil {
@@ -59,10 +59,10 @@ func Users() ([]UserStat, error) {
 			continue
 		}
 		user := UserStat{
-			User:     byteToString(u.Ut_user[:]),
-			Terminal: byteToString(u.Ut_line[:]),
-			Host:     byteToString(u.Ut_host[:]),
-			Started:  int(u.Ut_tv.Tv_sec),
+			User:     byteToString(u.UtUser[:]),
+			Terminal: byteToString(u.UtLine[:]),
+			Host:     byteToString(u.UtHost[:]),
+			Started:  int(u.UtTv.TvSec),
 		}
 		ret = append(ret, user)
 	}

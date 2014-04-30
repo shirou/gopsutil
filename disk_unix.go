@@ -8,12 +8,12 @@ func DiskUsage(path string) (DiskUsageStat, error) {
 	stat := syscall.Statfs_t{}
 	err := syscall.Statfs(path, &stat)
 	if err != nil {
-		return Disk_usageStat{Path: path}, err
+		return DiskUsageStat{Path: path}, err
 	}
 
 	bsize := stat.Bsize / 512
 
-	ret := Disk_usageStat{
+	ret := DiskUsageStat{
 		Path:  path,
 		Total: (uint64(stat.Blocks) * uint64(bsize)) >> 1,
 		Free:  (uint64(stat.Bfree) * uint64(bsize)) >> 1,

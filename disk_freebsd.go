@@ -9,7 +9,7 @@ import (
 )
 
 func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
-	ret := make([]Disk_partitionStat, 0)
+	var ret []Disk_partitionStat
 
 	// get length
 	count, err := syscall.Getfsstat(nil, MNT_WAIT)
@@ -72,8 +72,8 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 		}
 
 		d := Disk_partitionStat{
-			Mountpoint: byteToString(stat.F_mntonname[:]),
-			Fstype:     byteToString(stat.F_fstypename[:]),
+			Mountpoint: byteToString(stat.FMntonname[:]),
+			Fstype:     byteToString(stat.FFstypename[:]),
 			Opts:       opts,
 		}
 		ret = append(ret, d)
@@ -83,7 +83,7 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 }
 
 func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
-	ret := make(map[string]Disk_IO_CountersStat, 0)
+	ret := make(map[string]DiskIOCountersStat, 0)
 	return ret, errors.New("not implemented yet")
 }
 

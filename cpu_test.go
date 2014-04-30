@@ -21,7 +21,7 @@ func TestCpu_times(t *testing.T) {
 }
 
 func TestCpu_counts(t *testing.T) {
-	v, err := CpuCounts(true)
+	v, err := CPUCounts(true)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}

@@ -30,26 +30,26 @@ const (
 )
 
 type Statfs struct {
-	F_version     uint32           /* structure version number */
-	F_type        uint32           /* type of filesystem */
-	F_flags       uint64           /* copy of mount exported flags */
-	F_bsize       uint64           /* filesystem fragment size */
-	F_iosize      uint64           /* optimal transfer block size */
-	F_blocks      uint64           /* total data blocks in filesystem */
-	F_bfree       uint64           /* free blocks in filesystem */
-	F_bavail      int64            /* free blocks avail to non-superuser */
-	F_files       uint64           /* total file nodes in filesystem */
-	F_ffree       int64            /* free nodes avail to non-superuser */
-	F_syncwrites  uint64           /* count of sync writes since mount */
-	F_asyncwrites uint64           /* count of async writes since mount */
-	F_syncreads   uint64           /* count of sync reads since mount */
-	F_asyncreads  uint64           /* count of async reads since mount */
-	F_spare       [10]uint64       /* unused spare */
-	F_namemax     uint32           /* maximum filename length */
-	F_owner       uint32           /* user that mounted the filesystem */
-	F_fsid        int32            /* filesystem id */
-	F_charspare   [80]byte         /* spare string space */
-	F_fstypename  [MFSNAMELEN]byte /* filesystem type name */
-	F_mntfromname [MNAMELEN]byte   /* mounted filesystem */
-	F_mntonname   [MNAMELEN]byte   /* directory on which mounted */
+	FVersion     uint32           /* structure version number */
+	FType        uint32           /* type of filesystem */
+	FFlags       uint64           /* copy of mount exported flags */
+	FBsize       uint64           /* filesystem fragment size */
+	FIosize      uint64           /* optimal transfer block size */
+	FBlocks      uint64           /* total data blocks in filesystem */
+	FBfree       uint64           /* free blocks in filesystem */
+	FBavail      int64            /* free blocks avail to non-superuser */
+	FFiles       uint64           /* total file nodes in filesystem */
+	FFfree       int64            /* free nodes avail to non-superuser */
+	FSyncwrites  uint64           /* count of sync writes since mount */
+	FAsyncwrites uint64           /* count of async writes since mount */
+	FSyncreads   uint64           /* count of sync reads since mount */
+	FAsyncreads  uint64           /* count of async reads since mount */
+	FSpare       [10]uint64       /* unused spare */
+	FNamemax     uint32           /* maximum filename length */
+	FOwner       uint32           /* user that mounted the filesystem */
+	FFsid        int32            /* filesystem id */
+	FCharspare   [80]byte         /* spare string space */
+	FFstypename  [MFSNAMELEN]byte /* filesystem type name */
+	FMntfromname [MNAMELEN]byte   /* mounted filesystem */
+	FMntonname   [MNAMELEN]byte   /* directory on which mounted */
 }

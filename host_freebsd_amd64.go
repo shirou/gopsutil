@@ -10,8 +10,8 @@ const (
 )
 
 type utmp struct {
-	Ut_line [UT_LINESIZE]byte
-	Ut_name [UT_NAMESIZE]byte
-	Ut_host [UT_HOSTSIZE]byte
-	Ut_time int32
+	UtLine [UT_LINESIZE]byte
+	UtName [UT_NAMESIZE]byte
+	UtHost [UT_HOSTSIZE]byte
+	UtTime int32
 }
