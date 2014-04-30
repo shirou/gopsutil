@@ -12,7 +12,7 @@ func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 	var ret []CPUTimesStat
 
 	filename := "/proc/stat"
-	lines, _ := ReadLines(filename)
+	lines, _ := readLines(filename)
 	for _, line := range lines {
 		ct, err := parseStatLine(line)
 		if err != nil {

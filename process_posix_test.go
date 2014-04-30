@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestSendSignal(t *testing.T) {
+func Test_SendSignal(t *testing.T) {
 	checkPid := os.Getpid()
 
 	p, _ := NewProcess(int32(checkPid))
