@@ -8,7 +8,7 @@ import (
 
 func NetIOCounters() ([]NetIOCountersStat, error) {
 	filename := "/proc/net/dev"
-	lines, err := ReadLines(filename)
+	lines, err := readLines(filename)
 	if err != nil {
 		return make([]NetIOCountersStat, 0), err
 	}

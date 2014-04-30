@@ -13,8 +13,8 @@ import (
 	"strings"
 )
 
-// ReadLines read contents from file and split by new line.
-func ReadLines(filename string) ([]string, error) {
+// readLines read contents from file and split by new line.
+func readLines(filename string) ([]string, error) {
 	f, err := os.Open(filename)
 	if err != nil {
 		return []string{""}, err

@@ -17,7 +17,7 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 	var ret []DiskPartitionStat
 
 	filename := "/etc/mtab"
-	lines, err := ReadLines(filename)
+	lines, err := readLines(filename)
 	if err != nil {
 		return ret, err
 	}
@@ -40,7 +40,7 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 
 	// determine partitions we want to look for
 	filename := "/proc/partitions"
-	lines, err := ReadLines(filename)
+	lines, err := readLines(filename)
 	if err != nil {
 		return ret, err
 	}
@@ -62,7 +62,7 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 	}
 
 	filename = "/proc/diskstats"
-	lines, err = ReadLines(filename)
+	lines, err = readLines(filename)
 	if err != nil {
 		return ret, err
 	}

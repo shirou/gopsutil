@@ -23,7 +23,7 @@ const (
 
 // TODO: get per cpus
 func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
-	var ret []CPU_TimesStat
+	var ret []CPUTimesStat
 
 	cpuTime, err := doSysctrl("kern.cp_time")
 	if err != nil {
