@@ -21,8 +21,8 @@ var (
 	FILE_READ_ONLY_VOLUME = int64(524288) // 0x00080000
 )
 
-func Disk_usage(path string) (Disk_usageStat, error) {
-	ret := Disk_usageStat{}
+func DiskUsage(path string) (DiskUsageStat, error) {
+	ret := DiskUsageStat{}
 
 	ret.Path = path
 	lpFreeBytesAvailable := int64(0)
@@ -45,8 +45,8 @@ func Disk_usage(path string) (Disk_usageStat, error) {
 	return ret, nil
 }
 
-func Disk_partitions(all bool) ([]Disk_partitionStat, error) {
-	ret := make([]Disk_partitionStat, 0)
+func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
+	ret := make([]DiskPartitionStat, 0)
 	lpBuffer := make([]byte, 254)
 	diskret, _, err := procGetLogicalDriveStringsW.Call(
 		uintptr(len(lpBuffer)),
@@ -94,7 +94,7 @@ func Disk_partitions(all bool) ([]Disk_partitionStat, error) {
 					opts += ".compress"
 				}
 
-				d := Disk_partitionStat{
+				d := DiskPartitionStat{
 					Mountpoint: path,
 					Device:     path,
 					Fstype:     string(bytes.Replace(lpFileSystemNameBuffer, []byte("\x00"), []byte(""), -1)),
@@ -107,7 +107,7 @@ func Disk_partitions(all bool) ([]Disk_partitionStat, error) {
 	return ret, nil
 }
 
-func Disk_io_counters() (map[string]Disk_IO_CountersStat, error) {
-	ret := make(map[string]Disk_IO_CountersStat, 0)
-	return ret, errors.New("Not implemented yet")
+func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
+	ret := make(map[string]DiskIOCountersStat, 0)
+	return ret, errors.New("not implemented yet")
 }

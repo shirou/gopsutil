@@ -16,8 +16,8 @@ const (
 	PRIO_PROCESS = 0 // linux/resource.h
 )
 
-// Memory_info_ex is different between OSes
-type Memory_info_exStat struct {
+// MemoryInfoExStat is different between OSes
+type MemoryInfoExStat struct {
 	RSS    uint64 `json:"rss"`    // bytes
 	VMS    uint64 `json:"vms"`    // bytes
 	Shared uint64 `json:"shared"` // bytes
@@ -27,18 +27,18 @@ type Memory_info_exStat struct {
 	Dirty  uint64 `json:"dirty"`  // bytes
 }
 
-type Memory_mapsStat struct {
-	Path          string `json:"path"`
-	Rss           uint64 `json:"rss"`
-	Size          uint64 `json:"size"`
-	Pss           uint64 `json:"pss"`
-	Shared_clean  uint64 `json:"shared_clean"`
-	Shared_dirty  uint64 `json:"shared_dirty"`
-	Private_clean uint64 `json:"private_clean"`
-	Private_dirty uint64 `json:"private_dirty"`
-	Referenced    uint64 `json:"referenced"`
-	Anonymous     uint64 `json:"anonymous"`
-	Swap          uint64 `json:"swap"`
+type MemoryMapsStat struct {
+	Path         string `json:"path"`
+	Rss          uint64 `json:"rss"`
+	Size         uint64 `json:"size"`
+	Pss          uint64 `json:"pss"`
+	SharedClean  uint64 `json:"shared_clean"`
+	SharedDirty  uint64 `json:"shared_dirty"`
+	PrivateClean uint64 `json:"private_clean"`
+	PrivateDirty uint64 `json:"private_dirty"`
+	Referenced   uint64 `json:"referenced"`
+	Anonymous    uint64 `json:"anonymous"`
+	Swap         uint64 `json:"swap"`
 }
 
 // Create new Process instance
@@ -74,7 +74,7 @@ func (p *Process) Cwd() (string, error) {
 	return p.fillFromCwd()
 }
 func (p *Process) Parent() (*Process, error) {
-	return nil, errors.New("Not implemented yet")
+	return nil, errors.New("not implemented yet")
 }
 func (p *Process) Status() (string, error) {
 	_, status, _, _, _, err := p.fillFromStatus()
@@ -115,82 +115,82 @@ func (p *Process) Nice() (int32, error) {
 	return nice, nil
 }
 func (p *Process) Ionice() (int32, error) {
-	return 0, errors.New("Not implemented yet")
+	return 0, errors.New("not implemented yet")
 }
 func (p *Process) Rlimit() ([]RlimitStat, error) {
-	return nil, errors.New("Not implemented yet")
+	return nil, errors.New("not implemented yet")
 }
-func (p *Process) Io_counters() (*Io_countersStat, error) {
-	return nil, errors.New("Not implemented yet")
+func (p *Process) IOCounters() (*IOCountersStat, error) {
+	return nil, errors.New("not implemented yet")
 }
-func (p *Process) Num_ctx_switches() (int32, error) {
-	return 0, errors.New("Not implemented yet")
+func (p *Process) NumCtxSwitches() (int32, error) {
+	return 0, errors.New("not implemented yet")
 }
-func (p *Process) Num_fds() (int32, error) {
-	return 0, errors.New("Not implemented yet")
+func (p *Process) NumFDs() (int32, error) {
+	return 0, errors.New("not implemented yet")
 }
-func (p *Process) Num_Threads() (int32, error) {
-	_, _, _, _, num_threads, err := p.fillFromStatus()
+func (p *Process) NumThreads() (int32, error) {
+	_, _, _, _, numThreads, err := p.fillFromStatus()
 	if err != nil {
 		return 0, err
 	}
-	return num_threads, nil
+	return numThreads, nil
 }
 func (p *Process) Threads() (map[string]string, error) {
 	ret := make(map[string]string, 0)
 	return ret, nil
 }
-func (p *Process) Cpu_times() (*CPU_TimesStat, error) {
-	_, _, cpu_times, _, _, err := p.fillFromStat()
+func (p *Process) CPUTimes() (*CPUTimesStat, error) {
+	_, _, cpuTimes, _, _, err := p.fillFromStat()
 	if err != nil {
 		return nil, err
 	}
-	return cpu_times, nil
+	return cpuTimes, nil
 }
-func (p *Process) Cpu_percent() (int32, error) {
-	return 0, errors.New("Not implemented yet")
+func (p *Process) CPUPpercent() (int32, error) {
+	return 0, errors.New("not implemented yet")
 }
-func (p *Process) Cpu_affinity() ([]int32, error) {
-	return nil, errors.New("Not implemented yet")
+func (p *Process) CPUAffinity() ([]int32, error) {
+	return nil, errors.New("not implemented yet")
 }
-func (p *Process) Memory_info() (*Memory_infoStat, error) {
-	mem_info, _, err := p.fillFromStatm()
+func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
+	memInfo, _, err := p.fillFromStatm()
 	if err != nil {
 		return nil, err
 	}
-	return mem_info, nil
+	return memInfo, nil
 }
-func (p *Process) Memory_info_ex() (*Memory_info_exStat, error) {
-	_, mem_info_ex, err := p.fillFromStatm()
+func (p *Process) MemoryInfoEx() (*MemoryInfoExStat, error) {
+	_, memInfoEx, err := p.fillFromStatm()
 	if err != nil {
 		return nil, err
 	}
-	return mem_info_ex, nil
+	return memInfoEx, nil
 }
-func (p *Process) Memory_percent() (float32, error) {
-	return 0, errors.New("Not implemented yet")
+func (p *Process) MemoryPercent() (float32, error) {
+	return 0, errors.New("not implemented yet")
 }
 
 func (p *Process) Children() ([]*Process, error) {
-	return nil, errors.New("Not implemented yet")
+	return nil, errors.New("not implemented yet")
 }
 
-func (p *Process) Open_files() ([]Open_filesStat, error) {
-	return nil, errors.New("Not implemented yet")
+func (p *Process) OpenFiles() ([]OpenFilesStat, error) {
+	return nil, errors.New("not implemented yet")
 }
 
 func (p *Process) Connections() ([]Net_connectionStat, error) {
-	return nil, errors.New("Not implemented yet")
+	return nil, errors.New("not implemented yet")
 }
 
-func (p *Process) Is_running() (bool, error) {
-	return true, errors.New("Not implemented yet")
+func (p *Process) IsRunning() (bool, error) {
+	return true, errors.New("not implemented yet")
 }
 
-// Get memory maps from /proc/(pid)/smaps
-func (p *Process) Memory_Maps(grouped bool) (*[]Memory_mapsStat, error) {
+// MemoryMaps get memory maps from /proc/(pid)/smaps
+func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 	pid := p.Pid
-	ret := make([]Memory_mapsStat, 0)
+	var ret []MemoryMapsStat
 	smapsPath := filepath.Join("/", "proc", strconv.Itoa(int(pid)), "smaps")
 	contents, err := ioutil.ReadFile(smapsPath)
 	if err != nil {
@@ -199,8 +199,8 @@ func (p *Process) Memory_Maps(grouped bool) (*[]Memory_mapsStat, error) {
 	lines := strings.Split(string(contents), "\n")
 
 	// function of parsing a block
-	get_block := func(first_line []string, block []string) Memory_mapsStat {
-		m := Memory_mapsStat{}
+	getBlock := func(first_line []string, block []string) MemoryMapsStat {
+		m := MemoryMapsStat{}
 		m.Path = first_line[len(first_line)-1]
 
 		for _, line := range block {
@@ -217,13 +217,13 @@ func (p *Process) Memory_Maps(grouped bool) (*[]Memory_mapsStat, error) {
 			case "Pss":
 				m.Pss = parseUint64(v)
 			case "Shared_Clean":
-				m.Shared_clean = parseUint64(v)
+				m.SharedClean = parseUint64(v)
 			case "Shared_Dirty":
-				m.Shared_dirty = parseUint64(v)
+				m.SharedDirty = parseUint64(v)
 			case "Private_Clean":
-				m.Private_clean = parseUint64(v)
+				m.PrivateClean = parseUint64(v)
 			case "Private_Dirty":
-				m.Private_dirty = parseUint64(v)
+				m.PrivateDirty = parseUint64(v)
 			case "Referenced":
 				m.Referenced = parseUint64(v)
 			case "Anonymous":
@@ -241,7 +241,7 @@ func (p *Process) Memory_Maps(grouped bool) (*[]Memory_mapsStat, error) {
 		if strings.HasSuffix(field[0], ":") == false {
 			// new block section
 			if len(blocks) > 0 {
-				ret = append(ret, get_block(field, blocks))
+				ret = append(ret, getBlock(field, blocks))
 			}
 			// starts new block
 			blocks = make([]string, 16)
@@ -267,9 +267,9 @@ func (p *Process) fillFromfd() (int32, []*Open_filesStat, error) {
 	}
 	defer d.Close()
 	fnames, err := d.Readdirnames(-1)
-	num_fds := int32(len(fnames))
+	numFDs := int32(len(fnames))
 
-	openfiles := make([]*Open_filesStat, num_fds)
+	openfiles := make([]*OpenFilesStat, numFDs)
 	for _, fd := range fnames {
 		fpath := filepath.Join(statPath, fd)
 		filepath, err := os.Readlink(fpath)
@@ -283,7 +283,7 @@ func (p *Process) fillFromfd() (int32, []*Open_filesStat, error) {
 		openfiles = append(openfiles, o)
 	}
 
-	return num_fds, openfiles, nil
+	return numFDs, openfiles, nil
 }
 
 // Get cwd from /proc/(pid)/cwd
@@ -339,11 +339,11 @@ func (p *Process) fillFromStatm() (*Memory_infoStat, *Memory_info_exStat, error)
 
 	rss := parseUint64(fields[0]) * PAGESIZE
 	vms := parseUint64(fields[1]) * PAGESIZE
-	mem_info := &Memory_infoStat{
+	memInfo := &MemoryInfoStat{
 		RSS: rss,
 		VMS: vms,
 	}
-	mem_info_ex := &Memory_info_exStat{
+	memInfoEx := &MemoryInfoExStat{
 		RSS:    rss,
 		VMS:    vms,
 		Shared: parseUint64(fields[2]) * PAGESIZE,
@@ -352,7 +352,7 @@ func (p *Process) fillFromStatm() (*Memory_infoStat, *Memory_info_exStat, error)
 		Dirty:  parseUint64(fields[5]) * PAGESIZE,
 	}
 
-	return mem_info, mem_info_ex, nil
+	return memInfo, memInfoEx, nil
 }
 
 // Get various status from /proc/(pid)/status
@@ -367,9 +367,9 @@ func (p *Process) fillFromStatus() (string, string, []int32, []int32, int32, err
 
 	name := ""
 	status := ""
-	var num_threads int32
-	uids := make([]int32, 0)
-	gids := make([]int32, 0)
+	var numThreads int32
+	var uids []int32
+	var gids []int32
 	for _, line := range lines {
 		field := strings.Split(line, ":")
 		if len(field) < 2 {
@@ -394,14 +394,14 @@ func (p *Process) fillFromStatus() (string, string, []int32, []int32, int32, err
 				gids = append(gids, parseInt32(i))
 			}
 		case "Threads":
-			num_threads = parseInt32(field[1])
+			numThreads = parseInt32(field[1])
 		}
 	}
 
-	return name, status, uids, gids, num_threads, nil
+	return name, status, uids, gids, numThreads, nil
 }
 
-func (p *Process) fillFromStat() (string, int32, *CPU_TimesStat, int64, int32, error) {
+func (p *Process) fillFromStat() (string, int32, *CPUTimesStat, int64, int32, error) {
 	pid := p.Pid
 	statPath := filepath.Join("/", "proc", strconv.Itoa(int(pid)), "stat")
 	contents, err := ioutil.ReadFile(statPath)
@@ -420,26 +420,26 @@ func (p *Process) fillFromStat() (string, int32, *CPU_TimesStat, int64, int32, e
 	utime, _ := strconv.ParseFloat(fields[13], 64)
 	stime, _ := strconv.ParseFloat(fields[14], 64)
 
-	cpu_times := &CPU_TimesStat{
+	cpuTimes := &CPUTimesStat{
 		Cpu:    "cpu",
 		User:   float32(utime * (1000 / CLOCK_TICKS)),
 		System: float32(stime * (1000 / CLOCK_TICKS)),
 	}
 
-	boot_time, _ := Boot_time()
-	ctime := ((parseUint64(fields[21]) / uint64(CLOCK_TICKS)) + uint64(boot_time)) * 1000
-	create_time := int64(ctime)
+	bootTime, _ := BootTime()
+	ctime := ((parseUint64(fields[21]) / uint64(CLOCK_TICKS)) + uint64(bootTime)) * 1000
+	createTime := int64(ctime)
 
 	//	p.Nice = parseInt32(fields[18])
 	// use syscall instead of parse Stat file
 	snice, _ := syscall.Getpriority(PRIO_PROCESS, int(pid))
 	nice := int32(snice) // FIXME: is this true?
 
-	return terminal, ppid, cpu_times, create_time, nice, nil
+	return terminal, ppid, cpuTimes, createTime, nice, nil
 }
 
 func Pids() ([]int32, error) {
-	ret := make([]int32, 0)
+	var ret []int32
 
 	d, err := os.Open("/proc")
 	if err != nil {

@@ -4,7 +4,7 @@ package gopsutil
 
 import "syscall"
 
-func Disk_usage(path string) (Disk_usageStat, error) {
+func DiskUsage(path string) (DiskUsageStat, error) {
 	stat := syscall.Statfs_t{}
 	err := syscall.Statfs(path, &stat)
 	if err != nil {

@@ -4,7 +4,7 @@ import (
 	"runtime"
 )
 
-type CPU_TimesStat struct {
+type CPUTimesStat struct {
 	Cpu        string  `json:"cpu"`
 	User       float32 `json:"user"`
 	System     float32 `json:"system"`
@@ -19,6 +19,6 @@ type CPU_TimesStat struct {
 	Stolen     float32 `json:"stolen"`
 }
 
-func Cpu_counts(logical bool) (int, error) {
+func CpuCounts(logical bool) (int, error) {
 	return runtime.NumCPU(), nil
 }

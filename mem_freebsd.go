@@ -2,13 +2,13 @@
 
 package gopsutil
 
-func Virtual_memory() (Virtual_memoryStat, error) {
+func VirtualMemory() (VirtualMemoryStat, error) {
 	ret := Virtual_memoryStat{}
 
 	return ret, nil
 }
 
-func Swap_memory() (Swap_memoryStat, error) {
+func SwapMemory() (SwapMemoryStat, error) {
 	ret := Swap_memoryStat{}
 
 	return ret, nil

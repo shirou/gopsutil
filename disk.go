@@ -1,6 +1,6 @@
 package gopsutil
 
-type Disk_usageStat struct {
+type DiskUsageStat struct {
 	Path        string  `json:"path"`
 	Total       uint64  `json:"total"`
 	Free        uint64  `json:"free"`
@@ -8,14 +8,14 @@ type Disk_usageStat struct {
 	UsedPercent float64 `json:"usedPercent"`
 }
 
-type Disk_partitionStat struct {
+type DiskPartitionStat struct {
 	Device     string `json:"device"`
 	Mountpoint string `json:"mountpoint"`
 	Fstype     string `json:"fstype"`
 	Opts       string `json:"opts"`
 }
 
-type Disk_IO_CountersStat struct {
+type DiskIOCountersStat struct {
 	ReadCount  uint64 `json:"readCount"`
 	WriteCount uint64 `json:"writeCount"`
 	ReadBytes  uint64 `json:"readBytes"`

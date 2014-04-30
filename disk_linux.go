@@ -13,7 +13,7 @@ const (
 
 // Get disk partitions.
 // should use setmntent(3) but this implement use /etc/mtab file
-func Disk_partitions(all bool) ([]Disk_partitionStat, error) {
+func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 	ret := make([]Disk_partitionStat, 0)
 
 	filename := "/etc/mtab"
@@ -35,7 +35,7 @@ func Disk_partitions(all bool) ([]Disk_partitionStat, error) {
 	return ret, nil
 }
 
-func Disk_io_counters() (map[string]Disk_IO_CountersStat, error) {
+func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 	ret := make(map[string]Disk_IO_CountersStat, 0)
 
 	// determine partitions we want to look for

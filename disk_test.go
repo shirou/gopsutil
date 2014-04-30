@@ -11,7 +11,7 @@ func TestDisk_usage(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		path = "C:"
 	}
-	_, err := Disk_usage(path)
+	_, err := DiskUsage(path)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -20,14 +20,14 @@ func TestDisk_usage(t *testing.T) {
 }
 
 func TestDisk_partitions(t *testing.T) {
-	_, err := Disk_partitions(false)
+	_, err := DiskPartitions(false)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
 }
 
 func TestDisk_io_counters(t *testing.T) {
-	ret, err := Disk_io_counters()
+	ret, err := DiskIOCounters()
 	if err != nil {
 		t.Errorf("error %v", err)
 	}

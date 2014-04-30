@@ -6,7 +6,7 @@ import (
 	"syscall"
 )
 
-func Virtual_memory() (Virtual_memoryStat, error) {
+func VirtualMemory() (VirtualMemoryStat, error) {
 	ret := Virtual_memoryStat{}
 	sysinfo := &syscall.Sysinfo_t{}
 
@@ -35,7 +35,7 @@ func Virtual_memory() (Virtual_memoryStat, error) {
 	return ret, nil
 }
 
-func Swap_memory() (Swap_memoryStat, error) {
+func SwapMemory() (SwapMemoryStat, error) {
 	ret := Swap_memoryStat{}
 	sysinfo := &syscall.Sysinfo_t{}
 

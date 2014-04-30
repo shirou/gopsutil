@@ -10,15 +10,15 @@ import (
 	"unsafe"
 )
 
-// Memory_info_ex is different between OSes
-type Memory_info_exStat struct {
+// MemoryInfoExStat is different between OSes
+type MemoryInfoExStat struct {
 }
 
-type Memory_mapsStat struct {
+type MemoryMapsStat struct {
 }
 
 func Pids() ([]int32, error) {
-	ret := make([]int32, 0)
+	var ret []int32
 	procs, err := processes()
 	if err != nil {
 		return ret, nil
@@ -32,107 +32,107 @@ func Pids() ([]int32, error) {
 }
 
 func (p *Process) Ppid() (int32, error) {
-	return 0, errors.New("Not implemented yet")
+	return 0, errors.New("not implemented yet")
 }
 func (p *Process) Name() (string, error) {
 	name := ""
-	return name, errors.New("Not implemented yet")
+	return name, errors.New("not implemented yet")
 }
 func (p *Process) Exe() (string, error) {
-	return "", errors.New("Not implemented yet")
+	return "", errors.New("not implemented yet")
 }
 func (p *Process) Cmdline() (string, error) {
-	return "", errors.New("Not implemented yet")
+	return "", errors.New("not implemented yet")
 }
 func (p *Process) Cwd() (string, error) {
-	return "", errors.New("Not implemented yet")
+	return "", errors.New("not implemented yet")
 }
 func (p *Process) Parent() (*Process, error) {
-	return p, errors.New("Not implemented yet")
+	return p, errors.New("not implemented yet")
 }
 func (p *Process) Status() (string, error) {
-	return "", errors.New("Not implemented yet")
+	return "", errors.New("not implemented yet")
 }
 func (p *Process) Username() (string, error) {
-	return "", errors.New("Not implemented yet")
+	return "", errors.New("not implemented yet")
 }
 func (p *Process) Uids() ([]int32, error) {
-	uids := make([]int32, 0)
-	return uids, errors.New("Not implemented yet")
+	var uids []int32
+	return uids, errors.New("not implemented yet")
 }
 func (p *Process) Gids() ([]int32, error) {
-	gids := make([]int32, 0)
-	return gids, errors.New("Not implemented yet")
+	var gids []int32
+	return gids, errors.New("not implemented yet")
 }
 func (p *Process) Terminal() (string, error) {
-	return "", errors.New("Not implemented yet")
+	return "", errors.New("not implemented yet")
 }
 func (p *Process) Nice() (int32, error) {
-	return 0, errors.New("Not implemented yet")
+	return 0, errors.New("not implemented yet")
 }
 func (p *Process) Ionice() (int32, error) {
-	return 0, errors.New("Not implemented yet")
+	return 0, errors.New("not implemented yet")
 }
 func (p *Process) Rlimit() ([]RlimitStat, error) {
-	rlimit := make([]RlimitStat, 0)
-	return rlimit, errors.New("Not implemented yet")
+	var rlimit []RlimitStat
+	return rlimit, errors.New("not implemented yet")
 }
-func (p *Process) Io_counters() (*Io_countersStat, error) {
-	return nil, errors.New("Not implemented yet")
+func (p *Process) IOCounters() (*IOCountersStat, error) {
+	return nil, errors.New("not implemented yet")
 }
-func (p *Process) Num_ctx_switches() (int32, error) {
-	return 0, errors.New("Not implemented yet")
+func (p *Process) NumCtxSwitches() (int32, error) {
+	return 0, errors.New("not implemented yet")
 }
-func (p *Process) Num_fds() (int32, error) {
-	return 0, errors.New("Not implemented yet")
+func (p *Process) NumFDs() (int32, error) {
+	return 0, errors.New("not implemented yet")
 }
-func (p *Process) Num_Threads() (int32, error) {
-	return 0, errors.New("Not implemented yet")
+func (p *Process) NumThreads() (int32, error) {
+	return 0, errors.New("not implemented yet")
 }
 func (p *Process) Threads() (map[string]string, error) {
 	ret := make(map[string]string, 0)
-	return ret, errors.New("Not implemented yet")
+	return ret, errors.New("not implemented yet")
 }
-func (p *Process) Cpu_times() (*CPU_TimesStat, error) {
-	return nil, errors.New("Not implemented yet")
+func (p *Process) CPUTimes() (*CPUTimesStat, error) {
+	return nil, errors.New("not implemented yet")
 }
-func (p *Process) Cpu_percent() (int32, error) {
-	return 0, errors.New("Not implemented yet")
+func (p *Process) CPUPercent() (int32, error) {
+	return 0, errors.New("not implemented yet")
 }
-func (p *Process) Cpu_affinity() ([]int32, error) {
-	return nil, errors.New("Not implemented yet")
+func (p *Process) CPUAffinity() ([]int32, error) {
+	return nil, errors.New("not implemented yet")
 }
-func (p *Process) Memory_info() (*Memory_infoStat, error) {
-	return nil, errors.New("Not implemented yet")
+func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
+	return nil, errors.New("not implemented yet")
 }
-func (p *Process) Memory_info_ex() (*Memory_info_exStat, error) {
-	return nil, errors.New("Not implemented yet")
+func (p *Process) MemoryInfoEx() (*MemoryInfoExStat, error) {
+	return nil, errors.New("not implemented yet")
 }
-func (p *Process) Memory_percent() (float32, error) {
-	return 0, errors.New("Not implemented yet")
+func (p *Process) MemoryPercent() (float32, error) {
+	return 0, errors.New("not implemented yet")
 }
 
 func (p *Process) Children() ([]*Process, error) {
-	return nil, errors.New("Not implemented yet")
+	return nil, errors.New("not implemented yet")
 }
 
-func (p *Process) Open_files() ([]Open_filesStat, error) {
-	return nil, errors.New("Not implemented yet")
+func (p *Process) OpenFiles() ([]OpenFilesStat, error) {
+	return nil, errors.New("not implemented yet")
 }
 
-func (p *Process) Connections() ([]Net_connectionStat, error) {
-	return nil, errors.New("Not implemented yet")
+func (p *Process) Connections() ([]NetConnectionStat, error) {
+	return nil, errors.New("not implemented yet")
 }
 
-func (p *Process) Is_running() (bool, error) {
-	return true, errors.New("Not implemented yet")
+func (p *Process) IsRunning() (bool, error) {
+	return true, errors.New("not implemented yet")
 }
-func (p *Process) Memory_Maps(grouped bool) (*[]Memory_mapsStat, error) {
-	ret := make([]Memory_mapsStat, 0)
-	return &ret, errors.New("Not implemented yet")
+func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
+	var ret []MemoryMapsStat
+	return &ret, errors.New("not implemented yet")
 }
 
-func copy_params(k *Kinfo_proc, p *Process) error {
+func copyParams(k *Kinfo_proc, p *Process) error {
 
 	return nil
 }
@@ -141,20 +141,20 @@ func processes() ([]Process, error) {
 	results := make([]Process, 0, 50)
 
 	mib := []int32{CTL_KERN, KERN_PROC, KERN_PROC_PROC, 0}
-	buf, length, err := call_syscall(mib)
+	buf, length, err := callSyscall(mib)
 	if err != nil {
 		return results, err
 	}
 
 	// get kinfo_proc size
 	k := Kinfo_proc{}
-	procinfo_len := int(unsafe.Sizeof(k))
-	count := int(length / uint64(procinfo_len))
+	procinfoLen := int(unsafe.Sizeof(k))
+	count := int(length / uint64(procinfoLen))
 
 	// parse buf to procs
 	for i := 0; i < count; i++ {
-		b := buf[i*procinfo_len : i*procinfo_len+procinfo_len]
-		k, err := parse_kinfo_proc(b)
+		b := buf[i*procinfoLen : i*procinfoLen+procinfoLen]
+		k, err := parseKinfoProc(b)
 		if err != nil {
 			continue
 		}
@@ -162,7 +162,7 @@ func processes() ([]Process, error) {
 		if err != nil {
 			continue
 		}
-		copy_params(&k, p)
+		copyParams(&k, p)
 
 		results = append(results, *p)
 	}
@@ -170,8 +170,8 @@ func processes() ([]Process, error) {
 	return results, nil
 }
 
-func parse_kinfo_proc(buf []byte) (Kinfo_proc, error) {
-	var k Kinfo_proc
+func parseKinfoProc(buf []byte) (KinfoProc, error) {
+	var k KinfoProc
 	br := bytes.NewReader(buf)
 	err := binary.Read(br, binary.LittleEndian, &k)
 	if err != nil {
@@ -181,7 +181,7 @@ func parse_kinfo_proc(buf []byte) (Kinfo_proc, error) {
 	return k, nil
 }
 
-func call_syscall(mib []int32) ([]byte, uint64, error) {
+func callSyscall(mib []int32) ([]byte, uint64, error) {
 	miblen := uint64(len(mib))
 
 	// get required buffer size
@@ -195,11 +195,11 @@ func call_syscall(mib []int32) ([]byte, uint64, error) {
 		0,
 		0)
 	if err != 0 {
-		b := make([]byte, 0)
+		var b []byte
 		return b, length, err
 	}
 	if length == 0 {
-		b := make([]byte, 0)
+		var b []byte
 		return b, length, err
 	}
 	// get proc info itself
@@ -227,16 +227,16 @@ func NewProcess(pid int32) (*Process, error) {
 	if err != nil {
 		return nil, err
 	}
-	proc_k := Kinfo_proc{}
-	if length != uint64(unsafe.Sizeof(proc_k)) {
+	procK := KinfoProc{}
+	if length != uint64(unsafe.Sizeof(procK)) {
 		return nil, err
 	}
 
-	k, err := parse_kinfo_proc(buf)
+	k, err := parseKinfoProc(buf)
 	if err != nil {
 		return nil, err
 	}
 
-	copy_params(&k, p)
+	copyParams(&k, p)
 	return p, nil
 }

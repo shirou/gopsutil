@@ -39,7 +39,7 @@ func HostInfo() (HostInfoStat, error) {
 	return ret, nil
 }
 
-func Boot_time() (int64, error) {
+func BootTime() (int64, error) {
 	var lpSystemTimeAsFileTime FILETIME
 
 	r, _, _ := procGetSystemTimeAsFileTime.Call(uintptr(unsafe.Pointer(&lpSystemTimeAsFileTime)))
@@ -61,7 +61,7 @@ func Boot_time() (int64, error) {
 }
 func Users() ([]UserStat, error) {
 
-	ret := make([]UserStat, 0)
+	var ret []UserStat
 
 	return ret, nil
 }

@@ -24,7 +24,7 @@ func HostInfo() (HostInfoStat, error) {
 	return ret, nil
 }
 
-func Boot_time() (int64, error) {
+func BootTime() (int64, error) {
 	values, err := do_sysctrl("kern.boottime")
 	if err != nil {
 		return 0, err
