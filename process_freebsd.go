@@ -132,7 +132,7 @@ func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 	return &ret, errors.New("not implemented yet")
 }
 
-func copyParams(k *Kinfo_proc, p *Process) error {
+func copyParams(k *KinfoProc, p *Process) error {
 
 	return nil
 }
@@ -147,7 +147,7 @@ func processes() ([]Process, error) {
 	}
 
 	// get kinfo_proc size
-	k := Kinfo_proc{}
+	k := KinfoProc{}
 	procinfoLen := int(unsafe.Sizeof(k))
 	count := int(length / uint64(procinfoLen))
 
@@ -158,7 +158,7 @@ func processes() ([]Process, error) {
 		if err != nil {
 			continue
 		}
-		p, err := NewProcess(int32(k.Ki_pid))
+		p, err := NewProcess(int32(k.KiPid))
 		if err != nil {
 			continue
 		}
@@ -223,7 +223,7 @@ func NewProcess(pid int32) (*Process, error) {
 	p := &Process{Pid: pid}
 	mib := []int32{CTL_KERN, KERN_PROC, KERN_PROC_PID, p.Pid}
 
-	buf, length, err := call_syscall(mib)
+	buf, length, err := callSyscall(mib)
 	if err != nil {
 		return nil, err
 	}

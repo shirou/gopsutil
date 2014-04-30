@@ -3,13 +3,13 @@
 package gopsutil
 
 func VirtualMemory() (VirtualMemoryStat, error) {
-	ret := Virtual_memoryStat{}
+	ret := VirtualMemoryStat{}
 
 	return ret, nil
 }
 
 func SwapMemory() (SwapMemoryStat, error) {
-	ret := Swap_memoryStat{}
+	ret := SwapMemoryStat{}
 
 	return ret, nil
 }

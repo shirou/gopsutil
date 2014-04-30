@@ -9,7 +9,7 @@ import (
 )
 
 func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
-	var ret []Disk_partitionStat
+	var ret []DiskPartitionStat
 
 	// get length
 	count, err := syscall.Getfsstat(nil, MNT_WAIT)
@@ -22,56 +22,56 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 
 	for _, stat := range fs {
 		opts := "rw"
-		if stat.F_flags&MNT_RDONLY != 0 {
+		if stat.FFlags&MNT_RDONLY != 0 {
 			opts = "ro"
 		}
-		if stat.F_flags&MNT_SYNCHRONOUS != 0 {
+		if stat.FFlags&MNT_SYNCHRONOUS != 0 {
 			opts += ",sync"
 		}
-		if stat.F_flags&MNT_NOEXEC != 0 {
+		if stat.FFlags&MNT_NOEXEC != 0 {
 			opts += ",noexec"
 		}
-		if stat.F_flags&MNT_NOSUID != 0 {
+		if stat.FFlags&MNT_NOSUID != 0 {
 			opts += ",nosuid"
 		}
-		if stat.F_flags&MNT_UNION != 0 {
+		if stat.FFlags&MNT_UNION != 0 {
 			opts += ",union"
 		}
-		if stat.F_flags&MNT_ASYNC != 0 {
+		if stat.FFlags&MNT_ASYNC != 0 {
 			opts += ",async"
 		}
-		if stat.F_flags&MNT_SUIDDIR != 0 {
+		if stat.FFlags&MNT_SUIDDIR != 0 {
 			opts += ",suiddir"
 		}
-		if stat.F_flags&MNT_SOFTDEP != 0 {
+		if stat.FFlags&MNT_SOFTDEP != 0 {
 			opts += ",softdep"
 		}
-		if stat.F_flags&MNT_NOSYMFOLLOW != 0 {
+		if stat.FFlags&MNT_NOSYMFOLLOW != 0 {
 			opts += ",nosymfollow"
 		}
-		if stat.F_flags&MNT_GJOURNAL != 0 {
+		if stat.FFlags&MNT_GJOURNAL != 0 {
 			opts += ",gjounalc"
 		}
-		if stat.F_flags&MNT_MULTILABEL != 0 {
+		if stat.FFlags&MNT_MULTILABEL != 0 {
 			opts += ",multilabel"
 		}
-		if stat.F_flags&MNT_ACLS != 0 {
+		if stat.FFlags&MNT_ACLS != 0 {
 			opts += ",acls"
 		}
-		if stat.F_flags&MNT_NOATIME != 0 {
+		if stat.FFlags&MNT_NOATIME != 0 {
 			opts += ",noattime"
 		}
-		if stat.F_flags&MNT_NOCLUSTERR != 0 {
+		if stat.FFlags&MNT_NOCLUSTERR != 0 {
 			opts += ",nocluster"
 		}
-		if stat.F_flags&MNT_NOCLUSTERW != 0 {
+		if stat.FFlags&MNT_NOCLUSTERW != 0 {
 			opts += ",noclusterw"
 		}
-		if stat.F_flags&MNT_NFS4ACLS != 0 {
+		if stat.FFlags&MNT_NFS4ACLS != 0 {
 			opts += ",nfs4acls"
 		}
 
-		d := Disk_partitionStat{
+		d := DiskPartitionStat{
 			Mountpoint: byteToString(stat.FMntonname[:]),
 			Fstype:     byteToString(stat.FFstypename[:]),
 			Opts:       opts,
