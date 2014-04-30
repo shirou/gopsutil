@@ -6,8 +6,6 @@ import (
 	"os"
 	"syscall"
 	"unsafe"
-
-	"github.com/shirou/go-ps"
 )
 
 var (
@@ -30,7 +28,7 @@ func HostInfo() (HostInfoStat, error) {
 
 	ret.Uptime = int64(uptimemsec) / 1000
 
-	procs, err := ps.Processes()
+	procs, err := Pids()
 	if err != nil {
 		return ret, err
 	}
