@@ -19,7 +19,7 @@ type SYSTEM_PROCESS_INFORMATION struct {
 	NumberOfThreads   uint64
 	Reserved1         [48]byte
 	Reserved2         [3]byte
-	UniqueProcessId   uintptr
+	UniqueProcessID   uintptr
 	Reserved3         uintptr
 	HandleCount       uint64
 	Reserved4         [4]byte
@@ -30,15 +30,15 @@ type SYSTEM_PROCESS_INFORMATION struct {
 }
 
 // Memory_info_ex is different between OSes
-type Memory_info_exStat struct {
+type MemoryInfoExStat struct {
 }
 
-type Memory_mapsStat struct {
+type MemoryMapsStat struct {
 }
 
 func Pids() ([]int32, error) {
 
-	ret := make([]int32, 0)
+	var ret []int32
 
 	procs, err := processes()
 	if err != nil {
@@ -60,7 +60,7 @@ func (p *Process) Ppid() (int32, error) {
 }
 func (p *Process) Name() (string, error) {
 	name := ""
-	return name, errors.New("Not implemented yet")
+	return name, errors.New("not implemented yet")
 }
 func (p *Process) Exe() (string, error) {
 	_, _, ret, err := p.getFromSnapProcess(p.Pid)
@@ -70,51 +70,53 @@ func (p *Process) Exe() (string, error) {
 	return ret, nil
 }
 func (p *Process) Cmdline() (string, error) {
-	return "", errors.New("Not implemented yet")
+	return "", errors.New("not implemented yet")
 }
 func (p *Process) Cwd() (string, error) {
-	return "", errors.New("Not implemented yet")
+	return "", errors.New("not implemented yet")
 }
 func (p *Process) Parent() (*Process, error) {
-	return p, errors.New("Not implemented yet")
+	return p, errors.New("not implemented yet")
 }
 func (p *Process) Status() (string, error) {
-	return "", errors.New("Not implemented yet")
+	return "", errors.New("not implemented yet")
 }
 func (p *Process) Username() (string, error) {
-	return "", errors.New("Not implemented yet")
+	return "", errors.New("not implemented yet")
 }
 func (p *Process) Uids() ([]int32, error) {
-	uids := make([]int32, 0)
-	return uids, errors.New("Not implemented yet")
+	var uids []int32
+
+	return uids, errors.New("not implemented yet")
 }
 func (p *Process) Gids() ([]int32, error) {
-	gids := make([]int32, 0)
-	return gids, errors.New("Not implemented yet")
+	var gids []int32
+	return gids, errors.New("not implemented yet")
 }
 func (p *Process) Terminal() (string, error) {
-	return "", errors.New("Not implemented yet")
+	return "", errors.New("not implemented yet")
 }
 func (p *Process) Nice() (int32, error) {
-	return 0, errors.New("Not implemented yet")
+	return 0, errors.New("not implemented yet")
 }
 func (p *Process) Ionice() (int32, error) {
-	return 0, errors.New("Not implemented yet")
+	return 0, errors.New("not implemented yet")
 }
 func (p *Process) Rlimit() ([]RlimitStat, error) {
-	rlimit := make([]RlimitStat, 0)
-	return rlimit, errors.New("Not implemented yet")
+	var rlimit []RlimitStat
+
+	return rlimit, errors.New("not implemented yet")
 }
-func (p *Process) Io_counters() (*Io_countersStat, error) {
-	return nil, errors.New("Not implemented yet")
+func (p *Process) IoCounters() (*IoCountersStat, error) {
+	return nil, errors.New("not implemented yet")
 }
-func (p *Process) Num_ctx_switches() (int32, error) {
-	return 0, errors.New("Not implemented yet")
+func (p *Process) NumCtxSwitches() (int32, error) {
+	return 0, errors.New("not implemented yet")
 }
-func (p *Process) Num_fds() (int32, error) {
-	return 0, errors.New("Not implemented yet")
+func (p *Process) NumFDs() (int32, error) {
+	return 0, errors.New("not implemented yet")
 }
-func (p *Process) Num_Threads() (int32, error) {
+func (p *Process) NumThreads() (int32, error) {
 	_, ret, _, err := p.getFromSnapProcess(p.Pid)
 	if err != nil {
 		return 0, err
@@ -123,45 +125,45 @@ func (p *Process) Num_Threads() (int32, error) {
 }
 func (p *Process) Threads() (map[string]string, error) {
 	ret := make(map[string]string, 0)
-	return ret, errors.New("Not implemented yet")
+	return ret, errors.New("not implemented yet")
 }
-func (p *Process) Cpu_times() (*CPU_TimesStat, error) {
-	return nil, errors.New("Not implemented yet")
+func (p *Process) CPUTimes() (*CPUTimesStat, error) {
+	return nil, errors.New("not implemented yet")
 }
-func (p *Process) Cpu_percent() (int32, error) {
-	return 0, errors.New("Not implemented yet")
+func (p *Process) CPUPercent() (int32, error) {
+	return 0, errors.New("not implemented yet")
 }
-func (p *Process) Cpu_affinity() ([]int32, error) {
-	return nil, errors.New("Not implemented yet")
+func (p *Process) CPUAffinity() ([]int32, error) {
+	return nil, errors.New("not implemented yet")
 }
-func (p *Process) Memory_info() (*Memory_infoStat, error) {
-	return nil, errors.New("Not implemented yet")
+func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
+	return nil, errors.New("not implemented yet")
 }
-func (p *Process) Memory_info_ex() (*Memory_info_exStat, error) {
-	return nil, errors.New("Not implemented yet")
+func (p *Process) MemoryInfoEx() (*MemoryInfoExStat, error) {
+	return nil, errors.New("not implemented yet")
 }
-func (p *Process) Memory_percent() (float32, error) {
-	return 0, errors.New("Not implemented yet")
+func (p *Process) MemoryPercent() (float32, error) {
+	return 0, errors.New("not implemented yet")
 }
 
 func (p *Process) Children() ([]*Process, error) {
-	return nil, errors.New("Not implemented yet")
+	return nil, errors.New("not implemented yet")
 }
 
-func (p *Process) Open_files() ([]Open_filesStat, error) {
-	return nil, errors.New("Not implemented yet")
+func (p *Process) OpenFiles() ([]OpenFilesStat, error) {
+	return nil, errors.New("not implemented yet")
 }
 
-func (p *Process) Connections() ([]Net_connectionStat, error) {
-	return nil, errors.New("Not implemented yet")
+func (p *Process) Connections() ([]NetConnectionStat, error) {
+	return nil, errors.New("not implemented yet")
 }
 
-func (p *Process) Is_running() (bool, error) {
-	return true, errors.New("Not implemented yet")
+func (p *Process) IsRunning() (bool, error) {
+	return true, errors.New("not implemented yet")
 }
 
-func (p *Process) Memory_Maps(grouped bool) (*[]Memory_mapsStat, error) {
-	return nil, errors.New("Not implemented yet")
+func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
+	return nil, errors.New("not implemented yet")
 }
 
 func NewProcess(pid int32) (*Process, error) {
@@ -170,21 +172,21 @@ func NewProcess(pid int32) (*Process, error) {
 	return p, nil
 }
 
-func (p *Process) Send_signal(sig syscall.Signal) error {
-	return errors.New("Not implemented yet")
+func (p *Process) SendSignal(sig syscall.Signal) error {
+	return errors.New("not implemented yet")
 }
 
 func (p *Process) Suspend() error {
-	return errors.New("Not implemented yet")
+	return errors.New("not implemented yet")
 }
 func (p *Process) Resume() error {
-	return errors.New("Not implemented yet")
+	return errors.New("not implemented yet")
 }
 func (p *Process) Terminate() error {
-	return errors.New("Not implemented yet")
+	return errors.New("not implemented yet")
 }
 func (p *Process) Kill() error {
-	return errors.New("Not implemented yet")
+	return errors.New("not implemented yet")
 }
 
 func (p *Process) getFromSnapProcess(pid int32) (int32, int32, string, error) {
@@ -216,14 +218,14 @@ func (p *Process) getFromSnapProcess(pid int32) (int32, int32, string, error) {
 // Get processes
 func processes() ([]*Process, error) {
 	ps := make([]uint32, 255)
-	var read uint32 = 0
+	var read uint32
 	if w32.EnumProcesses(ps, uint32(len(ps)), &read) == false {
 		return nil, syscall.GetLastError()
 	}
 
-	results := make([]*Process, 0)
-	dward_size := uint32(4)
-	for _, pid := range ps[:read/dward_size] {
+	var results []*Process
+	dwardSize := uint32(4)
+	for _, pid := range ps[:read/dwardSize] {
 		if pid == 0 {
 			continue
 		}
@@ -237,14 +239,14 @@ func processes() ([]*Process, error) {
 	return results, nil
 }
 
-func get_proc_info(pid int32) (*SYSTEM_PROCESS_INFORMATION, error) {
+func getProcInfo(pid int32) (*SYSTEM_PROCESS_INFORMATION, error) {
 	initialBufferSize := uint64(0x4000)
 	bufferSize := initialBufferSize
 	buffer := make([]byte, bufferSize)
 
-	var sys_proc_info SYSTEM_PROCESS_INFORMATION
+	var sysProcInfo SYSTEM_PROCESS_INFORMATION
 	ret, _, _ := procNtQuerySystemInformation.Call(
-		uintptr(unsafe.Pointer(&sys_proc_info)),
+		uintptr(unsafe.Pointer(&sysProcInfo)),
 		uintptr(unsafe.Pointer(&buffer[0])),
 		uintptr(unsafe.Pointer(&bufferSize)),
 		uintptr(unsafe.Pointer(&bufferSize)))
@@ -252,5 +254,5 @@ func get_proc_info(pid int32) (*SYSTEM_PROCESS_INFORMATION, error) {
 		return nil, syscall.GetLastError()
 	}
 
-	return &sys_proc_info, nil
+	return &sysProcInfo, nil
 }

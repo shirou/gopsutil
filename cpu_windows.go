@@ -7,8 +7,8 @@ import (
 	"unsafe"
 )
 
-func Cpu_times(percpu bool) ([]CPU_TimesStat, error) {
-	ret := make([]CPU_TimesStat, 0)
+func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
+	var ret []CPUTimesStat
 
 	var lpIdleTime FILETIME
 	var lpKernelTime FILETIME
@@ -21,14 +21,14 @@ func Cpu_times(percpu bool) ([]CPU_TimesStat, error) {
 		return ret, syscall.GetLastError()
 	}
 
-	LO_T := float64(0.0000001)
-	HI_T := (LO_T * 4294967296.0)
-	idle := ((HI_T * float64(lpIdleTime.DwHighDateTime)) + (LO_T * float64(lpIdleTime.DwLowDateTime)))
-	user := ((HI_T * float64(lpUserTime.DwHighDateTime)) + (LO_T * float64(lpUserTime.DwLowDateTime)))
-	kernel := ((HI_T * float64(lpKernelTime.DwHighDateTime)) + (LO_T * float64(lpKernelTime.DwLowDateTime)))
+	LOT := float64(0.0000001)
+	HIT := (LOT * 4294967296.0)
+	idle := ((HIT * float64(lpIdleTime.DwHighDateTime)) + (LOT * float64(lpIdleTime.DwLowDateTime)))
+	user := ((HIT * float64(lpUserTime.DwHighDateTime)) + (LOT * float64(lpUserTime.DwLowDateTime)))
+	kernel := ((HIT * float64(lpKernelTime.DwHighDateTime)) + (LOT * float64(lpKernelTime.DwLowDateTime)))
 	system := (kernel - idle)
 
-	ret = append(ret, CPU_TimesStat{
+	ret = append(ret, CPUTimesStat{
 		Idle:   float32(idle),
 		User:   float32(user),
 		System: float32(system),

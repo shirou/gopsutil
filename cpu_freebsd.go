@@ -22,7 +22,7 @@ const (
 )
 
 // TODO: get per cpus
-func Cpu_times(percpu bool) ([]CPU_TimesStat, error) {
+func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 	ret := make([]CPU_TimesStat, 0)
 
 	cpu_time, err := do_sysctrl("kern.cp_time")

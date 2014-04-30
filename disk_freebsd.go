@@ -8,7 +8,7 @@ import (
 	"unsafe"
 )
 
-func Disk_partitions(all bool) ([]Disk_partitionStat, error) {
+func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 	ret := make([]Disk_partitionStat, 0)
 
 	// get length
@@ -82,12 +82,12 @@ func Disk_partitions(all bool) ([]Disk_partitionStat, error) {
 	return ret, nil
 }
 
-func Disk_io_counters() (map[string]Disk_IO_CountersStat, error) {
+func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 	ret := make(map[string]Disk_IO_CountersStat, 0)
-	return ret, errors.New("Not implemented yet")
+	return ret, errors.New("not implemented yet")
 }
 
-// This is borrowed from pkg/syscall/syscall_freebsd.go
+// Getfsstat is borrowed from pkg/syscall/syscall_freebsd.go
 // change Statfs_t to Statfs in order to get more information
 func Getfsstat(buf []Statfs, flags int) (n int, err error) {
 	var _p0 unsafe.Pointer

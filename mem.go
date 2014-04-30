@@ -1,6 +1,6 @@
 package gopsutil
 
-type Virtual_memoryStat struct {
+type VirtualMemoryStat struct {
 	Total       uint64  `json:"total"`
 	Available   uint64  `json:"available"`
 	Used        uint64  `json:"used"`
@@ -14,7 +14,7 @@ type Virtual_memoryStat struct {
 	Shared      uint64  `json:"shared"`
 }
 
-type Swap_memoryStat struct {
+type SwapMemoryStat struct {
 	Total       uint64  `json:"total"`
 	Used        uint64  `json:"used"`
 	Free        uint64  `json:"free"`

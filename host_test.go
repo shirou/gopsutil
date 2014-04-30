@@ -15,7 +15,7 @@ func TestHostInfo(t *testing.T) {
 }
 
 func TestBoot_time(t *testing.T) {
-	v, err := Boot_time()
+	v, err := BootTime()
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
