@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func NetIOCounters() ([]NetIOCountersStat, error) {
+func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 	filename := "/proc/net/dev"
 	lines, err := readLines(filename)
 	if err != nil {
