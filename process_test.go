@@ -8,6 +8,15 @@ import (
 	"testing"
 )
 
+func test_getProcess() Process {
+	checkPid := os.Getpid()
+	if runtime.GOOS == "windows" {
+		checkPid = 7960
+	}
+	ret, _ := NewProcess(int32(checkPid))
+	return *ret
+}
+
 func Test_Pids(t *testing.T) {
 	ret, err := Pids()
 	if err != nil {
@@ -68,17 +77,27 @@ func Test_Process_memory_maps(t *testing.T) {
 }
 
 func Test_Process_Ppid(t *testing.T) {
-	checkPid := os.Getpid()
-	if runtime.GOOS == "windows" {
-		checkPid = 7960
-	}
-	ret, err := NewProcess(int32(checkPid))
+	p := test_getProcess()
 
-	v, err := ret.Ppid()
+	v, err := p.Ppid()
 	if err != nil {
 		t.Errorf("geting ppid error %v", err)
 	}
 	if v == 0 {
+		t.Errorf("return value is 0 %v", v)
+	}
+
+}
+
+func Test_Process_IOCounters(t *testing.T) {
+	p := test_getProcess()
+
+	v, err := p.IOCounters()
+	if err != nil {
+		t.Errorf("geting ppid error %v", err)
+	}
+	fmt.Println(v)
+	if v.ReadCount == 0 {
 		t.Errorf("return value is 0 %v", v)
 	}
 

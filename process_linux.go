@@ -129,7 +129,7 @@ func (p *Process) Rlimit() ([]RlimitStat, error) {
 	return nil, errors.New("not implemented yet")
 }
 func (p *Process) IOCounters() (*IOCountersStat, error) {
-	return nil, errors.New("not implemented yet")
+	return p.fillFromIO()
 }
 func (p *Process) NumCtxSwitches() (int32, error) {
 	return 0, errors.New("not implemented yet")
@@ -331,6 +331,37 @@ func (p *Process) fillFromCmdline() (string, error) {
 		}
 		return false
 	})
+
+	return ret, nil
+}
+
+// Get IO status from /proc/(pid)/io
+func (p *Process) fillFromIO() (*IOCountersStat, error) {
+	pid := p.Pid
+	ioPath := filepath.Join("/", "proc", strconv.Itoa(int(pid)), "io")
+	ioline, err := ioutil.ReadFile(ioPath)
+	if err != nil {
+		return nil, err
+	}
+	lines := strings.Split(string(ioline), "\n")
+	ret := &IOCountersStat{}
+
+	for _, line := range lines {
+		field := strings.Split(line, ":")
+		if len(field) < 2 {
+			continue
+		}
+		switch field[0] {
+		case "rchar":
+			ret.ReadCount = parseInt32(strings.Trim(field[1], " \t"))
+		case "wchar":
+			ret.WriteCount = parseInt32(strings.Trim(field[1], " \t"))
+		case "read_bytes":
+			ret.ReadBytes = parseInt32(strings.Trim(field[1], " \t"))
+		case "write_bytes":
+			ret.WriteBytes = parseInt32(strings.Trim(field[1], " \t"))
+		}
+	}
 
 	return ret, nil
 }

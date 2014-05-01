@@ -87,6 +87,7 @@ Current Status
     - uids (linux, freebsd)
     - gids (linux, freebsd)
     - terminal (linux, freebsd)
+    - io_counters (linux)
     - nice (linux)
     - num_fds (linux)
     - num_threads (linux, freebsd, windows)
@@ -111,7 +112,6 @@ Current Status
     - username
     - ionice
     - rlimit
-    - io_counters
     - num_ctx_switches
     - num_handlers
     - threads
