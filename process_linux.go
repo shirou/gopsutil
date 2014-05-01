@@ -70,6 +70,14 @@ func (p *Process) Exe() (string, error) {
 func (p *Process) Cmdline() (string, error) {
 	return p.fillFromCmdline()
 }
+func (p *Process) CreateTime() (int64, error) {
+	_, _, _, createTime, _, err := p.fillFromStat()
+	if err != nil {
+		return 0, err
+	}
+	return createTime, nil
+}
+
 func (p *Process) Cwd() (string, error) {
 	return p.fillFromCwd()
 }
