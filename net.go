@@ -31,12 +31,12 @@ type NetConnectionStat struct {
 	Pid    int32  `json:"pid"`
 }
 
-func (n NetConnectionStat) String() string {
+func (n NetIOCountersStat) String() string {
 	s, _ := json.Marshal(n)
 	return string(s)
 }
 
-func (n NetIOCountersStat) String() string {
+func (n NetConnectionStat) String() string {
 	s, _ := json.Marshal(n)
 	return string(s)
 }

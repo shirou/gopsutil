@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"encoding/json"
 )
 
 const (
@@ -26,6 +27,10 @@ type MemoryInfoExStat struct {
 	Data   uint64 `json:"data"`   // bytes
 	Dirty  uint64 `json:"dirty"`  // bytes
 }
+func (m MemoryInfoExStat) String() string {
+	s, _ := json.Marshal(m)
+	return string(s)
+}
 
 type MemoryMapsStat struct {
 	Path         string `json:"path"`
@@ -40,6 +45,13 @@ type MemoryMapsStat struct {
 	Anonymous    uint64 `json:"anonymous"`
 	Swap         uint64 `json:"swap"`
 }
+
+func (m MemoryMapsStat) String() string {
+	s, _ := json.Marshal(m)
+	return string(s)
+}
+
+
 
 // Create new Process instance
 // This only stores Pid
