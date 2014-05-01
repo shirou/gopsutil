@@ -1,6 +1,7 @@
 package gopsutil
 
 import (
+	"encoding/json"
 	"runtime"
 )
 
@@ -21,4 +22,9 @@ type CPUTimesStat struct {
 
 func CPUCounts(logical bool) (int, error) {
 	return runtime.NumCPU(), nil
+}
+
+func (c CPUTimesStat) String() string {
+	s, _ := json.Marshal(c)
+	return string(s)
 }

@@ -1,5 +1,9 @@
 package gopsutil
 
+import (
+	"encoding/json"
+)
+
 type Process struct {
 	Pid int32 `json:"pid"`
 }
@@ -25,6 +29,31 @@ type IOCountersStat struct {
 	WriteCount int32 `json:"write_count"`
 	ReadBytes  int32 `json:"read_bytes"`
 	WriteBytes int32 `json:"write_bytes"`
+}
+
+func (p Process) String() string {
+	s, _ := json.Marshal(p)
+	return string(s)
+}
+
+func (o OpenFilesStat) String() string {
+	s, _ := json.Marshal(o)
+	return string(s)
+}
+
+func (m MemoryInfoStat) String() string {
+	s, _ := json.Marshal(m)
+	return string(s)
+}
+
+func (r RlimitStat) String() string {
+	s, _ := json.Marshal(r)
+	return string(s)
+}
+
+func (i IOCountersStat) String() string {
+	s, _ := json.Marshal(i)
+	return string(s)
 }
 
 func PidExists(pid int32) (bool, error) {

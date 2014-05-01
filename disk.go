@@ -1,5 +1,9 @@
 package gopsutil
 
+import (
+	"encoding/json"
+)
+
 type DiskUsageStat struct {
 	Path        string  `json:"path"`
 	Total       uint64  `json:"total"`
@@ -23,4 +27,19 @@ type DiskIOCountersStat struct {
 	ReadTime   uint64 `json:"readTime"`
 	WriteTime  uint64 `json:"writeTime"`
 	Name       string `json:"name"`
+}
+
+func (d DiskUsageStat) String() string {
+	s, _ := json.Marshal(d)
+	return string(s)
+}
+
+func (d DiskPartitionStat) String() string {
+	s, _ := json.Marshal(d)
+	return string(s)
+}
+
+func (d DiskIOCountersStat) String() string {
+	s, _ := json.Marshal(d)
+	return string(s)
 }

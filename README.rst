@@ -26,7 +26,6 @@ Usage
 ::
 
    import (
-   	"encoding/json"
    	"fmt"
 
    	"github.com/shirou/gopsutil"
@@ -35,12 +34,11 @@ Usage
    func main() {
    	v, _ := gopsutil.VirtualMemory()
 
-   	// return value is struct
+   	// almost every return value is struct
    	fmt.Printf("Total: %v, Free:%v, UsedPercent:%f%%\n", v.Total, v.Free, v.UsedPercent)
 
-   	// convert to JSON
-   	d, _ := json.Marshal(v)
-   	fmt.Printf("%s\n", d)
+   	// convert to JSON. String() is also implemented
+   	fmt.Println(d)
    }
 
 The output is below.

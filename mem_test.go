@@ -1,7 +1,6 @@
 package gopsutil
 
 import (
-	"encoding/json"
 	"fmt"
 	"testing"
 )
@@ -11,8 +10,7 @@ func TestVirtual_memory(t *testing.T) {
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
-	d, _ := json.Marshal(v)
-	fmt.Printf("%s\n", d)
+	fmt.Println(v)
 }
 
 func TestSwap_memory(t *testing.T) {
@@ -20,6 +18,5 @@ func TestSwap_memory(t *testing.T) {
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
-	d, _ := json.Marshal(v)
-	fmt.Printf("%s\n", d)
+	fmt.Println(v)
 }

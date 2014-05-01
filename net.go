@@ -1,5 +1,9 @@
 package gopsutil
 
+import (
+	"encoding/json"
+)
+
 type NetIOCountersStat struct {
 	Name        string `json:"name"`         // interface name
 	BytesSent   uint64 `json:"bytes_sent"`   // number of bytes sent
@@ -25,4 +29,19 @@ type NetConnectionStat struct {
 	Raddr  Addr   `json:"raddr"`
 	Status string `json:"status"`
 	Pid    int32  `json:"pid"`
+}
+
+func (n NetConnectionStat) String() string {
+	s, _ := json.Marshal(n)
+	return string(s)
+}
+
+func (n NetIOCountersStat) String() string {
+	s, _ := json.Marshal(n)
+	return string(s)
+}
+
+func (a Addr) String() string {
+	s, _ := json.Marshal(a)
+	return string(s)
 }

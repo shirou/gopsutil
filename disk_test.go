@@ -1,7 +1,7 @@
 package gopsutil
 
 import (
-	//	"fmt"
+	"fmt"
 	"runtime"
 	"testing"
 )
@@ -11,12 +11,11 @@ func TestDisk_usage(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		path = "C:"
 	}
-	_, err := DiskUsage(path)
+	v, err := DiskUsage(path)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
-	//	d, _ := json.Marshal(v)
-	//  fmt.Printf("%s\n", d)
+	fmt.Println(v)
 }
 
 func TestDisk_partitions(t *testing.T) {

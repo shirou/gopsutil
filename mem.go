@@ -1,5 +1,9 @@
 package gopsutil
 
+import (
+	"encoding/json"
+)
+
 type VirtualMemoryStat struct {
 	Total       uint64  `json:"total"`
 	Available   uint64  `json:"available"`
@@ -21,4 +25,14 @@ type SwapMemoryStat struct {
 	UsedPercent float64 `json:"usedPercent"`
 	Sin         uint64  `json:"sin"`
 	Sout        uint64  `json:"sout"`
+}
+
+func (m VirtualMemoryStat) String() string {
+	s, _ := json.Marshal(m)
+	return string(s)
+}
+
+func (m SwapMemoryStat) String() string {
+	s, _ := json.Marshal(m)
+	return string(s)
 }

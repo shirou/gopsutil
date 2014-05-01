@@ -1,7 +1,6 @@
 package gopsutil
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"runtime"
@@ -54,8 +53,7 @@ func Test_NewProcess(t *testing.T) {
 		t.Errorf("error %v", err)
 	}
 
-	d, _ := json.Marshal(ret)
-	fmt.Println(string(d))
+	fmt.Println(ret)
 }
 
 func Test_Process_memory_maps(t *testing.T) {
