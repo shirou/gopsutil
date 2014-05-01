@@ -32,17 +32,29 @@ func Pids() ([]int32, error) {
 }
 
 func (p *Process) Ppid() (int32, error) {
-	return 0, errors.New("not implemented yet")
+	k, err := p.getKProc()
+	if err != nil {
+		return 0, err
+	}
+
+	return k.KiPpid, nil
 }
 func (p *Process) Name() (string, error) {
-	name := ""
-	return name, errors.New("not implemented yet")
+	k, err := p.getKProc()
+	if err != nil {
+		return "", err
+	}
+
+	return string(k.KiComm[:]), nil
 }
 func (p *Process) Exe() (string, error) {
 	return "", errors.New("not implemented yet")
 }
 func (p *Process) Cmdline() (string, error) {
 	return "", errors.New("not implemented yet")
+}
+func (p *Process) CreateTime() (int64, error) {
+	return 0, errors.New("not implemented yet")
 }
 func (p *Process) Cwd() (string, error) {
 	return "", errors.New("not implemented yet")
@@ -51,21 +63,53 @@ func (p *Process) Parent() (*Process, error) {
 	return p, errors.New("not implemented yet")
 }
 func (p *Process) Status() (string, error) {
-	return "", errors.New("not implemented yet")
+	k, err := p.getKProc()
+	if err != nil {
+		return "", err
+	}
+
+	return string(k.KiStat[:]), nil
 }
 func (p *Process) Username() (string, error) {
 	return "", errors.New("not implemented yet")
 }
 func (p *Process) Uids() ([]int32, error) {
-	var uids []int32
-	return uids, errors.New("not implemented yet")
+	k, err := p.getKProc()
+	if err != nil {
+		return nil, err
+	}
+
+	uids := make([]int32, 0, 3)
+
+	uids = append(uids, int32(k.KiRuid), int32(k.KiUID), int32(k.KiSvuid))
+
+	return uids, nil
 }
 func (p *Process) Gids() ([]int32, error) {
-	var gids []int32
-	return gids, errors.New("not implemented yet")
+	k, err := p.getKProc()
+	if err != nil {
+		return nil, err
+	}
+
+	gids := make([]int32, 0, 3)
+	gids = append(gids, int32(k.KiRgid), int32(k.KiNgroups[0]), int32(k.KiSvuid))
+
+	return gids, nil
 }
 func (p *Process) Terminal() (string, error) {
-	return "", errors.New("not implemented yet")
+	k, err := p.getKProc()
+	if err != nil {
+		return "", err
+	}
+
+	ttyNr := uint64(k.KiTdev)
+
+	termmap, err := getTerminalMap()
+	if err != nil {
+		return "", err
+	}
+
+	return termmap[ttyNr], nil
 }
 func (p *Process) Nice() (int32, error) {
 	return 0, errors.New("not implemented yet")
@@ -87,7 +131,12 @@ func (p *Process) NumFDs() (int32, error) {
 	return 0, errors.New("not implemented yet")
 }
 func (p *Process) NumThreads() (int32, error) {
-	return 0, errors.New("not implemented yet")
+	k, err := p.getKProc()
+	if err != nil {
+		return 0, err
+	}
+
+	return k.KiNumthreads, nil
 }
 func (p *Process) Threads() (map[string]string, error) {
 	ret := make(map[string]string, 0)
@@ -103,7 +152,17 @@ func (p *Process) CPUAffinity() ([]int32, error) {
 	return nil, errors.New("not implemented yet")
 }
 func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
-	return nil, errors.New("not implemented yet")
+	k, err := p.getKProc()
+	if err != nil {
+		return nil, err
+	}
+
+	ret := &MemoryInfoStat{
+		RSS: uint64(k.KiRssize),
+		VMS: uint64(k.KiSize),
+	}
+
+	return ret, nil
 }
 func (p *Process) MemoryInfoEx() (*MemoryInfoExStat, error) {
 	return nil, errors.New("not implemented yet")
@@ -219,8 +278,7 @@ func callSyscall(mib []int32) ([]byte, uint64, error) {
 	return buf, length, nil
 }
 
-func NewProcess(pid int32) (*Process, error) {
-	p := &Process{Pid: pid}
+func (p *Process) getKProc() (*KinfoProc, error) {
 	mib := []int32{CTL_KERN, KERN_PROC, KERN_PROC_PID, p.Pid}
 
 	buf, length, err := callSyscall(mib)
@@ -237,6 +295,11 @@ func NewProcess(pid int32) (*Process, error) {
 		return nil, err
 	}
 
-	copyParams(&k, p)
+	return &k, nil
+}
+
+func NewProcess(pid int32) (*Process, error) {
+	p := &Process{Pid: pid}
+
 	return p, nil
 }
