@@ -31,6 +31,11 @@ type IOCountersStat struct {
 	WriteBytes int32 `json:"write_bytes"`
 }
 
+type NumCtxSwitchesStat struct {
+	Voluntary   int32 `json:"voluntary"`
+	Involuntary int32 `json:"involuntary"`
+}
+
 func (p Process) String() string {
 	s, _ := json.Marshal(p)
 	return string(s)
@@ -53,6 +58,11 @@ func (r RlimitStat) String() string {
 
 func (i IOCountersStat) String() string {
 	s, _ := json.Marshal(i)
+	return string(s)
+}
+
+func (p NumCtxSwitchesStat) String() string {
+	s, _ := json.Marshal(p)
 	return string(s)
 }
 

@@ -3,6 +3,7 @@
 package gopsutil
 
 import (
+	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"os"
@@ -10,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
-	"encoding/json"
 )
 
 const (
@@ -27,6 +27,7 @@ type MemoryInfoExStat struct {
 	Data   uint64 `json:"data"`   // bytes
 	Dirty  uint64 `json:"dirty"`  // bytes
 }
+
 func (m MemoryInfoExStat) String() string {
 	s, _ := json.Marshal(m)
 	return string(s)
@@ -51,8 +52,6 @@ func (m MemoryMapsStat) String() string {
 	return string(s)
 }
 
-
-
 // Create new Process instance
 // This only stores Pid
 func NewProcess(pid int32) (*Process, error) {
@@ -70,7 +69,7 @@ func (p *Process) Ppid() (int32, error) {
 	return ppid, nil
 }
 func (p *Process) Name() (string, error) {
-	name, _, _, _, _, err := p.fillFromStatus()
+	name, _, _, _, _, _, err := p.fillFromStatus()
 	if err != nil {
 		return "", err
 	}
@@ -97,7 +96,7 @@ func (p *Process) Parent() (*Process, error) {
 	return nil, errors.New("not implemented yet")
 }
 func (p *Process) Status() (string, error) {
-	_, status, _, _, _, err := p.fillFromStatus()
+	_, status, _, _, _, _, err := p.fillFromStatus()
 	if err != nil {
 		return "", err
 	}
@@ -107,14 +106,14 @@ func (p *Process) Username() (string, error) {
 	return "", nil
 }
 func (p *Process) Uids() ([]int32, error) {
-	_, _, uids, _, _, err := p.fillFromStatus()
+	_, _, uids, _, _, _, err := p.fillFromStatus()
 	if err != nil {
 		return nil, err
 	}
 	return uids, nil
 }
 func (p *Process) Gids() ([]int32, error) {
-	_, _, _, gids, _, err := p.fillFromStatus()
+	_, _, _, gids, _, _, err := p.fillFromStatus()
 	if err != nil {
 		return nil, err
 	}
@@ -143,14 +142,18 @@ func (p *Process) Rlimit() ([]RlimitStat, error) {
 func (p *Process) IOCounters() (*IOCountersStat, error) {
 	return p.fillFromIO()
 }
-func (p *Process) NumCtxSwitches() (int32, error) {
-	return 0, errors.New("not implemented yet")
+func (p *Process) NumCtxSwitches() (*NumCtxSwitchesStat, error) {
+	_, _, _, _, _, numCtxSwitches, err := p.fillFromStatus()
+	if err != nil {
+		return nil, err
+	}
+	return numCtxSwitches, nil
 }
 func (p *Process) NumFDs() (int32, error) {
 	return 0, errors.New("not implemented yet")
 }
 func (p *Process) NumThreads() (int32, error) {
-	_, _, _, _, numThreads, err := p.fillFromStatus()
+	_, _, _, _, numThreads, _, err := p.fillFromStatus()
 	if err != nil {
 		return 0, err
 	}
@@ -407,18 +410,20 @@ func (p *Process) fillFromStatm() (*MemoryInfoStat, *MemoryInfoExStat, error) {
 }
 
 // Get various status from /proc/(pid)/status
-func (p *Process) fillFromStatus() (string, string, []int32, []int32, int32, error) {
+func (p *Process) fillFromStatus() (string, string, []int32, []int32, int32, *NumCtxSwitchesStat, error) {
 	pid := p.Pid
 	statPath := filepath.Join("/", "proc", strconv.Itoa(int(pid)), "status")
 	contents, err := ioutil.ReadFile(statPath)
 	if err != nil {
-		return "", "", nil, nil, 0, err
+		return "", "", nil, nil, 0, nil, err
 	}
 	lines := strings.Split(string(contents), "\n")
 
 	name := ""
 	status := ""
 	var numThreads int32
+	var vol int32
+	var unvol int32
 	var uids []int32
 	var gids []int32
 	for _, line := range lines {
@@ -446,10 +451,18 @@ func (p *Process) fillFromStatus() (string, string, []int32, []int32, int32, err
 			}
 		case "Threads":
 			numThreads = parseInt32(field[1])
+		case "voluntary_ctxt_switches":
+			vol = parseInt32(field[1])
+		case "nonvoluntary_ctxt_switches":
+			unvol = parseInt32(field[1])
 		}
 	}
 
-	return name, status, uids, gids, numThreads, nil
+	numctx := &NumCtxSwitchesStat{
+		Voluntary:   vol,
+		Involuntary: unvol,
+	}
+	return name, status, uids, gids, numThreads, numctx, nil
 }
 
 func (p *Process) fillFromStat() (string, int32, *CPUTimesStat, int64, int32, error) {

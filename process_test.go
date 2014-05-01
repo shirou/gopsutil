@@ -101,3 +101,13 @@ func Test_Process_IOCounters(t *testing.T) {
 	fmt.Println(v)
 
 }
+
+func Test_Process_NumCtx(t *testing.T) {
+	p := test_getProcess()
+
+	_, err := p.NumCtxSwitches()
+	if err != nil {
+		t.Errorf("geting numctx error %v", err)
+		return
+	}
+}

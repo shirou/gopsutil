@@ -111,8 +111,8 @@ func (p *Process) Rlimit() ([]RlimitStat, error) {
 func (p *Process) IOCounters() (*IOCountersStat, error) {
 	return nil, errors.New("not implemented yet")
 }
-func (p *Process) NumCtxSwitches() (int32, error) {
-	return 0, errors.New("not implemented yet")
+func (p *Process) NumCtxSwitches() (*NumCtxSwitchesStat, error) {
+	return nil, errors.New("not implemented yet")
 }
 func (p *Process) NumFDs() (int32, error) {
 	return 0, errors.New("not implemented yet")

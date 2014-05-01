@@ -88,6 +88,7 @@ Current Status
     - io_counters (linux)
     - nice (linux)
     - num_fds (linux)
+    - num_ctx_switches (linux)
     - num_threads (linux, freebsd, windows)
     - cpu_times (linux)
     - memory_info (linux, freebsd)
@@ -110,7 +111,6 @@ Current Status
     - username
     - ionice
     - rlimit
-    - num_ctx_switches
     - num_handlers
     - threads
     - cpu_percent
