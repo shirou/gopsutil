@@ -23,25 +23,26 @@ type MEMORYSTATUSEX struct {
 	ullAvailExtendedVirtual uint64
 }
 
-func VirtualMemory() (VirtualMemoryStat, error) {
-	ret := VirtualMemoryStat{}
-
+func VirtualMemory() (*VirtualMemoryStat, error) {
 	var memInfo MEMORYSTATUSEX
 	memInfo.cbSize = uint32(unsafe.Sizeof(memInfo))
 	mem, _, _ := procGlobalMemoryStatusEx.Call(uintptr(unsafe.Pointer(&memInfo)))
 	if mem == 0 {
-		return ret, syscall.GetLastError()
+		return nil, syscall.GetLastError()
 	}
 
-	ret.Total = memInfo.ullTotalPhys
-	ret.Available = memInfo.ullAvailPhys
-	ret.UsedPercent = float64(memInfo.dwMemoryLoad)
+	ret := &VirtualMemoryStat{
+		Total:       memInfo.ullTotalPhys,
+		Available:   memInfo.ullAvailPhys,
+		UsedPercent: float64(memInfo.dwMemoryLoad),
+	}
+
 	ret.Used = ret.Total - ret.Available
 	return ret, nil
 }
 
-func SwapMemory() (SwapMemoryStat, error) {
-	ret := SwapMemoryStat{}
+func SwapMemory() (*SwapMemoryStat, error) {
+	ret := &SwapMemoryStat{}
 
 	return ret, nil
 }

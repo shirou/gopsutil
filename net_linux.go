@@ -10,7 +10,7 @@ func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 	filename := "/proc/net/dev"
 	lines, err := readLines(filename)
 	if err != nil {
-		return make([]NetIOCountersStat, 0), err
+		return nil, err
 	}
 
 	statlen := len(lines) - 1

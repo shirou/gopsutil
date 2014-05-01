@@ -11,15 +11,15 @@ import (
 	"unsafe"
 )
 
-func HostInfo() (HostInfoStat, error) {
-	ret := HostInfoStat{}
-
+func HostInfo() (*HostInfoStat, error) {
 	hostname, err := os.Hostname()
-	ret.Hostname = hostname
 	if err != nil {
-		return ret, err
+		return nil, err
 	}
 
+	ret := &HostInfoStat{
+		Hostname: hostname,
+	}
 	return ret, nil
 }
 

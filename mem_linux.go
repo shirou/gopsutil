@@ -6,17 +6,19 @@ import (
 	"syscall"
 )
 
-func VirtualMemory() (VirtualMemoryStat, error) {
-	ret := VirtualMemoryStat{}
+func VirtualMemory() (*VirtualMemoryStat, error) {
 	sysinfo := &syscall.Sysinfo_t{}
 
 	if err := syscall.Sysinfo(sysinfo); err != nil {
-		return ret, err
+		return nil, err
 	}
-	ret.Total = uint64(sysinfo.Totalram)
-	ret.Free = uint64(sysinfo.Freeram)
-	ret.Shared = uint64(sysinfo.Sharedram)
-	ret.Buffers = uint64(sysinfo.Bufferram)
+
+	ret := &VirtualMemoryStat{
+		Total:   uint64(sysinfo.Totalram),
+		Free:    uint64(sysinfo.Freeram),
+		Shared:  uint64(sysinfo.Sharedram),
+		Buffers: uint64(sysinfo.Bufferram),
+	}
 
 	ret.Used = ret.Total - ret.Free
 
@@ -35,15 +37,16 @@ func VirtualMemory() (VirtualMemoryStat, error) {
 	return ret, nil
 }
 
-func SwapMemory() (SwapMemoryStat, error) {
-	ret := SwapMemoryStat{}
+func SwapMemory() (*SwapMemoryStat, error) {
 	sysinfo := &syscall.Sysinfo_t{}
 
 	if err := syscall.Sysinfo(sysinfo); err != nil {
-		return ret, err
+		return nil, err
 	}
-	ret.Total = sysinfo.Totalswap
-	ret.Free = sysinfo.Freeswap
+	ret := &SwapMemoryStat{
+		Total: sysinfo.Totalswap,
+		Free:  sysinfo.Freeswap,
+	}
 	ret.Used = ret.Total - ret.Free
 	ret.UsedPercent = float64(ret.Total-ret.Free) / float64(ret.Total) * 100.0
 

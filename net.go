@@ -1,8 +1,8 @@
 package gopsutil
 
 type NetIOCountersStat struct {
-	Name        string `json:"name"`        // interface name
-	BytesSent   uint64 `json:"bytes_sent"`  // number of bytes sent
+	Name        string `json:"name"`         // interface name
+	BytesSent   uint64 `json:"bytes_sent"`   // number of bytes sent
 	BytesRecv   uint64 `json:"bytes_recv"`   // number of bytes received
 	PacketsSent uint64 `json:"packets_sent"` // number of packets sent
 	PacketsRecv uint64 `json:"packets_recv"` // number of packets received

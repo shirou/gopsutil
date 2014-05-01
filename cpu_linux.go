@@ -18,18 +18,18 @@ func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 		if err != nil {
 			continue
 		}
-		ret = append(ret, ct)
+		ret = append(ret, *ct)
 
 	}
 	return ret, nil
 }
 
-func parseStatLine(line string) (CPUTimesStat, error) {
+func parseStatLine(line string) (*CPUTimesStat, error) {
 	fields := strings.Fields(line)
 
 	if strings.HasPrefix(fields[0], "cpu") == false {
 		//		return CPUTimesStat{}, e
-		return CPUTimesStat{}, errors.New("not contain cpu")
+		return nil, errors.New("not contain cpu")
 	}
 
 	cpu := fields[0]
@@ -44,7 +44,7 @@ func parseStatLine(line string) (CPUTimesStat, error) {
 	irq, _ := strconv.ParseFloat(fields[6], 32)
 	softirq, _ := strconv.ParseFloat(fields[7], 32)
 	stolen, _ := strconv.ParseFloat(fields[8], 32)
-	ct := CPUTimesStat{
+	ct := &CPUTimesStat{
 		CPU:     cpu,
 		User:    float32(user),
 		Nice:    float32(nice),
