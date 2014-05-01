@@ -93,10 +93,11 @@ func Test_Process_IOCounters(t *testing.T) {
 	v, err := p.IOCounters()
 	if err != nil {
 		t.Errorf("geting ppid error %v", err)
+		return
 	}
-	fmt.Println(v)
 	if v.ReadCount == 0 {
 		t.Errorf("return value is 0 %v", v)
 	}
+	fmt.Println(v)
 
 }
