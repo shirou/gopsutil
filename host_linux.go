@@ -33,21 +33,22 @@ func BootTime() (int64, error) {
 
 func Users() ([]UserStat, error) {
 	utmpfile := "/var/run/utmp"
-	var ret []UserStat
 
 	file, err := os.Open(utmpfile)
 	if err != nil {
-		return ret, err
+		return nil, err
 	}
 
 	buf, err := ioutil.ReadAll(file)
 	if err != nil {
-		return ret, err
+		return nil, err
 	}
 
 	u := utmp{}
 	entrySize := int(unsafe.Sizeof(u))
 	count := len(buf) / entrySize
+
+	ret := make([]UserStat, 0, count)
 
 	for i := 0; i < count; i++ {
 		b := buf[i*entrySize : i*entrySize+entrySize]

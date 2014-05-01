@@ -9,10 +9,11 @@ import (
 )
 
 func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
-	var ret []CPUTimesStat
-
 	filename := "/proc/stat"
 	lines, _ := readLines(filename)
+
+	ret := make([]CPUTimesStat, 0, len(lines))
+
 	for _, line := range lines {
 		ct, err := parseStatLine(line)
 		if err != nil {

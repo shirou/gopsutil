@@ -14,13 +14,14 @@ const (
 // Get disk partitions.
 // should use setmntent(3) but this implement use /etc/mtab file
 func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
-	var ret []DiskPartitionStat
 
 	filename := "/etc/mtab"
 	lines, err := readLines(filename)
 	if err != nil {
-		return ret, err
+		return nil, err
 	}
+
+	ret := make([]DiskPartitionStat, 0, len(lines))
 
 	for _, line := range lines {
 		fields := strings.Fields(line)
@@ -36,15 +37,13 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 }
 
 func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
-	ret := make(map[string]DiskIOCountersStat, 0)
-
 	// determine partitions we want to look for
 	filename := "/proc/partitions"
 	lines, err := readLines(filename)
 	if err != nil {
-		return ret, err
+		return nil, err
 	}
-	var partitions []string
+	partitions := make([]string, 0, len(lines)-2)
 
 	for _, line := range lines[2:] {
 		fields := strings.Fields(line)
@@ -64,8 +63,9 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 	filename = "/proc/diskstats"
 	lines, err = readLines(filename)
 	if err != nil {
-		return ret, err
+		return nil, err
 	}
+	ret := make(map[string]DiskIOCountersStat, 0)
 	for _, line := range lines {
 		fields := strings.Fields(line)
 		name := fields[2]
