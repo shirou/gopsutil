@@ -4,6 +4,10 @@ gopsutil: psutil for golang
 .. image:: https://drone.io/github.com/shirou/gopsutil/status.png
         :target: https://drone.io/github.com/shirou/gopsutil
 
+.. image:: https://coveralls.io/repos/shirou/gopsutil/badge.png?branch=master
+        :target: https://coveralls.io/r/shirou/gopsutil?branch=master
+
+
 This is a port of psutil(http://pythonhosted.org/psutil/). This
 challenges porting all psutil functions on some architectures.
 
