@@ -13,8 +13,8 @@ var (
 	procGetTickCount            = modkernel32.NewProc("GetTickCount")
 )
 
-func HostInfo() (HostInfoStat, error) {
-	ret := HostInfoStat{}
+func HostInfo() (*HostInfoStat, error) {
+	ret := &HostInfoStat{}
 	hostname, err := os.Hostname()
 	if err != nil {
 		return ret, err
