@@ -1,7 +1,6 @@
 package gopsutil
 
 import (
-	"fmt"
 	"os"
 	"runtime"
 	"testing"
@@ -52,8 +51,13 @@ func Test_NewProcess(t *testing.T) {
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
+	empty := &Process{}
+	if runtime.GOOS != "windows" { // Windows pid is 0
+		if empty == ret {
+			t.Errorf("error %v", ret)
+		}
+	}
 
-	fmt.Println(ret)
 }
 
 func Test_Process_memory_maps(t *testing.T) {
@@ -61,15 +65,17 @@ func Test_Process_memory_maps(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		checkPid = 0
 	}
-	return
 	ret, err := NewProcess(int32(checkPid))
 
 	mmaps, err := ret.MemoryMaps(false)
 	if err != nil {
 		t.Errorf("memory map get error %v", err)
 	}
+	empty := MemoryMapsStat{}
 	for _, m := range *mmaps {
-		fmt.Println(m)
+		if m == empty {
+			t.Errorf("memory map get error %v", m)
+		}
 	}
 
 }
@@ -95,11 +101,10 @@ func Test_Process_IOCounters(t *testing.T) {
 		t.Errorf("geting ppid error %v", err)
 		return
 	}
-	if v.ReadCount == 0 {
-		t.Errorf("return value is 0 %v", v)
+	empty := &IOCountersStat{}
+	if v == empty {
+		t.Errorf("error %v", v)
 	}
-	fmt.Println(v)
-
 }
 
 func Test_Process_NumCtx(t *testing.T) {
