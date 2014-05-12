@@ -12,8 +12,8 @@ import (
 	"unsafe"
 )
 
-func HostInfo() (HostInfoStat, error) {
-	ret := HostInfoStat{}
+func HostInfo() (*HostInfoStat, error) {
+	ret := &HostInfoStat{}
 
 	hostname, err := os.Hostname()
 	ret.Hostname = hostname
