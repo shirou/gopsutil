@@ -15,7 +15,6 @@ func TestVirtual_memory(t *testing.T) {
 	if v == empty {
 		t.Errorf("error %v", v)
 	}
-
 }
 
 func TestSwap_memory(t *testing.T) {
