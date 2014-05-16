@@ -9,10 +9,10 @@ import (
 type HostInfoStat struct {
 	Hostname        string `json:"hostname"`
 	Uptime          int64  `json:"uptime"`
-	Procs           uint64 `json:"procs"` // number of processes
-	OS              string `json:"os"` // ex: freebsd, linux
-	Platform        string `json:"platform"`        // ex: ubuntu, linuxmint
-	PlatformFamily  string `json:"platformFamily"`  // ex: debian, rhel
+	Procs           uint64 `json:"procs"`          // number of processes
+	OS              string `json:"os"`             // ex: freebsd, linux
+	Platform        string `json:"platform"`       // ex: ubuntu, linuxmint
+	PlatformFamily  string `json:"platformFamily"` // ex: debian, rhel
 	PlatformVersion string `json:"platformVersion"`
 }
 

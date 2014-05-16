@@ -9,9 +9,9 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 	"syscall"
 	"unsafe"
-	"strings"
 )
 
 type LSB struct {
@@ -33,12 +33,11 @@ func HostInfo() (*HostInfoStat, error) {
 	}
 
 	platform, family, version, err := getPlatformInformation()
-	if err == nil{
+	if err == nil {
 		ret.Platform = platform
 		ret.PlatformFamily = family
 		ret.PlatformVersion = version
 	}
-
 
 	return ret, nil
 }
@@ -162,36 +161,36 @@ func getPlatformInformation() (string, string, string, error) {
 			version, _ = getRedhatishVersion(contents)
 		}
 	} else if pathExists("/etc/debian_version") {
-		if lsb.ID == "Ubuntu"{
-				platform = "ubuntu"
-				version = lsb.Release
-			}else if lsb.ID == "LinuxMint"{
-				platform = "linuxmint"
-				version = lsb.Release
-			}else{
-				if pathExists("/usr/bin/raspi-config"){
-					platform = "raspbian"
-				}else{
-					platform = "debian"
-				}
-				contents, err := readLines("/etc/debian_version")
-				if err == nil{
-					version = contents[0]
-				}
+		if lsb.ID == "Ubuntu" {
+			platform = "ubuntu"
+			version = lsb.Release
+		} else if lsb.ID == "LinuxMint" {
+			platform = "linuxmint"
+			version = lsb.Release
+		} else {
+			if pathExists("/usr/bin/raspi-config") {
+				platform = "raspbian"
+			} else {
+				platform = "debian"
+			}
+			contents, err := readLines("/etc/debian_version")
+			if err == nil {
+				version = contents[0]
+			}
 		}
-	} else if pathExists("/etc/redhat-release"){
+	} else if pathExists("/etc/redhat-release") {
 		contents, err := readLines("/etc/redhat-release")
 		if err == nil {
 			version, _ = getRedhatishVersion(contents)
 			platform, _ = getRedhatishPlatform(contents)
 		}
-	} else if pathExists("/etc/system-release"){
+	} else if pathExists("/etc/system-release") {
 		contents, err := readLines("/etc/system-release")
 		if err == nil {
 			version, _ = getRedhatishVersion(contents)
 			platform, _ = getRedhatishPlatform(contents)
 		}
-	} else if pathExists("/etc/gentoo-release"){
+	} else if pathExists("/etc/gentoo-release") {
 		platform = "gentoo"
 		contents, err := readLines("/etc/gentoo-release")
 		if err == nil {
@@ -199,26 +198,25 @@ func getPlatformInformation() (string, string, string, error) {
 		}
 		// TODO: suse detection
 		// TODO: slackware detecion
-	}else if pathExists("/etc/arch-release"){
+	} else if pathExists("/etc/arch-release") {
 		platform = "arch"
 		// TODO: exherbo detection
-	}else if lsb.ID == "RedHat"{
+	} else if lsb.ID == "RedHat" {
 		platform = "redhat"
 		version = lsb.Release
-	}else if lsb.ID == "Amazon"{
+	} else if lsb.ID == "Amazon" {
 		platform = "amazon"
-		version =  lsb.Release
-	}else if lsb.ID == "ScientificSL"{
+		version = lsb.Release
+	} else if lsb.ID == "ScientificSL" {
 		platform = "scientific"
-		version =  lsb.Release
-	}else if lsb.ID == "XenServer"{
+		version = lsb.Release
+	} else if lsb.ID == "XenServer" {
 		platform = "xenserver"
-		version =  lsb.Release
-	}else if lsb.ID != ""{
+		version = lsb.Release
+	} else if lsb.ID != "" {
 		platform = strings.ToLower(lsb.ID)
 		version = lsb.Release
 	}
-
 
 	switch platform {
 	case "debian", "ubuntu", "linuxmint", "raspbian":
