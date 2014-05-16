@@ -16,6 +16,7 @@ Available archtectures
 
 - FreeBSD/amd64
 - Linux/amd64
+- Linux/arm (raspberry pi)
 - Windows/amd64
 
 (I do not have a darwin machine)

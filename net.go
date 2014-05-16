@@ -25,8 +25,8 @@ type NetConnectionStat struct {
 	Fd     uint32 `json:"fd"`
 	Family uint32 `json:"family"`
 	Type   uint32 `json:"type"`
-	Laddr  Addr   `json:"laddr"`
-	Raddr  Addr   `json:"raddr"`
+	Laddr  Addr   `json:"localaddr"`
+	Raddr  Addr   `json:"remoteaddr"`
 	Status string `json:"status"`
 	Pid    int32  `json:"pid"`
 }

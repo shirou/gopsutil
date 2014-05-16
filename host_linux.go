@@ -1,4 +1,4 @@
-// +build linux,amd64
+// +build linux
 
 package gopsutil
 
@@ -28,7 +28,7 @@ func BootTime() (int64, error) {
 	if err := syscall.Sysinfo(sysinfo); err != nil {
 		return 0, err
 	}
-	return sysinfo.Uptime, nil
+	return int64(sysinfo.Uptime), nil
 }
 
 func Users() ([]UserStat, error) {
