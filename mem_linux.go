@@ -20,8 +20,6 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 		Buffers: uint64(sysinfo.Bufferram),
 	}
 
-	ret.Used = ret.Total - ret.Free
-
 	// TODO: platform independent
 	ret.Available = ret.Free + ret.Buffers + ret.Cached
 
