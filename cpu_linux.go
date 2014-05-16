@@ -25,6 +25,55 @@ func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 	return ret, nil
 }
 
+func CPUInfo() ([]CPUInfoStat, error) {
+	filename := "/proc/cpuinfo"
+	lines, _ := readLines(filename)
+
+	var ret []CPUInfoStat
+
+	var c CPUInfoStat
+	for _, line := range lines {
+		fields := strings.Split(line, ":")
+		if len(fields) < 2{
+			if c.VendorId != "" {
+				ret = append(ret, c)
+			}
+			continue
+		}
+		key := strings.TrimSpace(fields[0])
+		value := strings.TrimSpace(fields[1])
+
+		switch key {
+		case "processor":
+			c = CPUInfoStat{}
+			c.CPU = parseInt32(value)
+		case "vendor_id":
+			c.VendorId = value
+		case "cpu family":
+			c.Family = value
+		case "model":
+			c.Model = value
+		case "model name":
+			c.ModelName = value
+		case "stepping":
+			c.Stepping = parseInt32(value)
+		case "cpu MHz":
+			c.Mhz = parseFloat64(value)
+		case "cache size":
+			c.CacheSize = parseInt32(strings.Replace(value, " KB", "", 1))
+		case "physical id":
+			c.PhysicalID = value
+		case "core id":
+			c.CoreID = value
+		case "cpu cores":
+			c.Cores = parseInt32(value)
+		case "flags":
+			c.Flags = strings.Split(value, ",")
+		}
+	}
+	return ret, nil
+}
+
 func parseStatLine(line string) (*CPUTimesStat, error) {
 	fields := strings.Fields(line)
 

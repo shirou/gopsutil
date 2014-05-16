@@ -43,3 +43,15 @@ func TestCPUTimeStat_String(t *testing.T) {
 		t.Errorf("CPUTimesStat string is invalid: %v", v)
 	}
 }
+
+func TestCpuInfo(t *testing.T) {
+	v, err := CPUInfo()
+	if err != nil {
+		t.Errorf("error %v", err)
+	}
+	for _, vv := range v {
+		if vv.ModelName == ""{
+			t.Errorf("could not get CPU Info: %v", vv)
+		}
+	}
+}

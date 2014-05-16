@@ -72,6 +72,15 @@ To becomes more useful, add more information.
   - Platform family ex: debian
   - Platform Version ex: Ubuntu 13.10
 
+- CPUInfoStat()
+
+  - Processer
+  - Vendor ID
+  - Model name
+  - cores
+  - Mhz
+  - etc...
+
 Some codes are ported some functions from Ohai. very thanks.
 
 
