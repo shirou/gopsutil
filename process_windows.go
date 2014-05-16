@@ -164,7 +164,8 @@ func (p *Process) IsRunning() (bool, error) {
 }
 
 func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
-	return nil, errors.New("not implemented yet")
+	ret := make([]MemoryMapsStat, 0)
+	return &ret, errors.New("not implemented yet")
 }
 
 func NewProcess(pid int32) (*Process, error) {

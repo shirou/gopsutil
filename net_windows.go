@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	modiphlpapi             = NewLazyDLL("iphlpapi.dll")
+	modiphlpapi             = syscall.NewLazyDLL("iphlpapi.dll")
 	procGetExtendedTcpTable = modiphlpapi.NewProc("GetExtendedTcpTable")
 	procGetExtendedUdpTable = modiphlpapi.NewProc("GetExtendedUdpTable")
 )
@@ -72,7 +72,7 @@ func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 func NetConnections(kind string) ([]NetConnectionStat, error) {
 	var ret []NetConnectionStat
 
-	return ret, erros.New("not implemented yet")
+	return ret, errors.New("not implemented yet")
 }
 
 // borrowed from src/pkg/net/interface_windows.go
