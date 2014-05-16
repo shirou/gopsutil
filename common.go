@@ -9,6 +9,7 @@ package gopsutil
 import (
 	"bufio"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 )
@@ -84,4 +85,27 @@ func stringContains(target []string, src string) bool {
 		}
 	}
 	return false
+}
+
+// get struct attributes.
+// This method is used only for debugging platform dependent code.
+func attributes(m interface{}) map[string]reflect.Type {
+	typ := reflect.TypeOf(m)
+	if typ.Kind() == reflect.Ptr {
+		typ = typ.Elem()
+	}
+
+	attrs := make(map[string]reflect.Type)
+	if typ.Kind() != reflect.Struct {
+		return nil
+	}
+
+	for i := 0; i < typ.NumField(); i++ {
+		p := typ.Field(i)
+		if !p.Anonymous {
+			attrs[p.Name] = p.Type
+		}
+	}
+
+	return attrs
 }
