@@ -60,6 +60,21 @@ Document
 see http://godoc.org/github.com/shirou/gopsutil
 
 
+More info
+--------------------
+
+To becomes more useful, add more information.
+
+- Hostinfo()
+
+  - OS
+  - Platform ex: ubuntu, arch
+  - Platform family ex: debian
+  - Platform Version ex: Ubuntu 13.10
+
+Some codes are ported some functions from Ohai. very thanks.
+
+
 Current Status
 ------------------
 
@@ -151,6 +166,7 @@ Related works
 - gosiger: https://github.com/cloudfoundry/gosigar/
 - goprocinfo: https://github.com/c9s/goprocinfo
 - go-ps: https://github.com/mitchellh/go-ps
+- ohai: https://github.com/opscode/ohai/
 
 I have referenced these great works.
 
