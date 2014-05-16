@@ -65,14 +65,14 @@ More info
 
 To becomes more useful, add more information.
 
-- Hostinfo()
+- Hostinfo()  (linux)
 
   - OS
   - Platform ex: ubuntu, arch
   - Platform family ex: debian
   - Platform Version ex: Ubuntu 13.10
 
-- CPUInfoStat()
+- CPUInfoStat()  (linux, freebsd)
 
   - Processer
   - Vendor ID
@@ -80,6 +80,12 @@ To becomes more useful, add more information.
   - cores
   - Mhz
   - etc...
+
+- LoadAvg()  (linux, freebsd)
+
+  - Load1
+  - Load5
+  - Load15
 
 Some codes are ported some functions from Ohai. very thanks.
 
