@@ -3,10 +3,29 @@
 package gopsutil
 
 import (
+	"errors"
 	"net"
 	"os"
 	"syscall"
 	"unsafe"
+)
+
+var (
+	modiphlpapi             = NewLazyDLL("iphlpapi.dll")
+	procGetExtendedTcpTable = modiphlpapi.NewProc("GetExtendedTcpTable")
+	procGetExtendedUdpTable = modiphlpapi.NewProc("GetExtendedUdpTable")
+)
+
+const (
+	TCP_TABLE_BASIC_LISTENER = iota
+	TCP_TABLE_BASIC_CONNECTIONS
+	TCP_TABLE_BASIC_ALL
+	TCP_TABLE_OWNER_PID_LISTENER
+	TCP_TABLE_OWNER_PID_CONNECTIONS
+	TCP_TABLE_OWNER_PID_ALL
+	TCP_TABLE_OWNER_MODULE_LISTENER
+	TCP_TABLE_OWNER_MODULE_CONNECTIONS
+	TCP_TABLE_OWNER_MODULE_ALL
 )
 
 func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
@@ -47,6 +66,13 @@ func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 		}
 	}
 	return ret, nil
+}
+
+// Return a list of network connections opened by a process
+func NetConnections(kind string) ([]NetConnectionStat, error) {
+	var ret []NetConnectionStat
+
+	return ret, erros.New("not implemented yet")
 }
 
 // borrowed from src/pkg/net/interface_windows.go
