@@ -44,8 +44,10 @@ func TestHostInfoStat_String(t *testing.T) {
 		Hostname: "test",
 		Uptime:   3000,
 		Procs:    100,
+		OS: "linux",
+		Platform: "ubuntu",
 	}
-	e := `{"hostname":"test","uptime":3000,"procs":100}`
+	e := `{"hostname":"test","uptime":3000,"procs":100,"os":"linux","platform":"ubuntu","platformFamily":"","platformVersion":""}`
 	if e != fmt.Sprintf("%v", v) {
 		t.Errorf("HostInfoStat string is invalid: %v", v)
 	}
