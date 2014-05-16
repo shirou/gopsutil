@@ -34,7 +34,7 @@ func CPUInfo() ([]CPUInfoStat, error) {
 	var c CPUInfoStat
 	for _, line := range lines {
 		fields := strings.Split(line, ":")
-		if len(fields) < 2{
+		if len(fields) < 2 {
 			if c.VendorId != "" {
 				ret = append(ret, c)
 			}
@@ -48,7 +48,7 @@ func CPUInfo() ([]CPUInfoStat, error) {
 			c = CPUInfoStat{}
 			c.CPU = parseInt32(value)
 		case "vendor_id":
-			c.VendorId = value
+			c.VendorID = value
 		case "cpu family":
 			c.Family = value
 		case "model":
