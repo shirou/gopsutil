@@ -68,6 +68,14 @@ func parseUint64(val string) uint64 {
 	return uint64(vv)
 }
 
+// Parse to Float64 without error
+func parseFloat64(val string) float64 {
+	vv, _ := strconv.ParseFloat(val, 64)
+	return vv
+}
+
+
+
 // Check the target string slice containes src or not
 func stringContains(target []string, src string) bool {
 	for _, t := range target {
