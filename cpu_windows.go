@@ -35,3 +35,8 @@ func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 	})
 	return ret, nil
 }
+
+func CPUInfo() ([]CPUInfoStat, error) {
+	var ret []CPUInfoStat
+	return ret, nil
+}
