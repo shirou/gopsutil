@@ -35,7 +35,7 @@ func CPUInfo() ([]CPUInfoStat, error) {
 	for _, line := range lines {
 		fields := strings.Split(line, ":")
 		if len(fields) < 2 {
-			if c.VendorId != "" {
+			if c.VendorID != "" {
 				ret = append(ret, c)
 			}
 			continue
