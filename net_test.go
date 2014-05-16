@@ -31,7 +31,7 @@ func TestNetConnectionStatString(t *testing.T) {
 		Family: 10,
 		Type:   10,
 	}
-	e := `{"fd":10,"family":10,"type":10,"laddr":{"ip":"","port":0},"raddr":{"ip":"","port":0},"status":"","pid":0}`
+	e := `{"fd":10,"family":10,"type":10,"localaddr":{"ip":"","port":0},"remoteaddr":{"ip":"","port":0},"status":"","pid":0}`
 	if e != fmt.Sprintf("%v", v) {
 		t.Errorf("NetConnectionStat string is invalid: %v", v)
 	}
