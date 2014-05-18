@@ -38,11 +38,15 @@ func HostInfo() (*HostInfoStat, error) {
 		ret.PlatformFamily = family
 		ret.PlatformVersion = version
 	}
+	uptime, err := BootTime()
+	if err == nil {
+		ret.Uptime = uptime
+	}
 
 	return ret, nil
 }
 
-func BootTime() (int64, error) {
+func BootTime() (uint64, error) {
 	sysinfo := &syscall.Sysinfo_t{}
 	if err := syscall.Sysinfo(sysinfo); err != nil {
 		return 0, err
