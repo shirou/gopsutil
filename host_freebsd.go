@@ -7,18 +7,40 @@ import (
 	"encoding/binary"
 	"io/ioutil"
 	"os"
+	"os/exec"
+	"runtime"
 	"strconv"
 	"strings"
 	"unsafe"
 )
 
 func HostInfo() (*HostInfoStat, error) {
-	ret := &HostInfoStat{}
+	ret := &HostInfoStat{
+		OS:             runtime.GOOS,
+		PlatformFamily: "freebsd",
+	}
 
 	hostname, err := os.Hostname()
-	ret.Hostname = hostname
 	if err != nil {
 		return ret, err
+	}
+	ret.Hostname = hostname
+
+	out, err := exec.Command("uname", "-s").Output()
+	if err == nil {
+		ret.Platform = strings.ToLower(strings.TrimSpace(string(out)))
+	}
+
+	out, err = exec.Command("uname", "-r").Output()
+	if err == nil {
+		ret.PlatformVersion = strings.ToLower(strings.TrimSpace(string(out)))
+	}
+
+	values, err := doSysctrl("kern.boottime")
+	if err == nil {
+		// ex: { sec = 1392261637, usec = 627534 } Thu Feb 13 12:20:37 2014
+		v := strings.Replace(values[2], ",", "", 1)
+		ret.Uptime = mustParseUint64(v)
 	}
 
 	return ret, nil

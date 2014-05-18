@@ -8,7 +8,7 @@ import (
 // This is not in the psutil but it useful.
 type HostInfoStat struct {
 	Hostname        string `json:"hostname"`
-	Uptime          int64  `json:"uptime"`
+	Uptime          uint64 `json:"uptime"`
 	Procs           uint64 `json:"procs"`          // number of processes
 	OS              string `json:"os"`             // ex: freebsd, linux
 	Platform        string `json:"platform"`       // ex: ubuntu, linuxmint
