@@ -102,7 +102,7 @@ Current Status
   - disk_partitions (linux, freebsd, windows)
   - disk_io_counters (linux)
   - disk_usage (linux, freebsd, windows)
-  - net_io_counters (linux, windows)
+  - net_io_counters (linux, freebsd, windows)
   - boot_time (linux, freebsd, windows(but little broken))
   - users (linux, freebsd)
   - pids (linux, freebsd)
