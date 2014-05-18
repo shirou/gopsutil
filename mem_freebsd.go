@@ -10,7 +10,7 @@ import (
 func VirtualMemory() (*VirtualMemoryStat, error) {
 
 	pageSize, _ := doSysctrl("vm.stats.vm.v_page_size")
-	p := parseUint64(pageSize[0])
+	p := mustParseUint64(pageSize[0])
 
 	pageCount, _ := doSysctrl("vm.stats.vm.v_page_count")
 	free, _ := doSysctrl("vm.stats.vm.v_free_count")
@@ -21,13 +21,13 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 	wired, _ := doSysctrl("vm.stats.vm.v_wire_count")
 
 	ret := &VirtualMemoryStat{
-		Total:    parseUint64(pageCount[0]) * p,
-		Free:     parseUint64(free[0]) * p,
-		Active:   parseUint64(active[0]) * p,
-		Inactive: parseUint64(inactive[0]) * p,
-		Cached:   parseUint64(cache[0]) * p,
-		Buffers:  parseUint64(buffer[0]),
-		Wired:    parseUint64(wired[0]) * p,
+		Total:    mustParseUint64(pageCount[0]) * p,
+		Free:     mustParseUint64(free[0]) * p,
+		Active:   mustParseUint64(active[0]) * p,
+		Inactive: mustParseUint64(inactive[0]) * p,
+		Cached:   mustParseUint64(cache[0]) * p,
+		Buffers:  mustParseUint64(buffer[0]),
+		Wired:    mustParseUint64(wired[0]) * p,
 	}
 
 	// TODO: platform independent (worked freebsd?)
@@ -57,10 +57,10 @@ func SwapMemory() (*SwapMemoryStat, error) {
 		u := strings.Replace(values[4], "%", "", 1)
 
 		ret = &SwapMemoryStat{
-			Total:       parseUint64(values[1]),
-			Used:        parseUint64(values[2]),
-			Free:        parseUint64(values[3]),
-			UsedPercent: parseFloat64(u),
+			Total:       mustParseUint64(values[1]),
+			Used:        mustParseUint64(values[2]),
+			Free:        mustParseUint64(values[3]),
+			UsedPercent: mustParseFloat64(u),
 		}
 	}
 

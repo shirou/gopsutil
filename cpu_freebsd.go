@@ -62,12 +62,12 @@ func CPUInfo() ([]CPUInfoStat, error) {
 	for _, line := range lines {
 		if matches := regexp.MustCompile(`CPU:\s+(.+) \(([\d.]+).+\)`).FindStringSubmatch(line); matches != nil {
 			c.ModelName = matches[1]
-			c.Mhz = parseFloat64(matches[2])
+			c.Mhz = mustParseFloat64(matches[2])
 		} else if matches := regexp.MustCompile(`Origin = "(.+)"  Id = (.+)  Family = (.+)  Model = (.+)  Stepping = (.+)`).FindStringSubmatch(line); matches != nil {
 			c.VendorID = matches[1]
 			c.Family = matches[3]
 			c.Model = matches[4]
-			c.Stepping = parseInt32(matches[5])
+			c.Stepping = mustParseInt32(matches[5])
 		} else if matches := regexp.MustCompile(`Features=.+<(.+)>`).FindStringSubmatch(line); matches != nil {
 			for _, v := range strings.Split(matches[1], ",") {
 				c.Flags = append(c.Flags, strings.ToLower(v))
@@ -78,7 +78,7 @@ func CPUInfo() ([]CPUInfoStat, error) {
 			}
 		} else if matches := regexp.MustCompile(`Logical CPUs per core: (\d+)`).FindStringSubmatch(line); matches != nil {
 			// FIXME: no this line?
-			c.Cores = parseInt32(matches[1])
+			c.Cores = mustParseInt32(matches[1])
 		}
 
 	}

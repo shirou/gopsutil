@@ -46,7 +46,7 @@ func CPUInfo() ([]CPUInfoStat, error) {
 		switch key {
 		case "processor":
 			c = CPUInfoStat{}
-			c.CPU = parseInt32(value)
+			c.CPU = mustParseInt32(value)
 		case "vendor_id":
 			c.VendorID = value
 		case "cpu family":
@@ -56,17 +56,17 @@ func CPUInfo() ([]CPUInfoStat, error) {
 		case "model name":
 			c.ModelName = value
 		case "stepping":
-			c.Stepping = parseInt32(value)
+			c.Stepping = mustParseInt32(value)
 		case "cpu MHz":
-			c.Mhz = parseFloat64(value)
+			c.Mhz = mustParseFloat64(value)
 		case "cache size":
-			c.CacheSize = parseInt32(strings.Replace(value, " KB", "", 1))
+			c.CacheSize = mustParseInt32(strings.Replace(value, " KB", "", 1))
 		case "physical id":
 			c.PhysicalID = value
 		case "core id":
 			c.CoreID = value
 		case "cpu cores":
-			c.Cores = parseInt32(value)
+			c.Cores = mustParseInt32(value)
 		case "flags":
 			c.Flags = strings.Split(value, ",")
 		}

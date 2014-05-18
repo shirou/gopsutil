@@ -234,25 +234,25 @@ func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 			v := strings.Trim(field[1], " kB") // remove last "kB"
 			switch field[0] {
 			case "Size":
-				m.Size = parseUint64(v)
+				m.Size = mustParseUint64(v)
 			case "Rss":
-				m.Rss = parseUint64(v)
+				m.Rss = mustParseUint64(v)
 			case "Pss":
-				m.Pss = parseUint64(v)
+				m.Pss = mustParseUint64(v)
 			case "Shared_Clean":
-				m.SharedClean = parseUint64(v)
+				m.SharedClean = mustParseUint64(v)
 			case "Shared_Dirty":
-				m.SharedDirty = parseUint64(v)
+				m.SharedDirty = mustParseUint64(v)
 			case "Private_Clean":
-				m.PrivateClean = parseUint64(v)
+				m.PrivateClean = mustParseUint64(v)
 			case "Private_Dirty":
-				m.PrivateDirty = parseUint64(v)
+				m.PrivateDirty = mustParseUint64(v)
 			case "Referenced":
-				m.Referenced = parseUint64(v)
+				m.Referenced = mustParseUint64(v)
 			case "Anonymous":
-				m.Anonymous = parseUint64(v)
+				m.Anonymous = mustParseUint64(v)
 			case "Swap":
-				m.Swap = parseUint64(v)
+				m.Swap = mustParseUint64(v)
 			}
 		}
 		return m
@@ -301,7 +301,7 @@ func (p *Process) fillFromfd() (int32, []*OpenFilesStat, error) {
 		}
 		o := &OpenFilesStat{
 			Path: filepath,
-			Fd:   parseUint64(fd),
+			Fd:   mustParseUint64(fd),
 		}
 		openfiles = append(openfiles, o)
 	}
@@ -368,13 +368,13 @@ func (p *Process) fillFromIO() (*IOCountersStat, error) {
 		}
 		switch field[0] {
 		case "rchar":
-			ret.ReadCount = parseInt32(strings.Trim(field[1], " \t"))
+			ret.ReadCount = mustParseInt32(strings.Trim(field[1], " \t"))
 		case "wchar":
-			ret.WriteCount = parseInt32(strings.Trim(field[1], " \t"))
+			ret.WriteCount = mustParseInt32(strings.Trim(field[1], " \t"))
 		case "read_bytes":
-			ret.ReadBytes = parseInt32(strings.Trim(field[1], " \t"))
+			ret.ReadBytes = mustParseInt32(strings.Trim(field[1], " \t"))
 		case "write_bytes":
-			ret.WriteBytes = parseInt32(strings.Trim(field[1], " \t"))
+			ret.WriteBytes = mustParseInt32(strings.Trim(field[1], " \t"))
 		}
 	}
 
@@ -391,8 +391,8 @@ func (p *Process) fillFromStatm() (*MemoryInfoStat, *MemoryInfoExStat, error) {
 	}
 	fields := strings.Split(string(contents), " ")
 
-	rss := parseUint64(fields[0]) * PAGESIZE
-	vms := parseUint64(fields[1]) * PAGESIZE
+	rss := mustParseUint64(fields[0]) * PAGESIZE
+	vms := mustParseUint64(fields[1]) * PAGESIZE
 	memInfo := &MemoryInfoStat{
 		RSS: rss,
 		VMS: vms,
@@ -400,10 +400,10 @@ func (p *Process) fillFromStatm() (*MemoryInfoStat, *MemoryInfoExStat, error) {
 	memInfoEx := &MemoryInfoExStat{
 		RSS:    rss,
 		VMS:    vms,
-		Shared: parseUint64(fields[2]) * PAGESIZE,
-		Text:   parseUint64(fields[3]) * PAGESIZE,
-		Lib:    parseUint64(fields[4]) * PAGESIZE,
-		Dirty:  parseUint64(fields[5]) * PAGESIZE,
+		Shared: mustParseUint64(fields[2]) * PAGESIZE,
+		Text:   mustParseUint64(fields[3]) * PAGESIZE,
+		Lib:    mustParseUint64(fields[4]) * PAGESIZE,
+		Dirty:  mustParseUint64(fields[5]) * PAGESIZE,
 	}
 
 	return memInfo, memInfoEx, nil
@@ -443,18 +443,18 @@ func (p *Process) fillFromStatus() (string, string, []int32, []int32, int32, *Nu
 			//		case "PPid":  // filled by fillFromStat
 		case "Uid":
 			for _, i := range strings.Split(field[1], "\t") {
-				uids = append(uids, parseInt32(i))
+				uids = append(uids, mustParseInt32(i))
 			}
 		case "Gid":
 			for _, i := range strings.Split(field[1], "\t") {
-				gids = append(gids, parseInt32(i))
+				gids = append(gids, mustParseInt32(i))
 			}
 		case "Threads":
-			numThreads = parseInt32(field[1])
+			numThreads = mustParseInt32(field[1])
 		case "voluntary_ctxt_switches":
-			vol = parseInt32(field[1])
+			vol = mustParseInt32(field[1])
 		case "nonvoluntary_ctxt_switches":
-			unvol = parseInt32(field[1])
+			unvol = mustParseInt32(field[1])
 		}
 	}
 
@@ -477,10 +477,10 @@ func (p *Process) fillFromStat() (string, int32, *CPUTimesStat, int64, int32, er
 	termmap, err := getTerminalMap()
 	terminal := ""
 	if err == nil {
-		terminal = termmap[parseUint64(fields[6])]
+		terminal = termmap[mustParseUint64(fields[6])]
 	}
 
-	ppid := parseInt32(fields[3])
+	ppid := mustParseInt32(fields[3])
 	utime, _ := strconv.ParseFloat(fields[13], 64)
 	stime, _ := strconv.ParseFloat(fields[14], 64)
 
@@ -491,10 +491,10 @@ func (p *Process) fillFromStat() (string, int32, *CPUTimesStat, int64, int32, er
 	}
 
 	bootTime, _ := BootTime()
-	ctime := ((parseUint64(fields[21]) / uint64(CLOCK_TICKS)) + uint64(bootTime)) * 1000
+	ctime := ((mustParseUint64(fields[21]) / uint64(CLOCK_TICKS)) + uint64(bootTime)) * 1000
 	createTime := int64(ctime)
 
-	//	p.Nice = parseInt32(fields[18])
+	//	p.Nice = mustParseInt32(fields[18])
 	// use syscall instead of parse Stat file
 	snice, _ := syscall.Getpriority(PRIO_PROCESS, int(pid))
 	nice := int32(snice) // FIXME: is this true?

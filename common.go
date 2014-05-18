@@ -58,19 +58,19 @@ func byteToString(orig []byte) string {
 }
 
 // Parse to int32 without error
-func parseInt32(val string) int32 {
+func mustParseInt32(val string) int32 {
 	vv, _ := strconv.ParseInt(val, 10, 32)
 	return int32(vv)
 }
 
 // Parse to uint64 without error
-func parseUint64(val string) uint64 {
+func mustParseUint64(val string) uint64 {
 	vv, _ := strconv.ParseInt(val, 10, 64)
 	return uint64(vv)
 }
 
 // Parse to Float64 without error
-func parseFloat64(val string) float64 {
+func mustParseFloat64(val string) float64 {
 	vv, _ := strconv.ParseFloat(val, 64)
 	return vv
 }
