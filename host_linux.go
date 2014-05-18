@@ -47,7 +47,7 @@ func BootTime() (int64, error) {
 	if err := syscall.Sysinfo(sysinfo); err != nil {
 		return 0, err
 	}
-	return int64(sysinfo.Uptime), nil
+	return uint64(sysinfo.Uptime), nil
 }
 
 func Users() ([]UserStat, error) {
