@@ -1,35 +1,37 @@
-package gopsutil
+package test
 
 import (
 	"fmt"
 	"testing"
+
+	"github.com/shirou/gopsutil"
 )
 
 func TestVirtual_memory(t *testing.T) {
-	v, err := VirtualMemory()
+	v, err := gopsutil.VirtualMemory()
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
 
-	empty := &VirtualMemoryStat{}
+	empty := &gopsutil.VirtualMemoryStat{}
 	if v == empty {
 		t.Errorf("error %v", v)
 	}
 }
 
 func TestSwap_memory(t *testing.T) {
-	v, err := SwapMemory()
+	v, err := gopsutil.SwapMemory()
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
-	empty := &SwapMemoryStat{}
+	empty := &gopsutil.SwapMemoryStat{}
 	if v == empty {
 		t.Errorf("error %v", v)
 	}
 }
 
 func TestVirtualMemoryStat_String(t *testing.T) {
-	v := VirtualMemoryStat{
+	v := gopsutil.VirtualMemoryStat{
 		Total:       10,
 		Available:   20,
 		Used:        30,
@@ -43,7 +45,7 @@ func TestVirtualMemoryStat_String(t *testing.T) {
 }
 
 func TestSwapMemoryStat_String(t *testing.T) {
-	v := SwapMemoryStat{
+	v := gopsutil.SwapMemoryStat{
 		Total:       10,
 		Used:        30,
 		Free:        40,

@@ -1,12 +1,14 @@
-package gopsutil
+package test
 
 import (
 	"fmt"
 	"testing"
+
+	"github.com/shirou/gopsutil"
 )
 
 func TestAddrString(t *testing.T) {
-	v := Addr{IP: "192.168.0.1", Port: 8000}
+	v := gopsutil.Addr{IP: "192.168.0.1", Port: 8000}
 
 	s := fmt.Sprintf("%v", v)
 	if s != "{\"ip\":\"192.168.0.1\",\"port\":8000}" {
@@ -15,7 +17,7 @@ func TestAddrString(t *testing.T) {
 }
 
 func TestNetIOCountersStatString(t *testing.T) {
-	v := NetIOCountersStat{
+	v := gopsutil.NetIOCountersStat{
 		Name:      "test",
 		BytesSent: 100,
 	}
@@ -26,7 +28,7 @@ func TestNetIOCountersStatString(t *testing.T) {
 }
 
 func TestNetConnectionStatString(t *testing.T) {
-	v := NetConnectionStat{
+	v := gopsutil.NetConnectionStat{
 		Fd:     10,
 		Family: 10,
 		Type:   10,
@@ -39,7 +41,7 @@ func TestNetConnectionStatString(t *testing.T) {
 }
 
 func TestNetIOCounters(t *testing.T) {
-	v, err := NetIOCounters(true)
+	v, err := gopsutil.NetIOCounters(true)
 	if err != nil {
 		t.Errorf("Could not get NetIOCounters: %v", err)
 	}

@@ -1,23 +1,25 @@
-package gopsutil
+package test
 
 import (
 	"fmt"
 	"testing"
+
+	"github.com/shirou/gopsutil"
 )
 
 func TestHostInfo(t *testing.T) {
-	v, err := HostInfo()
+	v, err := gopsutil.HostInfo()
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
-	empty := &HostInfoStat{}
+	empty := &gopsutil.HostInfoStat{}
 	if v == empty {
 		t.Errorf("Could not get hostinfo %v", v)
 	}
 }
 
 func TestBoot_time(t *testing.T) {
-	v, err := BootTime()
+	v, err := gopsutil.BootTime()
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -27,11 +29,11 @@ func TestBoot_time(t *testing.T) {
 }
 
 func TestUsers(t *testing.T) {
-	v, err := Users()
+	v, err := gopsutil.Users()
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
-	empty := UserStat{}
+	empty := gopsutil.UserStat{}
 	for _, u := range v {
 		if u == empty {
 			t.Errorf("Could not Users %v", v)
@@ -40,7 +42,7 @@ func TestUsers(t *testing.T) {
 }
 
 func TestHostInfoStat_String(t *testing.T) {
-	v := HostInfoStat{
+	v := gopsutil.HostInfoStat{
 		Hostname: "test",
 		Uptime:   3000,
 		Procs:    100,
@@ -54,7 +56,7 @@ func TestHostInfoStat_String(t *testing.T) {
 }
 
 func TestUserStat_String(t *testing.T) {
-	v := UserStat{
+	v := gopsutil.UserStat{
 		User:     "user",
 		Terminal: "term",
 		Host:     "host",
