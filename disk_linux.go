@@ -69,12 +69,12 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 	for _, line := range lines {
 		fields := strings.Fields(line)
 		name := fields[2]
-		reads := parseUint64(fields[3])
-		rbytes := parseUint64(fields[5])
-		rtime := parseUint64(fields[6])
-		writes := parseUint64(fields[7])
-		wbytes := parseUint64(fields[9])
-		wtime := parseUint64(fields[10])
+		reads := mustParseUint64(fields[3])
+		rbytes := mustParseUint64(fields[5])
+		rtime := mustParseUint64(fields[6])
+		writes := mustParseUint64(fields[7])
+		wbytes := mustParseUint64(fields[9])
+		wtime := mustParseUint64(fields[10])
 		if stringContains(partitions, name) {
 			d := DiskIOCountersStat{
 				Name:       name,

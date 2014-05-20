@@ -24,13 +24,13 @@ func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 		}
 		nic := NetIOCountersStat{
 			Name:        strings.Trim(fields[0], ":"),
-			BytesRecv:   parseUint64(fields[1]),
-			Errin:       parseUint64(fields[2]),
-			Dropin:      parseUint64(fields[3]),
-			BytesSent:   parseUint64(fields[9]),
-			PacketsSent: parseUint64(fields[10]),
-			Errout:      parseUint64(fields[11]),
-			Dropout:     parseUint64(fields[12]),
+			BytesRecv:   mustParseUint64(fields[1]),
+			Errin:       mustParseUint64(fields[2]),
+			Dropin:      mustParseUint64(fields[3]),
+			BytesSent:   mustParseUint64(fields[9]),
+			PacketsSent: mustParseUint64(fields[10]),
+			Errout:      mustParseUint64(fields[11]),
+			Dropout:     mustParseUint64(fields[12]),
 		}
 		ret = append(ret, nic)
 	}

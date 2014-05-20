@@ -26,7 +26,7 @@ func HostInfo() (*HostInfoStat, error) {
 		return ret, syscall.GetLastError()
 	}
 
-	ret.Uptime = int64(uptimemsec) / 1000
+	ret.Uptime = uint64(uptimemsec) / 1000
 
 	procs, err := Pids()
 	if err != nil {
@@ -38,7 +38,7 @@ func HostInfo() (*HostInfoStat, error) {
 	return ret, nil
 }
 
-func BootTime() (int64, error) {
+func BootTime() (uint64, error) {
 	var lpSystemTimeAsFileTime FILETIME
 
 	r, _, _ := procGetSystemTimeAsFileTime.Call(uintptr(unsafe.Pointer(&lpSystemTimeAsFileTime)))
@@ -56,7 +56,7 @@ func BootTime() (int64, error) {
 	}
 	uptime := uint64(u) / 1000
 
-	return int64(pt - uptime), nil
+	return uint64(pt - uptime), nil
 }
 func Users() ([]UserStat, error) {
 
