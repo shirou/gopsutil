@@ -32,11 +32,16 @@ func HostInfo() (*HostInfoStat, error) {
 		OS:       runtime.GOOS,
 	}
 
-	platform, family, version, err := getPlatformInformation()
+	platform, family, version, err := GetPlatformInformation()
 	if err == nil {
 		ret.Platform = platform
 		ret.PlatformFamily = family
 		ret.PlatformVersion = version
+	}
+	system, role, err := GetVirtualization()
+	if err == nil {
+		ret.VirtualizationSystem = system
+		ret.VirtualizationRole = role
 	}
 	uptime, err := BootTime()
 	if err == nil {
@@ -145,7 +150,7 @@ func getLSB() (*LSB, error) {
 	return ret, nil
 }
 
-func getPlatformInformation() (string, string, string, error) {
+func GetPlatformInformation() (string, string, string, error) {
 	platform := ""
 	family := ""
 	version := ""
@@ -251,4 +256,89 @@ func getRedhatishVersion(contents []string) (string, error) {
 
 func getRedhatishPlatform(contents []string) (string, error) {
 	return "", nil
+}
+
+func GetVirtualization() (string, string, error) {
+	var system string
+	var role string
+
+	if pathExists("/proc/xen") {
+		system = "xen"
+		role = "guest" // assume guest
+
+		if pathExists("/proc/xen/capabilities") {
+			contents, err := readLines("/proc/xen/capabilities")
+			if err == nil {
+				if stringContains(contents, "control_d") {
+					role = "host"
+				}
+			}
+		}
+	}
+	if pathExists("/proc/modules") {
+		contents, err := readLines("/proc/modules")
+		if err == nil {
+			if stringContains(contents, "kvm") {
+				system = "kvm"
+				role = "host"
+			} else if stringContains(contents, "vboxdrv") {
+				system = "vbox"
+				role = "host"
+			} else if stringContains(contents, "vboxguest") {
+				system = "vbox"
+				role = "guest"
+			}
+		}
+	}
+
+	if pathExists("/proc/cpuinfo") {
+		contents, err := readLines("/proc/cpuinfo")
+		if err == nil {
+			if stringContains(contents, "QEMU Virtual CPU") ||
+				stringContains(contents, "Common KVM processor") ||
+				stringContains(contents, "Common 32-bit KVM processor") {
+				system = "kvm"
+				role = "guest"
+			}
+		}
+	}
+
+	if pathExists("/proc/bc/0") {
+		system = "openvz"
+		role = "host"
+	} else if pathExists("/proc/vz") {
+		system = "openvz"
+		role = "guest"
+	}
+
+	// not use dmidecode because it requires root
+
+	if pathExists("/proc/self/status") {
+		contents, err := readLines("/proc/self/status")
+		if err == nil {
+
+			if stringContains(contents, "s_context:") ||
+				stringContains(contents, "VxID:") {
+				system = "linux-vserver"
+			}
+			// TODO: guest or host
+		}
+	}
+
+	if pathExists("/proc/self/cgroup") {
+		contents, err := readLines("/proc/self/cgroup")
+		if err == nil {
+
+			if stringContains(contents, "lxc") ||
+				stringContains(contents, "docker") {
+				system = "lxc"
+				role = "guest"
+			} else if pathExists("/usr/bin/lxc-version") { // TODO: which
+				system = "lxc"
+				role = "host"
+			}
+		}
+	}
+
+	return system, role, nil
 }

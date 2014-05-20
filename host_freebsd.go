@@ -26,14 +26,16 @@ func HostInfo() (*HostInfoStat, error) {
 	}
 	ret.Hostname = hostname
 
-	out, err := exec.Command("uname", "-s").Output()
+	platform, family, version, err := GetPlatformInformation()
 	if err == nil {
-		ret.Platform = strings.ToLower(strings.TrimSpace(string(out)))
+		ret.Platform = platform
+		ret.PlatformFamily = family
+		ret.PlatformVersion = version
 	}
-
-	out, err = exec.Command("uname", "-r").Output()
+	system, role, err := GetVirtualization()
 	if err == nil {
-		ret.PlatformVersion = strings.ToLower(strings.TrimSpace(string(out)))
+		ret.VirtualizationSystem = system
+		ret.VirtualizationRole = role
 	}
 
 	values, err := doSysctrl("kern.boottime")
@@ -100,4 +102,29 @@ func Users() ([]UserStat, error) {
 
 	return ret, nil
 
+}
+
+func GetPlatformInformation() (string, string, string, error) {
+	platform := ""
+	family := ""
+	version := ""
+
+	out, err := exec.Command("uname", "-s").Output()
+	if err == nil {
+		platform = strings.ToLower(strings.TrimSpace(string(out)))
+	}
+
+	out, err = exec.Command("uname", "-r").Output()
+	if err == nil {
+		version = strings.ToLower(strings.TrimSpace(string(out)))
+	}
+
+	return platform, family, version, nil
+}
+
+func GetVirtualization() (string, string, error) {
+	system := ""
+	role := ""
+
+	return system, role, nil
 }
