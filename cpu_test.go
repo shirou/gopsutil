@@ -1,21 +1,20 @@
-package test
+package gopsutil
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/shirou/gopsutil"
 )
 
 func TestCpu_times(t *testing.T) {
-	v, err := gopsutil.CPUTimes(false)
+	v, err := CPUTimes(false)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
 	if len(v) == 0 {
 		t.Errorf("could not get CPUs ", err)
 	}
-	empty := gopsutil.CPUTimesStat{}
+	empty := CPUTimesStat{}
 	for _, vv := range v {
 		if vv == empty {
 			t.Errorf("could not get CPU User: %v", vv)
@@ -24,7 +23,7 @@ func TestCpu_times(t *testing.T) {
 }
 
 func TestCpu_counts(t *testing.T) {
-	v, err := gopsutil.CPUCounts(true)
+	v, err := CPUCounts(true)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -34,7 +33,7 @@ func TestCpu_counts(t *testing.T) {
 }
 
 func TestCPUTimeStat_String(t *testing.T) {
-	v := gopsutil.CPUTimesStat{
+	v := CPUTimesStat{
 		CPU:    "cpu0",
 		User:   100.1,
 		System: 200.1,
@@ -47,7 +46,7 @@ func TestCPUTimeStat_String(t *testing.T) {
 }
 
 func TestCpuInfo(t *testing.T) {
-	v, err := gopsutil.CPUInfo()
+	v, err := CPUInfo()
 	if err != nil {
 		t.Errorf("error %v", err)
 	}

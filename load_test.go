@@ -1,26 +1,24 @@
-package test
+package gopsutil
 
 import (
 	"fmt"
 	"testing"
-
-	"github.com/shirou/gopsutil"
 )
 
 func TestLoad(t *testing.T) {
-	v, err := gopsutil.LoadAvg()
+	v, err := LoadAvg()
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
 
-	empty := &gopsutil.LoadAvgStat{}
+	empty := &LoadAvgStat{}
 	if v == empty {
 		t.Errorf("error load: %v", v)
 	}
 }
 
 func TestLoadAvgStat_String(t *testing.T) {
-	v := gopsutil.LoadAvgStat{
+	v := LoadAvgStat{
 		Load1:  10.1,
 		Load5:  20.1,
 		Load15: 30.1,

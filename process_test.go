@@ -1,24 +1,22 @@
-package test
+package gopsutil
 
 import (
 	"os"
 	"runtime"
 	"testing"
-
-	"github.com/shirou/gopsutil"
 )
 
-func test_getProcess() gopsutil.Process {
+func test_getProcess() Process {
 	checkPid := os.Getpid()
 	if runtime.GOOS == "windows" {
 		checkPid = 7960
 	}
-	ret, _ := gopsutil.NewProcess(int32(checkPid))
+	ret, _ := NewProcess(int32(checkPid))
 	return *ret
 }
 
 func Test_Pids(t *testing.T) {
-	ret, err := gopsutil.Pids()
+	ret, err := Pids()
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -33,7 +31,7 @@ func Test_Pid_exists(t *testing.T) {
 		checkPid = 0
 	}
 
-	ret, err := gopsutil.PidExists(int32(checkPid))
+	ret, err := PidExists(int32(checkPid))
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -49,11 +47,11 @@ func Test_NewProcess(t *testing.T) {
 		checkPid = 0
 	}
 
-	ret, err := gopsutil.NewProcess(int32(checkPid))
+	ret, err := NewProcess(int32(checkPid))
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
-	empty := &gopsutil.Process{}
+	empty := &Process{}
 	if runtime.GOOS != "windows" { // Windows pid is 0
 		if empty == ret {
 			t.Errorf("error %v", ret)
@@ -67,13 +65,13 @@ func Test_Process_memory_maps(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		checkPid = 0
 	}
-	ret, err := gopsutil.NewProcess(int32(checkPid))
+	ret, err := NewProcess(int32(checkPid))
 
 	mmaps, err := ret.MemoryMaps(false)
 	if err != nil {
 		t.Errorf("memory map get error %v", err)
 	}
-	empty := gopsutil.MemoryMapsStat{}
+	empty := MemoryMapsStat{}
 	for _, m := range *mmaps {
 		if m == empty {
 			t.Errorf("memory map get error %v", m)
@@ -103,7 +101,7 @@ func Test_Process_IOCounters(t *testing.T) {
 		t.Errorf("geting ppid error %v", err)
 		return
 	}
-	empty := &gopsutil.IOCountersStat{}
+	empty := &IOCountersStat{}
 	if v == empty {
 		t.Errorf("error %v", v)
 	}
