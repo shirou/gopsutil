@@ -68,9 +68,11 @@ To becomes more useful, add more information.
 - Hostinfo()  (linux)
 
   - OS
-  - Platform ex: ubuntu, arch
-  - Platform family ex: debian
-  - Platform Version ex: Ubuntu 13.10
+  - Platform (ex: ubuntu, arch)
+  - Platform family (ex: debian)
+  - Platform Version (ex: Ubuntu 13.10)
+  - VirtualizationSystem (ex: LXC)
+  - VirtualizationRole (ex: guest/host)
 
 - CPUInfoStat()  (linux, freebsd)
 
