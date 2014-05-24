@@ -17,7 +17,7 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 		return ret, err
 	}
 
-	fs := make([]Statfs, 0, count)
+	fs := make([]Statfs, count)
 	_, err = Getfsstat(fs, MNT_WAIT)
 
 	for _, stat := range fs {
