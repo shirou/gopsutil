@@ -155,7 +155,10 @@ func GetPlatformInformation() (string, string, string, error) {
 	family := ""
 	version := ""
 
-	lsb, _ := getLSB()
+	lsb, err := getLSB()
+	if err != nil{
+		lsb = LSB{}
+	}
 
 	if pathExists("/etc/oracle-release") {
 		platform = "oracle"
