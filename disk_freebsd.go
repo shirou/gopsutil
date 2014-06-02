@@ -3,9 +3,9 @@
 package gopsutil
 
 import (
-	"errors"
 	"syscall"
 	"unsafe"
+	"errors"
 )
 
 func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
@@ -83,8 +83,33 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 }
 
 func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
+	return nil, errors.New("not implemented yet")
+
+	// statinfo->devinfo->devstat
+    // /usr/include/devinfo.h
+
+	// get length
+	count, err := Getfsstat(nil, MNT_WAIT)
+	if err != nil {
+		return nil, err
+	}
+
+	fs := make([]Statfs, count)
+	_, err = Getfsstat(fs, MNT_WAIT)
+
 	ret := make(map[string]DiskIOCountersStat, 0)
-	return ret, errors.New("not implemented yet")
+	for _, stat := range fs {
+		name := byteToString(stat.FMntonname[:])
+		d := DiskIOCountersStat{
+			Name:       name,
+			ReadCount:  stat.FSyncwrites + stat.FAsyncwrites,
+			WriteCount: stat.FSyncreads + stat.FAsyncreads,
+		}
+
+		ret[name] = d
+	}
+
+	return ret, nil
 }
 
 // Getfsstat is borrowed from pkg/syscall/syscall_freebsd.go
