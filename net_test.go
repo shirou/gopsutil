@@ -53,16 +53,16 @@ func TestNetIOCounters(t *testing.T) {
 	}
 }
 
-func TestNetInterfaces(t *testing.T){
+func TestNetInterfaces(t *testing.T) {
 	v, err := NetInterfaces()
-	if err != nil{
+	if err != nil {
 		t.Errorf("Could not get NetInterfaceStat: %v", err)
 	}
-	if len(v) == 0{
+	if len(v) == 0 {
 		t.Errorf("Could not get NetInterfaceStat: %v", err)
 	}
-	for _, vv := range v{
-		if vv.Name == ""{
+	for _, vv := range v {
+		if vv.Name == "" {
 			t.Errorf("Invalid NetInterface: %v", vv)
 		}
 	}

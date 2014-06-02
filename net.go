@@ -17,7 +17,6 @@ type NetIOCountersStat struct {
 	Dropout     uint64 `json:"dropout"`      // total number of outgoing packets which were dropped (always 0 on OSX and BSD)
 }
 
-
 // Addr is implemented compatibility to psutil
 type Addr struct {
 	IP   string `json:"ip"`
@@ -40,10 +39,10 @@ type NetInterfaceAddr struct {
 }
 
 type NetInterfaceStat struct {
-	MTU          int        `json:"mtu"`          // maximum transmission unit
-	Name         string     `json:"name"`         // e.g., "en0", "lo0", "eth0.100"
-	HardwareAddr []byte     `json:"hardwareaddr"` // IEEE MAC-48, EUI-48 and EUI-64 form
-	Flags        []string   `json:"flags"`        // e.g., FlagUp, FlagLoopback, FlagMulticast
+	MTU          int                `json:"mtu"`          // maximum transmission unit
+	Name         string             `json:"name"`         // e.g., "en0", "lo0", "eth0.100"
+	HardwareAddr string             `json:"hardwareaddr"` // IEEE MAC-48, EUI-48 and EUI-64 form
+	Flags        []string           `json:"flags"`        // e.g., FlagUp, FlagLoopback, FlagMulticast
 	Addrs        []NetInterfaceAddr `json:"addrs"`
 }
 
@@ -67,11 +66,10 @@ func (n NetInterfaceStat) String() string {
 	return string(s)
 }
 
-func (n NetInterfaceAddr) String() string{
+func (n NetInterfaceAddr) String() string {
 	s, _ := json.Marshal(n)
 	return string(s)
 }
-
 
 func NetInterfaces() ([]NetInterfaceStat, error) {
 	is, err := net.Interfaces()
@@ -85,29 +83,29 @@ func NetInterfaces() ([]NetInterfaceStat, error) {
 		if ifi.Flags&net.FlagUp != 0 {
 			flags = append(flags, "up")
 		}
-		if ifi.Flags & net.FlagBroadcast != 0 {
+		if ifi.Flags&net.FlagBroadcast != 0 {
 			flags = append(flags, "broadcast")
 		}
-		if ifi.Flags & net.FlagLoopback != 0{
+		if ifi.Flags&net.FlagLoopback != 0 {
 			flags = append(flags, "loopback")
 		}
-		if ifi.Flags & net.FlagPointToPoint != 0{
+		if ifi.Flags&net.FlagPointToPoint != 0 {
 			flags = append(flags, "pointtopoint")
 		}
-		if ifi.Flags & net.FlagMulticast != 0{
+		if ifi.Flags&net.FlagMulticast != 0 {
 			flags = append(flags, "multicast")
 		}
 
 		r := NetInterfaceStat{
 			Name:         ifi.Name,
 			MTU:          ifi.MTU,
-			HardwareAddr: ifi.HardwareAddr,
+			HardwareAddr: ifi.HardwareAddr.String(),
 			Flags:        flags,
 		}
 		addrs, err := ifi.Addrs()
 		if err == nil {
 			r.Addrs = make([]NetInterfaceAddr, 0, len(addrs))
-			for _, addr := range addrs{
+			for _, addr := range addrs {
 				r.Addrs = append(r.Addrs, NetInterfaceAddr{
 					Addr: addr.String(),
 				})
