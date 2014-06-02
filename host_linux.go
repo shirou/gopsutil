@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"regexp"
 	"runtime"
 	"strings"
 	"syscall"
@@ -155,19 +156,22 @@ func GetPlatformInformation() (string, string, string, error) {
 	family := ""
 	version := ""
 
-	lsb, _ := getLSB()
+	lsb, err := getLSB()
+	if err != nil {
+		lsb = &LSB{}
+	}
 
 	if pathExists("/etc/oracle-release") {
 		platform = "oracle"
 		contents, err := readLines("/etc/oracle-release")
 		if err == nil {
-			version, _ = getRedhatishVersion(contents)
+			version = getRedhatishVersion(contents)
 		}
 	} else if pathExists("/etc/enterprise-release") {
 		platform = "oracle"
 		contents, err := readLines("/etc/enterprise-release")
 		if err == nil {
-			version, _ = getRedhatishVersion(contents)
+			version = getRedhatishVersion(contents)
 		}
 	} else if pathExists("/etc/debian_version") {
 		if lsb.ID == "Ubuntu" {
@@ -190,20 +194,20 @@ func GetPlatformInformation() (string, string, string, error) {
 	} else if pathExists("/etc/redhat-release") {
 		contents, err := readLines("/etc/redhat-release")
 		if err == nil {
-			version, _ = getRedhatishVersion(contents)
-			platform, _ = getRedhatishPlatform(contents)
+			version = getRedhatishVersion(contents)
+			platform = getRedhatishPlatform(contents)
 		}
 	} else if pathExists("/etc/system-release") {
 		contents, err := readLines("/etc/system-release")
 		if err == nil {
-			version, _ = getRedhatishVersion(contents)
-			platform, _ = getRedhatishPlatform(contents)
+			version = getRedhatishVersion(contents)
+			platform = getRedhatishPlatform(contents)
 		}
 	} else if pathExists("/etc/gentoo-release") {
 		platform = "gentoo"
 		contents, err := readLines("/etc/gentoo-release")
 		if err == nil {
-			version, _ = getRedhatishVersion(contents)
+			version = getRedhatishVersion(contents)
 		}
 		// TODO: suse detection
 		// TODO: slackware detecion
@@ -250,12 +254,28 @@ func GetPlatformInformation() (string, string, string, error) {
 
 }
 
-func getRedhatishVersion(contents []string) (string, error) {
-	return "", nil
+func getRedhatishVersion(contents []string) string {
+	c := strings.ToLower(strings.Join(contents, ""))
+
+	if strings.Contains(c, "rawhide") {
+		return "rawhide"
+	}
+	if matches := regexp.MustCompile(`release (\d[\d.]*)`).FindStringSubmatch(c); matches != nil {
+		return matches[1]
+	} else {
+		return ""
+	}
 }
 
-func getRedhatishPlatform(contents []string) (string, error) {
-	return "", nil
+func getRedhatishPlatform(contents []string) string {
+	c := strings.ToLower(strings.Join(contents, ""))
+
+	if strings.Contains(c, "red hat") {
+		return "redhat"
+	}
+	f := strings.Split(c, " ")
+
+	return f[0]
 }
 
 func GetVirtualization() (string, string, error) {

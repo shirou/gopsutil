@@ -3,7 +3,6 @@ package gopsutil
 import (
 	"fmt"
 	"testing"
-
 )
 
 func TestCpu_times(t *testing.T) {
