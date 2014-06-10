@@ -89,6 +89,19 @@ To becomes more useful, add more information.
   - Load5
   - Load15
 
+- GetDockerIDList() (linux)
+
+  - container id list ([]string)
+
+- CgroupCPU() (linux)
+
+  - user
+  - system
+
+- CgroupMem() (linux)
+
+  - various status
+
 Some codes are ported some functions from Ohai. very thanks.
 
 
