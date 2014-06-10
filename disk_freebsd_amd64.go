@@ -53,3 +53,54 @@ type Statfs struct {
 	FMntfromname [MNAMELEN]byte   /* mounted filesystem */
 	FMntonname   [MNAMELEN]byte   /* directory on which mounted */
 }
+
+
+// /usr/include/devstat.h
+// devstat_getdevs()
+// kern.devstat.all -> devstats list struct
+
+// struct devinfo {
+//         struct devstat  *devices;
+//         u_int8_t        *mem_ptr;
+//         long            generation;
+//         int             numdevs;
+// };
+// 
+// struct statinfo {
+//         long            cp_time[CPUSTATES];
+//         long            tk_nin;
+//         long            tk_nout;
+//         struct devinfo  *dinfo;
+//         long double     snap_time;
+// };
+
+
+// /usr/include/devinfo.h 
+
+//    struct devinfo_dev {
+//               devinfo_handle_t    dd_handle;      /* device handle */
+//               devinfo_handle_t    dd_parent;      /* parent handle */
+//               char                *dd_name;       /* name of device */
+//               char                *dd_desc;       /* device description */
+//               char                *dd_drivername; /* name of attached driver */
+//               char                *dd_pnpinfo;    /* pnp info from parent bus */
+//               char                *dd_location;   /* Where bus thinks dev at */
+//               uint32_t            dd_devflags;    /* API flags */
+//               uint16_t            dd_flags;       /* internal dev flags */
+//               device_state_t      dd_state;       /* attachment state of dev */
+//	};
+//
+//           struct devinfo_rman {
+//               devinfo_handle_t    dm_handle;      /* resource manager handle */
+//               u_long              dm_start;       /* resource start */
+//               u_long              dm_size;        /* resource size */
+//               char                *dm_desc;       /* resource description */
+//           };
+//
+//           struct devinfo_res {
+//               devinfo_handle_t    dr_handle;      /* resource handle */
+//               devinfo_handle_t    dr_rman;        /* resource manager handle */
+//               devinfo_handle_t    dr_device;      /* owning device */
+//               u_long              dr_start;       /* region start */
+//               u_long              dr_size;        /* region size */
+//           };

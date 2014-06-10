@@ -2,6 +2,7 @@ package gopsutil
 
 import (
 	"encoding/json"
+	"net"
 )
 
 type NetIOCountersStat struct {
@@ -16,6 +17,7 @@ type NetIOCountersStat struct {
 	Dropout     uint64 `json:"dropout"`      // total number of outgoing packets which were dropped (always 0 on OSX and BSD)
 }
 
+// Addr is implemented compatibility to psutil
 type Addr struct {
 	IP   string `json:"ip"`
 	Port uint32 `json:"port"`
@@ -31,6 +33,19 @@ type NetConnectionStat struct {
 	Pid    int32  `json:"pid"`
 }
 
+// NetInterfaceAddr is designed for represent interface addresses
+type NetInterfaceAddr struct {
+	Addr string `json:"addr"`
+}
+
+type NetInterfaceStat struct {
+	MTU          int                `json:"mtu"`          // maximum transmission unit
+	Name         string             `json:"name"`         // e.g., "en0", "lo0", "eth0.100"
+	HardwareAddr string             `json:"hardwareaddr"` // IEEE MAC-48, EUI-48 and EUI-64 form
+	Flags        []string           `json:"flags"`        // e.g., FlagUp, FlagLoopback, FlagMulticast
+	Addrs        []NetInterfaceAddr `json:"addrs"`
+}
+
 func (n NetIOCountersStat) String() string {
 	s, _ := json.Marshal(n)
 	return string(s)
@@ -44,4 +59,61 @@ func (n NetConnectionStat) String() string {
 func (a Addr) String() string {
 	s, _ := json.Marshal(a)
 	return string(s)
+}
+
+func (n NetInterfaceStat) String() string {
+	s, _ := json.Marshal(n)
+	return string(s)
+}
+
+func (n NetInterfaceAddr) String() string {
+	s, _ := json.Marshal(n)
+	return string(s)
+}
+
+func NetInterfaces() ([]NetInterfaceStat, error) {
+	is, err := net.Interfaces()
+	if err != nil {
+		return nil, err
+	}
+	ret := make([]NetInterfaceStat, 0, len(is))
+	for _, ifi := range is {
+
+		var flags []string
+		if ifi.Flags&net.FlagUp != 0 {
+			flags = append(flags, "up")
+		}
+		if ifi.Flags&net.FlagBroadcast != 0 {
+			flags = append(flags, "broadcast")
+		}
+		if ifi.Flags&net.FlagLoopback != 0 {
+			flags = append(flags, "loopback")
+		}
+		if ifi.Flags&net.FlagPointToPoint != 0 {
+			flags = append(flags, "pointtopoint")
+		}
+		if ifi.Flags&net.FlagMulticast != 0 {
+			flags = append(flags, "multicast")
+		}
+
+		r := NetInterfaceStat{
+			Name:         ifi.Name,
+			MTU:          ifi.MTU,
+			HardwareAddr: ifi.HardwareAddr.String(),
+			Flags:        flags,
+		}
+		addrs, err := ifi.Addrs()
+		if err == nil {
+			r.Addrs = make([]NetInterfaceAddr, 0, len(addrs))
+			for _, addr := range addrs {
+				r.Addrs = append(r.Addrs, NetInterfaceAddr{
+					Addr: addr.String(),
+				})
+			}
+
+		}
+		ret = append(ret, r)
+	}
+
+	return ret, nil
 }
