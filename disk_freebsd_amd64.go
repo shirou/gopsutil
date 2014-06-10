@@ -54,7 +54,6 @@ type Statfs struct {
 	FMntonname   [MNAMELEN]byte   /* directory on which mounted */
 }
 
-
 // /usr/include/devstat.h
 // devstat_getdevs()
 // kern.devstat.all -> devstats list struct
@@ -65,7 +64,7 @@ type Statfs struct {
 //         long            generation;
 //         int             numdevs;
 // };
-// 
+//
 // struct statinfo {
 //         long            cp_time[CPUSTATES];
 //         long            tk_nin;
@@ -74,8 +73,7 @@ type Statfs struct {
 //         long double     snap_time;
 // };
 
-
-// /usr/include/devinfo.h 
+// /usr/include/devinfo.h
 
 //    struct devinfo_dev {
 //               devinfo_handle_t    dd_handle;      /* device handle */

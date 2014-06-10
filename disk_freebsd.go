@@ -3,9 +3,9 @@
 package gopsutil
 
 import (
+	"errors"
 	"syscall"
 	"unsafe"
-	"errors"
 )
 
 func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
@@ -86,7 +86,7 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 	return nil, errors.New("not implemented yet")
 
 	// statinfo->devinfo->devstat
-    // /usr/include/devinfo.h
+	// /usr/include/devinfo.h
 
 	// get length
 	count, err := Getfsstat(nil, MNT_WAIT)
