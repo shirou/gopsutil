@@ -43,7 +43,7 @@ Usage
    	fmt.Printf("Total: %v, Free:%v, UsedPercent:%f%%\n", v.Total, v.Free, v.UsedPercent)
 
    	// convert to JSON. String() is also implemented
-   	fmt.Println(d)
+   	fmt.Println(v)
    }
 
 The output is below.
@@ -63,7 +63,7 @@ see http://godoc.org/github.com/shirou/gopsutil
 More info
 --------------------
 
-To becomes more useful, add more information.
+To becomes more useful, I have some methods which produces more information.
 
 - Hostinfo()  (linux)
 
@@ -102,7 +102,7 @@ To becomes more useful, add more information.
 
   - various status
 
-Some codes are ported some functions from Ohai. very thanks.
+Some codes are ported from Ohai. many thanks.
 
 
 Current Status
@@ -198,7 +198,7 @@ Related works
 - go-ps: https://github.com/mitchellh/go-ps
 - ohai: https://github.com/opscode/ohai/
 
-I have referenced these great works.
+I have influenced from these great works.
 
 How to Contributing
 ---------------------------
