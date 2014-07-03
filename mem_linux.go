@@ -3,34 +3,43 @@
 package gopsutil
 
 import (
+	"strings"
 	"syscall"
 )
 
 func VirtualMemory() (*VirtualMemoryStat, error) {
-	sysinfo := &syscall.Sysinfo_t{}
+	filename := "/proc/meminfo"
+	lines, _ := readLines(filename)
 
-	if err := syscall.Sysinfo(sysinfo); err != nil {
-		return nil, err
+	ret := &VirtualMemoryStat{}
+	for _, line := range lines {
+		fields := strings.Split(line, ":")
+		if len(fields) != 2 {
+			continue
+		}
+		key := strings.TrimSpace(fields[0])
+		value := strings.TrimSpace(fields[1])
+		value = strings.Replace(value, " kB", "", -1)
+
+		switch key {
+		case "MemTotal":
+			ret.Total = mustParseUint64(value)
+		case "MemFree":
+			ret.Free = mustParseUint64(value)
+		case "Buffers":
+			ret.Buffers = mustParseUint64(value)
+		case "Cached":
+			ret.Cached = mustParseUint64(value)
+		case "Active":
+			ret.Active = mustParseUint64(value)
+		case "Inactive":
+			ret.Inactive = mustParseUint64(value)
+
+		}
 	}
-
-	ret := &VirtualMemoryStat{
-		Total:   uint64(sysinfo.Totalram),
-		Free:    uint64(sysinfo.Freeram),
-		Shared:  uint64(sysinfo.Sharedram),
-		Buffers: uint64(sysinfo.Bufferram),
-	}
-
-	// TODO: platform independent
 	ret.Available = ret.Free + ret.Buffers + ret.Cached
-
 	ret.Used = ret.Total - ret.Free
 	ret.UsedPercent = float64(ret.Total-ret.Available) / float64(ret.Total) * 100.0
-
-	/*
-		kern := buffers + cached
-		ret.ActualFree = ret.Free + kern
-		ret.ActualUsed = ret.Used - kern
-	*/
 
 	return ret, nil
 }
