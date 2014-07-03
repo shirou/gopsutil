@@ -39,9 +39,9 @@ func TestDisk_io_counters(t *testing.T) {
 		t.Errorf("error %v", err)
 	}
 	empty := DiskIOCountersStat{}
-	for _, io := range ret {
+	for part, io := range ret {
 		if io == empty {
-			t.Errorf("io_counter error %v", io)
+			t.Errorf("io_counter error %v, %v", part, io)
 		}
 	}
 }

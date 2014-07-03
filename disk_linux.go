@@ -4,7 +4,6 @@ package gopsutil
 
 import (
 	"strings"
-	"unicode"
 )
 
 const (
@@ -37,35 +36,14 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 }
 
 func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
-	// determine partitions we want to look for
-	filename := "/proc/partitions"
+	filename := "/proc/diskstats"
 	lines, err := readLines(filename)
 	if err != nil {
 		return nil, err
 	}
-	partitions := make([]string, 0, len(lines)-2)
-
-	for _, line := range lines[2:] {
-		fields := strings.Fields(line)
-		name := []rune(fields[3])
-
-		if unicode.IsDigit(name[len(name)-1]) {
-			partitions = append(partitions, fields[3])
-		} else {
-			// http://code.google.com/p/psutil/issues/detail?id=338
-			lenpart := len(partitions)
-			if lenpart == 0 || strings.HasPrefix(partitions[lenpart-1], fields[3]) {
-				partitions = append(partitions, fields[3])
-			}
-		}
-	}
-
-	filename = "/proc/diskstats"
-	lines, err = readLines(filename)
-	if err != nil {
-		return nil, err
-	}
 	ret := make(map[string]DiskIOCountersStat, 0)
+	empty := DiskIOCountersStat{}
+
 	for _, line := range lines {
 		fields := strings.Fields(line)
 		name := fields[2]
@@ -75,19 +53,20 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 		writes := mustParseUint64(fields[7])
 		wbytes := mustParseUint64(fields[9])
 		wtime := mustParseUint64(fields[10])
-		if stringContains(partitions, name) {
-			d := DiskIOCountersStat{
-				Name:       name,
-				ReadBytes:  rbytes * SECTOR_SIZE,
-				WriteBytes: wbytes * SECTOR_SIZE,
-				ReadCount:  reads,
-				WriteCount: writes,
-				ReadTime:   rtime,
-				WriteTime:  wtime,
-			}
-			ret[name] = d
-
+		d := DiskIOCountersStat{
+			ReadBytes:  rbytes * SECTOR_SIZE,
+			WriteBytes: wbytes * SECTOR_SIZE,
+			ReadCount:  reads,
+			WriteCount: writes,
+			ReadTime:   rtime,
+			WriteTime:  wtime,
 		}
+		if d == empty {
+			continue
+		}
+		d.Name = name
+
+		ret[name] = d
 	}
 	return ret, nil
 }
