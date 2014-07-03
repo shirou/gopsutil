@@ -23,17 +23,17 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 
 		switch key {
 		case "MemTotal":
-			ret.Total = mustParseUint64(value)
+			ret.Total = mustParseUint64(value) * 1000
 		case "MemFree":
-			ret.Free = mustParseUint64(value)
+			ret.Free = mustParseUint64(value) * 1000
 		case "Buffers":
-			ret.Buffers = mustParseUint64(value)
+			ret.Buffers = mustParseUint64(value) * 1000
 		case "Cached":
-			ret.Cached = mustParseUint64(value)
+			ret.Cached = mustParseUint64(value) * 1000
 		case "Active":
-			ret.Active = mustParseUint64(value)
+			ret.Active = mustParseUint64(value) * 1000
 		case "Inactive":
-			ret.Inactive = mustParseUint64(value)
+			ret.Inactive = mustParseUint64(value) * 1000
 
 		}
 	}
