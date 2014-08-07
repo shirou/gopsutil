@@ -4,7 +4,6 @@ package gopsutil
 
 import (
 	"encoding/json"
-	"errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -93,7 +92,7 @@ func (p *Process) Cwd() (string, error) {
 	return p.fillFromCwd()
 }
 func (p *Process) Parent() (*Process, error) {
-	return nil, errors.New("not implemented yet")
+	return nil, NotImplementedError
 }
 func (p *Process) Status() (string, error) {
 	_, status, _, _, _, _, err := p.fillFromStatus()
@@ -134,10 +133,10 @@ func (p *Process) Nice() (int32, error) {
 	return nice, nil
 }
 func (p *Process) IOnice() (int32, error) {
-	return 0, errors.New("not implemented yet")
+	return 0, NotImplementedError
 }
 func (p *Process) Rlimit() ([]RlimitStat, error) {
-	return nil, errors.New("not implemented yet")
+	return nil, NotImplementedError
 }
 func (p *Process) IOCounters() (*IOCountersStat, error) {
 	return p.fillFromIO()
@@ -150,7 +149,7 @@ func (p *Process) NumCtxSwitches() (*NumCtxSwitchesStat, error) {
 	return numCtxSwitches, nil
 }
 func (p *Process) NumFDs() (int32, error) {
-	return 0, errors.New("not implemented yet")
+	return 0, NotImplementedError
 }
 func (p *Process) NumThreads() (int32, error) {
 	_, _, _, _, numThreads, _, err := p.fillFromStatus()
@@ -171,10 +170,10 @@ func (p *Process) CPUTimes() (*CPUTimesStat, error) {
 	return cpuTimes, nil
 }
 func (p *Process) CPUPpercent() (int32, error) {
-	return 0, errors.New("not implemented yet")
+	return 0, NotImplementedError
 }
 func (p *Process) CPUAffinity() ([]int32, error) {
-	return nil, errors.New("not implemented yet")
+	return nil, NotImplementedError
 }
 func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
 	memInfo, _, err := p.fillFromStatm()
@@ -191,23 +190,23 @@ func (p *Process) MemoryInfoEx() (*MemoryInfoExStat, error) {
 	return memInfoEx, nil
 }
 func (p *Process) MemoryPercent() (float32, error) {
-	return 0, errors.New("not implemented yet")
+	return 0, NotImplementedError
 }
 
 func (p *Process) Children() ([]*Process, error) {
-	return nil, errors.New("not implemented yet")
+	return nil, NotImplementedError
 }
 
 func (p *Process) OpenFiles() ([]OpenFilesStat, error) {
-	return nil, errors.New("not implemented yet")
+	return nil, NotImplementedError
 }
 
 func (p *Process) Connections() ([]NetConnectionStat, error) {
-	return nil, errors.New("not implemented yet")
+	return nil, NotImplementedError
 }
 
 func (p *Process) IsRunning() (bool, error) {
-	return true, errors.New("not implemented yet")
+	return true, NotImplementedError
 }
 
 // MemoryMaps get memory maps from /proc/(pid)/smaps

@@ -3,7 +3,6 @@
 package gopsutil
 
 import (
-	"errors"
 	"net"
 	"os"
 	"syscall"
@@ -72,7 +71,7 @@ func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 func NetConnections(kind string) ([]NetConnectionStat, error) {
 	var ret []NetConnectionStat
 
-	return ret, errors.New("not implemented yet")
+	return ret, NotImplementedError
 }
 
 // borrowed from src/pkg/net/interface_windows.go

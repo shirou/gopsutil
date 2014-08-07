@@ -3,7 +3,6 @@
 package gopsutil
 
 import (
-	"errors"
 	"syscall"
 	"unsafe"
 )
@@ -83,7 +82,7 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 }
 
 func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
-	return nil, errors.New("not implemented yet")
+	return nil, NotImplementedError
 
 	// statinfo->devinfo->devstat
 	// /usr/include/devinfo.h

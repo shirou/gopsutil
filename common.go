@@ -12,7 +12,10 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"errors"
 )
+
+var NotImplementedError = errors.New("not implemented yet")
 
 // readLines read contents from file and split by new line.
 func readLines(filename string) ([]string, error) {
