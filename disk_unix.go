@@ -1,4 +1,4 @@
-// +build freebsd linux
+// +build freebsd linux darwin
 
 package gopsutil
 
