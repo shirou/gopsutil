@@ -86,12 +86,14 @@ func CPUInfo() ([]CPUInfoStat, error) {
 			}
 		} else if strings.HasPrefix(line, "machdep.cpu.core_count") {
 			c.Cores = mustParseInt32(values[1])
+		} else if strings.HasPrefix(line, "machdep.cpu.cache.size") {
+			c.CacheSize = mustParseInt32(values[1])
+		} else if strings.HasPrefix(line, "machdep.cpu.vendor") {
+			c.VendorID = values[1]
 		}
 
 		// TODO:
 		// c.Mhz = mustParseFloat64(values[1])
-		//			c.VendorID = matches[1]
-
 	}
 
 	return append(ret, c), nil
