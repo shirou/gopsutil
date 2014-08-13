@@ -214,7 +214,7 @@ func (p *Process) getFromSnapProcess(pid int32) (int32, int32, string, error) {
 			return int32(pe32.Th32ParentProcessID), int32(pe32.CntThreads), szexe, nil
 		}
 	}
-	return 0, 0, "", errors.New("Cloud not find pid:" + string(pid))
+	return 0, 0, "", errors.New("Couldn't find pid:" + string(pid))
 }
 
 // Get processes
