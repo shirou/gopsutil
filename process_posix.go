@@ -41,7 +41,9 @@ func getTerminalMap() (map[uint64]string, error) {
 
 	for _, name := range termfiles {
 		stat := syscall.Stat_t{}
-		syscall.Stat(name, &stat)
+		if err = syscall.Stat(name, &stat); err != nil {
+			return nil, err
+		}
 		rdev := uint64(stat.Rdev)
 		ret[rdev] = strings.Replace(name, "/dev", "", -1)
 	}
