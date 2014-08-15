@@ -11,11 +11,11 @@ import (
 )
 
 const (
-	ERROR_NO_MORE_FILES = 0x12
-	MAX_PATH            = 260
+	NoMoreFiles   = 0x12
+	MaxPathLength = 260
 )
 
-type SYSTEM_PROCESS_INFORMATION struct {
+type SystemProcessInformation struct {
 	NextEntryOffset   uint64
 	NumberOfThreads   uint64
 	Reserved1         [48]byte
@@ -241,12 +241,12 @@ func processes() ([]*Process, error) {
 	return results, nil
 }
 
-func getProcInfo(pid int32) (*SYSTEM_PROCESS_INFORMATION, error) {
+func getProcInfo(pid int32) (*SystemProcessInformation, error) {
 	initialBufferSize := uint64(0x4000)
 	bufferSize := initialBufferSize
 	buffer := make([]byte, bufferSize)
 
-	var sysProcInfo SYSTEM_PROCESS_INFORMATION
+	var sysProcInfo SystemProcessInformation
 	ret, _, _ := procNtQuerySystemInformation.Call(
 		uintptr(unsafe.Pointer(&sysProcInfo)),
 		uintptr(unsafe.Pointer(&buffer[0])),

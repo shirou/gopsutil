@@ -4,14 +4,14 @@
 package gopsutil
 
 const (
-	UT_NAMESIZE = 16 /* see MAXLOGNAME in <sys/param.h> */
-	UT_LINESIZE = 8
-	UT_HOSTSIZE = 16
+	UTNameSize = 16 /* see MAXLOGNAME in <sys/param.h> */
+	UTLineSize = 8
+	UTHostSize = 16
 )
 
 type utmp struct {
-	UtLine [UT_LINESIZE]byte
-	UtName [UT_NAMESIZE]byte
-	UtHost [UT_HOSTSIZE]byte
+	UtLine [UTLineSize]byte
+	UtName [UTNameSize]byte
+	UtHost [UTHostSize]byte
 	UtTime int32
 }

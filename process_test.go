@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func test_getProcess() Process {
+func testGetProcess() Process {
 	checkPid := os.Getpid()
 	if runtime.GOOS == "windows" {
 		checkPid = 7960
@@ -81,7 +81,7 @@ func Test_Process_memory_maps(t *testing.T) {
 }
 
 func Test_Process_Ppid(t *testing.T) {
-	p := test_getProcess()
+	p := testGetProcess()
 
 	v, err := p.Ppid()
 	if err != nil {
@@ -94,7 +94,7 @@ func Test_Process_Ppid(t *testing.T) {
 }
 
 func Test_Process_IOCounters(t *testing.T) {
-	p := test_getProcess()
+	p := testGetProcess()
 
 	v, err := p.IOCounters()
 	if err != nil {
@@ -108,7 +108,7 @@ func Test_Process_IOCounters(t *testing.T) {
 }
 
 func Test_Process_NumCtx(t *testing.T) {
-	p := test_getProcess()
+	p := testGetProcess()
 
 	_, err := p.NumCtxSwitches()
 	if err != nil {

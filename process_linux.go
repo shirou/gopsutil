@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	PRIO_PROCESS = 0 // linux/resource.h
+	PrioProcess = 0 // linux/resource.h
 )
 
 // MemoryInfoExStat is different between OSes
@@ -390,8 +390,8 @@ func (p *Process) fillFromStatm() (*MemoryInfoStat, *MemoryInfoExStat, error) {
 	}
 	fields := strings.Split(string(contents), " ")
 
-	rss := mustParseUint64(fields[0]) * PAGESIZE
-	vms := mustParseUint64(fields[1]) * PAGESIZE
+	rss := mustParseUint64(fields[0]) * PageSize
+	vms := mustParseUint64(fields[1]) * PageSize
 	memInfo := &MemoryInfoStat{
 		RSS: rss,
 		VMS: vms,
@@ -399,10 +399,10 @@ func (p *Process) fillFromStatm() (*MemoryInfoStat, *MemoryInfoExStat, error) {
 	memInfoEx := &MemoryInfoExStat{
 		RSS:    rss,
 		VMS:    vms,
-		Shared: mustParseUint64(fields[2]) * PAGESIZE,
-		Text:   mustParseUint64(fields[3]) * PAGESIZE,
-		Lib:    mustParseUint64(fields[4]) * PAGESIZE,
-		Dirty:  mustParseUint64(fields[5]) * PAGESIZE,
+		Shared: mustParseUint64(fields[2]) * PageSize,
+		Text:   mustParseUint64(fields[3]) * PageSize,
+		Lib:    mustParseUint64(fields[4]) * PageSize,
+		Dirty:  mustParseUint64(fields[5]) * PageSize,
 	}
 
 	return memInfo, memInfoEx, nil
@@ -485,17 +485,17 @@ func (p *Process) fillFromStat() (string, int32, *CPUTimesStat, int64, int32, er
 
 	cpuTimes := &CPUTimesStat{
 		CPU:    "cpu",
-		User:   float32(utime * (1000 / CLOCK_TICKS)),
-		System: float32(stime * (1000 / CLOCK_TICKS)),
+		User:   float32(utime * (1000 / ClockTicks)),
+		System: float32(stime * (1000 / ClockTicks)),
 	}
 
 	bootTime, _ := BootTime()
-	ctime := ((mustParseUint64(fields[21]) / uint64(CLOCK_TICKS)) + uint64(bootTime)) * 1000
+	ctime := ((mustParseUint64(fields[21]) / uint64(ClockTicks)) + uint64(bootTime)) * 1000
 	createTime := int64(ctime)
 
 	//	p.Nice = mustParseInt32(fields[18])
 	// use syscall instead of parse Stat file
-	snice, _ := syscall.Getpriority(PRIO_PROCESS, int(pid))
+	snice, _ := syscall.Getpriority(PrioProcess, int(pid))
 	nice := int32(snice) // FIXME: is this true?
 
 	return terminal, ppid, cpuTimes, createTime, nice, nil

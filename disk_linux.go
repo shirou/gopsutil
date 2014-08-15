@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	SECTOR_SIZE = 512
+	SectorSize = 512
 )
 
 // Get disk partitions.
@@ -54,8 +54,8 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 		wbytes := mustParseUint64(fields[9])
 		wtime := mustParseUint64(fields[10])
 		d := DiskIOCountersStat{
-			ReadBytes:  rbytes * SECTOR_SIZE,
-			WriteBytes: wbytes * SECTOR_SIZE,
+			ReadBytes:  rbytes * SectorSize,
+			WriteBytes: wbytes * SectorSize,
 			ReadCount:  reads,
 			WriteCount: writes,
 			ReadTime:   rtime,
