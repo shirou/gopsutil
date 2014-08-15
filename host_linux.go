@@ -151,10 +151,7 @@ func getLSB() (*LSB, error) {
 	return ret, nil
 }
 
-func GetPlatformInformation() (string, string, string, error) {
-	platform := ""
-	family := ""
-	version := ""
+func GetPlatformInformation() (platform string, family string, version string, err error) {
 
 	lsb, err := getLSB()
 	if err != nil {
@@ -262,9 +259,8 @@ func getRedhatishVersion(contents []string) string {
 	}
 	if matches := regexp.MustCompile(`release (\d[\d.]*)`).FindStringSubmatch(c); matches != nil {
 		return matches[1]
-	} else {
-		return ""
 	}
+	return ""
 }
 
 func getRedhatishPlatform(contents []string) string {
