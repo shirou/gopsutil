@@ -11,62 +11,62 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 	var ret []DiskPartitionStat
 
 	// get length
-	count, err := syscall.Getfsstat(nil, MNT_WAIT)
+	count, err := syscall.Getfsstat(nil, MntWait)
 	if err != nil {
 		return ret, err
 	}
 
 	fs := make([]Statfs, count)
-	_, err = Getfsstat(fs, MNT_WAIT)
+	_, err = Getfsstat(fs, MntWait)
 
 	for _, stat := range fs {
 		opts := "rw"
-		if stat.FFlags&MNT_RDONLY != 0 {
+		if stat.FFlags&MntReadOnly != 0 {
 			opts = "ro"
 		}
-		if stat.FFlags&MNT_SYNCHRONOUS != 0 {
+		if stat.FFlags&MntSynchronous != 0 {
 			opts += ",sync"
 		}
-		if stat.FFlags&MNT_NOEXEC != 0 {
+		if stat.FFlags&MntNoExec != 0 {
 			opts += ",noexec"
 		}
-		if stat.FFlags&MNT_NOSUID != 0 {
+		if stat.FFlags&MntNoSuid != 0 {
 			opts += ",nosuid"
 		}
-		if stat.FFlags&MNT_UNION != 0 {
+		if stat.FFlags&MntUnion != 0 {
 			opts += ",union"
 		}
-		if stat.FFlags&MNT_ASYNC != 0 {
+		if stat.FFlags&MntAsync != 0 {
 			opts += ",async"
 		}
-		if stat.FFlags&MNT_SUIDDIR != 0 {
+		if stat.FFlags&MntSuidDir != 0 {
 			opts += ",suiddir"
 		}
-		if stat.FFlags&MNT_SOFTDEP != 0 {
+		if stat.FFlags&MntSoftDep != 0 {
 			opts += ",softdep"
 		}
-		if stat.FFlags&MNT_NOSYMFOLLOW != 0 {
+		if stat.FFlags&MntNoSymFollow != 0 {
 			opts += ",nosymfollow"
 		}
-		if stat.FFlags&MNT_GJOURNAL != 0 {
+		if stat.FFlags&MntGEOMJournal != 0 {
 			opts += ",gjounalc"
 		}
-		if stat.FFlags&MNT_MULTILABEL != 0 {
+		if stat.FFlags&MntMultilabel != 0 {
 			opts += ",multilabel"
 		}
-		if stat.FFlags&MNT_ACLS != 0 {
+		if stat.FFlags&MntACLs != 0 {
 			opts += ",acls"
 		}
-		if stat.FFlags&MNT_NOATIME != 0 {
+		if stat.FFlags&MntNoATime != 0 {
 			opts += ",noattime"
 		}
-		if stat.FFlags&MNT_NOCLUSTERR != 0 {
+		if stat.FFlags&MntClusterRead != 0 {
 			opts += ",nocluster"
 		}
-		if stat.FFlags&MNT_NOCLUSTERW != 0 {
+		if stat.FFlags&MntClusterWrite != 0 {
 			opts += ",noclusterw"
 		}
-		if stat.FFlags&MNT_NFS4ACLS != 0 {
+		if stat.FFlags&MntNFS4ACLs != 0 {
 			opts += ",nfs4acls"
 		}
 
@@ -88,13 +88,13 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 	// /usr/include/devinfo.h
 
 	// get length
-	count, err := Getfsstat(nil, MNT_WAIT)
+	count, err := Getfsstat(nil, MntWait)
 	if err != nil {
 		return nil, err
 	}
 
 	fs := make([]Statfs, count)
-	_, err = Getfsstat(fs, MNT_WAIT)
+	_, err = Getfsstat(fs, MntWait)
 
 	ret := make(map[string]DiskIOCountersStat, 0)
 	for _, stat := range fs {

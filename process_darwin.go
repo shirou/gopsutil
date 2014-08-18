@@ -200,7 +200,7 @@ func copyParams(k *KinfoProc, p *Process) error {
 func processes() ([]Process, error) {
 	results := make([]Process, 0, 50)
 
-	mib := []int32{CTL_KERN, KERN_PROC, KERN_PROC_PROC, 0}
+	mib := []int32{CTLKern, KernProc, KernProcProc, 0}
 	buf, length, err := callSyscall(mib)
 	if err != nil {
 		return results, err
@@ -280,7 +280,7 @@ func callSyscall(mib []int32) ([]byte, uint64, error) {
 }
 
 func (p *Process) getKProc() (*KinfoProc, error) {
-	mib := []int32{CTL_KERN, KERN_PROC, KERN_PROC_PID, p.Pid}
+	mib := []int32{CTLKern, KernProc, KernProcPID, p.Pid}
 
 	buf, length, err := callSyscall(mib)
 	if err != nil {

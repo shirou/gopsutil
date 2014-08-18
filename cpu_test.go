@@ -11,7 +11,7 @@ func TestCpu_times(t *testing.T) {
 		t.Errorf("error %v", err)
 	}
 	if len(v) == 0 {
-		t.Errorf("could not get CPUs ", err)
+		t.Error("could not get CPUs ", err)
 	}
 	empty := CPUTimesStat{}
 	for _, vv := range v {

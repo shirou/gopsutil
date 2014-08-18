@@ -5,11 +5,11 @@ package gopsutil
 
 // copied from sys/sysctl.h
 const (
-	CTL_KERN           = 1  // "high kernel": proc, limits
-	KERN_PROC          = 14 // struct: process entries
-	KERN_PROC_PID      = 1  // by process id
-	KERN_PROC_PROC     = 8  // only return procs
-	KERN_PROC_PATHNAME = 12 // path to executable
+	CTLKern          = 1  // "high kernel": proc, limits
+	KernProc         = 14 // struct: process entries
+	KernProcPID      = 1  // by process id
+	KernProcProc     = 8  // only return procs
+	KernProcPathname = 12 // path to executable
 )
 
 // copied from sys/user.h

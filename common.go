@@ -8,11 +8,11 @@ package gopsutil
 
 import (
 	"bufio"
+	"errors"
 	"os"
 	"reflect"
 	"strconv"
 	"strings"
-	"errors"
 )
 
 var NotImplementedError = errors.New("not implemented yet")

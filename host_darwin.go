@@ -15,21 +15,21 @@ import (
 )
 
 const (
-	UTX_USERSIZE = 256 /* include/NetBSD/utmpx.h */
-	UTX_IDSIZE   = 4
-	UTX_LINESIZE = 32
-	UTX_HOSTSIZE = 256
+	UTXUserSize = 256 /* include/NetBSD/utmpx.h */
+	UTXIDSize   = 4
+	UTXLineSize = 32
+	UTXHostSize = 256
 )
 
 type utmpx32 struct {
-	UtUser [UTX_USERSIZE]byte /* login name */
-	UtId   [UTX_IDSIZE]byte   /* id */
-	UtLine [UTX_LINESIZE]byte /* tty name */
+	UtUser [UTXUserSize]byte /* login name */
+	UtID   [UTXIDSize]byte   /* id */
+	UtLine [UTXLineSize]byte /* tty name */
 	//TODO	UtPid  pid_t              /* process id creating the entry */
 	UtType [4]byte /* type of this entry */
 	//TODO	UtTv   timeval32          /* time entry was created */
-	UtHost [UTX_HOSTSIZE]byte /* host name */
-	UtPad  [16]byte           /* reserved for future use */
+	UtHost [UTXHostSize]byte /* host name */
+	UtPad  [16]byte          /* reserved for future use */
 }
 
 func HostInfo() (*HostInfoStat, error) {

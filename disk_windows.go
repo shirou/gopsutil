@@ -16,8 +16,8 @@ var (
 )
 
 var (
-	FILE_FILE_COMPRESSION = int64(16)     // 0x00000010
-	FILE_READ_ONLY_VOLUME = int64(524288) // 0x00080000
+	FileFileCompression = int64(16)     // 0x00000010
+	FileReadOnlyVolume  = int64(524288) // 0x00080000
 )
 
 func DiskUsage(path string) (DiskUsageStat, error) {
@@ -86,10 +86,10 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 					return ret, err
 				}
 				opts := "rw"
-				if lpFileSystemFlags&FILE_READ_ONLY_VOLUME != 0 {
+				if lpFileSystemFlags&FileReadOnlyVolume != 0 {
 					opts = "ro"
 				}
-				if lpFileSystemFlags&FILE_FILE_COMPRESSION != 0 {
+				if lpFileSystemFlags&FileFileCompression != 0 {
 					opts += ".compress"
 				}
 

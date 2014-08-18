@@ -10,17 +10,17 @@ import (
 
 // sys/resource.h
 const (
-	CP_USER   = 0
-	CP_NICE   = 1
-	CP_SYS    = 2
-	CP_INTR   = 3
-	CP_IDLE   = 4
-	CPUSTATES = 5
+	CPUser    = 0
+	CPNice    = 1
+	CPSys     = 2
+	CPIntr    = 3
+	CPIdle    = 4
+	CPUStates = 5
 )
 
 // time.h
 const (
-	CLOCKS_PER_SEC = 128
+	ClocksPerSec = 128
 )
 
 // TODO: get per cpus
@@ -32,18 +32,18 @@ func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 		return ret, err
 	}
 
-	user, _ := strconv.ParseFloat(cpuTime[CP_USER], 32)
-	nice, _ := strconv.ParseFloat(cpuTime[CP_NICE], 32)
-	sys, _ := strconv.ParseFloat(cpuTime[CP_SYS], 32)
-	idle, _ := strconv.ParseFloat(cpuTime[CP_IDLE], 32)
-	intr, _ := strconv.ParseFloat(cpuTime[CP_INTR], 32)
+	user, _ := strconv.ParseFloat(cpuTime[CPUser], 32)
+	nice, _ := strconv.ParseFloat(cpuTime[CPNice], 32)
+	sys, _ := strconv.ParseFloat(cpuTime[CPSys], 32)
+	idle, _ := strconv.ParseFloat(cpuTime[CPIdle], 32)
+	intr, _ := strconv.ParseFloat(cpuTime[CPIntr], 32)
 
 	c := CPUTimesStat{
-		User:   float32(user / CLOCKS_PER_SEC),
-		Nice:   float32(nice / CLOCKS_PER_SEC),
-		System: float32(sys / CLOCKS_PER_SEC),
-		Idle:   float32(idle / CLOCKS_PER_SEC),
-		Irq:    float32(intr / CLOCKS_PER_SEC), // FIXME: correct?
+		User:   float32(user / ClocksPerSec),
+		Nice:   float32(nice / ClocksPerSec),
+		System: float32(sys / ClocksPerSec),
+		Idle:   float32(idle / ClocksPerSec),
+		Irq:    float32(intr / ClocksPerSec),
 	}
 
 	ret = append(ret, c)
