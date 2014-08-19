@@ -4,6 +4,7 @@ package gopsutil
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -138,6 +139,12 @@ func (p *Process) IOnice() (int32, error) {
 func (p *Process) Rlimit() ([]RlimitStat, error) {
 	return nil, NotImplementedError
 }
+
+// FIXME: not sure if the func name is ok
+func (p *Process) NetIOCounters() ([]NetIOCountersStat, error) {
+	return fromNetDevFile(fmt.Sprintf("/proc/%d/net/dev", p.Pid))
+}
+
 func (p *Process) IOCounters() (*IOCountersStat, error) {
 	return p.fillFromIO()
 }

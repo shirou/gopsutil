@@ -7,7 +7,10 @@ import (
 )
 
 func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
-	filename := "/proc/net/dev"
+	return fromNetDevFile("/proc/net/dev")
+}
+
+func fromNetDevFile(filename string) ([]NetIOCountersStat, error) {
 	lines, err := readLines(filename)
 	if err != nil {
 		return nil, err
