@@ -48,13 +48,17 @@ func TestDisk_io_counters(t *testing.T) {
 
 func TestDiskUsageStat_String(t *testing.T) {
 	v := DiskUsageStat{
-		Path:        "/",
-		Total:       1000,
-		Free:        2000,
-		Used:        3000,
-		UsedPercent: 50.1,
+		Path:              "/",
+		Total:             1000,
+		Free:              2000,
+		Used:              3000,
+		UsedPercent:       50.1,
+		InodesTotal:       4000,
+		InodesUsed:        5000,
+		InodesFree:        6000,
+		InodesUsedPercent: 49.1,
 	}
-	e := `{"path":"/","total":1000,"free":2000,"used":3000,"usedPercent":50.1}`
+	e := `{"path":"/","total":1000,"free":2000,"used":3000,"usedPercent":50.1,"inodesTotal":4000,"inodesUsed":5000,"inodesFree":6000,"inodesUsedPercent":49.1}`
 	if e != fmt.Sprintf("%v", v) {
 		t.Errorf("DiskUsageStat string is invalid: %v", v)
 	}
