@@ -10,6 +10,10 @@ type DiskUsageStat struct {
 	Free        uint64  `json:"free"`
 	Used        uint64  `json:"used"`
 	UsedPercent float64 `json:"usedPercent"`
+	InodesTotal uint64 `json:"inodesTotal"`
+	InodesUsed uint64 `json:"inodesUsed"`
+	InodesFree uint64 `json:"inodesFree"`
+	InodesUsedPercent float64 `json:"inodesUsedPercent"`
 }
 
 type DiskPartitionStat struct {
