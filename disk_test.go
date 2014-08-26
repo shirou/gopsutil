@@ -53,8 +53,12 @@ func TestDiskUsageStat_String(t *testing.T) {
 		Free:        2000,
 		Used:        3000,
 		UsedPercent: 50.1,
+		InodesTotal: 10,
+		InodesUsed:  1,
+		InodesFree:  9,
+		InodesUsedPercent: 1.,
 	}
-	e := `{"path":"/","total":1000,"free":2000,"used":3000,"usedPercent":50.1}`
+	e := `{"path":"/","total":1000,"free":2000,"used":3000,"usedPercent":50.1,"inodesTotal":10,"inodesUsed":1,"inodesFree":9,"inodesUsedPercent":1}`
 	if e != fmt.Sprintf("%v", v) {
 		t.Errorf("DiskUsageStat string is invalid: %v", v)
 	}
