@@ -25,6 +25,7 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 	for _, line := range lines {
 		fields := strings.Fields(line)
 		d := DiskPartitionStat{
+			Device:	    fields[0],
 			Mountpoint: fields[1],
 			Fstype:     fields[2],
 			Opts:       fields[3],
@@ -53,6 +54,7 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 		writes := mustParseUint64(fields[7])
 		wbytes := mustParseUint64(fields[9])
 		wtime := mustParseUint64(fields[10])
+		iotime := mustParseUint64(fields[13])
 		d := DiskIOCountersStat{
 			ReadBytes:  rbytes * SectorSize,
 			WriteBytes: wbytes * SectorSize,
@@ -60,6 +62,7 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 			WriteCount: writes,
 			ReadTime:   rtime,
 			WriteTime:  wtime,
+			IoTime:	    iotime,
 		}
 		if d == empty {
 			continue
