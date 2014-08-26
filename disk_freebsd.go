@@ -71,6 +71,7 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 		}
 
 		d := DiskPartitionStat{
+			Device:     byteToString(stat.FMntfromname[:]),
 			Mountpoint: byteToString(stat.FMntonname[:]),
 			Fstype:     byteToString(stat.FFstypename[:]),
 			Opts:       opts,
