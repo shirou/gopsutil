@@ -25,6 +25,7 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 	for _, line := range lines {
 		fields := strings.Fields(line)
 		d := DiskPartitionStat{
+			Device:	    fields[0],
 			Mountpoint: fields[1],
 			Fstype:     fields[2],
 			Opts:       fields[3],
