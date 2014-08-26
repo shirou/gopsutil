@@ -41,6 +41,11 @@ func DiskUsage(path string) (DiskUsageStat, error) {
 	ret.Used = ret.Total - ret.Free
 	ret.UsedPercent = float64(ret.Used) / float64(ret.Total) * 100.0
 
+	//TODO: implement inodes stat
+	ret.InodesTotal = 0
+	ret.InodesUsed = 0
+	ret.InodesFree = 0
+	ret.InodesUsedPercent = 0.0
 	return ret, nil
 }
 
