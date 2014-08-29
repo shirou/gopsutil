@@ -101,9 +101,6 @@ func (p *Process) Status() (string, error) {
 	}
 	return status, nil
 }
-func (p *Process) Username() (string, error) {
-	return "", nil
-}
 func (p *Process) Uids() ([]int32, error) {
 	_, _, uids, _, _, _, err := p.fillFromStatus()
 	if err != nil {
