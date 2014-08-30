@@ -335,15 +335,14 @@ func (p *Process) fillFromCmdline() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	// remove \u0000
-	ret := strings.TrimFunc(string(cmdline), func(r rune) bool {
+	ret := strings.FieldsFunc(string(cmdline), func(r rune) bool {
 		if r == '\u0000' {
 			return true
 		}
 		return false
 	})
 
-	return ret, nil
+	return strings.Join(ret, " "), nil
 }
 
 // Get IO status from /proc/(pid)/io
