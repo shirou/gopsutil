@@ -386,8 +386,8 @@ func (p *Process) fillFromStatm() (*MemoryInfoStat, *MemoryInfoExStat, error) {
 	}
 	fields := strings.Split(string(contents), " ")
 
-	rss := mustParseUint64(fields[0]) * PageSize
-	vms := mustParseUint64(fields[1]) * PageSize
+	vms := mustParseUint64(fields[0]) * PageSize
+	rss := mustParseUint64(fields[1]) * PageSize
 	memInfo := &MemoryInfoStat{
 		RSS: rss,
 		VMS: vms,
