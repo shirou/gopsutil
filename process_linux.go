@@ -390,11 +390,9 @@ func (p *Process) fillFromStatus() error {
 		return err
 	}
 	lines := strings.Split(string(contents), "\n")
-
-	var vol int32
-	var unvol int32
+	p.numCtxSwitches = &NumCtxSwitchesStat{}
 	for _, line := range lines {
-		tabParts := strings.SplitN(line, "\t", 1)
+		tabParts := strings.SplitN(line, "\t", 2)
 		if len(tabParts) < 2 {
 			continue
 		}
@@ -410,24 +408,40 @@ func (p *Process) fillFromStatus() error {
 		case "Uid":
 			p.uids = make([]int32, 0, 4)
 			for _, i := range strings.Split(value, "\t") {
-				p.uids = append(p.uids, mustParseInt32(i))
+				v, err := strconv.ParseInt(i, 10, 32)
+				if err != nil {
+					return err
+				}
+				p.uids = append(p.uids, int32(v))
 			}
 		case "Gid":
 			p.gids = make([]int32, 0, 4)
 			for _, i := range strings.Split(value, "\t") {
-				p.gids = append(p.gids, mustParseInt32(i))
+				v, err := strconv.ParseInt(i, 10, 32)
+				if err != nil {
+					return err
+				}
+				p.gids = append(p.gids, int32(v))
 			}
 		case "Threads":
-			p.numThreads = mustParseInt32(value)
+			v, err := strconv.ParseInt(value, 10, 32)
+			if err != nil {
+				return err
+			}
+			p.numThreads = int32(v)
 		case "voluntary_ctxt_switches":
-			vol = mustParseInt32(value)
+			v, err := strconv.ParseInt(value, 10, 32)
+			if err != nil {
+				return err
+			}
+			p.numCtxSwitches.Voluntary = int32(v)
 		case "nonvoluntary_ctxt_switches":
-			unvol = mustParseInt32(value)
+			v, err := strconv.ParseInt(value, 10, 32)
+			if err != nil {
+				return err
+			}
+			p.numCtxSwitches.Involuntary = int32(v)
 		}
-	}
-	p.numCtxSwitches = &NumCtxSwitchesStat{
-		Voluntary:   vol,
-		Involuntary: unvol,
 	}
 	return nil
 }
