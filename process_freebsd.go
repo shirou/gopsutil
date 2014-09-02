@@ -69,9 +69,6 @@ func (p *Process) Status() (string, error) {
 
 	return string(k.KiStat[:]), nil
 }
-func (p *Process) Username() (string, error) {
-	return "", NotImplementedError
-}
 func (p *Process) Uids() ([]int32, error) {
 	k, err := p.getKProc()
 	if err != nil {

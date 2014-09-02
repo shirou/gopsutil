@@ -4,6 +4,7 @@ package gopsutil
 
 import (
 	"os"
+	"os/user"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -84,4 +85,18 @@ func (p *Process) Terminate() error {
 }
 func (p *Process) Kill() error {
 	return p.SendSignal(syscall.SIGKILL)
+}
+func (p *Process) Username() (string, error) {
+	uids, err := p.Uids()
+	if err != nil {
+		return "", err
+	}
+	if len(uids) > 0 {
+		u, err := user.LookupId(strconv.Itoa(int(uids[0])))
+		if err != nil {
+			return "", err
+		}
+		return u.Username, nil
+	}
+	return "", nil
 }

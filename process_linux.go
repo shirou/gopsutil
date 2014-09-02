@@ -57,7 +57,8 @@ func NewProcess(pid int32) (*Process, error) {
 	p := &Process{
 		Pid: int32(pid),
 	}
-	return p, nil
+	err := p.fillFromStatus()
+	return p, err
 }
 
 func (p *Process) Ppid() (int32, error) {
@@ -68,11 +69,7 @@ func (p *Process) Ppid() (int32, error) {
 	return ppid, nil
 }
 func (p *Process) Name() (string, error) {
-	name, _, _, _, _, _, err := p.fillFromStatus()
-	if err != nil {
-		return "", err
-	}
-	return name, nil
+	return p.name, nil
 }
 func (p *Process) Exe() (string, error) {
 	return p.fillFromExe()
@@ -95,28 +92,13 @@ func (p *Process) Parent() (*Process, error) {
 	return nil, NotImplementedError
 }
 func (p *Process) Status() (string, error) {
-	_, status, _, _, _, _, err := p.fillFromStatus()
-	if err != nil {
-		return "", err
-	}
-	return status, nil
-}
-func (p *Process) Username() (string, error) {
-	return "", nil
+	return p.status, nil
 }
 func (p *Process) Uids() ([]int32, error) {
-	_, _, uids, _, _, _, err := p.fillFromStatus()
-	if err != nil {
-		return nil, err
-	}
-	return uids, nil
+	return p.uids, nil
 }
 func (p *Process) Gids() ([]int32, error) {
-	_, _, _, gids, _, _, err := p.fillFromStatus()
-	if err != nil {
-		return nil, err
-	}
-	return gids, nil
+	return p.gids, nil
 }
 func (p *Process) Terminal() (string, error) {
 	terminal, _, _, _, _, err := p.fillFromStat()
@@ -142,21 +124,13 @@ func (p *Process) IOCounters() (*IOCountersStat, error) {
 	return p.fillFromIO()
 }
 func (p *Process) NumCtxSwitches() (*NumCtxSwitchesStat, error) {
-	_, _, _, _, _, numCtxSwitches, err := p.fillFromStatus()
-	if err != nil {
-		return nil, err
-	}
-	return numCtxSwitches, nil
+	return p.numCtxSwitches, nil
 }
 func (p *Process) NumFDs() (int32, error) {
 	return 0, NotImplementedError
 }
 func (p *Process) NumThreads() (int32, error) {
-	_, _, _, _, numThreads, _, err := p.fillFromStatus()
-	if err != nil {
-		return 0, err
-	}
-	return numThreads, nil
+	return p.numThreads, nil
 }
 func (p *Process) Threads() (map[string]string, error) {
 	ret := make(map[string]string, 0)
@@ -338,15 +312,14 @@ func (p *Process) fillFromCmdline() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	// remove \u0000
-	ret := strings.TrimFunc(string(cmdline), func(r rune) bool {
+	ret := strings.FieldsFunc(string(cmdline), func(r rune) bool {
 		if r == '\u0000' {
 			return true
 		}
 		return false
 	})
 
-	return ret, nil
+	return strings.Join(ret, " "), nil
 }
 
 // Get IO status from /proc/(pid)/io
@@ -390,8 +363,8 @@ func (p *Process) fillFromStatm() (*MemoryInfoStat, *MemoryInfoExStat, error) {
 	}
 	fields := strings.Split(string(contents), " ")
 
-	rss := mustParseUint64(fields[0]) * PageSize
-	vms := mustParseUint64(fields[1]) * PageSize
+	vms := mustParseUint64(fields[0]) * PageSize
+	rss := mustParseUint64(fields[1]) * PageSize
 	memInfo := &MemoryInfoStat{
 		RSS: rss,
 		VMS: vms,
@@ -409,59 +382,68 @@ func (p *Process) fillFromStatm() (*MemoryInfoStat, *MemoryInfoExStat, error) {
 }
 
 // Get various status from /proc/(pid)/status
-func (p *Process) fillFromStatus() (string, string, []int32, []int32, int32, *NumCtxSwitchesStat, error) {
+func (p *Process) fillFromStatus() error {
 	pid := p.Pid
 	statPath := filepath.Join("/", "proc", strconv.Itoa(int(pid)), "status")
 	contents, err := ioutil.ReadFile(statPath)
 	if err != nil {
-		return "", "", nil, nil, 0, nil, err
+		return err
 	}
 	lines := strings.Split(string(contents), "\n")
-
-	name := ""
-	status := ""
-	var numThreads int32
-	var vol int32
-	var unvol int32
-	var uids []int32
-	var gids []int32
+	p.numCtxSwitches = &NumCtxSwitchesStat{}
 	for _, line := range lines {
-		field := strings.Split(line, ":")
-		if len(field) < 2 {
+		tabParts := strings.SplitN(line, "\t", 2)
+		if len(tabParts) < 2 {
 			continue
 		}
-		//		fmt.Printf("%s ->__%s__\n", field[0], strings.Trim(field[1], " \t"))
-		switch field[0] {
+		value := tabParts[1]
+		switch strings.TrimRight(tabParts[0], ":") {
 		case "Name":
-			name = strings.Trim(field[1], " \t")
+			p.name = strings.Trim(value, " \t")
 		case "State":
 			// get between "(" and ")"
-			s := strings.Index(field[1], "(") + 1
-			e := strings.Index(field[1], "(") + 1
-			status = field[1][s:e]
-			//		case "PPid":  // filled by fillFromStat
+			s := strings.Index(value, "(") + 1
+			e := strings.Index(value, "(") + 1
+			p.status = value[s:e]
 		case "Uid":
-			for _, i := range strings.Split(field[1], "\t") {
-				uids = append(uids, mustParseInt32(i))
+			p.uids = make([]int32, 0, 4)
+			for _, i := range strings.Split(value, "\t") {
+				v, err := strconv.ParseInt(i, 10, 32)
+				if err != nil {
+					return err
+				}
+				p.uids = append(p.uids, int32(v))
 			}
 		case "Gid":
-			for _, i := range strings.Split(field[1], "\t") {
-				gids = append(gids, mustParseInt32(i))
+			p.gids = make([]int32, 0, 4)
+			for _, i := range strings.Split(value, "\t") {
+				v, err := strconv.ParseInt(i, 10, 32)
+				if err != nil {
+					return err
+				}
+				p.gids = append(p.gids, int32(v))
 			}
 		case "Threads":
-			numThreads = mustParseInt32(field[1])
+			v, err := strconv.ParseInt(value, 10, 32)
+			if err != nil {
+				return err
+			}
+			p.numThreads = int32(v)
 		case "voluntary_ctxt_switches":
-			vol = mustParseInt32(field[1])
+			v, err := strconv.ParseInt(value, 10, 32)
+			if err != nil {
+				return err
+			}
+			p.numCtxSwitches.Voluntary = int32(v)
 		case "nonvoluntary_ctxt_switches":
-			unvol = mustParseInt32(field[1])
+			v, err := strconv.ParseInt(value, 10, 32)
+			if err != nil {
+				return err
+			}
+			p.numCtxSwitches.Involuntary = int32(v)
 		}
 	}
-
-	numctx := &NumCtxSwitchesStat{
-		Voluntary:   vol,
-		Involuntary: unvol,
-	}
-	return name, status, uids, gids, numThreads, numctx, nil
+	return nil
 }
 
 func (p *Process) fillFromStat() (string, int32, *CPUTimesStat, int64, int32, error) {
