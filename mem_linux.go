@@ -55,7 +55,12 @@ func SwapMemory() (*SwapMemoryStat, error) {
 		Free:  uint64(sysinfo.Freeswap),
 	}
 	ret.Used = ret.Total - ret.Free
-	ret.UsedPercent = float64(ret.Total-ret.Free) / float64(ret.Total) * 100.0
+	//check Infinity
+	if ret.Total != 0 {
+		ret.UsedPercent = float64(ret.Total-ret.Free) / float64(ret.Total) * 100.0
+	} else {
+		ret.UsedPercent = 0
+	}
 
 	return ret, nil
 }
