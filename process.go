@@ -38,8 +38,8 @@ type IOCountersStat struct {
 }
 
 type NumCtxSwitchesStat struct {
-	Voluntary   int32 `json:"voluntary"`
-	Involuntary int32 `json:"involuntary"`
+	Voluntary   int64 `json:"voluntary"`
+	Involuntary int64 `json:"involuntary"`
 }
 
 func (p Process) String() string {
