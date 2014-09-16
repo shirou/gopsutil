@@ -54,7 +54,7 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 		writes := mustParseUint64(fields[7])
 		wbytes := mustParseUint64(fields[9])
 		wtime := mustParseUint64(fields[10])
-		iotime := mustParseUint64(fields[13])
+		iotime := mustParseUint64(fields[12])
 		d := DiskIOCountersStat{
 			ReadBytes:  rbytes * SectorSize,
 			WriteBytes: wbytes * SectorSize,
