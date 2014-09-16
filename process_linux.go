@@ -430,17 +430,17 @@ func (p *Process) fillFromStatus() error {
 			}
 			p.numThreads = int32(v)
 		case "voluntary_ctxt_switches":
-			v, err := strconv.ParseInt(value, 10, 32)
+			v, err := strconv.ParseInt(value, 10, 64)
 			if err != nil {
 				return err
 			}
-			p.numCtxSwitches.Voluntary = int32(v)
+			p.numCtxSwitches.Voluntary = v
 		case "nonvoluntary_ctxt_switches":
-			v, err := strconv.ParseInt(value, 10, 32)
+			v, err := strconv.ParseInt(value, 10, 64)
 			if err != nil {
 				return err
 			}
-			p.numCtxSwitches.Involuntary = int32(v)
+			p.numCtxSwitches.Involuntary = v
 		}
 	}
 	return nil
