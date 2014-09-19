@@ -78,13 +78,13 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 			return ret, err
 		}
 		d := DiskIOCountersStat{
-			ReadBytes:  uint64(rbytes) * SectorSize,
-			WriteBytes: uint64(wbytes) * SectorSize,
-			ReadCount:  uint64(reads),
-			WriteCount: uint64(writes),
-			ReadTime:   uint64(rtime),
-			WriteTime:  uint64(wtime),
-			IoTime:     uint64(iotime),
+			ReadBytes:  rbytes * SectorSize,
+			WriteBytes: wbytes * SectorSize,
+			ReadCount:  reads,
+			WriteCount: writes,
+			ReadTime:   rtime,
+			WriteTime:  wtime,
+			IoTime:     iotime,
 		}
 		if d == empty {
 			continue
