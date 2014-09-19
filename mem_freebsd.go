@@ -4,30 +4,75 @@ package gopsutil
 
 import (
 	"os/exec"
+	"strconv"
 	"strings"
 )
 
 func VirtualMemory() (*VirtualMemoryStat, error) {
+	pageSize, err := doSysctrl("vm.stats.vm.v_page_size")
+	if err != nil {
+		return nil, err
+	}
+	p, err := strconv.ParseUint(pageSize[0], 10, 64)
+	if err != nil {
+		return nil, err
+	}
 
-	pageSize, _ := doSysctrl("vm.stats.vm.v_page_size")
-	p := mustParseUint64(pageSize[0])
+	pageCount, err := doSysctrl("vm.stats.vm.v_page_count")
+	if err != nil {
+		return nil, err
+	}
+	free, err := doSysctrl("vm.stats.vm.v_free_count")
+	if err != nil {
+		return nil, err
+	}
+	active, err := doSysctrl("vm.stats.vm.v_active_count")
+	if err != nil {
+		return nil, err
+	}
+	inactive, err := doSysctrl("vm.stats.vm.v_inactive_count")
+	if err != nil {
+		return nil, err
+	}
+	cache, err := doSysctrl("vm.stats.vm.v_cache_count")
+	if err != nil {
+		return nil, err
+	}
+	buffer, err := doSysctrl("vfs.bufspace")
+	if err != nil {
+		return nil, err
+	}
+	wired, err := doSysctrl("vm.stats.vm.v_wire_count")
+	if err != nil {
+		return nil, err
+	}
 
-	pageCount, _ := doSysctrl("vm.stats.vm.v_page_count")
-	free, _ := doSysctrl("vm.stats.vm.v_free_count")
-	active, _ := doSysctrl("vm.stats.vm.v_active_count")
-	inactive, _ := doSysctrl("vm.stats.vm.v_inactive_count")
-	cache, _ := doSysctrl("vm.stats.vm.v_cache_count")
-	buffer, _ := doSysctrl("vfs.bufspace")
-	wired, _ := doSysctrl("vm.stats.vm.v_wire_count")
+	parsed := make([]uint64, 0, 7)
+	vv := []string{
+		pageCount[0],
+		free[0],
+		active[0],
+		inactive[0],
+		cache[0],
+		buffer[0],
+		wired[0],
+	}
+	for _, target := range vv {
+		t, err := strconv.ParseUint(target, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		parsed = append(parsed, t)
+	}
 
 	ret := &VirtualMemoryStat{
-		Total:    mustParseUint64(pageCount[0]) * p,
-		Free:     mustParseUint64(free[0]) * p,
-		Active:   mustParseUint64(active[0]) * p,
-		Inactive: mustParseUint64(inactive[0]) * p,
-		Cached:   mustParseUint64(cache[0]) * p,
-		Buffers:  mustParseUint64(buffer[0]),
-		Wired:    mustParseUint64(wired[0]) * p,
+		Total:    parsed[0] * p,
+		Free:     parsed[1] * p,
+		Active:   parsed[2] * p,
+		Inactive: parsed[3] * p,
+		Cached:   parsed[4] * p,
+		Buffers:  parsed[5],
+		Wired:    parsed[6] * p,
 	}
 
 	// TODO: platform independent (worked freebsd?)
@@ -55,12 +100,28 @@ func SwapMemory() (*SwapMemoryStat, error) {
 		}
 
 		u := strings.Replace(values[4], "%", "", 1)
+		total_v, err := strconv.ParseUint(values[1], 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		used_v, err := strconv.ParseUint(values[2], 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		free_v, err := strconv.ParseUint(values[3], 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		up_v, err := strconv.ParseFloat(u, 64)
+		if err != nil {
+			return nil, err
+		}
 
 		ret = &SwapMemoryStat{
-			Total:       mustParseUint64(values[1]),
-			Used:        mustParseUint64(values[2]),
-			Free:        mustParseUint64(values[3]),
-			UsedPercent: mustParseFloat64(u),
+			Total:       total_v,
+			Used:        used_v,
+			Free:        free_v,
+			UsedPercent: up_v,
 		}
 	}
 

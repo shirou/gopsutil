@@ -4,6 +4,7 @@ package gopsutil
 
 import (
 	"os/exec"
+	"strconv"
 	"strings"
 )
 
@@ -27,16 +28,40 @@ func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 			base = 0
 		}
 
+		parsed := make([]uint64, 0, 8)
+		vv := []string{
+			values[base+3],  // PacketsRecv
+			values[base+4],  // Errin
+			values[base+5],  // Dropin
+			values[base+6],  // BytesRecvn
+			values[base+7],  // PacketSent
+			values[base+8],  // Errout
+			values[base+9],  // BytesSent
+			values[base+11], // Dropout
+		}
+		for _, target := range vv {
+			if target == "-" {
+				parsed = append(parsed, 0)
+				continue
+			}
+
+			t, err := strconv.ParseUint(target, 10, 64)
+			if err != nil {
+				return nil, err
+			}
+			parsed = append(parsed, t)
+		}
+
 		n := NetIOCountersStat{
 			Name:        values[0],
-			PacketsRecv: mustParseUint64(values[base+3]),
-			Errin:       mustParseUint64(values[base+4]),
-			Dropin:      mustParseUint64(values[base+5]),
-			BytesRecv:   mustParseUint64(values[base+6]),
-			PacketsSent: mustParseUint64(values[base+7]),
-			Errout:      mustParseUint64(values[base+8]),
-			BytesSent:   mustParseUint64(values[base+9]),
-			Dropout:     mustParseUint64(values[base+11]),
+			PacketsRecv: parsed[0],
+			Errin:       parsed[1],
+			Dropin:      parsed[2],
+			BytesRecv:   parsed[3],
+			PacketsSent: parsed[4],
+			Errout:      parsed[5],
+			BytesSent:   parsed[6],
+			Dropout:     parsed[7],
 		}
 		ret = append(ret, n)
 	}
