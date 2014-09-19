@@ -4,8 +4,8 @@ package gopsutil
 
 import (
 	"os"
-	"os/user"
 	"os/exec"
+	"os/user"
 	"strconv"
 	"strings"
 	"syscall"

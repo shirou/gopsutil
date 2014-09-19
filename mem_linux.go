@@ -3,6 +3,7 @@
 package gopsutil
 
 import (
+	"strconv"
 	"strings"
 	"syscall"
 )
@@ -24,17 +25,42 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 		switch key {
 		case "MemTotal":
 			ret.Total = mustParseUint64(value) * 1000
+			t, err := strconv.ParseInt(value, 10, 64)
+			if err != nil {
+				return ret, err
+			}
+			ret.Total = uint64(t) * 1000
 		case "MemFree":
 			ret.Free = mustParseUint64(value) * 1000
+			t, err := strconv.ParseInt(value, 10, 64)
+			if err != nil {
+				return ret, err
+			}
+			ret.Free = uint64(t) * 1000
 		case "Buffers":
-			ret.Buffers = mustParseUint64(value) * 1000
+			t, err := strconv.ParseInt(value, 10, 64)
+			if err != nil {
+				return ret, err
+			}
+			ret.Buffers = uint64(t) * 1000
 		case "Cached":
-			ret.Cached = mustParseUint64(value) * 1000
+			t, err := strconv.ParseInt(value, 10, 64)
+			if err != nil {
+				return ret, err
+			}
+			ret.Cached = uint64(t) * 1000
 		case "Active":
-			ret.Active = mustParseUint64(value) * 1000
+			t, err := strconv.ParseInt(value, 10, 64)
+			if err != nil {
+				return ret, err
+			}
+			ret.Active = uint64(t) * 1000
 		case "Inactive":
-			ret.Inactive = mustParseUint64(value) * 1000
-
+			t, err := strconv.ParseInt(value, 10, 64)
+			if err != nil {
+				return ret, err
+			}
+			ret.Inactive = uint64(t) * 1000
 		}
 	}
 	ret.Available = ret.Free + ret.Buffers + ret.Cached

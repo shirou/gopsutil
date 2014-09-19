@@ -3,6 +3,7 @@
 package gopsutil
 
 import (
+	"strconv"
 	"strings"
 )
 
@@ -25,7 +26,7 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 	for _, line := range lines {
 		fields := strings.Fields(line)
 		d := DiskPartitionStat{
-			Device:	    fields[0],
+			Device:     fields[0],
 			Mountpoint: fields[1],
 			Fstype:     fields[2],
 			Opts:       fields[3],
@@ -48,21 +49,42 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 	for _, line := range lines {
 		fields := strings.Fields(line)
 		name := fields[2]
-		reads := mustParseUint64(fields[3])
-		rbytes := mustParseUint64(fields[5])
-		rtime := mustParseUint64(fields[6])
-		writes := mustParseUint64(fields[7])
-		wbytes := mustParseUint64(fields[9])
-		wtime := mustParseUint64(fields[10])
-		iotime := mustParseUint64(fields[12])
+		reads, err := strconv.ParseUint((fields[3]), 10, 64)
+		if err != nil {
+			return ret, err
+		}
+		rbytes, err := strconv.ParseUint((fields[5]), 10, 64)
+		if err != nil {
+			return ret, err
+		}
+		rtime, err := strconv.ParseUint((fields[6]), 10, 64)
+		if err != nil {
+			return ret, err
+		}
+		writes, err := strconv.ParseUint((fields[7]), 10, 64)
+		if err != nil {
+			return ret, err
+		}
+		wbytes, err := strconv.ParseUint((fields[9]), 10, 64)
+		if err != nil {
+			return ret, err
+		}
+		wtime, err := strconv.ParseUint((fields[10]), 10, 64)
+		if err != nil {
+			return ret, err
+		}
+		iotime, err := strconv.ParseUint((fields[12]), 10, 64)
+		if err != nil {
+			return ret, err
+		}
 		d := DiskIOCountersStat{
-			ReadBytes:  rbytes * SectorSize,
-			WriteBytes: wbytes * SectorSize,
-			ReadCount:  reads,
-			WriteCount: writes,
-			ReadTime:   rtime,
-			WriteTime:  wtime,
-			IoTime:	    iotime,
+			ReadBytes:  uint64(rbytes) * SectorSize,
+			WriteBytes: uint64(wbytes) * SectorSize,
+			ReadCount:  uint64(reads),
+			WriteCount: uint64(writes),
+			ReadTime:   uint64(rtime),
+			WriteTime:  uint64(wtime),
+			IoTime:     uint64(iotime),
 		}
 		if d == empty {
 			continue

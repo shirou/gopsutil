@@ -3,6 +3,7 @@
 package gopsutil
 
 import (
+	"strconv"
 	"strings"
 )
 
@@ -22,16 +23,50 @@ func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 		if fields[0] == "" {
 			continue
 		}
+
+		bytesRecv, err := strconv.ParseUint(fields[1], 10, 64)
+		if err != nil {
+			return ret, err
+		}
+		packetsRecv, err := strconv.ParseUint(fields[2], 10, 64)
+		if err != nil {
+			return ret, err
+		}
+		errIn, err := strconv.ParseUint(fields[3], 10, 64)
+		if err != nil {
+			return ret, err
+		}
+		dropIn, err := strconv.ParseUint(fields[4], 10, 64)
+		if err != nil {
+			return ret, err
+		}
+		bytesSent, err := strconv.ParseUint(fields[9], 10, 64)
+		if err != nil {
+			return ret, err
+		}
+		packetsSent, err := strconv.ParseUint(fields[10], 10, 64)
+		if err != nil {
+			return ret, err
+		}
+		errOut, err := strconv.ParseUint(fields[11], 10, 64)
+		if err != nil {
+			return ret, err
+		}
+		dropOut, err := strconv.ParseUint(fields[14], 10, 64)
+		if err != nil {
+			return ret, err
+		}
+
 		nic := NetIOCountersStat{
 			Name:        strings.Trim(fields[0], ":"),
-			BytesRecv:   mustParseUint64(fields[1]),
-			PacketsRecv: mustParseUint64(fields[2]),
-			Errin:       mustParseUint64(fields[3]),
-			Dropin:      mustParseUint64(fields[4]),
-			BytesSent:   mustParseUint64(fields[9]),
-			PacketsSent: mustParseUint64(fields[10]),
-			Errout:      mustParseUint64(fields[11]),
-			Dropout:     mustParseUint64(fields[12]),
+			BytesRecv:   bytesRecv,
+			PacketsRecv: packetsRecv,
+			Errin:       errIn,
+			Dropin:      dropIn,
+			BytesSent:   bytesSent,
+			PacketsSent: packetsSent,
+			Errout:      errOut,
+			Dropout:     dropOut,
 		}
 		ret = append(ret, nic)
 	}

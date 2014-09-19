@@ -46,7 +46,11 @@ func CPUInfo() ([]CPUInfoStat, error) {
 		switch key {
 		case "processor":
 			c = CPUInfoStat{}
-			c.CPU = mustParseInt32(value)
+			t, err := strconv.ParseInt(value, 10, 32)
+			if err != nil {
+				return ret, err
+			}
+			c.CPU = int32(t)
 		case "vendor_id":
 			c.VendorID = value
 		case "cpu family":
@@ -56,17 +60,33 @@ func CPUInfo() ([]CPUInfoStat, error) {
 		case "model name":
 			c.ModelName = value
 		case "stepping":
-			c.Stepping = mustParseInt32(value)
+			t, err := strconv.ParseInt(value, 10, 32)
+			if err != nil {
+				return ret, err
+			}
+			c.Stepping = int32(t)
 		case "cpu MHz":
-			c.Mhz = mustParseFloat64(value)
+			t, err := strconv.ParseFloat(value, 64)
+			if err != nil {
+				return ret, err
+			}
+			c.Mhz = t
 		case "cache size":
-			c.CacheSize = mustParseInt32(strings.Replace(value, " KB", "", 1))
+			t, err := strconv.ParseInt(strings.Replace(value, " KB", "", 1), 10, 32)
+			if err != nil {
+				return ret, err
+			}
+			c.CacheSize = int32(t)
 		case "physical id":
 			c.PhysicalID = value
 		case "core id":
 			c.CoreID = value
 		case "cpu cores":
-			c.Cores = mustParseInt32(value)
+			t, err := strconv.ParseInt(value, 10, 32)
+			if err != nil {
+				return ret, err
+			}
+			c.Cores = int32(t)
 		case "flags":
 			c.Flags = strings.Split(value, ",")
 		}
