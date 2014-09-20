@@ -32,11 +32,26 @@ func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 		return ret, err
 	}
 
-	user, _ := strconv.ParseFloat(cpuTime[CPUser], 32)
-	nice, _ := strconv.ParseFloat(cpuTime[CPNice], 32)
-	sys, _ := strconv.ParseFloat(cpuTime[CPSys], 32)
-	idle, _ := strconv.ParseFloat(cpuTime[CPIdle], 32)
-	intr, _ := strconv.ParseFloat(cpuTime[CPIntr], 32)
+	user, err := strconv.ParseFloat(cpuTime[CPUser], 32)
+	if err != nil {
+		return ret, err
+	}
+	nice, err := strconv.ParseFloat(cpuTime[CPNice], 32)
+	if err != nil {
+		return ret, err
+	}
+	sys, err := strconv.ParseFloat(cpuTime[CPSys], 32)
+	if err != nil {
+		return ret, err
+	}
+	idle, err := strconv.ParseFloat(cpuTime[CPIdle], 32)
+	if err != nil {
+		return ret, err
+	}
+	intr, err := strconv.ParseFloat(cpuTime[CPIntr], 32)
+	if err != nil {
+		return ret, err
+	}
 
 	c := CPUTimesStat{
 		User:   float32(user / ClocksPerSec),
@@ -64,6 +79,10 @@ func CPUInfo() ([]CPUInfoStat, error) {
 	for _, line := range strings.Split(string(out), "\n") {
 		values := strings.Fields(line)
 
+		t, err := strconv.ParseInt(values[1], 10, 32)
+		if err != nil {
+			return ret, err
+		}
 		if strings.HasPrefix(line, "machdep.cpu.brand_string") {
 			c.ModelName = strings.Join(values[1:], " ")
 		} else if strings.HasPrefix(line, "machdep.cpu.family") {
@@ -71,7 +90,7 @@ func CPUInfo() ([]CPUInfoStat, error) {
 		} else if strings.HasPrefix(line, "machdep.cpu.model") {
 			c.Model = values[1]
 		} else if strings.HasPrefix(line, "machdep.cpu.stepping") {
-			c.Stepping = mustParseInt32(values[1])
+			c.Stepping = int32(t)
 		} else if strings.HasPrefix(line, "machdep.cpu.features") {
 			for _, v := range values[1:] {
 				c.Flags = append(c.Flags, strings.ToLower(v))
@@ -85,9 +104,9 @@ func CPUInfo() ([]CPUInfoStat, error) {
 				c.Flags = append(c.Flags, strings.ToLower(v))
 			}
 		} else if strings.HasPrefix(line, "machdep.cpu.core_count") {
-			c.Cores = mustParseInt32(values[1])
+			c.Cores = int32(t)
 		} else if strings.HasPrefix(line, "machdep.cpu.cache.size") {
-			c.CacheSize = mustParseInt32(values[1])
+			c.CacheSize = int32(t)
 		} else if strings.HasPrefix(line, "machdep.cpu.vendor") {
 			c.VendorID = values[1]
 		}

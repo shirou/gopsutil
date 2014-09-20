@@ -3,6 +3,7 @@
 package gopsutil
 
 import (
+	"strconv"
 	"strings"
 	"syscall"
 )
@@ -21,20 +22,23 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 		value := strings.TrimSpace(fields[1])
 		value = strings.Replace(value, " kB", "", -1)
 
+		t, err := strconv.ParseUint(value, 10, 64)
+		if err != nil {
+			return ret, err
+		}
 		switch key {
 		case "MemTotal":
-			ret.Total = mustParseUint64(value) * 1000
+			ret.Total = t * 1000
 		case "MemFree":
-			ret.Free = mustParseUint64(value) * 1000
+			ret.Free = t * 1000
 		case "Buffers":
-			ret.Buffers = mustParseUint64(value) * 1000
+			ret.Buffers = t * 1000
 		case "Cached":
-			ret.Cached = mustParseUint64(value) * 1000
+			ret.Cached = t * 1000
 		case "Active":
-			ret.Active = mustParseUint64(value) * 1000
+			ret.Active = t * 1000
 		case "Inactive":
-			ret.Inactive = mustParseUint64(value) * 1000
-
+			ret.Inactive = t * 1000
 		}
 	}
 	ret.Available = ret.Free + ret.Buffers + ret.Cached

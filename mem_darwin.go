@@ -4,6 +4,7 @@ package gopsutil
 
 import (
 	"os/exec"
+	"strconv"
 	"strings"
 )
 
@@ -12,34 +13,46 @@ func getPageSize() (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	p := mustParseUint64(string(out))
+	o := strings.TrimSpace(string(out))
+	p, err := strconv.ParseUint(o, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
 	return p, nil
 }
 
 // VirtualMemory returns VirtualmemoryStat.
 func VirtualMemory() (*VirtualMemoryStat, error) {
-	p, _ := getPageSize()
+	p, err := getPageSize()
+	if err != nil {
+		return nil, err
+	}
 
-	total, _ := doSysctrl("hw.memsize")
-	free, _ := doSysctrl("vm.page_free_count")
-	/*
-		active, _ := doSysctrl("vm.stats.vm.v_active_count")
-		inactive, _ := doSysctrl("vm.pageout_inactive_used")
-		cache, _ := doSysctrl("vm.stats.vm.v_cache_count")
-		buffer, _ := doSysctrl("vfs.bufspace")
-		wired, _ := doSysctrl("vm.stats.vm.v_wire_count")
-	*/
+	total, err := doSysctrl("hw.memsize")
+	if err != nil {
+		return nil, err
+	}
+	free, err := doSysctrl("vm.page_free_count")
+	if err != nil {
+		return nil, err
+	}
+	parsed := make([]uint64, 0, 7)
+	vv := []string{
+		total[0],
+		free[0],
+	}
+	for _, target := range vv {
+		t, err := strconv.ParseUint(target, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		parsed = append(parsed, t)
+	}
 
 	ret := &VirtualMemoryStat{
-		Total: mustParseUint64(total[0]) * p,
-		Free:  mustParseUint64(free[0]) * p,
-		/*
-			Active:   mustParseUint64(active[0]) * p,
-			Inactive: mustParseUint64(inactive[0]) * p,
-			Cached:   mustParseUint64(cache[0]) * p,
-			Buffers:  mustParseUint64(buffer[0]),
-			Wired:    mustParseUint64(wired[0]) * p,
-		*/
+		Total: parsed[0] * p,
+		Free:  parsed[1] * p,
 	}
 
 	// TODO: platform independent (worked freebsd?)
@@ -53,21 +66,38 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 
 // SwapMemory returns swapinfo.
 func SwapMemory() (*SwapMemoryStat, error) {
-	swapUsage, _ := doSysctrl("vm.swapusage")
-
 	var ret *SwapMemoryStat
 
-	total := strings.Replace(swapUsage[3], "M", "", 1)
-	used := strings.Replace(swapUsage[6], "M", "", 1)
-	free := strings.Replace(swapUsage[9], "M", "", 1)
+	swapUsage, err := doSysctrl("vm.swapusage")
+	if err != nil {
+		return ret, err
+	}
 
-	u := "0"
+	total := strings.Replace(swapUsage[2], "M", "", 1)
+	used := strings.Replace(swapUsage[5], "M", "", 1)
+	free := strings.Replace(swapUsage[8], "M", "", 1)
 
+	total_v, err := strconv.ParseFloat(total, 64)
+	if err != nil {
+		return nil, err
+	}
+	used_v, err := strconv.ParseFloat(used, 64)
+	if err != nil {
+		return nil, err
+	}
+	free_v, err := strconv.ParseFloat(free, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	u := ((total_v - free_v) / total_v) * 100.0
+
+	// vm.swapusage shows "M", multiply 1000
 	ret = &SwapMemoryStat{
-		Total:       mustParseUint64(total),
-		Used:        mustParseUint64(used),
-		Free:        mustParseUint64(free),
-		UsedPercent: mustParseFloat64(u),
+		Total:       uint64(total_v * 1000),
+		Used:        uint64(used_v * 1000),
+		Free:        uint64(free_v * 1000),
+		UsedPercent: u,
 	}
 
 	return ret, nil

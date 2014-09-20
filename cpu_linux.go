@@ -46,7 +46,11 @@ func CPUInfo() ([]CPUInfoStat, error) {
 		switch key {
 		case "processor":
 			c = CPUInfoStat{}
-			c.CPU = mustParseInt32(value)
+			t, err := strconv.ParseInt(value, 10, 32)
+			if err != nil {
+				return ret, err
+			}
+			c.CPU = int32(t)
 		case "vendor_id":
 			c.VendorID = value
 		case "cpu family":
@@ -56,17 +60,33 @@ func CPUInfo() ([]CPUInfoStat, error) {
 		case "model name":
 			c.ModelName = value
 		case "stepping":
-			c.Stepping = mustParseInt32(value)
+			t, err := strconv.ParseInt(value, 10, 32)
+			if err != nil {
+				return ret, err
+			}
+			c.Stepping = int32(t)
 		case "cpu MHz":
-			c.Mhz = mustParseFloat64(value)
+			t, err := strconv.ParseFloat(value, 64)
+			if err != nil {
+				return ret, err
+			}
+			c.Mhz = t
 		case "cache size":
-			c.CacheSize = mustParseInt32(strings.Replace(value, " KB", "", 1))
+			t, err := strconv.ParseInt(strings.Replace(value, " KB", "", 1), 10, 32)
+			if err != nil {
+				return ret, err
+			}
+			c.CacheSize = int32(t)
 		case "physical id":
 			c.PhysicalID = value
 		case "core id":
 			c.CoreID = value
 		case "cpu cores":
-			c.Cores = mustParseInt32(value)
+			t, err := strconv.ParseInt(value, 10, 32)
+			if err != nil {
+				return ret, err
+			}
+			c.Cores = int32(t)
 		case "flags":
 			c.Flags = strings.Split(value, ",")
 		}
@@ -86,14 +106,38 @@ func parseStatLine(line string) (*CPUTimesStat, error) {
 	if cpu == "cpu" {
 		cpu = "cpu-total"
 	}
-	user, _ := strconv.ParseFloat(fields[1], 32)
-	nice, _ := strconv.ParseFloat(fields[2], 32)
-	system, _ := strconv.ParseFloat(fields[3], 32)
-	idle, _ := strconv.ParseFloat(fields[4], 32)
-	iowait, _ := strconv.ParseFloat(fields[5], 32)
-	irq, _ := strconv.ParseFloat(fields[6], 32)
-	softirq, _ := strconv.ParseFloat(fields[7], 32)
-	stolen, _ := strconv.ParseFloat(fields[8], 32)
+	user, err := strconv.ParseFloat(fields[1], 32)
+	if err != nil {
+		return nil, err
+	}
+	nice, err := strconv.ParseFloat(fields[2], 32)
+	if err != nil {
+		return nil, err
+	}
+	system, err := strconv.ParseFloat(fields[3], 32)
+	if err != nil {
+		return nil, err
+	}
+	idle, err := strconv.ParseFloat(fields[4], 32)
+	if err != nil {
+		return nil, err
+	}
+	iowait, err := strconv.ParseFloat(fields[5], 32)
+	if err != nil {
+		return nil, err
+	}
+	irq, err := strconv.ParseFloat(fields[6], 32)
+	if err != nil {
+		return nil, err
+	}
+	softirq, err := strconv.ParseFloat(fields[7], 32)
+	if err != nil {
+		return nil, err
+	}
+	stolen, err := strconv.ParseFloat(fields[8], 32)
+	if err != nil {
+		return nil, err
+	}
 	ct := &CPUTimesStat{
 		CPU:     cpu,
 		User:    float32(user),
@@ -106,15 +150,24 @@ func parseStatLine(line string) (*CPUTimesStat, error) {
 		Stolen:  float32(stolen),
 	}
 	if len(fields) > 9 { // Linux >= 2.6.11
-		steal, _ := strconv.ParseFloat(fields[9], 32)
+		steal, err := strconv.ParseFloat(fields[9], 32)
+		if err != nil {
+			return nil, err
+		}
 		ct.Steal = float32(steal)
 	}
 	if len(fields) > 10 { // Linux >= 2.6.24
-		guest, _ := strconv.ParseFloat(fields[10], 32)
+		guest, err := strconv.ParseFloat(fields[10], 32)
+		if err != nil {
+			return nil, err
+		}
 		ct.Guest = float32(guest)
 	}
 	if len(fields) > 11 { // Linux >= 3.2.0
-		guestNice, _ := strconv.ParseFloat(fields[11], 32)
+		guestNice, err := strconv.ParseFloat(fields[11], 32)
+		if err != nil {
+			return nil, err
+		}
 		ct.GuestNice = float32(guestNice)
 	}
 

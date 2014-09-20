@@ -195,7 +195,7 @@ func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 	lines := strings.Split(string(contents), "\n")
 
 	// function of parsing a block
-	getBlock := func(first_line []string, block []string) MemoryMapsStat {
+	getBlock := func(first_line []string, block []string) (MemoryMapsStat, error) {
 		m := MemoryMapsStat{}
 		m.Path = first_line[len(first_line)-1]
 
@@ -205,30 +205,35 @@ func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 				continue
 			}
 			v := strings.Trim(field[1], " kB") // remove last "kB"
+			t, err := strconv.ParseUint(v, 10, 64)
+			if err != nil {
+				return m, err
+			}
+
 			switch field[0] {
 			case "Size":
-				m.Size = mustParseUint64(v)
+				m.Size = t
 			case "Rss":
-				m.Rss = mustParseUint64(v)
+				m.Rss = t
 			case "Pss":
-				m.Pss = mustParseUint64(v)
+				m.Pss = t
 			case "Shared_Clean":
-				m.SharedClean = mustParseUint64(v)
+				m.SharedClean = t
 			case "Shared_Dirty":
-				m.SharedDirty = mustParseUint64(v)
+				m.SharedDirty = t
 			case "Private_Clean":
-				m.PrivateClean = mustParseUint64(v)
+				m.PrivateClean = t
 			case "Private_Dirty":
-				m.PrivateDirty = mustParseUint64(v)
+				m.PrivateDirty = t
 			case "Referenced":
-				m.Referenced = mustParseUint64(v)
+				m.Referenced = t
 			case "Anonymous":
-				m.Anonymous = mustParseUint64(v)
+				m.Anonymous = t
 			case "Swap":
-				m.Swap = mustParseUint64(v)
+				m.Swap = t
 			}
 		}
-		return m
+		return m, nil
 	}
 
 	blocks := make([]string, 16)
@@ -237,7 +242,11 @@ func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 		if strings.HasSuffix(field[0], ":") == false {
 			// new block section
 			if len(blocks) > 0 {
-				ret = append(ret, getBlock(field, blocks))
+				g, err := getBlock(field, blocks)
+				if err != nil {
+					return &ret, err
+				}
+				ret = append(ret, g)
 			}
 			// starts new block
 			blocks = make([]string, 16)
@@ -272,9 +281,13 @@ func (p *Process) fillFromfd() (int32, []*OpenFilesStat, error) {
 		if err != nil {
 			continue
 		}
+		t, err := strconv.ParseUint(fd, 10, 64)
+		if err != nil {
+			return numFDs, openfiles, err
+		}
 		o := &OpenFilesStat{
 			Path: filepath,
-			Fd:   mustParseUint64(fd),
+			Fd:   t,
 		}
 		openfiles = append(openfiles, o)
 	}
@@ -338,15 +351,20 @@ func (p *Process) fillFromIO() (*IOCountersStat, error) {
 		if len(field) < 2 {
 			continue
 		}
+		t, err := strconv.ParseInt(strings.Trim(field[1], " \t"), 10, 32)
+		if err != nil {
+			return nil, err
+		}
+
 		switch field[0] {
 		case "rchar":
-			ret.ReadCount = mustParseInt32(strings.Trim(field[1], " \t"))
+			ret.ReadCount = int32(t)
 		case "wchar":
-			ret.WriteCount = mustParseInt32(strings.Trim(field[1], " \t"))
+			ret.WriteCount = int32(t)
 		case "read_bytes":
-			ret.ReadBytes = mustParseInt32(strings.Trim(field[1], " \t"))
+			ret.ReadBytes = int32(t)
 		case "write_bytes":
-			ret.WriteBytes = mustParseInt32(strings.Trim(field[1], " \t"))
+			ret.WriteBytes = int32(t)
 		}
 	}
 
@@ -363,19 +381,43 @@ func (p *Process) fillFromStatm() (*MemoryInfoStat, *MemoryInfoExStat, error) {
 	}
 	fields := strings.Split(string(contents), " ")
 
-	vms := mustParseUint64(fields[0]) * PageSize
-	rss := mustParseUint64(fields[1]) * PageSize
-	memInfo := &MemoryInfoStat{
-		RSS: rss,
-		VMS: vms,
+	vms, err := strconv.ParseUint(fields[0], 10, 64)
+	if err != nil {
+		return nil, nil, err
 	}
+	rss, err := strconv.ParseUint(fields[1], 10, 64)
+	if err != nil {
+		return nil, nil, err
+	}
+	memInfo := &MemoryInfoStat{
+		RSS: rss * PageSize,
+		VMS: vms * PageSize,
+	}
+
+	shared, err := strconv.ParseUint(fields[2], 10, 64)
+	if err != nil {
+		return nil, nil, err
+	}
+	text, err := strconv.ParseUint(fields[3], 10, 64)
+	if err != nil {
+		return nil, nil, err
+	}
+	lib, err := strconv.ParseUint(fields[4], 10, 64)
+	if err != nil {
+		return nil, nil, err
+	}
+	dirty, err := strconv.ParseUint(fields[5], 10, 64)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	memInfoEx := &MemoryInfoExStat{
-		RSS:    rss,
-		VMS:    vms,
-		Shared: mustParseUint64(fields[2]) * PageSize,
-		Text:   mustParseUint64(fields[3]) * PageSize,
-		Lib:    mustParseUint64(fields[4]) * PageSize,
-		Dirty:  mustParseUint64(fields[5]) * PageSize,
+		RSS:    rss * PageSize,
+		VMS:    vms * PageSize,
+		Shared: shared * PageSize,
+		Text:   text * PageSize,
+		Lib:    lib * PageSize,
+		Dirty:  dirty * PageSize,
 	}
 
 	return memInfo, memInfoEx, nil
@@ -458,12 +500,25 @@ func (p *Process) fillFromStat() (string, int32, *CPUTimesStat, int64, int32, er
 	termmap, err := getTerminalMap()
 	terminal := ""
 	if err == nil {
-		terminal = termmap[mustParseUint64(fields[6])]
+		t, err := strconv.ParseUint(fields[6], 10, 64)
+		if err != nil {
+			return "", 0, nil, 0, 0, err
+		}
+		terminal = termmap[t]
 	}
 
-	ppid := mustParseInt32(fields[3])
-	utime, _ := strconv.ParseFloat(fields[13], 64)
-	stime, _ := strconv.ParseFloat(fields[14], 64)
+	ppid, err := strconv.ParseInt(fields[3], 10, 32)
+	if err != nil {
+		return "", 0, nil, 0, 0, err
+	}
+	utime, err := strconv.ParseFloat(fields[13], 64)
+	if err != nil {
+		return "", 0, nil, 0, 0, err
+	}
+	stime, err := strconv.ParseFloat(fields[14], 64)
+	if err != nil {
+		return "", 0, nil, 0, 0, err
+	}
 
 	cpuTimes := &CPUTimesStat{
 		CPU:    "cpu",
@@ -472,7 +527,12 @@ func (p *Process) fillFromStat() (string, int32, *CPUTimesStat, int64, int32, er
 	}
 
 	bootTime, _ := BootTime()
-	ctime := ((mustParseUint64(fields[21]) / uint64(ClockTicks)) + uint64(bootTime)) * 1000
+	t, err := strconv.ParseUint(fields[21], 10, 64)
+	if err != nil {
+		return "", 0, nil, 0, 0, err
+	}
+
+	ctime := ((t / uint64(ClockTicks)) + uint64(bootTime)) * 1000
 	createTime := int64(ctime)
 
 	//	p.Nice = mustParseInt32(fields[18])
@@ -480,7 +540,7 @@ func (p *Process) fillFromStat() (string, int32, *CPUTimesStat, int64, int32, er
 	snice, _ := syscall.Getpriority(PrioProcess, int(pid))
 	nice := int32(snice) // FIXME: is this true?
 
-	return terminal, ppid, cpuTimes, createTime, nice, nil
+	return terminal, int32(ppid), cpuTimes, createTime, nice, nil
 }
 
 func Pids() ([]int32, error) {

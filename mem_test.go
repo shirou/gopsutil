@@ -10,7 +10,6 @@ func TestVirtual_memory(t *testing.T) {
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
-
 	empty := &VirtualMemoryStat{}
 	if v == empty {
 		t.Errorf("error %v", v)

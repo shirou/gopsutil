@@ -42,7 +42,11 @@ func HostInfo() (*HostInfoStat, error) {
 	if err == nil {
 		// ex: { sec = 1392261637, usec = 627534 } Thu Feb 13 12:20:37 2014
 		v := strings.Replace(values[2], ",", "", 1)
-		ret.Uptime = mustParseUint64(v)
+		t, err := strconv.ParseUint(v, 10, 64)
+		if err != nil {
+			return ret, err
+		}
+		ret.Uptime = t
 	}
 
 	return ret, nil

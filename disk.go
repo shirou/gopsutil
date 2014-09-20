@@ -31,7 +31,7 @@ type DiskIOCountersStat struct {
 	ReadTime   uint64 `json:"readTime"`
 	WriteTime  uint64 `json:"writeTime"`
 	Name       string `json:"name"`
-	IoTime	   uint64 `json:"ioTime"`
+	IoTime     uint64 `json:"ioTime"`
 }
 
 func (d DiskUsageStat) String() string {

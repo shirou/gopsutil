@@ -5,13 +5,13 @@ import (
 )
 
 type Process struct {
-	Pid int32 `json:"pid"`
-	name string
-	status string
+	Pid            int32 `json:"pid"`
+	name           string
+	status         string
 	numCtxSwitches *NumCtxSwitchesStat
-	uids []int32
-	gids []int32
-	numThreads int32
+	uids           []int32
+	gids           []int32
+	numThreads     int32
 }
 
 type OpenFilesStat struct {
