@@ -4,6 +4,7 @@ package gopsutil
 
 import (
 	"os/exec"
+	"strconv"
 	"strings"
 )
 
@@ -53,21 +54,38 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 
 // SwapMemory returns swapinfo.
 func SwapMemory() (*SwapMemoryStat, error) {
-	swapUsage, _ := doSysctrl("vm.swapusage")
-
 	var ret *SwapMemoryStat
 
-	total := strings.Replace(swapUsage[3], "M", "", 1)
-	used := strings.Replace(swapUsage[6], "M", "", 1)
-	free := strings.Replace(swapUsage[9], "M", "", 1)
+	swapUsage, err := doSysctrl("vm.swapusage")
+	if err != nil {
+		return ret, err
+	}
 
-	u := "0"
+	total := strings.Replace(swapUsage[2], "M", "", 1)
+	used := strings.Replace(swapUsage[5], "M", "", 1)
+	free := strings.Replace(swapUsage[8], "M", "", 1)
 
+	total_v, err := strconv.ParseFloat(total, 64)
+	if err != nil {
+		return nil, err
+	}
+	used_v, err := strconv.ParseFloat(used, 64)
+	if err != nil {
+		return nil, err
+	}
+	free_v, err := strconv.ParseFloat(free, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	u := ((total_v - free_v) / total_v) * 100.0
+
+	// vm.swapusage shows "M", multiply 1000
 	ret = &SwapMemoryStat{
-		Total:       mustParseUint64(total),
-		Used:        mustParseUint64(used),
-		Free:        mustParseUint64(free),
-		UsedPercent: mustParseFloat64(u),
+		Total:       uint64(total_v * 1000),
+		Used:        uint64(used_v * 1000),
+		Free:        uint64(free_v * 1000),
+		UsedPercent: u,
 	}
 
 	return ret, nil
