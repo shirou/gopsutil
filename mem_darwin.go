@@ -13,34 +13,46 @@ func getPageSize() (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	p := mustParseUint64(string(out))
+	o := strings.TrimSpace(string(out))
+	p, err := strconv.ParseUint(o, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
 	return p, nil
 }
 
 // VirtualMemory returns VirtualmemoryStat.
 func VirtualMemory() (*VirtualMemoryStat, error) {
-	p, _ := getPageSize()
+	p, err := getPageSize()
+	if err != nil {
+		return nil, err
+	}
 
-	total, _ := doSysctrl("hw.memsize")
-	free, _ := doSysctrl("vm.page_free_count")
-	/*
-		active, _ := doSysctrl("vm.stats.vm.v_active_count")
-		inactive, _ := doSysctrl("vm.pageout_inactive_used")
-		cache, _ := doSysctrl("vm.stats.vm.v_cache_count")
-		buffer, _ := doSysctrl("vfs.bufspace")
-		wired, _ := doSysctrl("vm.stats.vm.v_wire_count")
-	*/
+	total, err := doSysctrl("hw.memsize")
+	if err != nil {
+		return nil, err
+	}
+	free, err := doSysctrl("vm.page_free_count")
+	if err != nil {
+		return nil, err
+	}
+	parsed := make([]uint64, 0, 7)
+	vv := []string{
+		total[0],
+		free[0],
+	}
+	for _, target := range vv {
+		t, err := strconv.ParseUint(target, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		parsed = append(parsed, t)
+	}
 
 	ret := &VirtualMemoryStat{
-		Total: mustParseUint64(total[0]) * p,
-		Free:  mustParseUint64(free[0]) * p,
-		/*
-			Active:   mustParseUint64(active[0]) * p,
-			Inactive: mustParseUint64(inactive[0]) * p,
-			Cached:   mustParseUint64(cache[0]) * p,
-			Buffers:  mustParseUint64(buffer[0]),
-			Wired:    mustParseUint64(wired[0]) * p,
-		*/
+		Total: parsed[0] * p,
+		Free:  parsed[1] * p,
 	}
 
 	// TODO: platform independent (worked freebsd?)
