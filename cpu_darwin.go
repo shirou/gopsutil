@@ -79,6 +79,10 @@ func CPUInfo() ([]CPUInfoStat, error) {
 	for _, line := range strings.Split(string(out), "\n") {
 		values := strings.Fields(line)
 
+		t, err := strconv.ParseInt(values[1], 10, 32)
+		if err != nil {
+			return ret, err
+		}
 		if strings.HasPrefix(line, "machdep.cpu.brand_string") {
 			c.ModelName = strings.Join(values[1:], " ")
 		} else if strings.HasPrefix(line, "machdep.cpu.family") {
@@ -86,12 +90,7 @@ func CPUInfo() ([]CPUInfoStat, error) {
 		} else if strings.HasPrefix(line, "machdep.cpu.model") {
 			c.Model = values[1]
 		} else if strings.HasPrefix(line, "machdep.cpu.stepping") {
-			t, err := strconv.ParseInt(values[1], 10, 32)
-			if err != nil {
-				return ret, err
-			}
 			c.Stepping = int32(t)
-
 		} else if strings.HasPrefix(line, "machdep.cpu.features") {
 			for _, v := range values[1:] {
 				c.Flags = append(c.Flags, strings.ToLower(v))
@@ -105,18 +104,9 @@ func CPUInfo() ([]CPUInfoStat, error) {
 				c.Flags = append(c.Flags, strings.ToLower(v))
 			}
 		} else if strings.HasPrefix(line, "machdep.cpu.core_count") {
-			t, err := strconv.ParseInt(values[1], 10, 32)
-			if err != nil {
-				return ret, err
-			}
-			c.Cores = t
+			c.Cores = int32(t)
 		} else if strings.HasPrefix(line, "machdep.cpu.cache.size") {
-			t, err := strconv.ParseInt(values[1], 10, 32)
-			if err != nil {
-				return ret, err
-			}
-
-			c.CacheSize = t
+			c.CacheSize = int32(t)
 		} else if strings.HasPrefix(line, "machdep.cpu.vendor") {
 			c.VendorID = values[1]
 		}
