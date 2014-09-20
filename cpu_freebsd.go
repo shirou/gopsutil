@@ -32,11 +32,26 @@ func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 		return ret, err
 	}
 
-	user, _ := strconv.ParseFloat(cpuTime[CPUser], 32)
-	nice, _ := strconv.ParseFloat(cpuTime[CPNice], 32)
-	sys, _ := strconv.ParseFloat(cpuTime[CPSys], 32)
-	idle, _ := strconv.ParseFloat(cpuTime[CPIdle], 32)
-	intr, _ := strconv.ParseFloat(cpuTime[CPIntr], 32)
+	user, err := strconv.ParseFloat(cpuTime[CPUser], 32)
+	if err != nil {
+		return ret, err
+	}
+	nice, err := strconv.ParseFloat(cpuTime[CPNice], 32)
+	if err != nil {
+		return ret, err
+	}
+	sys, err := strconv.ParseFloat(cpuTime[CPSys], 32)
+	if err != nil {
+		return ret, err
+	}
+	idle, err := strconv.ParseFloat(cpuTime[CPIdle], 32)
+	if err != nil {
+		return ret, err
+	}
+	intr, err := strconv.ParseFloat(cpuTime[CPIntr], 32)
+	if err != nil {
+		return ret, err
+	}
 
 	c := CPUTimesStat{
 		User:   float32(user / ClocksPerSec),

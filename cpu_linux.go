@@ -106,14 +106,38 @@ func parseStatLine(line string) (*CPUTimesStat, error) {
 	if cpu == "cpu" {
 		cpu = "cpu-total"
 	}
-	user, _ := strconv.ParseFloat(fields[1], 32)
-	nice, _ := strconv.ParseFloat(fields[2], 32)
-	system, _ := strconv.ParseFloat(fields[3], 32)
-	idle, _ := strconv.ParseFloat(fields[4], 32)
-	iowait, _ := strconv.ParseFloat(fields[5], 32)
-	irq, _ := strconv.ParseFloat(fields[6], 32)
-	softirq, _ := strconv.ParseFloat(fields[7], 32)
-	stolen, _ := strconv.ParseFloat(fields[8], 32)
+	user, err := strconv.ParseFloat(fields[1], 32)
+	if err != nil {
+		return nil, err
+	}
+	nice, err := strconv.ParseFloat(fields[2], 32)
+	if err != nil {
+		return nil, err
+	}
+	system, err := strconv.ParseFloat(fields[3], 32)
+	if err != nil {
+		return nil, err
+	}
+	idle, err := strconv.ParseFloat(fields[4], 32)
+	if err != nil {
+		return nil, err
+	}
+	iowait, err := strconv.ParseFloat(fields[5], 32)
+	if err != nil {
+		return nil, err
+	}
+	irq, err := strconv.ParseFloat(fields[6], 32)
+	if err != nil {
+		return nil, err
+	}
+	softirq, err := strconv.ParseFloat(fields[7], 32)
+	if err != nil {
+		return nil, err
+	}
+	stolen, err := strconv.ParseFloat(fields[8], 32)
+	if err != nil {
+		return nil, err
+	}
 	ct := &CPUTimesStat{
 		CPU:     cpu,
 		User:    float32(user),
@@ -126,15 +150,24 @@ func parseStatLine(line string) (*CPUTimesStat, error) {
 		Stolen:  float32(stolen),
 	}
 	if len(fields) > 9 { // Linux >= 2.6.11
-		steal, _ := strconv.ParseFloat(fields[9], 32)
+		steal, err := strconv.ParseFloat(fields[9], 32)
+		if err != nil {
+			return nil, err
+		}
 		ct.Steal = float32(steal)
 	}
 	if len(fields) > 10 { // Linux >= 2.6.24
-		guest, _ := strconv.ParseFloat(fields[10], 32)
+		guest, err := strconv.ParseFloat(fields[10], 32)
+		if err != nil {
+			return nil, err
+		}
 		ct.Guest = float32(guest)
 	}
 	if len(fields) > 11 { // Linux >= 3.2.0
-		guestNice, _ := strconv.ParseFloat(fields[11], 32)
+		guestNice, err := strconv.ParseFloat(fields[11], 32)
+		if err != nil {
+			return nil, err
+		}
 		ct.GuestNice = float32(guestNice)
 	}
 
