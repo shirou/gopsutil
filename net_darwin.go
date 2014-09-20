@@ -23,7 +23,7 @@ func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 		}
 		base := 1
 		// sometimes Address is ommitted
-		if len(values) < 13 {
+		if len(values) < 11 {
 			base = 0
 		}
 
