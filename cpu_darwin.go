@@ -79,7 +79,7 @@ func CPUInfo() ([]CPUInfoStat, error) {
 	for _, line := range strings.Split(string(out), "\n") {
 		values := strings.Fields(line)
 
-		t, err := strconv.ParseInt(values[1], 10, 32)
+		t, err := strconv.ParseInt(values[1], 10, 64)
 		if err != nil {
 			return ret, err
 		}
