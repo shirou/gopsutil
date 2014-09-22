@@ -99,13 +99,13 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 	return ret, nil
 }
 
-func GetDiskSerialNumber(name string) (string, error) {
+func GetDiskSerialNumber(name string) string {
 	n := fmt.Sprintf("--name=%s", name)
 	out, err := exec.Command("/sbin/udevadm", "info", "--query=property", n).Output()
 
 	// does not return error, just an empty string
 	if err != nil {
-		return "", nil
+		return ""
 	}
 	lines := strings.Split(string(out), "\n")
 	for _, line := range lines {
@@ -114,7 +114,7 @@ func GetDiskSerialNumber(name string) (string, error) {
 			// only get ID_SERIAL, not ID_SERIAL_SHORT
 			continue
 		}
-		return values[1], nil
+		return values[1]
 	}
-	return "", nil
+	return ""
 }
