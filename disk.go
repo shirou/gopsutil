@@ -24,14 +24,15 @@ type DiskPartitionStat struct {
 }
 
 type DiskIOCountersStat struct {
-	ReadCount  uint64 `json:"readCount"`
-	WriteCount uint64 `json:"writeCount"`
-	ReadBytes  uint64 `json:"readBytes"`
-	WriteBytes uint64 `json:"writeBytes"`
-	ReadTime   uint64 `json:"readTime"`
-	WriteTime  uint64 `json:"writeTime"`
-	Name       string `json:"name"`
-	IoTime     uint64 `json:"ioTime"`
+	ReadCount    uint64 `json:"readCount"`
+	WriteCount   uint64 `json:"writeCount"`
+	ReadBytes    uint64 `json:"readBytes"`
+	WriteBytes   uint64 `json:"writeBytes"`
+	ReadTime     uint64 `json:"readTime"`
+	WriteTime    uint64 `json:"writeTime"`
+	Name         string `json:"name"`
+	IoTime       uint64 `json:"ioTime"`
+	SerialNumber string `json:"serialNumber"`
 }
 
 func (d DiskUsageStat) String() string {

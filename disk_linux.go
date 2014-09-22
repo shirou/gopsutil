@@ -3,6 +3,8 @@
 package gopsutil
 
 import (
+	"fmt"
+	"os/exec"
 	"strconv"
 	"strings"
 )
@@ -91,7 +93,28 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 		}
 		d.Name = name
 
+		d.SerialNumber = GetDiskSerialNumber(name)
 		ret[name] = d
 	}
 	return ret, nil
+}
+
+func GetDiskSerialNumber(name string) (string, error) {
+	n := fmt.Sprintf("--name=%s", name)
+	out, err := exec.Command("/sbin/udevadm", "info", "--query=property", n).Output()
+
+	// does not return error, just an empty string
+	if err != nil {
+		return "", nil
+	}
+	lines := strings.Split(string(out), "\n")
+	for _, line := range lines {
+		values := strings.Split(line, "=")
+		if len(values) < 2 || values[0] != "ID_SERIAL" {
+			// only get ID_SERIAL, not ID_SERIAL_SHORT
+			continue
+		}
+		return values[1], nil
+	}
+	return "", nil
 }
