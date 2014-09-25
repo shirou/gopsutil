@@ -143,7 +143,7 @@ func (p *Process) CPUTimes() (*CPUTimesStat, error) {
 	}
 	return cpuTimes, nil
 }
-func (p *Process) CPUPpercent() (int32, error) {
+func (p *Process) CPUPercent() (int32, error) {
 	return 0, NotImplementedError
 }
 func (p *Process) CPUAffinity() ([]int32, error) {
