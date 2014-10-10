@@ -11,12 +11,12 @@ func DiskUsage(path string) (*DiskUsageStat, error) {
 		return nil, err
 	}
 
-	bsize := stat.Bsize / 512
+	bsize := stat.Bsize
 
 	ret := &DiskUsageStat{
 		Path:        path,
-		Total:       (uint64(stat.Blocks) * uint64(bsize)) >> 1,
-		Free:        (uint64(stat.Bfree) * uint64(bsize)) >> 1,
+		Total:       (uint64(stat.Blocks) * uint64(bsize)),
+		Free:        (uint64(stat.Bfree) * uint64(bsize)),
 		InodesTotal: (uint64(stat.Files)),
 		InodesFree:  (uint64(stat.Ffree)),
 	}
