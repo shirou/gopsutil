@@ -12,6 +12,7 @@ type Process struct {
 	uids           []int32
 	gids           []int32
 	numThreads     int32
+	memInfo        *MemoryInfoStat
 }
 
 type OpenFilesStat struct {
@@ -20,8 +21,9 @@ type OpenFilesStat struct {
 }
 
 type MemoryInfoStat struct {
-	RSS uint64 `json:"rss"` // bytes
-	VMS uint64 `json:"vms"` // bytes
+	RSS  uint64 `json:"rss"`  // bytes
+	VMS  uint64 `json:"vms"`  // bytes
+	Swap uint64 `json:"swap"` // bytes
 }
 
 type RlimitStat struct {
