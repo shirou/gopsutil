@@ -150,11 +150,7 @@ func (p *Process) CPUAffinity() ([]int32, error) {
 	return nil, NotImplementedError
 }
 func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
-	memInfo, _, err := p.fillFromStatm()
-	if err != nil {
-		return nil, err
-	}
-	return memInfo, nil
+	return p.memInfo, nil
 }
 func (p *Process) MemoryInfoEx() (*MemoryInfoExStat, error) {
 	_, memInfoEx, err := p.fillFromStatm()
@@ -436,6 +432,7 @@ func (p *Process) fillFromStatus() error {
 	}
 	lines := strings.Split(string(contents), "\n")
 	p.numCtxSwitches = &NumCtxSwitchesStat{}
+	p.memInfo = &MemoryInfoStat{}
 	for _, line := range lines {
 		tabParts := strings.SplitN(line, "\t", 2)
 		if len(tabParts) < 2 {
@@ -486,7 +483,29 @@ func (p *Process) fillFromStatus() error {
 				return err
 			}
 			p.numCtxSwitches.Involuntary = v
+		case "VmRSS":
+			value := strings.Trim(value, " kB") // remove last "kB"
+			v, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return err
+			}
+			p.memInfo.RSS = v * 1024
+		case "VmSize":
+			value := strings.Trim(value, " kB") // remove last "kB"
+			v, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return err
+			}
+			p.memInfo.VMS = v * 1024
+		case "VmSwap":
+			value := strings.Trim(value, " kB") // remove last "kB"
+			v, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return err
+			}
+			p.memInfo.Swap = v * 1024
 		}
+
 	}
 	return nil
 }
