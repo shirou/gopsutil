@@ -200,6 +200,9 @@ func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 		m.Path = first_line[len(first_line)-1]
 
 		for _, line := range block {
+			if strings.Contains(line, "VmFlags") {
+				continue
+			}
 			field := strings.Split(line, ":")
 			if len(field) < 2 {
 				continue
