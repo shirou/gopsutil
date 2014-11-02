@@ -65,6 +65,26 @@ func SwapMemory() (*SwapMemoryStat, error) {
 	} else {
 		ret.UsedPercent = 0
 	}
-
+	lines, _ := readLines("/proc/vmstat")
+	for _, l := range lines {
+		fields := strings.Fields(l)
+		if len(fields) < 2 {
+			continue
+		}
+		switch fields[0] {
+		case "pswpin":
+			value, err := strconv.ParseUint(fields[1], 10, 64)
+			if err != nil {
+				continue
+			}
+			ret.Sin = value * 4 * 1024
+		case "pswpout":
+			value, err := strconv.ParseUint(fields[1], 10, 64)
+			if err != nil {
+				continue
+			}
+			ret.Sout = value * 4 * 1024
+		}
+	}
 	return ret, nil
 }

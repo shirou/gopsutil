@@ -346,24 +346,27 @@ func (p *Process) fillFromIO() (*IOCountersStat, error) {
 	ret := &IOCountersStat{}
 
 	for _, line := range lines {
-		field := strings.Split(line, ":")
+		field := strings.Fields(line)
 		if len(field) < 2 {
 			continue
 		}
-		t, err := strconv.ParseInt(strings.Trim(field[1], " \t"), 10, 32)
+		t, err := strconv.ParseUint(field[1], 10, 64)
 		if err != nil {
 			return nil, err
 		}
-
-		switch field[0] {
-		case "rchar":
-			ret.ReadCount = int32(t)
-		case "wchar":
-			ret.WriteCount = int32(t)
+		param := field[0]
+		if strings.HasSuffix(param, ":") {
+			param = param[:len(param)-1]
+		}
+		switch param {
+		case "syscr":
+			ret.ReadCount = t
+		case "syscw":
+			ret.WriteCount = t
 		case "read_bytes":
-			ret.ReadBytes = int32(t)
+			ret.ReadBytes = t
 		case "write_bytes":
-			ret.WriteBytes = int32(t)
+			ret.WriteBytes = t
 		}
 	}
 
