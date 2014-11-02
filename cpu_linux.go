@@ -10,7 +10,13 @@ import (
 
 func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 	filename := "/proc/stat"
-	lines, _ := readLines(filename)
+	var lines []string
+	if percpu {
+		ncpu, _ := CPUCounts(true)
+		lines, _ = readLinesOffsetN(filename, 1, ncpu)
+	} else {
+		lines, _ = readLinesOffsetN(filename, 0, 1)
+	}
 
 	ret := make([]CPUTimesStat, 0, len(lines))
 
