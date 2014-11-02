@@ -23,45 +23,62 @@ const (
 	ClocksPerSec = 128
 )
 
-// TODO: get per cpus
 func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 	var ret []CPUTimesStat
 
-	cpuTime, err := doSysctrl("kern.cp_time")
+	var sysctlCall string
+	var ncpu int
+	if percpu {
+		sysctlCall = "kern.cp_times"
+		ncpu, _ = CPUCounts(true)
+	} else {
+		sysctlCall = "kern.cp_time"
+		ncpu = 1
+	}
+
+	cpuTimes, err := doSysctrl(sysctlCall)
 	if err != nil {
 		return ret, err
 	}
 
-	user, err := strconv.ParseFloat(cpuTime[CPUser], 32)
-	if err != nil {
-		return ret, err
-	}
-	nice, err := strconv.ParseFloat(cpuTime[CPNice], 32)
-	if err != nil {
-		return ret, err
-	}
-	sys, err := strconv.ParseFloat(cpuTime[CPSys], 32)
-	if err != nil {
-		return ret, err
-	}
-	idle, err := strconv.ParseFloat(cpuTime[CPIdle], 32)
-	if err != nil {
-		return ret, err
-	}
-	intr, err := strconv.ParseFloat(cpuTime[CPIntr], 32)
-	if err != nil {
-		return ret, err
-	}
+	for i := 0; i < ncpu; i++ {
+		offset := CPUStates * i
+		user, err := strconv.ParseFloat(cpuTimes[CPUser+offset], 32)
+		if err != nil {
+			return ret, err
+		}
+		nice, err := strconv.ParseFloat(cpuTimes[CPNice+offset], 32)
+		if err != nil {
+			return ret, err
+		}
+		sys, err := strconv.ParseFloat(cpuTimes[CPSys+offset], 32)
+		if err != nil {
+			return ret, err
+		}
+		idle, err := strconv.ParseFloat(cpuTimes[CPIdle+offset], 32)
+		if err != nil {
+			return ret, err
+		}
+		intr, err := strconv.ParseFloat(cpuTimes[CPIntr+offset], 32)
+		if err != nil {
+			return ret, err
+		}
 
-	c := CPUTimesStat{
-		User:   float32(user / ClocksPerSec),
-		Nice:   float32(nice / ClocksPerSec),
-		System: float32(sys / ClocksPerSec),
-		Idle:   float32(idle / ClocksPerSec),
-		Irq:    float32(intr / ClocksPerSec),
-	}
+		c := CPUTimesStat{
+			User:   float32(user / ClocksPerSec),
+			Nice:   float32(nice / ClocksPerSec),
+			System: float32(sys / ClocksPerSec),
+			Idle:   float32(idle / ClocksPerSec),
+			Irq:    float32(intr / ClocksPerSec),
+		}
+		if !percpu {
+			c.CPU = "cpu-total"
+		} else {
+			c.CPU = fmt.Sprintf("cpu%d", i)
+		}
 
-	ret = append(ret, c)
+		ret = append(ret, c)
+	}
 
 	return ret, nil
 }
