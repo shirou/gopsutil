@@ -33,10 +33,10 @@ type RlimitStat struct {
 }
 
 type IOCountersStat struct {
-	ReadCount  int32 `json:"read_count"`
-	WriteCount int32 `json:"write_count"`
-	ReadBytes  int32 `json:"read_bytes"`
-	WriteBytes int32 `json:"write_bytes"`
+	ReadCount  uint64 `json:"read_count"`
+	WriteCount uint64 `json:"write_count"`
+	ReadBytes  uint64 `json:"read_bytes"`
+	WriteBytes uint64 `json:"write_bytes"`
 }
 
 type NumCtxSwitchesStat struct {
