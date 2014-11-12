@@ -57,6 +57,9 @@ func CPUPercent(interval time.Duration, percpu bool) ([]float32, error) {
 		if t2Busy <= t1Busy {
 			return 0
 		}
+		if t2All <= t1All {
+			return 1
+		}
 		return (t2Busy - t1Busy) / (t2All - t1All) * 100
 	}
 
