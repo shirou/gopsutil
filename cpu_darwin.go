@@ -3,6 +3,7 @@
 package gopsutil
 
 import (
+	"fmt"
 	"os/exec"
 	"strconv"
 	"strings"
