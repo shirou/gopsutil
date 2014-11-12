@@ -67,8 +67,9 @@ func testCPUPercent(t *testing.T, percpu bool) {
 	if (percpu && len(v) != numcpu) || (!percpu && len(v) != 1) {
 		t.Fatalf("wrong number of entries from CPUPercent: %v", v)
 	}
-	for i := 0; i < 1000; i++ {
-		v, err := CPUPercent(0, percpu)
+	for i := 0; i < 100; i++ {
+		duration := time.Duration(10) * time.Microsecond
+		v, err := CPUPercent(duration, percpu)
 		if err != nil {
 			t.Errorf("error %v", err)
 		}
