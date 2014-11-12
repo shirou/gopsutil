@@ -17,8 +17,18 @@ import (
 
 var NotImplementedError = errors.New("not implemented yet")
 
-// readLines read contents from file and split by new line.
+// readLines reads contents from file and splits them by new line.
+// A convenience wrapper to readLinesOffsetN(filename, 0, -1).
 func readLines(filename string) ([]string, error) {
+	return readLinesOffsetN(filename, 0, -1)
+}
+
+// readLines reads contents from file and splits them by new line.
+// The offset tells at which line number to start.
+// The count determines the number of lines to read (starting from offset):
+//   n >= 0: at most n lines
+//   n < 0: whole file
+func readLinesOffsetN(filename string, offset uint, n int) ([]string, error) {
 	f, err := os.Open(filename)
 	if err != nil {
 		return []string{""}, err
@@ -28,10 +38,15 @@ func readLines(filename string) ([]string, error) {
 	var ret []string
 
 	r := bufio.NewReader(f)
-	line, err := r.ReadString('\n')
-	for err == nil {
+	for i := 0; i < n+int(offset) || n < 0; i++ {
+		line, err := r.ReadString('\n')
+		if err != nil {
+			break
+		}
+		if i < int(offset) {
+			continue
+		}
 		ret = append(ret, strings.Trim(line, "\n"))
-		line, err = r.ReadString('\n')
 	}
 
 	return ret, nil

@@ -7,6 +7,7 @@ import (
 	"unsafe"
 )
 
+// TODO: Get percpu
 func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 	var ret []CPUTimesStat
 

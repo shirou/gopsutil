@@ -2,7 +2,9 @@ package gopsutil
 
 import (
 	"fmt"
+	"runtime"
 	"testing"
+	"time"
 )
 
 func TestCpu_times(t *testing.T) {
@@ -54,4 +56,34 @@ func TestCpuInfo(t *testing.T) {
 			t.Errorf("could not get CPU Info: %v", vv)
 		}
 	}
+}
+
+func testCPUPercent(t *testing.T, percpu bool) {
+	v, err := CPUPercent(time.Millisecond, percpu)
+	if err != nil {
+		t.Errorf("error %v", err)
+	}
+	numcpu := runtime.NumCPU()
+	if (percpu && len(v) != numcpu) || (!percpu && len(v) != 1) {
+		t.Fatalf("wrong number of entries from CPUPercent: %v", v)
+	}
+	for i := 0; i < 1000; i++ {
+		v, err := CPUPercent(0, percpu)
+		if err != nil {
+			t.Errorf("error %v", err)
+		}
+		for _, percent := range v {
+			if percent < 0.0 || percent > 100.0*float32(numcpu) {
+				t.Fatalf("CPUPercent value is invalid: %f", percent)
+			}
+		}
+	}
+}
+
+func TestCPUPercent(t *testing.T) {
+	testCPUPercent(t, false)
+}
+
+func TestCPUPercentPerCpu(t *testing.T) {
+	testCPUPercent(t, true)
 }
