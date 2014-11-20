@@ -8,10 +8,10 @@ gopsutil: psutil for golang
         :target: https://coveralls.io/r/shirou/gopsutil?branch=master
 
 
-This is a port of psutil(http://pythonhosted.org/psutil/). This
-challenges porting all psutil functions on some architectures.
+This is a port of psutil (http://pythonhosted.org/psutil/). The challenge is porting all 
+psutil functions on some architectures...
 
-Available archtectures
+Available Architectures
 ------------------------------------
 
 - FreeBSD/amd64
@@ -39,7 +39,7 @@ Usage
    func main() {
    	v, _ := gopsutil.VirtualMemory()
 
-   	// almost every return value is struct
+   	// almost every return value is a struct
    	fmt.Printf("Total: %v, Free:%v, UsedPercent:%f%%\n", v.Total, v.Free, v.UsedPercent)
 
    	// convert to JSON. String() is also implemented
@@ -54,34 +54,43 @@ The output is below.
   {"total":3179569152,"available":492572672,"used":2895335424,"usedPercent":84.50819439828305, (snip)}
 
 
-Document
-----------
+Documentation
+------------------------
 
 see http://godoc.org/github.com/shirou/gopsutil
 
 
-More info
+More Info
 --------------------
 
-To becomes more useful, I have some methods which produces more information.
+Several methods have been added which are not present in psutil, but which provide useful information.
 
-- Hostinfo()  (linux)
+- HostInfo()  (linux)
 
-  - OS
-  - Platform (ex: ubuntu, arch)
-  - Platform family (ex: debian)
-  - Platform Version (ex: Ubuntu 13.10)
-  - VirtualizationSystem (ex: LXC)
-  - VirtualizationRole (ex: guest/host)
+  - Hostname
+  - Uptime
+  - Procs
+  - OS                    (ex: "linux")
+  - Platform              (ex: "ubuntu", "arch")
+  - PlatformFamily        (ex: "debian")
+  - PlatformVersion       (ex: "Ubuntu 13.10")
+  - VirtualizationSystem  (ex: "LXC")
+  - VirtualizationRole    (ex: "guest"/"host")
 
-- CPUInfoStat()  (linux, freebsd)
+- CPUInfo()  (linux, freebsd)
 
-  - Processer
-  - Vendor ID
-  - Model name
-  - cores
+  - CPU          (ex: 0, 1, ...)
+  - VendorID     (ex: "GenuineIntel")
+  - Family
+  - Model
+  - Stepping
+  - PhysicalID
+  - CoreID
+  - Cores        (ex: 2)
+  - ModelName    (ex: "Intel(R) Core(TM) i7-2640M CPU @ 2.80GHz")
   - Mhz
-  - etc...
+  - CacheSize
+  - Flags        (ex: "fpu vme de pse tsc msr pae mce cx8 ...")
 
 - LoadAvg()  (linux, freebsd)
 
@@ -188,8 +197,10 @@ License
 New BSD License (same as psutil)
 
 
-Related works
+Related Works
 -----------------------
+
+I have been influenced by the following great works:
 
 - psutil: http://pythonhosted.org/psutil/
 - dstat: https://github.com/dagwieers/dstat
@@ -198,9 +209,8 @@ Related works
 - go-ps: https://github.com/mitchellh/go-ps
 - ohai: https://github.com/opscode/ohai/
 
-I have influenced from these great works.
 
-How to Contributing
+How to Contribute
 ---------------------------
 
 1. Fork it
@@ -209,5 +219,5 @@ How to Contributing
 4. Push to the branch (git push origin my-new-feature)
 5. Create new Pull Request
 
-My engilsh is terrible, documentation or correcting comments are also
+My Engilsh is terrible, so documentation or correcting comments are also
 welcome.
