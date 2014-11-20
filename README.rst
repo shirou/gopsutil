@@ -219,5 +219,5 @@ How to Contribute
 4. Push to the branch (git push origin my-new-feature)
 5. Create new Pull Request
 
-My Engilsh is terrible, so documentation or correcting comments are also
+My English is terrible, so documentation or correcting comments are also
 welcome.
