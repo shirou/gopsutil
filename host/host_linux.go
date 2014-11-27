@@ -13,6 +13,8 @@ import (
 	"strings"
 	"syscall"
 	"unsafe"
+
+	common "github.com/shirou/gopsutil/common"
 )
 
 type LSB struct {
@@ -89,9 +91,9 @@ func Users() ([]UserStat, error) {
 			continue
 		}
 		user := UserStat{
-			User:     byteToString(u.UtUser[:]),
-			Terminal: byteToString(u.UtLine[:]),
-			Host:     byteToString(u.UtHost[:]),
+			User:     common.ByteToString(u.UtUser[:]),
+			Terminal: common.ByteToString(u.UtLine[:]),
+			Host:     common.ByteToString(u.UtHost[:]),
 			Started:  int(u.UtTv.TvSec),
 		}
 		ret = append(ret, user)

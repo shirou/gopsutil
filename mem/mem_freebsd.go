@@ -6,10 +6,12 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+
+	common "github.com/shirou/gopsutil/common"
 )
 
 func VirtualMemory() (*VirtualMemoryStat, error) {
-	pageSize, err := doSysctrl("vm.stats.vm.v_page_size")
+	pageSize, err := common.DoSysctrl("vm.stats.vm.v_page_size")
 	if err != nil {
 		return nil, err
 	}
@@ -18,31 +20,31 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 		return nil, err
 	}
 
-	pageCount, err := doSysctrl("vm.stats.vm.v_page_count")
+	pageCount, err := common.DoSysctrl("vm.stats.vm.v_page_count")
 	if err != nil {
 		return nil, err
 	}
-	free, err := doSysctrl("vm.stats.vm.v_free_count")
+	free, err := common.DoSysctrl("vm.stats.vm.v_free_count")
 	if err != nil {
 		return nil, err
 	}
-	active, err := doSysctrl("vm.stats.vm.v_active_count")
+	active, err := common.DoSysctrl("vm.stats.vm.v_active_count")
 	if err != nil {
 		return nil, err
 	}
-	inactive, err := doSysctrl("vm.stats.vm.v_inactive_count")
+	inactive, err := common.DoSysctrl("vm.stats.vm.v_inactive_count")
 	if err != nil {
 		return nil, err
 	}
-	cache, err := doSysctrl("vm.stats.vm.v_cache_count")
+	cache, err := common.DoSysctrl("vm.stats.vm.v_cache_count")
 	if err != nil {
 		return nil, err
 	}
-	buffer, err := doSysctrl("vfs.bufspace")
+	buffer, err := common.DoSysctrl("vfs.bufspace")
 	if err != nil {
 		return nil, err
 	}
-	wired, err := doSysctrl("vm.stats.vm.v_wire_count")
+	wired, err := common.DoSysctrl("vm.stats.vm.v_wire_count")
 	if err != nil {
 		return nil, err
 	}

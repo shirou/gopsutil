@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"unsafe"
+
+	common "github.com/shirou/gopsutil/common"
 )
 
 const (
@@ -56,7 +58,7 @@ func HostInfo() (*HostInfoStat, error) {
 		ret.VirtualizationRole = role
 	}
 
-	values, err := doSysctrl("kern.boottime")
+	values, err := common.DoSysctrl("kern.boottime")
 	if err == nil {
 		// ex: { sec = 1392261637, usec = 627534 } Thu Feb 13 12:20:37 2014
 		v := strings.Replace(values[2], ",", "", 1)
@@ -71,7 +73,7 @@ func HostInfo() (*HostInfoStat, error) {
 }
 
 func BootTime() (int64, error) {
-	values, err := doSysctrl("kern.boottime")
+	values, err := common.DoSysctrl("kern.boottime")
 	if err != nil {
 		return 0, err
 	}
@@ -114,9 +116,9 @@ func Users() ([]UserStat, error) {
 			continue
 		}
 		user := UserStat{
-			User: byteToString(u.UtUser[:]),
-			//			Terminal: byteToString(u.UtLine[:]),
-			Host: byteToString(u.UtHost[:]),
+			User: common.ByteToString(u.UtUser[:]),
+			//			Terminal: ByteToString(u.UtLine[:]),
+			Host: common.ByteToString(u.UtHost[:]),
 			//			Started:  int(u.UtTime),
 		}
 		ret = append(ret, user)

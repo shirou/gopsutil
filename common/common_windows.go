@@ -21,7 +21,7 @@ type FILETIME struct {
 }
 
 // borrowed from net/interface_windows.go
-func bytePtrToString(p *uint8) string {
+func BytePtrToString(p *uint8) string {
 	a := (*[10000]uint8)(unsafe.Pointer(p))
 	i := 0
 	for a[i] != 0 {

@@ -5,6 +5,8 @@ package gopsutil
 import (
 	"syscall"
 	"unsafe"
+
+	common "github.com/shirou/gopsutil/common"
 )
 
 func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
@@ -71,9 +73,9 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 		}
 
 		d := DiskPartitionStat{
-			Device:     byteToString(stat.FMntfromname[:]),
-			Mountpoint: byteToString(stat.FMntonname[:]),
-			Fstype:     byteToString(stat.FFstypename[:]),
+			Device:     common.ByteToString(stat.FMntfromname[:]),
+			Mountpoint: common.ByteToString(stat.FMntonname[:]),
+			Fstype:     common.ByteToString(stat.FFstypename[:]),
 			Opts:       opts,
 		}
 		ret = append(ret, d)
@@ -83,7 +85,7 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 }
 
 func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
-	return nil, NotImplementedError
+	return nil, common.NotImplementedError
 
 	// statinfo->devinfo->devstat
 	// /usr/include/devinfo.h
@@ -99,7 +101,7 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 
 	ret := make(map[string]DiskIOCountersStat, 0)
 	for _, stat := range fs {
-		name := byteToString(stat.FMntonname[:])
+		name := ByteToString(stat.FMntonname[:])
 		d := DiskIOCountersStat{
 			Name:       name,
 			ReadCount:  stat.FSyncwrites + stat.FAsyncwrites,

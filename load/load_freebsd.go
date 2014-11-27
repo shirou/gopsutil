@@ -1,13 +1,15 @@
-// +build darwin
+// +build freebsd
 
 package gopsutil
 
 import (
 	"strconv"
+
+	common "github.com/shirou/gopsutil/common"
 )
 
 func LoadAvg() (*LoadAvgStat, error) {
-	values, err := doSysctrl("vm.loadavg")
+	values, err := common.DoSysctrl("vm.loadavg")
 	if err != nil {
 		return nil, err
 	}

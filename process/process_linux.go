@@ -10,6 +10,10 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+
+	common "github.com/shirou/gopsutil/common"
+	cpu "github.com/shirou/gopsutil/cpu"
+	net "github.com/shirou/gopsutil/net"
 )
 
 const (
@@ -89,7 +93,7 @@ func (p *Process) Cwd() (string, error) {
 	return p.fillFromCwd()
 }
 func (p *Process) Parent() (*Process, error) {
-	return nil, NotImplementedError
+	return nil, common.NotImplementedError
 }
 func (p *Process) Status() (string, error) {
 	return p.status, nil
@@ -115,10 +119,10 @@ func (p *Process) Nice() (int32, error) {
 	return nice, nil
 }
 func (p *Process) IOnice() (int32, error) {
-	return 0, NotImplementedError
+	return 0, common.NotImplementedError
 }
 func (p *Process) Rlimit() ([]RlimitStat, error) {
-	return nil, NotImplementedError
+	return nil, common.NotImplementedError
 }
 func (p *Process) IOCounters() (*IOCountersStat, error) {
 	return p.fillFromIO()
@@ -127,7 +131,7 @@ func (p *Process) NumCtxSwitches() (*NumCtxSwitchesStat, error) {
 	return p.numCtxSwitches, nil
 }
 func (p *Process) NumFDs() (int32, error) {
-	return 0, NotImplementedError
+	return 0, common.NotImplementedError
 }
 func (p *Process) NumThreads() (int32, error) {
 	return p.numThreads, nil
@@ -136,7 +140,7 @@ func (p *Process) Threads() (map[string]string, error) {
 	ret := make(map[string]string, 0)
 	return ret, nil
 }
-func (p *Process) CPUTimes() (*CPUTimesStat, error) {
+func (p *Process) CPUTimes() (*cpu.CPUTimesStat, error) {
 	_, _, cpuTimes, _, _, err := p.fillFromStat()
 	if err != nil {
 		return nil, err
@@ -144,10 +148,10 @@ func (p *Process) CPUTimes() (*CPUTimesStat, error) {
 	return cpuTimes, nil
 }
 func (p *Process) CPUPercent() (int32, error) {
-	return 0, NotImplementedError
+	return 0, common.NotImplementedError
 }
 func (p *Process) CPUAffinity() ([]int32, error) {
-	return nil, NotImplementedError
+	return nil, common.NotImplementedError
 }
 func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
 	return p.memInfo, nil
@@ -160,23 +164,23 @@ func (p *Process) MemoryInfoEx() (*MemoryInfoExStat, error) {
 	return memInfoEx, nil
 }
 func (p *Process) MemoryPercent() (float32, error) {
-	return 0, NotImplementedError
+	return 0, common.NotImplementedError
 }
 
 func (p *Process) Children() ([]*Process, error) {
-	return nil, NotImplementedError
+	return nil, common.NotImplementedError
 }
 
 func (p *Process) OpenFiles() ([]OpenFilesStat, error) {
-	return nil, NotImplementedError
+	return nil, common.NotImplementedError
 }
 
-func (p *Process) Connections() ([]NetConnectionStat, error) {
-	return nil, NotImplementedError
+func (p *Process) Connections() ([]net.NetConnectionStat, error) {
+	return nil, common.NotImplementedError
 }
 
 func (p *Process) IsRunning() (bool, error) {
-	return true, NotImplementedError
+	return true, common.NotImplementedError
 }
 
 // MemoryMaps get memory maps from /proc/(pid)/smaps
@@ -513,7 +517,7 @@ func (p *Process) fillFromStatus() error {
 	return nil
 }
 
-func (p *Process) fillFromStat() (string, int32, *CPUTimesStat, int64, int32, error) {
+func (p *Process) fillFromStat() (string, int32, *cpu.CPUTimesStat, int64, int32, error) {
 	pid := p.Pid
 	statPath := filepath.Join("/", "proc", strconv.Itoa(int(pid)), "stat")
 	contents, err := ioutil.ReadFile(statPath)
@@ -545,7 +549,7 @@ func (p *Process) fillFromStat() (string, int32, *CPUTimesStat, int64, int32, er
 		return "", 0, nil, 0, 0, err
 	}
 
-	cpuTimes := &CPUTimesStat{
+	cpuTimes := &cpu.CPUTimesStat{
 		CPU:    "cpu",
 		User:   float32(utime * (1000 / ClockTicks)),
 		System: float32(stime * (1000 / ClockTicks)),

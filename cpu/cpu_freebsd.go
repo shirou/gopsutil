@@ -1,12 +1,14 @@
-// +build darwin
+// +build freebsd
 
 package gopsutil
 
 import (
 	"fmt"
-	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
+
+	common "github.com/shirou/gopsutil/common"
 )
 
 // sys/resource.h
@@ -37,7 +39,7 @@ func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 		ncpu = 1
 	}
 
-	cpuTimes, err := doSysctrl(sysctlCall)
+	cpuTimes, err := common.DoSysctrl(sysctlCall)
 	if err != nil {
 		return ret, err
 	}
@@ -86,61 +88,46 @@ func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 
 // Returns only one CPUInfoStat on FreeBSD
 func CPUInfo() ([]CPUInfoStat, error) {
+	filename := "/var/run/dmesg.boot"
+	lines, _ := readLines(filename)
+
 	var ret []CPUInfoStat
 
-	out, err := exec.Command("/usr/sbin/sysctl", "machdep.cpu").Output()
-	if err != nil {
-		return ret, err
-	}
-
 	c := CPUInfoStat{}
-	for _, line := range strings.Split(string(out), "\n") {
-		values := strings.Fields(line)
-		if len(values) < 1 {
-			continue
-		}
-
-		t, err := strconv.ParseInt(values[1], 10, 64)
-		// err is not checked here because some value is string.
-		if strings.HasPrefix(line, "machdep.cpu.brand_string") {
-			c.ModelName = strings.Join(values[1:], " ")
-		} else if strings.HasPrefix(line, "machdep.cpu.family") {
-			c.Family = values[1]
-		} else if strings.HasPrefix(line, "machdep.cpu.model") {
-			c.Model = values[1]
-		} else if strings.HasPrefix(line, "machdep.cpu.stepping") {
+	for _, line := range lines {
+		if matches := regexp.MustCompile(`CPU:\s+(.+) \(([\d.]+).+\)`).FindStringSubmatch(line); matches != nil {
+			c.ModelName = matches[1]
+			t, err := strconv.ParseFloat(matches[2], 64)
 			if err != nil {
-				return ret, err
+				return ret, nil
+			}
+			c.Mhz = t
+		} else if matches := regexp.MustCompile(`Origin = "(.+)"  Id = (.+)  Family = (.+)  Model = (.+)  Stepping = (.+)`).FindStringSubmatch(line); matches != nil {
+			c.VendorID = matches[1]
+			c.Family = matches[3]
+			c.Model = matches[4]
+			t, err := strconv.ParseInt(matches[5], 10, 32)
+			if err != nil {
+				return ret, nil
 			}
 			c.Stepping = int32(t)
-		} else if strings.HasPrefix(line, "machdep.cpu.features") {
-			for _, v := range values[1:] {
+		} else if matches := regexp.MustCompile(`Features=.+<(.+)>`).FindStringSubmatch(line); matches != nil {
+			for _, v := range strings.Split(matches[1], ",") {
 				c.Flags = append(c.Flags, strings.ToLower(v))
 			}
-		} else if strings.HasPrefix(line, "machdep.cpu.leaf7_features") {
-			for _, v := range values[1:] {
+		} else if matches := regexp.MustCompile(`Features2=[a-f\dx]+<(.+)>`).FindStringSubmatch(line); matches != nil {
+			for _, v := range strings.Split(matches[1], ",") {
 				c.Flags = append(c.Flags, strings.ToLower(v))
 			}
-		} else if strings.HasPrefix(line, "machdep.cpu.extfeatures") {
-			for _, v := range values[1:] {
-				c.Flags = append(c.Flags, strings.ToLower(v))
-			}
-		} else if strings.HasPrefix(line, "machdep.cpu.core_count") {
+		} else if matches := regexp.MustCompile(`Logical CPUs per core: (\d+)`).FindStringSubmatch(line); matches != nil {
+			// FIXME: no this line?
+			t, err := strconv.ParseInt(matches[1], 10, 32)
 			if err != nil {
-				return ret, err
+				return ret, nil
 			}
 			c.Cores = int32(t)
-		} else if strings.HasPrefix(line, "machdep.cpu.cache.size") {
-			if err != nil {
-				return ret, err
-			}
-			c.CacheSize = int32(t)
-		} else if strings.HasPrefix(line, "machdep.cpu.vendor") {
-			c.VendorID = values[1]
 		}
 
-		// TODO:
-		// c.Mhz = mustParseFloat64(values[1])
 	}
 
 	return append(ret, c), nil

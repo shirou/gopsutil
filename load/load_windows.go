@@ -2,8 +2,12 @@
 
 package gopsutil
 
+import (
+	common "github.com/shirou/gopsutil/common"
+)
+
 func LoadAvg() (*LoadAvgStat, error) {
 	ret := LoadAvgStat{}
 
-	return &ret, NotImplementedError
+	return &ret, common.NotImplementedError
 }

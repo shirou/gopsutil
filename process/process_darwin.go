@@ -7,6 +7,10 @@ import (
 	"encoding/binary"
 	"syscall"
 	"unsafe"
+
+	common "github.com/shirou/gopsutil/common"
+	cpu "github.com/shirou/gopsutil/cpu"
+	net "github.com/shirou/gopsutil/net"
 )
 
 // MemoryInfoExStat is different between OSes
@@ -31,7 +35,7 @@ func Pids() ([]int32, error) {
 }
 
 func (p *Process) Ppid() (int32, error) {
-	return 0, NotImplementedError
+	return 0, common.NotImplementedError
 
 	k, err := p.getKProc()
 	if err != nil {
@@ -49,19 +53,19 @@ func (p *Process) Name() (string, error) {
 	return string(k.KiComm[:]), nil
 }
 func (p *Process) Exe() (string, error) {
-	return "", NotImplementedError
+	return "", common.NotImplementedError
 }
 func (p *Process) Cmdline() (string, error) {
-	return "", NotImplementedError
+	return "", common.NotImplementedError
 }
 func (p *Process) CreateTime() (int64, error) {
-	return 0, NotImplementedError
+	return 0, common.NotImplementedError
 }
 func (p *Process) Cwd() (string, error) {
-	return "", NotImplementedError
+	return "", common.NotImplementedError
 }
 func (p *Process) Parent() (*Process, error) {
-	return p, NotImplementedError
+	return p, common.NotImplementedError
 }
 func (p *Process) Status() (string, error) {
 	k, err := p.getKProc()
@@ -110,23 +114,23 @@ func (p *Process) Terminal() (string, error) {
 	return termmap[ttyNr], nil
 }
 func (p *Process) Nice() (int32, error) {
-	return 0, NotImplementedError
+	return 0, common.NotImplementedError
 }
 func (p *Process) IOnice() (int32, error) {
-	return 0, NotImplementedError
+	return 0, common.NotImplementedError
 }
 func (p *Process) Rlimit() ([]RlimitStat, error) {
 	var rlimit []RlimitStat
-	return rlimit, NotImplementedError
+	return rlimit, common.NotImplementedError
 }
 func (p *Process) IOCounters() (*IOCountersStat, error) {
-	return nil, NotImplementedError
+	return nil, common.NotImplementedError
 }
 func (p *Process) NumCtxSwitches() (*NumCtxSwitchesStat, error) {
-	return nil, NotImplementedError
+	return nil, common.NotImplementedError
 }
 func (p *Process) NumFDs() (int32, error) {
-	return 0, NotImplementedError
+	return 0, common.NotImplementedError
 }
 func (p *Process) NumThreads() (int32, error) {
 	k, err := p.getKProc()
@@ -138,16 +142,16 @@ func (p *Process) NumThreads() (int32, error) {
 }
 func (p *Process) Threads() (map[string]string, error) {
 	ret := make(map[string]string, 0)
-	return ret, NotImplementedError
+	return ret, common.NotImplementedError
 }
-func (p *Process) CPUTimes() (*CPUTimesStat, error) {
-	return nil, NotImplementedError
+func (p *Process) CPUTimes() (*cpu.CPUTimesStat, error) {
+	return nil, common.NotImplementedError
 }
 func (p *Process) CPUPercent() (int32, error) {
-	return 0, NotImplementedError
+	return 0, common.NotImplementedError
 }
 func (p *Process) CPUAffinity() ([]int32, error) {
-	return nil, NotImplementedError
+	return nil, common.NotImplementedError
 }
 func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
 	k, err := p.getKProc()
@@ -163,30 +167,30 @@ func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
 	return ret, nil
 }
 func (p *Process) MemoryInfoEx() (*MemoryInfoExStat, error) {
-	return nil, NotImplementedError
+	return nil, common.NotImplementedError
 }
 func (p *Process) MemoryPercent() (float32, error) {
-	return 0, NotImplementedError
+	return 0, common.NotImplementedError
 }
 
 func (p *Process) Children() ([]*Process, error) {
-	return nil, NotImplementedError
+	return nil, common.NotImplementedError
 }
 
 func (p *Process) OpenFiles() ([]OpenFilesStat, error) {
-	return nil, NotImplementedError
+	return nil, common.NotImplementedError
 }
 
-func (p *Process) Connections() ([]NetConnectionStat, error) {
-	return nil, NotImplementedError
+func (p *Process) Connections() ([]net.NetConnectionStat, error) {
+	return nil, common.NotImplementedError
 }
 
 func (p *Process) IsRunning() (bool, error) {
-	return true, NotImplementedError
+	return true, common.NotImplementedError
 }
 func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 	var ret []MemoryMapsStat
-	return &ret, NotImplementedError
+	return &ret, common.NotImplementedError
 }
 
 func copyParams(k *KinfoProc, p *Process) error {

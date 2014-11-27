@@ -6,6 +6,8 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+
+	common "github.com/shirou/gopsutil/common"
 )
 
 func getPageSize() (uint64, error) {
@@ -29,11 +31,11 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 		return nil, err
 	}
 
-	total, err := doSysctrl("hw.memsize")
+	total, err := common.DoSysctrl("hw.memsize")
 	if err != nil {
 		return nil, err
 	}
-	free, err := doSysctrl("vm.page_free_count")
+	free, err := common.DoSysctrl("vm.page_free_count")
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +70,7 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 func SwapMemory() (*SwapMemoryStat, error) {
 	var ret *SwapMemoryStat
 
-	swapUsage, err := doSysctrl("vm.swapusage")
+	swapUsage, err := common.DoSysctrl("vm.swapusage")
 	if err != nil {
 		return ret, err
 	}

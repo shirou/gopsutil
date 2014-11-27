@@ -6,6 +6,8 @@ import (
 	"bytes"
 	"syscall"
 	"unsafe"
+
+	common "github.com/shirou/gopsutil/common"
 )
 
 var (
@@ -113,5 +115,5 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 
 func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 	ret := make(map[string]DiskIOCountersStat, 0)
-	return ret, NotImplementedError
+	return ret, common.NotImplementedError
 }

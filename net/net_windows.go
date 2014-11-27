@@ -7,6 +7,8 @@ import (
 	"os"
 	"syscall"
 	"unsafe"
+
+	common "github.com/shirou/gopsutil/common"
 )
 
 var (
@@ -71,7 +73,7 @@ func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 func NetConnections(kind string) ([]NetConnectionStat, error) {
 	var ret []NetConnectionStat
 
-	return ret, NotImplementedError
+	return ret, common.NotImplementedError
 }
 
 // borrowed from src/pkg/net/interface_windows.go
