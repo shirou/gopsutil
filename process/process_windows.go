@@ -10,6 +10,8 @@ import (
 	"github.com/shirou/w32"
 
 	common "github.com/shirou/gopsutil/common"
+	cpu "github.com/shirou/gopsutil/cpu"
+	net "github.com/shirou/gopsutil/net"
 )
 
 const (
@@ -130,7 +132,7 @@ func (p *Process) Threads() (map[string]string, error) {
 	ret := make(map[string]string, 0)
 	return ret, common.NotImplementedError
 }
-func (p *Process) CPUTimes() (*CPUTimesStat, error) {
+func (p *Process) CPUTimes() (*cpu.CPUTimesStat, error) {
 	return nil, common.NotImplementedError
 }
 func (p *Process) CPUPercent() (int32, error) {
@@ -157,7 +159,7 @@ func (p *Process) OpenFiles() ([]OpenFilesStat, error) {
 	return nil, common.NotImplementedError
 }
 
-func (p *Process) Connections() ([]NetConnectionStat, error) {
+func (p *Process) Connections() ([]net.NetConnectionStat, error) {
 	return nil, common.NotImplementedError
 }
 
@@ -249,7 +251,7 @@ func getProcInfo(pid int32) (*SystemProcessInformation, error) {
 	buffer := make([]byte, bufferSize)
 
 	var sysProcInfo SystemProcessInformation
-	ret, _, _ := procNtQuerySystemInformation.Call(
+	ret, _, _ := common.ProcNtQuerySystemInformation.Call(
 		uintptr(unsafe.Pointer(&sysProcInfo)),
 		uintptr(unsafe.Pointer(&buffer[0])),
 		uintptr(unsafe.Pointer(&bufferSize)),

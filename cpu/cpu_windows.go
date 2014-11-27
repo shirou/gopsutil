@@ -5,16 +5,18 @@ package gopsutil
 import (
 	"syscall"
 	"unsafe"
+
+	common "github.com/shirou/gopsutil/common"
 )
 
 // TODO: Get percpu
 func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 	var ret []CPUTimesStat
 
-	var lpIdleTime FILETIME
-	var lpKernelTime FILETIME
-	var lpUserTime FILETIME
-	r, _, _ := procGetSystemTimes.Call(
+	var lpIdleTime common.FILETIME
+	var lpKernelTime common.FILETIME
+	var lpUserTime common.FILETIME
+	r, _, _ := common.ProcGetSystemTimes.Call(
 		uintptr(unsafe.Pointer(&lpIdleTime)),
 		uintptr(unsafe.Pointer(&lpKernelTime)),
 		uintptr(unsafe.Pointer(&lpUserTime)))

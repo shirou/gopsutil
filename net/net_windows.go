@@ -44,7 +44,7 @@ func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 	for _, ifi := range ifs {
 		name := ifi.Name
 		for ; ai != nil; ai = ai.Next {
-			name = bytePtrToString(&ai.Description[0])
+			name = common.BytePtrToString(&ai.Description[0])
 			c := NetIOCountersStat{
 				Name: name,
 			}

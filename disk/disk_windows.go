@@ -11,10 +11,10 @@ import (
 )
 
 var (
-	procGetDiskFreeSpaceExW     = modkernel32.NewProc("GetDiskFreeSpaceExW")
-	procGetLogicalDriveStringsW = modkernel32.NewProc("GetLogicalDriveStringsW")
-	procGetDriveType            = modkernel32.NewProc("GetDriveTypeW")
-	provGetVolumeInformation    = modkernel32.NewProc("GetVolumeInformationW")
+	procGetDiskFreeSpaceExW     = common.Modkernel32.NewProc("GetDiskFreeSpaceExW")
+	procGetLogicalDriveStringsW = common.Modkernel32.NewProc("GetLogicalDriveStringsW")
+	procGetDriveType            = common.Modkernel32.NewProc("GetDriveTypeW")
+	provGetVolumeInformation    = common.Modkernel32.NewProc("GetVolumeInformationW")
 )
 
 var (

@@ -8,11 +8,11 @@ import (
 )
 
 var (
-	modkernel32 = syscall.NewLazyDLL("kernel32.dll")
-	modNt       = syscall.NewLazyDLL("ntdll.dll")
+	Modkernel32 = syscall.NewLazyDLL("kernel32.dll")
+	ModNt       = syscall.NewLazyDLL("ntdll.dll")
 
-	procGetSystemTimes           = modkernel32.NewProc("GetSystemTimes")
-	procNtQuerySystemInformation = modNt.NewProc("NtQuerySystemInformation")
+	ProcGetSystemTimes           = Modkernel32.NewProc("GetSystemTimes")
+	ProcNtQuerySystemInformation = ModNt.NewProc("NtQuerySystemInformation")
 )
 
 type FILETIME struct {

@@ -5,10 +5,12 @@ package gopsutil
 import (
 	"syscall"
 	"unsafe"
+
+	common "github.com/shirou/gopsutil/common"
 )
 
 var (
-	procGlobalMemoryStatusEx = modkernel32.NewProc("GlobalMemoryStatusEx")
+	procGlobalMemoryStatusEx = common.Modkernel32.NewProc("GlobalMemoryStatusEx")
 )
 
 type MEMORYSTATUSEX struct {

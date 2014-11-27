@@ -6,11 +6,14 @@ import (
 	"os"
 	"syscall"
 	"unsafe"
+
+	common "github.com/shirou/gopsutil/common"
+	process "github.com/shirou/gopsutil/process"
 )
 
 var (
-	procGetSystemTimeAsFileTime = modkernel32.NewProc("GetSystemTimeAsFileTime")
-	procGetTickCount            = modkernel32.NewProc("GetTickCount")
+	procGetSystemTimeAsFileTime = common.Modkernel32.NewProc("GetSystemTimeAsFileTime")
+	procGetTickCount            = common.Modkernel32.NewProc("GetTickCount")
 )
 
 func HostInfo() (*HostInfoStat, error) {
@@ -28,7 +31,7 @@ func HostInfo() (*HostInfoStat, error) {
 
 	ret.Uptime = uint64(uptimemsec) / 1000
 
-	procs, err := Pids()
+	procs, err := process.Pids()
 	if err != nil {
 		return ret, err
 	}
@@ -39,7 +42,7 @@ func HostInfo() (*HostInfoStat, error) {
 }
 
 func BootTime() (uint64, error) {
-	var lpSystemTimeAsFileTime FILETIME
+	var lpSystemTimeAsFileTime common.FILETIME
 
 	r, _, _ := procGetSystemTimeAsFileTime.Call(uintptr(unsafe.Pointer(&lpSystemTimeAsFileTime)))
 	if r == 0 {
