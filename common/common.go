@@ -94,7 +94,7 @@ func mustParseFloat64(val string) float64 {
 }
 
 // Check the target string slice containes src or not
-func stringContains(target []string, src string) bool {
+func StringContains(target []string, src string) bool {
 	for _, t := range target {
 		if t == src {
 			return true
@@ -126,7 +126,7 @@ func attributes(m interface{}) map[string]reflect.Type {
 	return attrs
 }
 
-func pathExists(filename string) bool {
+func PathExists(filename string) bool {
 	if _, err := os.Stat(filename); err == nil {
 		return true
 	}

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	common "github.com/shirou/gopsutil/common"
+	cpu "github.com/shirou/gopsutil/cpu"
 )
 
 type CgroupMemStat struct {
@@ -64,7 +65,7 @@ func GetDockerIDList() ([]string, error) {
 // containerid is same as docker id if you use docker.
 // If you use container via systemd.slice, you could use
 // containerid = docker-<container id>.scope and base=/sys/fs/cgroup/cpuacct/system.slice/
-func CgroupCPU(containerid string, base string) (*CPUTimesStat, error) {
+func CgroupCPU(containerid string, base string) (*cpu.CPUTimesStat, error) {
 	if len(base) == 0 {
 		base = "/sys/fs/cgroup/cpuacct/docker"
 	}
@@ -75,7 +76,7 @@ func CgroupCPU(containerid string, base string) (*CPUTimesStat, error) {
 	if len(containerid) == 0 {
 		containerid = "all"
 	}
-	ret := &CPUTimesStat{CPU: containerid}
+	ret := &cpu.CPUTimesStat{CPU: containerid}
 	for _, line := range lines {
 		fields := strings.Split(line, " ")
 		if fields[0] == "user" {
@@ -95,7 +96,7 @@ func CgroupCPU(containerid string, base string) (*CPUTimesStat, error) {
 	return ret, nil
 }
 
-func CgroupCPUDocker(containerid string) (*CPUTimesStat, error) {
+func CgroupCPUDocker(containerid string) (*cpu.CPUTimesStat, error) {
 	return CgroupCPU(containerid, "/sys/fs/cgroup/cpuacct/docker")
 }
 

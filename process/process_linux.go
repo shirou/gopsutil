@@ -13,6 +13,7 @@ import (
 
 	common "github.com/shirou/gopsutil/common"
 	cpu "github.com/shirou/gopsutil/cpu"
+	host "github.com/shirou/gopsutil/host"
 	net "github.com/shirou/gopsutil/net"
 )
 
@@ -555,7 +556,7 @@ func (p *Process) fillFromStat() (string, int32, *cpu.CPUTimesStat, int64, int32
 		System: float32(stime * (1000 / ClockTicks)),
 	}
 
-	bootTime, _ := BootTime()
+	bootTime, _ := host.BootTime()
 	t, err := strconv.ParseUint(fields[21], 10, 64)
 	if err != nil {
 		return "", 0, nil, 0, 0, err

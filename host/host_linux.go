@@ -105,7 +105,7 @@ func Users() ([]UserStat, error) {
 
 func getLSB() (*LSB, error) {
 	ret := &LSB{}
-	if pathExists("/etc/lsb-release") {
+	if common.PathExists("/etc/lsb-release") {
 		contents, err := common.ReadLines("/etc/lsb-release")
 		if err != nil {
 			return ret, err // return empty
@@ -126,7 +126,7 @@ func getLSB() (*LSB, error) {
 				ret.Description = field[1]
 			}
 		}
-	} else if pathExists("/usr/bin/lsb_release") {
+	} else if common.PathExists("/usr/bin/lsb_release") {
 		out, err := exec.Command("/usr/bin/lsb_release").Output()
 		if err != nil {
 			return ret, err
@@ -160,19 +160,19 @@ func GetPlatformInformation() (platform string, family string, version string, e
 		lsb = &LSB{}
 	}
 
-	if pathExists("/etc/oracle-release") {
+	if common.PathExists("/etc/oracle-release") {
 		platform = "oracle"
 		contents, err := common.ReadLines("/etc/oracle-release")
 		if err == nil {
 			version = getRedhatishVersion(contents)
 		}
-	} else if pathExists("/etc/enterprise-release") {
+	} else if common.PathExists("/etc/enterprise-release") {
 		platform = "oracle"
 		contents, err := common.ReadLines("/etc/enterprise-release")
 		if err == nil {
 			version = getRedhatishVersion(contents)
 		}
-	} else if pathExists("/etc/debian_version") {
+	} else if common.PathExists("/etc/debian_version") {
 		if lsb.ID == "Ubuntu" {
 			platform = "ubuntu"
 			version = lsb.Release
@@ -180,7 +180,7 @@ func GetPlatformInformation() (platform string, family string, version string, e
 			platform = "linuxmint"
 			version = lsb.Release
 		} else {
-			if pathExists("/usr/bin/raspi-config") {
+			if common.PathExists("/usr/bin/raspi-config") {
 				platform = "raspbian"
 			} else {
 				platform = "debian"
@@ -190,19 +190,19 @@ func GetPlatformInformation() (platform string, family string, version string, e
 				version = contents[0]
 			}
 		}
-	} else if pathExists("/etc/redhat-release") {
+	} else if common.PathExists("/etc/redhat-release") {
 		contents, err := common.ReadLines("/etc/redhat-release")
 		if err == nil {
 			version = getRedhatishVersion(contents)
 			platform = getRedhatishPlatform(contents)
 		}
-	} else if pathExists("/etc/system-release") {
+	} else if common.PathExists("/etc/system-release") {
 		contents, err := common.ReadLines("/etc/system-release")
 		if err == nil {
 			version = getRedhatishVersion(contents)
 			platform = getRedhatishPlatform(contents)
 		}
-	} else if pathExists("/etc/gentoo-release") {
+	} else if common.PathExists("/etc/gentoo-release") {
 		platform = "gentoo"
 		contents, err := common.ReadLines("/etc/gentoo-release")
 		if err == nil {
@@ -210,7 +210,7 @@ func GetPlatformInformation() (platform string, family string, version string, e
 		}
 		// TODO: suse detection
 		// TODO: slackware detecion
-	} else if pathExists("/etc/arch-release") {
+	} else if common.PathExists("/etc/arch-release") {
 		platform = "arch"
 		// TODO: exherbo detection
 	} else if lsb.ID == "RedHat" {
@@ -280,78 +280,78 @@ func GetVirtualization() (string, string, error) {
 	var system string
 	var role string
 
-	if pathExists("/proc/xen") {
+	if common.PathExists("/proc/xen") {
 		system = "xen"
 		role = "guest" // assume guest
 
-		if pathExists("/proc/xen/capabilities") {
+		if common.PathExists("/proc/xen/capabilities") {
 			contents, err := common.ReadLines("/proc/xen/capabilities")
 			if err == nil {
-				if stringContains(contents, "control_d") {
+				if common.StringContains(contents, "control_d") {
 					role = "host"
 				}
 			}
 		}
 	}
-	if pathExists("/proc/modules") {
+	if common.PathExists("/proc/modules") {
 		contents, err := common.ReadLines("/proc/modules")
 		if err == nil {
-			if stringContains(contents, "kvm") {
+			if common.StringContains(contents, "kvm") {
 				system = "kvm"
 				role = "host"
-			} else if stringContains(contents, "vboxdrv") {
+			} else if common.StringContains(contents, "vboxdrv") {
 				system = "vbox"
 				role = "host"
-			} else if stringContains(contents, "vboxguest") {
+			} else if common.StringContains(contents, "vboxguest") {
 				system = "vbox"
 				role = "guest"
 			}
 		}
 	}
 
-	if pathExists("/proc/cpuinfo") {
+	if common.PathExists("/proc/cpuinfo") {
 		contents, err := common.ReadLines("/proc/cpuinfo")
 		if err == nil {
-			if stringContains(contents, "QEMU Virtual CPU") ||
-				stringContains(contents, "Common KVM processor") ||
-				stringContains(contents, "Common 32-bit KVM processor") {
+			if common.StringContains(contents, "QEMU Virtual CPU") ||
+				common.StringContains(contents, "Common KVM processor") ||
+				common.StringContains(contents, "Common 32-bit KVM processor") {
 				system = "kvm"
 				role = "guest"
 			}
 		}
 	}
 
-	if pathExists("/proc/bc/0") {
+	if common.PathExists("/proc/bc/0") {
 		system = "openvz"
 		role = "host"
-	} else if pathExists("/proc/vz") {
+	} else if common.PathExists("/proc/vz") {
 		system = "openvz"
 		role = "guest"
 	}
 
 	// not use dmidecode because it requires root
 
-	if pathExists("/proc/self/status") {
+	if common.PathExists("/proc/self/status") {
 		contents, err := common.ReadLines("/proc/self/status")
 		if err == nil {
 
-			if stringContains(contents, "s_context:") ||
-				stringContains(contents, "VxID:") {
+			if common.StringContains(contents, "s_context:") ||
+				common.StringContains(contents, "VxID:") {
 				system = "linux-vserver"
 			}
 			// TODO: guest or host
 		}
 	}
 
-	if pathExists("/proc/self/cgroup") {
+	if common.PathExists("/proc/self/cgroup") {
 		contents, err := common.ReadLines("/proc/self/cgroup")
 		if err == nil {
 
-			if stringContains(contents, "lxc") ||
-				stringContains(contents, "docker") {
+			if common.StringContains(contents, "lxc") ||
+				common.StringContains(contents, "docker") {
 				system = "lxc"
 				role = "guest"
-			} else if pathExists("/usr/bin/lxc-version") { // TODO: which
+			} else if common.PathExists("/usr/bin/lxc-version") { // TODO: which
 				system = "lxc"
 				role = "host"
 			}
