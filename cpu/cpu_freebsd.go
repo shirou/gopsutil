@@ -89,7 +89,7 @@ func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 // Returns only one CPUInfoStat on FreeBSD
 func CPUInfo() ([]CPUInfoStat, error) {
 	filename := "/var/run/dmesg.boot"
-	lines, _ := readLines(filename)
+	lines, _ := common.ReadLines(filename)
 
 	var ret []CPUInfoStat
 

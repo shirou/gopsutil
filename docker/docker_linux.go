@@ -8,6 +8,8 @@ import (
 	"path"
 	"strconv"
 	"strings"
+
+	common "github.com/shirou/gopsutil/common"
 )
 
 type CgroupMemStat struct {
@@ -68,7 +70,7 @@ func CgroupCPU(containerid string, base string) (*CPUTimesStat, error) {
 	}
 	path := path.Join(base, containerid, "cpuacct.stat")
 
-	lines, _ := readLines(path)
+	lines, _ := common.ReadLines(path)
 	// empty containerid means all cgroup
 	if len(containerid) == 0 {
 		containerid = "all"
@@ -106,7 +108,7 @@ func CgroupMem(containerid string, base string) (*CgroupMemStat, error) {
 	if len(containerid) == 0 {
 		containerid = "all"
 	}
-	lines, _ := readLines(path)
+	lines, _ := common.ReadLines(path)
 	ret := &CgroupMemStat{ContainerID: containerid}
 	for _, line := range lines {
 		fields := strings.Split(line, " ")

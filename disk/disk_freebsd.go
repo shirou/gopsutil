@@ -101,7 +101,7 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 
 	ret := make(map[string]DiskIOCountersStat, 0)
 	for _, stat := range fs {
-		name := ByteToString(stat.FMntonname[:])
+		name := common.ByteToString(stat.FMntonname[:])
 		d := DiskIOCountersStat{
 			Name:       name,
 			ReadCount:  stat.FSyncwrites + stat.FAsyncwrites,

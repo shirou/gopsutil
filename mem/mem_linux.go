@@ -6,11 +6,13 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+
+	common "github.com/shirou/gopsutil/common"
 )
 
 func VirtualMemory() (*VirtualMemoryStat, error) {
 	filename := "/proc/meminfo"
-	lines, _ := readLines(filename)
+	lines, _ := common.ReadLines(filename)
 
 	ret := &VirtualMemoryStat{}
 	for _, line := range lines {
@@ -65,7 +67,7 @@ func SwapMemory() (*SwapMemoryStat, error) {
 	} else {
 		ret.UsedPercent = 0
 	}
-	lines, _ := readLines("/proc/vmstat")
+	lines, _ := common.ReadLines("/proc/vmstat")
 	for _, l := range lines {
 		fields := strings.Fields(l)
 		if len(fields) < 2 {

@@ -5,11 +5,13 @@ package gopsutil
 import (
 	"strconv"
 	"strings"
+
+	common "github.com/shirou/gopsutil/common"
 )
 
 func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 	filename := "/proc/net/dev"
-	lines, err := readLines(filename)
+	lines, err := common.ReadLines(filename)
 	if err != nil {
 		return nil, err
 	}

@@ -7,6 +7,8 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+
+	common "github.com/shirou/gopsutil/common"
 )
 
 const (
@@ -18,7 +20,7 @@ const (
 func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 
 	filename := "/etc/mtab"
-	lines, err := readLines(filename)
+	lines, err := common.ReadLines(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +43,7 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 
 func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 	filename := "/proc/diskstats"
-	lines, err := readLines(filename)
+	lines, err := common.ReadLines(filename)
 	if err != nil {
 		return nil, err
 	}

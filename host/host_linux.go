@@ -106,7 +106,7 @@ func Users() ([]UserStat, error) {
 func getLSB() (*LSB, error) {
 	ret := &LSB{}
 	if pathExists("/etc/lsb-release") {
-		contents, err := readLines("/etc/lsb-release")
+		contents, err := common.ReadLines("/etc/lsb-release")
 		if err != nil {
 			return ret, err // return empty
 		}
@@ -162,13 +162,13 @@ func GetPlatformInformation() (platform string, family string, version string, e
 
 	if pathExists("/etc/oracle-release") {
 		platform = "oracle"
-		contents, err := readLines("/etc/oracle-release")
+		contents, err := common.ReadLines("/etc/oracle-release")
 		if err == nil {
 			version = getRedhatishVersion(contents)
 		}
 	} else if pathExists("/etc/enterprise-release") {
 		platform = "oracle"
-		contents, err := readLines("/etc/enterprise-release")
+		contents, err := common.ReadLines("/etc/enterprise-release")
 		if err == nil {
 			version = getRedhatishVersion(contents)
 		}
@@ -185,26 +185,26 @@ func GetPlatformInformation() (platform string, family string, version string, e
 			} else {
 				platform = "debian"
 			}
-			contents, err := readLines("/etc/debian_version")
+			contents, err := common.ReadLines("/etc/debian_version")
 			if err == nil {
 				version = contents[0]
 			}
 		}
 	} else if pathExists("/etc/redhat-release") {
-		contents, err := readLines("/etc/redhat-release")
+		contents, err := common.ReadLines("/etc/redhat-release")
 		if err == nil {
 			version = getRedhatishVersion(contents)
 			platform = getRedhatishPlatform(contents)
 		}
 	} else if pathExists("/etc/system-release") {
-		contents, err := readLines("/etc/system-release")
+		contents, err := common.ReadLines("/etc/system-release")
 		if err == nil {
 			version = getRedhatishVersion(contents)
 			platform = getRedhatishPlatform(contents)
 		}
 	} else if pathExists("/etc/gentoo-release") {
 		platform = "gentoo"
-		contents, err := readLines("/etc/gentoo-release")
+		contents, err := common.ReadLines("/etc/gentoo-release")
 		if err == nil {
 			version = getRedhatishVersion(contents)
 		}
@@ -285,7 +285,7 @@ func GetVirtualization() (string, string, error) {
 		role = "guest" // assume guest
 
 		if pathExists("/proc/xen/capabilities") {
-			contents, err := readLines("/proc/xen/capabilities")
+			contents, err := common.ReadLines("/proc/xen/capabilities")
 			if err == nil {
 				if stringContains(contents, "control_d") {
 					role = "host"
@@ -294,7 +294,7 @@ func GetVirtualization() (string, string, error) {
 		}
 	}
 	if pathExists("/proc/modules") {
-		contents, err := readLines("/proc/modules")
+		contents, err := common.ReadLines("/proc/modules")
 		if err == nil {
 			if stringContains(contents, "kvm") {
 				system = "kvm"
@@ -310,7 +310,7 @@ func GetVirtualization() (string, string, error) {
 	}
 
 	if pathExists("/proc/cpuinfo") {
-		contents, err := readLines("/proc/cpuinfo")
+		contents, err := common.ReadLines("/proc/cpuinfo")
 		if err == nil {
 			if stringContains(contents, "QEMU Virtual CPU") ||
 				stringContains(contents, "Common KVM processor") ||
@@ -332,7 +332,7 @@ func GetVirtualization() (string, string, error) {
 	// not use dmidecode because it requires root
 
 	if pathExists("/proc/self/status") {
-		contents, err := readLines("/proc/self/status")
+		contents, err := common.ReadLines("/proc/self/status")
 		if err == nil {
 
 			if stringContains(contents, "s_context:") ||
@@ -344,7 +344,7 @@ func GetVirtualization() (string, string, error) {
 	}
 
 	if pathExists("/proc/self/cgroup") {
-		contents, err := readLines("/proc/self/cgroup")
+		contents, err := common.ReadLines("/proc/self/cgroup")
 		if err == nil {
 
 			if stringContains(contents, "lxc") ||

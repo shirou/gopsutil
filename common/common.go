@@ -17,18 +17,18 @@ import (
 
 var NotImplementedError = errors.New("not implemented yet")
 
-// readLines reads contents from file and splits them by new line.
-// A convenience wrapper to readLinesOffsetN(filename, 0, -1).
-func readLines(filename string) ([]string, error) {
-	return readLinesOffsetN(filename, 0, -1)
+// ReadLines reads contents from file and splits them by new line.
+// A convenience wrapper to ReadLinesOffsetN(filename, 0, -1).
+func ReadLines(filename string) ([]string, error) {
+	return ReadLinesOffsetN(filename, 0, -1)
 }
 
-// readLines reads contents from file and splits them by new line.
+// ReadLines reads contents from file and splits them by new line.
 // The offset tells at which line number to start.
 // The count determines the number of lines to read (starting from offset):
 //   n >= 0: at most n lines
 //   n < 0: whole file
-func readLinesOffsetN(filename string, offset uint, n int) ([]string, error) {
+func ReadLinesOffsetN(filename string, offset uint, n int) ([]string, error) {
 	f, err := os.Open(filename)
 	if err != nil {
 		return []string{""}, err

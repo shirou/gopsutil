@@ -6,6 +6,8 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+
+	common "github.com/shirou/gopsutil/common"
 )
 
 func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
@@ -13,9 +15,9 @@ func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 	var lines []string
 	if percpu {
 		ncpu, _ := CPUCounts(true)
-		lines, _ = readLinesOffsetN(filename, 1, ncpu)
+		lines, _ = common.ReadLinesOffsetN(filename, 1, ncpu)
 	} else {
-		lines, _ = readLinesOffsetN(filename, 0, 1)
+		lines, _ = common.ReadLinesOffsetN(filename, 0, 1)
 	}
 
 	ret := make([]CPUTimesStat, 0, len(lines))
@@ -33,7 +35,7 @@ func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 
 func CPUInfo() ([]CPUInfoStat, error) {
 	filename := "/proc/cpuinfo"
-	lines, _ := readLines(filename)
+	lines, _ := common.ReadLines(filename)
 
 	var ret []CPUInfoStat
 
