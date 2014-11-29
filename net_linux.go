@@ -19,46 +19,51 @@ func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 	ret := make([]NetIOCountersStat, 0, statlen)
 
 	for _, line := range lines[2:] {
-		fields := strings.Fields(line)
-		if fields[0] == "" {
+		parts := strings.SplitN(line, ":", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		interfaceName := strings.TrimSpace(parts[0])
+		if interfaceName == "" {
 			continue
 		}
 
-		bytesRecv, err := strconv.ParseUint(fields[1], 10, 64)
+		fields := strings.Fields(strings.TrimSpace(parts[1]))
+		bytesRecv, err := strconv.ParseUint(fields[0], 10, 64)
 		if err != nil {
 			return ret, err
 		}
-		packetsRecv, err := strconv.ParseUint(fields[2], 10, 64)
+		packetsRecv, err := strconv.ParseUint(fields[1], 10, 64)
 		if err != nil {
 			return ret, err
 		}
-		errIn, err := strconv.ParseUint(fields[3], 10, 64)
+		errIn, err := strconv.ParseUint(fields[2], 10, 64)
 		if err != nil {
 			return ret, err
 		}
-		dropIn, err := strconv.ParseUint(fields[4], 10, 64)
+		dropIn, err := strconv.ParseUint(fields[3], 10, 64)
 		if err != nil {
 			return ret, err
 		}
-		bytesSent, err := strconv.ParseUint(fields[9], 10, 64)
+		bytesSent, err := strconv.ParseUint(fields[8], 10, 64)
 		if err != nil {
 			return ret, err
 		}
-		packetsSent, err := strconv.ParseUint(fields[10], 10, 64)
+		packetsSent, err := strconv.ParseUint(fields[9], 10, 64)
 		if err != nil {
 			return ret, err
 		}
-		errOut, err := strconv.ParseUint(fields[11], 10, 64)
+		errOut, err := strconv.ParseUint(fields[10], 10, 64)
 		if err != nil {
 			return ret, err
 		}
-		dropOut, err := strconv.ParseUint(fields[14], 10, 64)
+		dropOut, err := strconv.ParseUint(fields[13], 10, 64)
 		if err != nil {
 			return ret, err
 		}
 
 		nic := NetIOCountersStat{
-			Name:        strings.Trim(fields[0], ":"),
+			Name:        interfaceName,
 			BytesRecv:   bytesRecv,
 			PacketsRecv: packetsRecv,
 			Errin:       errIn,
