@@ -8,7 +8,7 @@ type VirtualMemoryStat struct {
 	Total       uint64  `json:"total"`
 	Available   uint64  `json:"available"`
 	Used        uint64  `json:"used"`
-	UsedPercent float64 `json:"usedPercent"`
+	UsedPercent float64 `json:"used_percent"`
 	Free        uint64  `json:"free"`
 	Active      uint64  `json:"active"`
 	Inactive    uint64  `json:"inactive"`
@@ -22,7 +22,7 @@ type SwapMemoryStat struct {
 	Total       uint64  `json:"total"`
 	Used        uint64  `json:"used"`
 	Free        uint64  `json:"free"`
-	UsedPercent float64 `json:"usedPercent"`
+	UsedPercent float64 `json:"used_percent"`
 	Sin         uint64  `json:"sin"`
 	Sout        uint64  `json:"sout"`
 }
