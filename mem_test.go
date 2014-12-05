@@ -35,7 +35,7 @@ func TestVirtualMemoryStat_String(t *testing.T) {
 		UsedPercent: 30.1,
 		Free:        40,
 	}
-	e := `{"total":10,"available":20,"used":30,"usedPercent":30.1,"free":40,"active":0,"inactive":0,"buffers":0,"cached":0,"wired":0,"shared":0}`
+	e := `{"total":10,"available":20,"used":30,"used_percent":30.1,"free":40,"active":0,"inactive":0,"buffers":0,"cached":0,"wired":0,"shared":0}`
 	if e != fmt.Sprintf("%v", v) {
 		t.Errorf("VirtualMemoryStat string is invalid: %v", v)
 	}
@@ -48,7 +48,7 @@ func TestSwapMemoryStat_String(t *testing.T) {
 		Free:        40,
 		UsedPercent: 30.1,
 	}
-	e := `{"total":10,"used":30,"free":40,"usedPercent":30.1,"sin":0,"sout":0}`
+	e := `{"total":10,"used":30,"free":40,"used_percent":30.1,"sin":0,"sout":0}`
 	if e != fmt.Sprintf("%v", v) {
 		t.Errorf("SwapMemoryStat string is invalid: %v", v)
 	}
