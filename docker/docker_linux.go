@@ -14,7 +14,7 @@ import (
 )
 
 type CgroupMemStat struct {
-	ContainerID             string `json:"containerid"`
+	ContainerID             string `json:"container_id"`
 	Cache                   uint64 `json:"cache"`
 	RSS                     uint64 `json:"rss"`
 	RSSHuge                 uint64 `json:"rss_huge"`

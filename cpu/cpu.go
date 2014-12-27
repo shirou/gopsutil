@@ -23,16 +23,16 @@ type CPUTimesStat struct {
 
 type CPUInfoStat struct {
 	CPU        int32    `json:"cpu"`
-	VendorID   string   `json:"vendorId"`
+	VendorID   string   `json:"vendor_id"`
 	Family     string   `json:"family"`
 	Model      string   `json:"model"`
 	Stepping   int32    `json:"stepping"`
-	PhysicalID string   `json:"physicalId"`
-	CoreID     string   `json:"coreId"`
+	PhysicalID string   `json:"physical_id"`
+	CoreID     string   `json:"core_id"`
 	Cores      int32    `json:"cores"`
-	ModelName  string   `json:"modelName"`
+	ModelName  string   `json:"model_name"`
 	Mhz        float64  `json:"mhz"`
-	CacheSize  int32    `json:"cacheSize"`
+	CacheSize  int32    `json:"cache_size"`
 	Flags      []string `json:"flags"`
 }
 
