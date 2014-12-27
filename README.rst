@@ -11,6 +11,11 @@ gopsutil: psutil for golang
 This is a port of psutil (http://pythonhosted.org/psutil/). The challenge is porting all 
 psutil functions on some architectures...
 
+.. highlights:: Package Structure Changed!
+
+   Package (a.k.a. directory) structure has been changed!! see `#24 <https://github.com/shirou/gopsutil/issues/24`_
+
+
 Available Architectures
 ------------------------------------
 
@@ -117,68 +122,105 @@ Some codes are ported from Ohai. many thanks.
 Current Status
 ------------------
 
-- done
+- x: work
+- b: almost work but something broken
 
-  - cpu_times (linux, freebsd)
-  - cpu_count (linux, freebsd, windows)
-  - virtual_memory (linux, freebsd, windows)
-  - swap_memory (linux, freebsd)
-  - disk_partitions (linux, freebsd, windows)
-  - disk_io_counters (linux)
-  - disk_usage (linux, freebsd, windows)
-  - net_io_counters (linux, freebsd, windows)
-  - boot_time (linux, freebsd, windows(but little broken))
-  - users (linux, freebsd)
-  - pids (linux, freebsd)
-  - pid_exists (linux, freebsd)
-  - Process class
+================= ========= ========= =========== ====== =======
+name              Linux 686 Linux ARM FreeBSD 686 MacOSX Windows
+cpu_times            x         x         x          x
+cpu_count            x         x         x          x       x
+cpu_percent          x         x         x          x       x
+cpu_times_percent    x         x         x          x       x
+virtual_memory       x         x         x          x       x
+swap_memory          x         x         x          x
+disk_partitions      x         x         x                  x
+disk_io_counters     x         x
+disk_usage           x         x         x                  x
+net_io_counters      x         x         x          x       x
+boot_time            x         x         x          x       b
+users                x         x         x          x       x
+pids                 x         x         x          x       x
+pid_exists           x         x         x          x       x
+net_connections
+================= ========= ========= =========== ====== =======
 
-    - pid (linux, freebsd, windows)
-    - ppid (linux, freebsd, windows)
-    - name (linux)
-    - cmdline (linux)
-    - create_time (linux)
-    - status (linux)
-    - cwd (linux)
-    - exe (linux, freebsd, windows)
-    - uids (linux, freebsd)
-    - gids (linux, freebsd)
-    - terminal (linux, freebsd)
-    - io_counters (linux)
-    - nice (linux)
-    - num_fds (linux)
-    - num_ctx_switches (linux)
-    - num_threads (linux, freebsd, windows)
-    - cpu_times (linux)
-    - memory_info (linux, freebsd)
-    - memory_info_ex (linux)
-    - memory_maps() (linux)
-    - open_files (linux)
-    - send_signal (linux, freebsd)
-    - suspend (linux, freebsd)
-    - resume (linux, freebsd)
-    - terminate (linux, freebsd)
-    - kill (linux, freebsd)
+Process class
+^^^^^^^^^^^^^^^
 
-- not yet
+================ ========= ========= =========== ====== =======
+name             Linux 686 Linux ARM FreeBSD 686 MacOSX Windows
+pid                 x         x         x          x       x
+ppid                x         x         x          x       x
+name                x         x         x          x
+cmdline             x         x
+create_time         x         x
+status              x         x         x          x
+cwd                 x         x
+exe                 x         x         x                  x
+uids                x         x         x          x
+gids                x         x         x          x
+terminal            x         x         x          x
+io_counters         x         x
+nice                x         x
+num_fds             x         x
+num_ctx_switches    x         x
+num_threads         x         x         x          x
+cpu_times           x         x
+memory_info         x         x         x          x
+memory_info_ex      x         x
+memory_maps         x         x
+open_files          x         x
+send_signal         x         x         x          x
+suspend             x         x         x          x
+resume              x         x         x          x
+terminate           x         x         x          x
+kill                x         x         x          x
+username            x         x         x          x
+ionice
+rlimit
+num_handlres
+threads
+cpu_percent
+cpu_affinity
+memory_percent
+children
+connections
+is_running
+================ ========= ========= =========== ====== =======
 
-  - cpu_percent
-  - cpu_times_percent
-  - net_connections
-  - Process class
-
-    - username
-    - ionice
-    - rlimit
-    - num_handlers
-    - threads
-    - cpu_percent
-    - cpu_affinity
-    - memory_percent
-    - children
-    - connections
-    - is_running
-
+Original Metrics
+^^^^^^^^^^^^^^^^^^^
+================== ========= ========= =========== ====== =======
+item               Linux 686 Linux ARM FreeBSD 686 MacOSX Windows
+**HostInfo**
+  hostname            x         x         x
+  uptime              x         x         x
+  proces              x         x         x
+  os                  x         x         x          x       x
+  platform            x         x         x
+  platformfamiliy     x         x         x
+  virtualization      x         x
+**CPU**
+  VendorID            x         x
+  Family              x         x
+  Model               x         x
+  Stepping            x         x
+  PhysicalID          x         x
+  CoreID              x         x
+  Cores               x         x
+  ModelName           x         x
+**LoadAvg**
+  Load1               x         x         x
+  Load5               x         x         x
+  Load15              x         x         x
+**GetDockerID**
+  container id        x         x
+**CgroupsCPU**
+  user                x         x
+  system              x         x
+**CgroupsMem**
+  various             x         x
+================== ========= ========= =========== ====== =======
 
 - future work
 
