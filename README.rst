@@ -13,7 +13,7 @@ psutil functions on some architectures...
 
 .. highlights:: Package Structure Changed!
 
-   Package (a.k.a. directory) structure has been changed!! see `#24 <https://github.com/shirou/gopsutil/issues/24`_
+   Package (a.k.a. directory) structure has been changed!! see `issue 24 <https://github.com/shirou/gopsutil/issues/24>`_
 
 .. highlights:: golang 1.4 will become REQUIRED!
 
