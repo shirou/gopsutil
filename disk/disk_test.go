@@ -58,7 +58,7 @@ func TestDiskUsageStat_String(t *testing.T) {
 		InodesFree:        6000,
 		InodesUsedPercent: 49.1,
 	}
-	e := `{"path":"/","total":1000,"free":2000,"used":3000,"usedPercent":50.1,"inodesTotal":4000,"inodesUsed":5000,"inodesFree":6000,"inodesUsedPercent":49.1}`
+	e := `{"path":"/","total":1000,"free":2000,"used":3000,"used_percent":50.1,"inodes_total":4000,"inodes_used":5000,"inodes_free":6000,"inodes_used_percent":49.1}`
 	if e != fmt.Sprintf("%v", v) {
 		t.Errorf("DiskUsageStat string is invalid: %v", v)
 	}
@@ -86,7 +86,7 @@ func TestDiskIOCountersStat_String(t *testing.T) {
 		WriteBytes:   400,
 		SerialNumber: "SERIAL",
 	}
-	e := `{"readCount":100,"writeCount":200,"readBytes":300,"writeBytes":400,"readTime":0,"writeTime":0,"name":"sd01","ioTime":0,"serialNumber":"SERIAL"}`
+	e := `{"read_count":100,"write_count":200,"read_bytes":300,"write_bytes":400,"read_time":0,"write_time":0,"name":"sd01","io_time":0,"serial_number":"SERIAL"}`
 	if e != fmt.Sprintf("%v", v) {
 		t.Errorf("DiskUsageStat string is invalid: %v", v)
 	}
