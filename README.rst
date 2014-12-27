@@ -15,6 +15,10 @@ psutil functions on some architectures...
 
    Package (a.k.a. directory) structure has been changed!! see `#24 <https://github.com/shirou/gopsutil/issues/24`_
 
+.. highlights:: golang 1.4 will become REQUIRED!
+
+   Since syscall package becomes frozen, we should use golang/x/sys of golang 1.4 as soon as possible.
+
 
 Available Architectures
 ------------------------------------
