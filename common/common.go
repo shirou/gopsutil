@@ -52,6 +52,21 @@ func ReadLinesOffsetN(filename string, offset uint, n int) ([]string, error) {
 	return ret, nil
 }
 
+func IntToString(orig []int8) string {
+	ret := make([]byte, len(orig))
+	size := 0
+	for i, o := range orig {
+		if o == 0 {
+			size = i
+			break
+		}
+
+		ret[i] = byte(o)
+	}
+
+	return string(ret[0:size])
+}
+
 func ByteToString(orig []byte) string {
 	n := -1
 	l := -1
