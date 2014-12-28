@@ -3,40 +3,21 @@
 package gopsutil
 
 import (
+	"syscall"
+	"unsafe"
+
 	common "github.com/shirou/gopsutil/common"
-
-	"golang.org/x/sys/unix"
-)
-
-// sys/mount.h
-const (
-	MntReadOnly     = 0x00000001 /* read only filesystem */
-	MntSynchronous  = 0x00000002 /* filesystem written synchronously */
-	MntNoExec       = 0x00000004 /* can't exec from filesystem */
-	MntNoSuid       = 0x00000008 /* don't honor setuid bits on fs */
-	MntUnion        = 0x00000020 /* union with underlying filesystem */
-	MntAsync        = 0x00000040 /* filesystem written asynchronously */
-	MntSuidDir      = 0x00100000 /* special handling of SUID on dirs */
-	MntSoftDep      = 0x00200000 /* soft updates being done */
-	MntNoSymFollow  = 0x00400000 /* do not follow symlinks */
-	MntGEOMJournal  = 0x02000000 /* GEOM journal support enabled */
-	MntMultilabel   = 0x04000000 /* MAC support for individual objects */
-	MntACLs         = 0x08000000 /* ACL support enabled */
-	MntNoATime      = 0x10000000 /* disable update of file access time */
-	MntClusterRead  = 0x40000000 /* disable cluster read */
-	MntClusterWrite = 0x80000000 /* disable cluster write */
-	MntNFS4ACLs     = 0x00000010
 )
 
 func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 	var ret []DiskPartitionStat
 
-	count, err := unix.Getfsstat(nil, 1)
+	count, err := Getfsstat(nil, MntWait)
 	if err != nil {
 		return ret, err
 	}
-	fs := make([]unix.Statfs_t, count)
-	_, err = unix.Getfsstat(fs, 1)
+	fs := make([]Statfs_t, count)
+	_, err = Getfsstat(fs, MntWait)
 	for _, stat := range fs {
 		opts := "rw"
 		if stat.Flags&MntReadOnly != 0 {
@@ -101,4 +82,19 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 
 func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 	return nil, common.NotImplementedError
+}
+
+func Getfsstat(buf []Statfs_t, flags int) (n int, err error) {
+	var _p0 unsafe.Pointer
+	var bufsize uintptr
+	if len(buf) > 0 {
+		_p0 = unsafe.Pointer(&buf[0])
+		bufsize = unsafe.Sizeof(Statfs_t{}) * uintptr(len(buf))
+	}
+	r0, _, e1 := syscall.Syscall(SYS_GETFSSTAT64, uintptr(_p0), bufsize, uintptr(flags))
+	n = int(r0)
+	if e1 != 0 {
+		err = e1
+	}
+	return
 }
