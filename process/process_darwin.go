@@ -13,6 +13,16 @@ import (
 	net "github.com/shirou/gopsutil/net"
 )
 
+// copied from sys/sysctl.h
+const (
+	CTLKern          = 1  // "high kernel": proc, limits
+	KernProc         = 14 // struct: process entries
+	KernProcPID      = 1  // by process id
+	KernProcProc     = 8  // only return procs
+	KernProcAll      = 0  // everything
+	KernProcPathname = 12 // path to executable
+)
+
 // MemoryInfoExStat is different between OSes
 type MemoryInfoExStat struct {
 }
@@ -42,7 +52,7 @@ func (p *Process) Ppid() (int32, error) {
 		return 0, err
 	}
 
-	return k.KiPpid, nil
+	return k.Proc.P_pid, nil
 }
 func (p *Process) Name() (string, error) {
 	k, err := p.getKProc()
@@ -50,7 +60,7 @@ func (p *Process) Name() (string, error) {
 		return "", err
 	}
 
-	return string(k.KiComm[:]), nil
+	return common.IntToString(k.Proc.P_comm[:]), nil
 }
 func (p *Process) Exe() (string, error) {
 	return "", common.NotImplementedError
@@ -73,7 +83,7 @@ func (p *Process) Status() (string, error) {
 		return "", err
 	}
 
-	return string(k.KiStat[:]), nil
+	return string(k.Proc.P_stat), nil // TODO
 }
 func (p *Process) Uids() ([]int32, error) {
 	k, err := p.getKProc()
@@ -83,7 +93,7 @@ func (p *Process) Uids() ([]int32, error) {
 
 	uids := make([]int32, 0, 3)
 
-	uids = append(uids, int32(k.KiRuid), int32(k.KiUID), int32(k.KiSvuid))
+	uids = append(uids, int32(k.Eproc.Pcred.P_ruid), int32(k.Eproc.Ucred.Uid), int32(k.Eproc.Pcred.P_svuid))
 
 	return uids, nil
 }
@@ -94,7 +104,7 @@ func (p *Process) Gids() ([]int32, error) {
 	}
 
 	gids := make([]int32, 0, 3)
-	gids = append(gids, int32(k.KiRgid), int32(k.KiNgroups[0]), int32(k.KiSvuid))
+	gids = append(gids, int32(k.Eproc.Pcred.P_rgid), int32(k.Eproc.Ucred.Ngroups), int32(k.Eproc.Pcred.P_svgid))
 
 	return gids, nil
 }
@@ -104,7 +114,7 @@ func (p *Process) Terminal() (string, error) {
 		return "", err
 	}
 
-	ttyNr := uint64(k.KiTdev)
+	ttyNr := uint64(k.Eproc.Tdev)
 
 	termmap, err := getTerminalMap()
 	if err != nil {
@@ -133,12 +143,16 @@ func (p *Process) NumFDs() (int32, error) {
 	return 0, common.NotImplementedError
 }
 func (p *Process) NumThreads() (int32, error) {
-	k, err := p.getKProc()
-	if err != nil {
-		return 0, err
-	}
+	return 0, common.NotImplementedError
 
-	return k.KiNumthreads, nil
+	/*
+		k, err := p.getKProc()
+		if err != nil {
+			return 0, err
+		}
+
+			return k.KiNumthreads, nil
+	*/
 }
 func (p *Process) Threads() (map[string]string, error) {
 	ret := make(map[string]string, 0)
@@ -160,8 +174,8 @@ func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
 	}
 
 	ret := &MemoryInfoStat{
-		RSS: uint64(k.KiRssize),
-		VMS: uint64(k.KiSize),
+		RSS: uint64(k.Eproc.Xrssize),
+		VMS: uint64(k.Eproc.Xsize),
 	}
 
 	return ret, nil
@@ -220,7 +234,7 @@ func processes() ([]Process, error) {
 		if err != nil {
 			continue
 		}
-		p, err := NewProcess(int32(k.KiPid))
+		p, err := NewProcess(int32(k.Proc.P_pid))
 		if err != nil {
 			continue
 		}
@@ -235,6 +249,7 @@ func processes() ([]Process, error) {
 func parseKinfoProc(buf []byte) (KinfoProc, error) {
 	var k KinfoProc
 	br := bytes.NewReader(buf)
+
 	err := binary.Read(br, binary.LittleEndian, &k)
 	if err != nil {
 		return k, err
