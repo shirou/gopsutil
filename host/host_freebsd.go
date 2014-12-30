@@ -16,6 +16,12 @@ import (
 	common "github.com/shirou/gopsutil/common"
 )
 
+const (
+	UTNameSize = 16 /* see MAXLOGNAME in <sys/param.h> */
+	UTLineSize = 8
+	UTHostSize = 16
+)
+
 func HostInfo() (*HostInfoStat, error) {
 	ret := &HostInfoStat{
 		OS:             runtime.GOOS,
@@ -84,25 +90,26 @@ func Users() ([]UserStat, error) {
 		return ret, err
 	}
 
-	u := utmp{}
+	u := Utmp{}
 	entrySize := int(unsafe.Sizeof(u))
 	count := len(buf) / entrySize
 
 	for i := 0; i < count; i++ {
 		b := buf[i*entrySize : i*entrySize+entrySize]
 
-		var u utmp
+		var u Utmp
 		br := bytes.NewReader(b)
 		err := binary.Read(br, binary.LittleEndian, &u)
-		if err != nil {
+		if err != nil || u.Time == 0 {
 			continue
 		}
 		user := UserStat{
-			User:     common.ByteToString(u.UtName[:]),
-			Terminal: common.ByteToString(u.UtLine[:]),
-			Host:     common.ByteToString(u.UtHost[:]),
-			Started:  int(u.UtTime),
+			User:     common.IntToString(u.Name[:]),
+			Terminal: common.IntToString(u.Line[:]),
+			Host:     common.IntToString(u.Host[:]),
+			Started:  int(u.Time),
 		}
+
 		ret = append(ret, user)
 	}
 
