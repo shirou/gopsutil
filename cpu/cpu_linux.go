@@ -1,6 +1,6 @@
 // +build linux
 
-package gopsutil
+package cpu
 
 import (
 	"errors"

@@ -1,7 +1,7 @@
 // +build freebsd
 // +build amd64
 
-package gopsutil
+package host
 
 const (
 	UTNameSize = 16 /* see MAXLOGNAME in <sys/param.h> */

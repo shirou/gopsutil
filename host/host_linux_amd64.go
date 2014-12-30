@@ -1,7 +1,7 @@
 // +build linux
 // +build amd64
 
-package gopsutil
+package host
 
 type exitStatus struct {
 	Etermination int16 // Process termination status.

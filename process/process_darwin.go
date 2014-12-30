@@ -1,6 +1,6 @@
 // +build darwin
 
-package gopsutil
+package process
 
 import (
 	"bytes"
@@ -201,7 +201,7 @@ func copyParams(k *KinfoProc, p *Process) error {
 func processes() ([]Process, error) {
 	results := make([]Process, 0, 50)
 
-	mib := []int32{CTLKern, KernProc, KernProcProc, 0}
+	mib := []int32{CTLKern, KernProc, KernProcAll}
 	buf, length, err := callSyscall(mib)
 	if err != nil {
 		return results, err
@@ -213,6 +213,7 @@ func processes() ([]Process, error) {
 	count := int(length / uint64(procinfoLen))
 
 	// parse buf to procs
+
 	for i := 0; i < count; i++ {
 		b := buf[i*procinfoLen : i*procinfoLen+procinfoLen]
 		k, err := parseKinfoProc(b)

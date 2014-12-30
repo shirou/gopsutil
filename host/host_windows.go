@@ -1,6 +1,6 @@
 // +build windows
 
-package gopsutil
+package host
 
 import (
 	"os"

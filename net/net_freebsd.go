@@ -1,6 +1,6 @@
 // +build freebsd
 
-package gopsutil
+package net
 
 import (
 	"os/exec"

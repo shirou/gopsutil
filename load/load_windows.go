@@ -1,6 +1,6 @@
 // +build windows
 
-package gopsutil
+package load
 
 import (
 	common "github.com/shirou/gopsutil/common"

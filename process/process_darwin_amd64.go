@@ -1,7 +1,7 @@
 // +build darwin
 // +build amd64
 
-package gopsutil
+package process
 
 // copied from sys/sysctl.h
 const (
@@ -9,6 +9,7 @@ const (
 	KernProc         = 14 // struct: process entries
 	KernProcPID      = 1  // by process id
 	KernProcProc     = 8  // only return procs
+	KernProcAll      = 0  // everything
 	KernProcPathname = 12 // path to executable
 )
 

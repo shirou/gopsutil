@@ -1,6 +1,6 @@
 // +build linux freebsd darwin
 
-package gopsutil
+package process
 
 import (
 	"os"

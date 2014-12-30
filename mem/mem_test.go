@@ -1,4 +1,4 @@
-package gopsutil
+package mem
 
 import (
 	"fmt"

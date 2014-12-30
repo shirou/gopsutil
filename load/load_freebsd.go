@@ -1,6 +1,6 @@
 // +build freebsd
 
-package gopsutil
+package load
 
 import (
 	"strconv"

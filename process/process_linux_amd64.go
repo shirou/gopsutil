@@ -1,7 +1,7 @@
 // +build linux
 // +build amd64
 
-package gopsutil
+package process
 
 const (
 	ClockTicks = 100  // C.sysconf(C._SC_CLK_TCK)

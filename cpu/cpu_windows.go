@@ -1,6 +1,6 @@
 // +build windows
 
-package gopsutil
+package cpu
 
 import (
 	"syscall"

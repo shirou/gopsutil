@@ -1,4 +1,4 @@
-package gopsutil
+package host
 
 import (
 	"encoding/json"

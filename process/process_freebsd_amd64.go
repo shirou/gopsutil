@@ -1,7 +1,7 @@
 // +build freebsd
 // +build amd64
 
-package gopsutil
+package process
 
 // copied from sys/sysctl.h
 const (

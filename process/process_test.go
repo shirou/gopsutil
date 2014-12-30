@@ -1,4 +1,4 @@
-package gopsutil
+package process
 
 import (
 	"os"
@@ -113,6 +113,16 @@ func Test_Process_NumCtx(t *testing.T) {
 	_, err := p.NumCtxSwitches()
 	if err != nil {
 		t.Errorf("geting numctx error %v", err)
+		return
+	}
+}
+
+func Test_Process_Nice(t *testing.T) {
+	p := testGetProcess()
+
+	_, err := p.Nice()
+	if err != nil {
+		t.Errorf("geting nice error %v", err)
 		return
 	}
 }

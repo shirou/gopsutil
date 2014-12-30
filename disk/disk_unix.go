@@ -1,6 +1,6 @@
 // +build freebsd linux darwin
 
-package gopsutil
+package disk
 
 import "syscall"
 

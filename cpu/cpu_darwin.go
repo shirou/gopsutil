@@ -1,6 +1,6 @@
 // +build darwin
 
-package gopsutil
+package cpu
 
 import (
 	"fmt"

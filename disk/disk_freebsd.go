@@ -1,6 +1,6 @@
 // +build freebsd
 
-package gopsutil
+package disk
 
 import (
 	"syscall"

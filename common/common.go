@@ -1,10 +1,10 @@
 //
-// gopsutil is a port of psutil(http://pythonhosted.org/psutil/).
+// common is a port of psutil(http://pythonhosted.org/psutil/).
 // This covers these architectures.
 //  - linux (amd64, arm)
 //  - freebsd (amd64)
 //  - windows (amd64)
-package gopsutil
+package common
 
 import (
 	"bufio"

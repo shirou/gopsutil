@@ -1,6 +1,6 @@
 // +build freebsd
 
-package gopsutil
+package process
 
 import (
 	"bytes"
