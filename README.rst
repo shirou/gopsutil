@@ -13,7 +13,11 @@ psutil functions on some architectures...
 
 .. highlights:: Package Structure Changed!
 
-   Package (a.k.a. directory) structure has been changed!! see `#24 <https://github.com/shirou/gopsutil/issues/24`_
+   Package (a.k.a. directory) structure has been changed!! see `issue 24 <https://github.com/shirou/gopsutil/issues/24>`_
+
+.. highlights:: golang 1.4 will become REQUIRED!
+
+   Since syscall package becomes frozen, we should use golang/x/sys of golang 1.4 as soon as possible.
 
 
 Available Architectures
@@ -23,9 +27,7 @@ Available Architectures
 - Linux/amd64
 - Linux/arm (raspberry pi)
 - Windows/amd64
-
-(I do not have a darwin machine)
-
+- Darwin/amd64
 
 All works are implemented without cgo by porting c struct to golang struct.
 
@@ -125,57 +127,57 @@ Current Status
 - x: work
 - b: almost work but something broken
 
-================= ========= ========= =========== ====== =======
-name              Linux 686 Linux ARM FreeBSD 686 MacOSX Windows
-cpu_times            x         x         x          x
-cpu_count            x         x         x          x       x
-cpu_percent          x         x         x          x       x
-cpu_times_percent    x         x         x          x       x
-virtual_memory       x         x         x          x       x
-swap_memory          x         x         x          x
-disk_partitions      x         x         x                  x
-disk_io_counters     x         x
-disk_usage           x         x         x                  x
-net_io_counters      x         x         x          x       x
-boot_time            x         x         x          x       b
-users                x         x         x          x       x
-pids                 x         x         x          x       x
-pid_exists           x         x         x          x       x
+================= =========== ========= ============= ====== =======
+name              Linux amd64 Linux ARM FreeBSD amd64 MacOSX Windows
+cpu_times            x           x         x            
+cpu_count            x           x         x            x       x
+cpu_percent          x           x         x                    x
+cpu_times_percent    x           x         x                    x
+virtual_memory       x           x         x            x       x
+swap_memory          x           x         x            x
+disk_partitions      x           x         x            x       x
+disk_io_counters     x           x
+disk_usage           x           x         x            x       x
+net_io_counters      x           x         x            x       x
+boot_time            x           x         x            x       b
+users                x           x         x            x       x
+pids                 x           x         x            x       x
+pid_exists           x           x         x            x       x
 net_connections
-================= ========= ========= =========== ====== =======
+================= =========== ========= ============= ====== =======
 
 Process class
 ^^^^^^^^^^^^^^^
 
-================ ========= ========= =========== ====== =======
-name             Linux 686 Linux ARM FreeBSD 686 MacOSX Windows
-pid                 x         x         x          x       x
-ppid                x         x         x          x       x
-name                x         x         x          x
-cmdline             x         x
-create_time         x         x
-status              x         x         x          x
-cwd                 x         x
-exe                 x         x         x                  x
-uids                x         x         x          x
-gids                x         x         x          x
-terminal            x         x         x          x
-io_counters         x         x
-nice                x         x
-num_fds             x         x
-num_ctx_switches    x         x
-num_threads         x         x         x          x
-cpu_times           x         x
-memory_info         x         x         x          x
-memory_info_ex      x         x
-memory_maps         x         x
-open_files          x         x
-send_signal         x         x         x          x
-suspend             x         x         x          x
-resume              x         x         x          x
-terminate           x         x         x          x
-kill                x         x         x          x
-username            x         x         x          x
+================ =========== ========= ============= ====== =======
+name             Linux amd64 Linux ARM FreeBSD amd64 MacOSX Windows
+pid                 x           x         x            x       x
+ppid                x           x         x            x       x
+name                x           x         x            x
+cmdline             x           x
+create_time         x           x
+status              x           x         x            x
+cwd                 x           x
+exe                 x           x         x                    x
+uids                x           x         x            x
+gids                x           x         x            x
+terminal            x           x         x            x
+io_counters         x           x
+nice                x           x
+num_fds             x           x
+num_ctx_switches    x           x
+num_threads         x           x         x            x
+cpu_times           x           x
+memory_info         x           x         x            x
+memory_info_ex      x           x
+memory_maps         x           x
+open_files          x           x
+send_signal         x           x         x            x
+suspend             x           x         x            x
+resume              x           x         x            x
+terminate           x           x         x            x
+kill                x           x         x            x
+username            x           x         x            x
 ionice
 rlimit
 num_handlres
@@ -186,41 +188,41 @@ memory_percent
 children
 connections
 is_running
-================ ========= ========= =========== ====== =======
+================ =========== ========= ============= ====== =======
 
 Original Metrics
 ^^^^^^^^^^^^^^^^^^^
-================== ========= ========= =========== ====== =======
-item               Linux 686 Linux ARM FreeBSD 686 MacOSX Windows
+================== =========== ========= ============= ====== =======
+item               Linux amd64 Linux ARM FreeBSD amd64 MacOSX Windows
 **HostInfo**
-  hostname            x         x         x
-  uptime              x         x         x
-  proces              x         x         x
-  os                  x         x         x          x       x
-  platform            x         x         x
-  platformfamiliy     x         x         x
-  virtualization      x         x
+  hostname            x           x         x            x       x
+  uptime              x           x         x            x
+  proces              x           x         x
+  os                  x           x         x            x       x
+  platform            x           x         x            x
+  platformfamiliy     x           x         x            x
+  virtualization      x           x
 **CPU**
-  VendorID            x         x
-  Family              x         x
-  Model               x         x
-  Stepping            x         x
-  PhysicalID          x         x
-  CoreID              x         x
-  Cores               x         x
-  ModelName           x         x
+  VendorID            x           x         x            x
+  Family              x           x         x            x
+  Model               x           x         x            x
+  Stepping            x           x         x            x
+  PhysicalID          x           x
+  CoreID              x           x
+  Cores               x           x
+  ModelName           x           x         x            x
 **LoadAvg**
-  Load1               x         x         x
-  Load5               x         x         x
-  Load15              x         x         x
+  Load1               x           x         x            x
+  Load5               x           x         x            x
+  Load15              x           x         x            x
 **GetDockerID**
-  container id        x         x
+  container id        x           x         no          no      no
 **CgroupsCPU**
-  user                x         x
-  system              x         x
+  user                x           x         no          no      no
+  system              x           x         no          no      no
 **CgroupsMem**
-  various             x         x
-================== ========= ========= =========== ====== =======
+  various             x           x         no          no      no
+================== =========== ========= ============= ====== =======
 
 - future work
 
