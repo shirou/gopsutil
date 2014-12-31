@@ -40,11 +40,11 @@ Usage
    import (
    	"fmt"
 
-   	"github.com/shirou/gopsutil"
+   	"github.com/shirou/gopsutil/mem"
    )
 
    func main() {
-   	v, _ := gopsutil.VirtualMemory()
+   	v, _ := mem.VirtualMemory()
 
    	// almost every return value is a struct
    	fmt.Printf("Total: %v, Free:%v, UsedPercent:%f%%\n", v.Total, v.Free, v.UsedPercent)
@@ -70,9 +70,9 @@ see http://godoc.org/github.com/shirou/gopsutil
 More Info
 --------------------
 
-Several methods have been added which are not present in psutil, but which provide useful information.
+Several methods have been added which are not present in psutil, but will provide useful information.
 
-- HostInfo()  (linux)
+- host/HostInfo()  (linux)
 
   - Hostname
   - Uptime
@@ -84,7 +84,7 @@ Several methods have been added which are not present in psutil, but which provi
   - VirtualizationSystem  (ex: "LXC")
   - VirtualizationRole    (ex: "guest"/"host")
 
-- CPUInfo()  (linux, freebsd)
+- cpu/CPUInfo()  (linux, freebsd)
 
   - CPU          (ex: 0, 1, ...)
   - VendorID     (ex: "GenuineIntel")
@@ -99,22 +99,22 @@ Several methods have been added which are not present in psutil, but which provi
   - CacheSize
   - Flags        (ex: "fpu vme de pse tsc msr pae mce cx8 ...")
 
-- LoadAvg()  (linux, freebsd)
+- load/LoadAvg()  (linux, freebsd)
 
   - Load1
   - Load5
   - Load15
 
-- GetDockerIDList() (linux)
+- docker/GetDockerIDList() (linux only)
 
   - container id list ([]string)
 
-- CgroupCPU() (linux)
+- docker/CgroupCPU() (linux only)
 
   - user
   - system
 
-- CgroupMem() (linux)
+- docker/CgroupMem() (linux only)
 
   - various status
 
