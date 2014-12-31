@@ -33,7 +33,6 @@ func TestUsers(t *testing.T) {
 	}
 	empty := UserStat{}
 	for _, u := range v {
-		fmt.Println(u)
 		if u == empty {
 			t.Errorf("Could not Users %v", v)
 		}
