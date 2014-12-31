@@ -13,15 +13,15 @@ type timeval struct {
 }
 
 type utmp struct {
-	UtType    int16      // Type of login.
-	UtPid     int32      // Process ID of login process.
-	UtLine    [32]byte   // Devicename.
-	UtID      [4]byte    // Inittab ID.
-	UtUser    [32]byte   // Username.
-	UtHost    [256]byte  // Hostname for remote login.
-	UtExit    exitStatus // Exit status of a process marked
-	UtSession int32      // Session ID, used for windowing.
-	UtTv      timeval    // Time entry was made.
-	UtAddrV6  [16]byte   // Internet address of remote host.
-	Unused    [20]byte   // Reserved for future use. // original is 20
+	Type    int16      // Type of login.
+	Pid     int32      // Process ID of login process.
+	Line    [32]byte   // Devicename.
+	ID      [4]byte    // Inittab ID.
+	User    [32]byte   // Username.
+	Host    [256]byte  // Hostname for remote login.
+	Exit    exitStatus // Exit status of a process marked
+	Session int32      // Session ID, used for windowing.
+	Tv      timeval    // Time entry was made.
+	AddrV6  [16]byte   // Internet address of remote host.
+	Unused  [20]byte   // Reserved for future use. // original is 20
 }
