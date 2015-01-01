@@ -6,6 +6,8 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+
+	"github.com/shirou/gopsutil/common"
 )
 
 func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
@@ -16,12 +18,19 @@ func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 
 	lines := strings.Split(string(out), "\n")
 	ret := make([]NetIOCountersStat, 0, len(lines)-1)
+	exists := make([]string, 0, len(ret))
 
 	for _, line := range lines {
 		values := strings.Fields(line)
 		if len(values) < 1 || values[0] == "Name" {
 			continue
 		}
+		if common.StringContains(exists, values[0]) {
+			// skip if already get
+			continue
+		}
+		exists = append(exists, values[0])
+
 		base := 1
 		// sometimes Address is ommitted
 		if len(values) < 13 {
