@@ -138,7 +138,7 @@ swap_memory          x           x         x            x
 disk_partitions      x           x         x            x       x
 disk_io_counters     x           x
 disk_usage           x           x         x            x       x
-net_io_counters      x           x         x            x       x
+net_io_counters      x           x         x            b       x
 boot_time            x           x         x            x       b
 users                x           x         x            x       x
 pids                 x           x         x            x       x
@@ -252,7 +252,8 @@ I have been influenced by the following great works:
 - goprocinfo: https://github.com/c9s/goprocinfo
 - go-ps: https://github.com/mitchellh/go-ps
 - ohai: https://github.com/opscode/ohai/
-
+- bosun: https://github.com/bosun-monitor/bosun/tree/master/cmd/scollector/collectors
+- mackerel: https://github.com/mackerelio/mackerel-agent/tree/master/metrics
 
 How to Contribute
 ---------------------------

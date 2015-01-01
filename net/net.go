@@ -117,3 +117,21 @@ func NetInterfaces() ([]NetInterfaceStat, error) {
 
 	return ret, nil
 }
+
+func getNetIOCountersAll(n []NetIOCountersStat) ([]NetIOCountersStat, error) {
+	r := NetIOCountersStat{
+		Name: "all",
+	}
+	for _, nic := range n {
+		r.BytesRecv += nic.BytesRecv
+		r.PacketsRecv += nic.PacketsRecv
+		r.Errin += nic.Errin
+		r.Dropin += nic.Dropin
+		r.BytesSent += nic.BytesSent
+		r.PacketsSent += nic.PacketsSent
+		r.Errout += nic.Errout
+		r.Dropout += nic.Dropout
+	}
+
+	return []NetIOCountersStat{r}, nil
+}

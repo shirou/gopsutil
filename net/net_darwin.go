@@ -57,5 +57,9 @@ func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 		ret = append(ret, n)
 	}
 
+	if pernic == false {
+		return getNetIOCountersAll(ret)
+	}
+
 	return ret, nil
 }

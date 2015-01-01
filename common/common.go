@@ -1,5 +1,5 @@
 //
-// common is a port of psutil(http://pythonhosted.org/psutil/).
+// gopsutil is a port of psutil(http://pythonhosted.org/psutil/).
 // This covers these architectures.
 //  - linux (amd64, arm)
 //  - freebsd (amd64)

@@ -9,6 +9,11 @@ import (
 	common "github.com/shirou/gopsutil/common"
 )
 
+// NetIOCounters returnes network I/O statistics for every network
+// interface installed on the system.  If pernic argument is false,
+// return only sum of all information (which name is 'all'). If true,
+// every network interface installed on the system is returned
+// separately.
 func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 	filename := "/proc/net/dev"
 	lines, err := common.ReadLines(filename)
@@ -77,5 +82,10 @@ func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 		}
 		ret = append(ret, nic)
 	}
+
+	if pernic == false {
+		return getNetIOCountersAll(ret)
+	}
+
 	return ret, nil
 }
