@@ -35,7 +35,7 @@ All works are implemented without cgo by porting c struct to golang struct.
 Usage
 ---------
 
-::
+.. code:: go
 
    import (
    	"fmt"
