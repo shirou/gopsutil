@@ -12,10 +12,18 @@ import (
 
 func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 	filename := "/proc/stat"
-	var lines []string
+	var lines = []string{}
 	if percpu {
-		ncpu, _ := CPUCounts(true)
-		lines, _ = common.ReadLinesOffsetN(filename, 1, ncpu)
+		var startIdx uint = 1
+		for {
+			linen, _ := common.ReadLinesOffsetN(filename, startIdx, 1)
+			line := linen[0]
+			if !strings.HasPrefix(line, "cpu") {
+				break
+			}
+			lines = append(lines, line)
+			startIdx += 1
+		}
 	} else {
 		lines, _ = common.ReadLinesOffsetN(filename, 0, 1)
 	}
