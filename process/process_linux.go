@@ -132,7 +132,8 @@ func (p *Process) NumCtxSwitches() (*NumCtxSwitchesStat, error) {
 	return p.numCtxSwitches, nil
 }
 func (p *Process) NumFDs() (int32, error) {
-	return 0, common.NotImplementedError
+	numFds, _, err := p.fillFromfd()
+	return numFds, err
 }
 func (p *Process) NumThreads() (int32, error) {
 	return p.numThreads, nil
