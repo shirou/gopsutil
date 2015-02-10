@@ -44,3 +44,10 @@ func TestCgroupMem(t *testing.T) {
 		}
 	}
 }
+
+func TestCgroupMemInvalidId(t *testing.T) {
+	_, err := CgroupMemDocker("bad id")
+	if err == nil {
+		t.Error("Expected path does not exist error")
+	}
+}
