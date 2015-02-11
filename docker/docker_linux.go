@@ -71,7 +71,10 @@ func CgroupCPU(containerid string, base string) (*cpu.CPUTimesStat, error) {
 	}
 	path := path.Join(base, containerid, "cpuacct.stat")
 
-	lines, _ := common.ReadLines(path)
+	lines, err := common.ReadLines(path)
+	if err != nil {
+		return nil, err
+	}
 	// empty containerid means all cgroup
 	if len(containerid) == 0 {
 		containerid = "all"
@@ -109,7 +112,10 @@ func CgroupMem(containerid string, base string) (*CgroupMemStat, error) {
 	if len(containerid) == 0 {
 		containerid = "all"
 	}
-	lines, _ := common.ReadLines(path)
+	lines, err := common.ReadLines(path)
+	if err != nil {
+		return nil, err
+	}
 	ret := &CgroupMemStat{ContainerID: containerid}
 	for _, line := range lines {
 		fields := strings.Split(line, " ")

@@ -31,6 +31,13 @@ func TestCgroupCPU(t *testing.T) {
 	}
 }
 
+func TestCgroupCPUInvalidId(t *testing.T) {
+	_, err := CgroupCPUDocker("bad id")
+	if err == nil {
+		t.Error("Expected path does not exist error")
+	}
+}
+
 func TestCgroupMem(t *testing.T) {
 	v, _ := GetDockerIDList()
 	for _, id := range v {
@@ -42,5 +49,12 @@ func TestCgroupMem(t *testing.T) {
 		if v == empty {
 			t.Errorf("Could not CgroupMemStat %v", v)
 		}
+	}
+}
+
+func TestCgroupMemInvalidId(t *testing.T) {
+	_, err := CgroupMemDocker("bad id")
+	if err == nil {
+		t.Error("Expected path does not exist error")
 	}
 }
