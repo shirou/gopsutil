@@ -113,7 +113,7 @@ func mustParseFloat64(val string) float64 {
 // Check the target string slice containes src or not
 func StringContains(target []string, src string) bool {
 	for _, t := range target {
-		if t == src {
+		if strings.TrimSpace(t) == src {
 			return true
 		}
 	}

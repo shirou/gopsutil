@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -10,7 +11,7 @@ func TestReadlines(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if ret[0] != "package common" {
+	if !strings.Contains(ret[0], "package common") {
 		t.Error("could not read correctly")
 	}
 }
@@ -21,7 +22,7 @@ func TestReadLinesOffsetN(t *testing.T) {
 		t.Error(err)
 	}
 	fmt.Println(ret[0])
-	if ret[0] != `import (` {
+	if !strings.Contains(ret[0], `import (`) {
 		t.Error("could not read correctly")
 	}
 }
