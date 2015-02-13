@@ -154,16 +154,18 @@ func parseStatLine(line string) (*CPUTimesStat, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	cpu_tick := float32(100) // TODO: how to get _SC_CLK_TCK ?
 	ct := &CPUTimesStat{
 		CPU:     cpu,
-		User:    float32(user),
-		Nice:    float32(nice),
-		System:  float32(system),
-		Idle:    float32(idle),
-		Iowait:  float32(iowait),
-		Irq:     float32(irq),
-		Softirq: float32(softirq),
-		Stolen:  float32(stolen),
+		User:    float32(user) / cpu_tick,
+		Nice:    float32(nice) / cpu_tick,
+		System:  float32(system) / cpu_tick,
+		Idle:    float32(idle) / cpu_tick,
+		Iowait:  float32(iowait) / cpu_tick,
+		Irq:     float32(irq) / cpu_tick,
+		Softirq: float32(softirq) / cpu_tick,
+		Stolen:  float32(stolen) / cpu_tick,
 	}
 	if len(fields) > 9 { // Linux >= 2.6.11
 		steal, err := strconv.ParseFloat(fields[9], 32)
