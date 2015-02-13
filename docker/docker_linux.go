@@ -83,15 +83,15 @@ func CgroupCPU(containerid string, base string) (*cpu.CPUTimesStat, error) {
 	for _, line := range lines {
 		fields := strings.Split(line, " ")
 		if fields[0] == "user" {
-			user, err := strconv.ParseFloat(fields[1], 32)
+			user, err := strconv.ParseFloat(fields[1], 64)
 			if err == nil {
-				ret.User = float32(user)
+				ret.User = float64(user)
 			}
 		}
 		if fields[0] == "system" {
-			system, err := strconv.ParseFloat(fields[1], 32)
+			system, err := strconv.ParseFloat(fields[1], 64)
 			if err == nil {
-				ret.System = float32(system)
+				ret.System = float64(system)
 			}
 		}
 	}
