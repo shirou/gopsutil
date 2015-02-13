@@ -62,7 +62,7 @@ func CPUInfo() ([]CPUInfoStat, error) {
 		switch key {
 		case "processor":
 			c = CPUInfoStat{}
-			t, err := strconv.ParseInt(value, 10, 32)
+			t, err := strconv.ParseInt(value, 10, 64)
 			if err != nil {
 				return ret, err
 			}
@@ -76,7 +76,7 @@ func CPUInfo() ([]CPUInfoStat, error) {
 		case "model name":
 			c.ModelName = value
 		case "stepping":
-			t, err := strconv.ParseInt(value, 10, 32)
+			t, err := strconv.ParseInt(value, 10, 64)
 			if err != nil {
 				return ret, err
 			}
@@ -88,7 +88,7 @@ func CPUInfo() ([]CPUInfoStat, error) {
 			}
 			c.Mhz = t
 		case "cache size":
-			t, err := strconv.ParseInt(strings.Replace(value, " KB", "", 1), 10, 32)
+			t, err := strconv.ParseInt(strings.Replace(value, " KB", "", 1), 10, 64)
 			if err != nil {
 				return ret, err
 			}
@@ -98,7 +98,7 @@ func CPUInfo() ([]CPUInfoStat, error) {
 		case "core id":
 			c.CoreID = value
 		case "cpu cores":
-			t, err := strconv.ParseInt(value, 10, 32)
+			t, err := strconv.ParseInt(value, 10, 64)
 			if err != nil {
 				return ret, err
 			}
@@ -122,71 +122,71 @@ func parseStatLine(line string) (*CPUTimesStat, error) {
 	if cpu == "cpu" {
 		cpu = "cpu-total"
 	}
-	user, err := strconv.ParseFloat(fields[1], 32)
+	user, err := strconv.ParseFloat(fields[1], 64)
 	if err != nil {
 		return nil, err
 	}
-	nice, err := strconv.ParseFloat(fields[2], 32)
+	nice, err := strconv.ParseFloat(fields[2], 64)
 	if err != nil {
 		return nil, err
 	}
-	system, err := strconv.ParseFloat(fields[3], 32)
+	system, err := strconv.ParseFloat(fields[3], 64)
 	if err != nil {
 		return nil, err
 	}
-	idle, err := strconv.ParseFloat(fields[4], 32)
+	idle, err := strconv.ParseFloat(fields[4], 64)
 	if err != nil {
 		return nil, err
 	}
-	iowait, err := strconv.ParseFloat(fields[5], 32)
+	iowait, err := strconv.ParseFloat(fields[5], 64)
 	if err != nil {
 		return nil, err
 	}
-	irq, err := strconv.ParseFloat(fields[6], 32)
+	irq, err := strconv.ParseFloat(fields[6], 64)
 	if err != nil {
 		return nil, err
 	}
-	softirq, err := strconv.ParseFloat(fields[7], 32)
+	softirq, err := strconv.ParseFloat(fields[7], 64)
 	if err != nil {
 		return nil, err
 	}
-	stolen, err := strconv.ParseFloat(fields[8], 32)
+	stolen, err := strconv.ParseFloat(fields[8], 64)
 	if err != nil {
 		return nil, err
 	}
 
-	cpu_tick := float32(100) // TODO: how to get _SC_CLK_TCK ?
+	cpu_tick := float64(100) // TODO: how to get _SC_CLK_TCK ?
 	ct := &CPUTimesStat{
 		CPU:     cpu,
-		User:    float32(user) / cpu_tick,
-		Nice:    float32(nice) / cpu_tick,
-		System:  float32(system) / cpu_tick,
-		Idle:    float32(idle) / cpu_tick,
-		Iowait:  float32(iowait) / cpu_tick,
-		Irq:     float32(irq) / cpu_tick,
-		Softirq: float32(softirq) / cpu_tick,
-		Stolen:  float32(stolen) / cpu_tick,
+		User:    float64(user) / cpu_tick,
+		Nice:    float64(nice) / cpu_tick,
+		System:  float64(system) / cpu_tick,
+		Idle:    float64(idle) / cpu_tick,
+		Iowait:  float64(iowait) / cpu_tick,
+		Irq:     float64(irq) / cpu_tick,
+		Softirq: float64(softirq) / cpu_tick,
+		Stolen:  float64(stolen) / cpu_tick,
 	}
 	if len(fields) > 9 { // Linux >= 2.6.11
-		steal, err := strconv.ParseFloat(fields[9], 32)
+		steal, err := strconv.ParseFloat(fields[9], 64)
 		if err != nil {
 			return nil, err
 		}
-		ct.Steal = float32(steal)
+		ct.Steal = float64(steal)
 	}
 	if len(fields) > 10 { // Linux >= 2.6.24
-		guest, err := strconv.ParseFloat(fields[10], 32)
+		guest, err := strconv.ParseFloat(fields[10], 64)
 		if err != nil {
 			return nil, err
 		}
-		ct.Guest = float32(guest)
+		ct.Guest = float64(guest)
 	}
 	if len(fields) > 11 { // Linux >= 3.2.0
-		guestNice, err := strconv.ParseFloat(fields[11], 32)
+		guestNice, err := strconv.ParseFloat(fields[11], 64)
 		if err != nil {
 			return nil, err
 		}
-		ct.GuestNice = float32(guestNice)
+		ct.GuestNice = float64(guestNice)
 	}
 
 	return ct, nil

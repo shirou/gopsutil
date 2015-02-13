@@ -8,17 +8,17 @@ import (
 
 type CPUTimesStat struct {
 	CPU       string  `json:"cpu"`
-	User      float32 `json:"user"`
-	System    float32 `json:"system"`
-	Idle      float32 `json:"idle"`
-	Nice      float32 `json:"nice"`
-	Iowait    float32 `json:"iowait"`
-	Irq       float32 `json:"irq"`
-	Softirq   float32 `json:"softirq"`
-	Steal     float32 `json:"steal"`
-	Guest     float32 `json:"guest"`
-	GuestNice float32 `json:"guest_nice"`
-	Stolen    float32 `json:"stolen"`
+	User      float64 `json:"user"`
+	System    float64 `json:"system"`
+	Idle      float64 `json:"idle"`
+	Nice      float64 `json:"nice"`
+	Iowait    float64 `json:"iowait"`
+	Irq       float64 `json:"irq"`
+	Softirq   float64 `json:"softirq"`
+	Steal     float64 `json:"steal"`
+	Guest     float64 `json:"guest"`
+	GuestNice float64 `json:"guest_nice"`
+	Stolen    float64 `json:"stolen"`
 }
 
 type CPUInfoStat struct {
@@ -43,14 +43,14 @@ func CPUCounts(logical bool) (int, error) {
 var lastCPUTimes []CPUTimesStat
 var lastPerCPUTimes []CPUTimesStat
 
-func CPUPercent(interval time.Duration, percpu bool) ([]float32, error) {
-	getAllBusy := func(t CPUTimesStat) (float32, float32) {
+func CPUPercent(interval time.Duration, percpu bool) ([]float64, error) {
+	getAllBusy := func(t CPUTimesStat) (float64, float64) {
 		busy := t.User + t.System + t.Nice + t.Iowait + t.Irq +
 			t.Softirq + t.Steal + t.Guest + t.GuestNice + t.Stolen
 		return busy + t.Idle, busy
 	}
 
-	calculate := func(t1, t2 CPUTimesStat) float32 {
+	calculate := func(t1, t2 CPUTimesStat) float64 {
 		t1All, t1Busy := getAllBusy(t1)
 		t2All, t2Busy := getAllBusy(t2)
 
@@ -81,7 +81,7 @@ func CPUPercent(interval time.Duration, percpu bool) ([]float32, error) {
 		}
 	}
 
-	ret := make([]float32, len(cpuTimes))
+	ret := make([]float64, len(cpuTimes))
 	if !percpu {
 		ret[0] = calculate(lastCPUTimes[0], cpuTimes[0])
 		lastCPUTimes = cpuTimes

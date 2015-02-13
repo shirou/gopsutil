@@ -32,9 +32,9 @@ func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 	system := (kernel - idle)
 
 	ret = append(ret, CPUTimesStat{
-		Idle:   float32(idle),
-		User:   float32(user),
-		System: float32(system),
+		Idle:   float64(idle),
+		User:   float64(user),
+		System: float64(system),
 	})
 	return ret, nil
 }

@@ -74,7 +74,7 @@ func testCPUPercent(t *testing.T, percpu bool) {
 			t.Errorf("error %v", err)
 		}
 		for _, percent := range v {
-			if percent < 0.0 || percent > 100.0*float32(numcpu) {
+			if percent < 0.0 || percent > 100.0*float64(numcpu) {
 				t.Fatalf("CPUPercent value is invalid: %f", percent)
 			}
 		}
