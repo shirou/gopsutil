@@ -16,24 +16,6 @@ import (
 	common "github.com/shirou/gopsutil/common"
 )
 
-const (
-	UTXUserSize = 256 /* include/NetBSD/utmpx.h */
-	UTXIDSize   = 4
-	UTXLineSize = 32
-	UTXHostSize = 256
-)
-
-type utmpx32 struct {
-	UtUser [UTXUserSize]byte /* login name */
-	UtID   [UTXIDSize]byte   /* id */
-	UtLine [UTXLineSize]byte /* tty name */
-	//TODO	UtPid  pid_t              /* process id creating the entry */
-	UtType [4]byte /* type of this entry */
-	//TODO	UtTv   timeval32          /* time entry was created */
-	UtHost [UTXHostSize]byte /* host name */
-	UtPad  [16]byte          /* reserved for future use */
-}
-
 func HostInfo() (*HostInfoStat, error) {
 	ret := &HostInfoStat{
 		OS:             runtime.GOOS,
@@ -102,24 +84,27 @@ func Users() ([]UserStat, error) {
 		return ret, err
 	}
 
-	u := utmpx32{}
+	u := Utmpx{}
 	entrySize := int(unsafe.Sizeof(u))
 	count := len(buf) / entrySize
 
 	for i := 0; i < count; i++ {
 		b := buf[i*entrySize : i*entrySize+entrySize]
 
-		var u utmpx32
+		var u Utmpx
 		br := bytes.NewReader(b)
 		err := binary.Read(br, binary.LittleEndian, &u)
 		if err != nil {
 			continue
 		}
+		if u.Line[0] == 0 { // skip if terminal is empty
+			continue
+		}
 		user := UserStat{
-			User: common.ByteToString(u.UtUser[:]),
-			//			Terminal: ByteToString(u.UtLine[:]),
-			Host: common.ByteToString(u.UtHost[:]),
-			//			Started:  int(u.UtTime),
+			User:     common.IntToString(u.User[:]),
+			Terminal: common.IntToString(u.Line[:]),
+			Host:     common.IntToString(u.Host[:]),
+			Started:  int(u.Tv.Sec),
 		}
 		ret = append(ret, user)
 	}
