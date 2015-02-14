@@ -97,7 +97,7 @@ func Users() ([]UserStat, error) {
 		if err != nil {
 			continue
 		}
-		if u.Line[0] == 0 { // skip if terminal is empty
+		if u.Type != 7 { // skip if not USERPROCESS
 			continue
 		}
 		user := UserStat{
