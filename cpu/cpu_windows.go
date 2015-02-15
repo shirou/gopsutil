@@ -3,6 +3,8 @@
 package cpu
 
 import (
+	"strconv"
+	"strings"
 	"syscall"
 	"unsafe"
 
@@ -41,5 +43,39 @@ func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 
 func CPUInfo() ([]CPUInfoStat, error) {
 	var ret []CPUInfoStat
+	lines, err := common.GetWmic("cpu", "Family,L2CacheSize,Manufacturer,Name,NumberOfLogicalProcessors,ProcessorId,Stepping")
+	if err != nil {
+		return ret, err
+	}
+	for i, l := range lines {
+		t := strings.Split(l, ",")
+		if len(t) < 2 {
+			continue
+		}
+		cache, err := strconv.Atoi(t[2])
+		if err != nil {
+			cache = 0
+		}
+		cores, err := strconv.Atoi(t[5])
+		if err != nil {
+			cores = 0
+		}
+		stepping, err := strconv.Atoi(t[7])
+		if err != nil {
+			stepping = 0
+		}
+		cpu := CPUInfoStat{
+			CPU:        int32(i),
+			Family:     t[1],
+			CacheSize:  int32(cache),
+			VendorID:   t[3],
+			ModelName:  t[4],
+			Cores:      int32(cores),
+			PhysicalID: t[6],
+			Stepping:   int32(stepping),
+			Flags:      []string{},
+		}
+		ret = append(ret, cpu)
+	}
 	return ret, nil
 }

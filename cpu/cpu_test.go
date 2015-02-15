@@ -51,6 +51,9 @@ func TestCpuInfo(t *testing.T) {
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
+	if len(v) == 0 {
+		t.Errorf("could not get CPU Info")
+	}
 	for _, vv := range v {
 		if vv.ModelName == "" {
 			t.Errorf("could not get CPU Info: %v", vv)
