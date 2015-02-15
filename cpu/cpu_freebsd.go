@@ -68,11 +68,11 @@ func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 		}
 
 		c := CPUTimesStat{
-			User:   float32(user / ClocksPerSec),
-			Nice:   float32(nice / ClocksPerSec),
-			System: float32(sys / ClocksPerSec),
-			Idle:   float32(idle / ClocksPerSec),
-			Irq:    float32(intr / ClocksPerSec),
+			User:   float64(user / ClocksPerSec),
+			Nice:   float64(nice / ClocksPerSec),
+			System: float64(sys / ClocksPerSec),
+			Idle:   float64(idle / ClocksPerSec),
+			Irq:    float64(intr / ClocksPerSec),
 		}
 		if !percpu {
 			c.CPU = "cpu-total"
