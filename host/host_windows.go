@@ -3,9 +3,10 @@
 package host
 
 import (
+	"fmt"
 	"os"
-	"syscall"
-	"unsafe"
+	"strings"
+	"time"
 
 	common "github.com/shirou/gopsutil/common"
 	process "github.com/shirou/gopsutil/process"
@@ -13,7 +14,6 @@ import (
 
 var (
 	procGetSystemTimeAsFileTime = common.Modkernel32.NewProc("GetSystemTimeAsFileTime")
-	procGetTickCount            = common.Modkernel32.NewProc("GetTickCount")
 )
 
 func HostInfo() (*HostInfoStat, error) {
@@ -24,12 +24,10 @@ func HostInfo() (*HostInfoStat, error) {
 	}
 
 	ret.Hostname = hostname
-	uptimemsec, _, err := procGetTickCount.Call()
-	if uptimemsec == 0 {
-		return ret, syscall.GetLastError()
+	uptime, err := BootTime()
+	if err == nil {
+		ret.Uptime = uptime
 	}
-
-	ret.Uptime = uint64(uptimemsec) / 1000
 
 	procs, err := process.Pids()
 	if err != nil {
@@ -42,25 +40,26 @@ func HostInfo() (*HostInfoStat, error) {
 }
 
 func BootTime() (uint64, error) {
-	var lpSystemTimeAsFileTime common.FILETIME
-
-	r, _, _ := procGetSystemTimeAsFileTime.Call(uintptr(unsafe.Pointer(&lpSystemTimeAsFileTime)))
-	if r == 0 {
-		return 0, syscall.GetLastError()
+	lines, err := common.GetWmic("os", "LastBootUpTime")
+	if err != nil {
+		return 0, err
 	}
-
-	// TODO: This calc is wrong.
-	ll := (uint32(lpSystemTimeAsFileTime.DwHighDateTime))<<32 + lpSystemTimeAsFileTime.DwLowDateTime
-	pt := (uint64(ll) - 116444736000000000) / 10000000
-
-	u, _, _ := procGetTickCount.Call()
-	if u == 0 {
-		return 0, syscall.GetLastError()
+	if len(lines) == 0 || lines[0] == "" {
+		return 0, fmt.Errorf("could not get LastBootUpTime")
 	}
-	uptime := uint64(u) / 1000
-
-	return uint64(pt - uptime), nil
+	l := strings.Split(lines[0], ",")
+	if len(l) != 2 {
+		return 0, fmt.Errorf("could not parse LastBootUpTime")
+	}
+	format := "20060102150405"
+	t, err := time.Parse(format, strings.Split(l[1], ".")[0])
+	if err != nil {
+		return 0, err
+	}
+	now := time.Now()
+	return uint64(now.Sub(t).Seconds()), nil
 }
+
 func Users() ([]UserStat, error) {
 
 	var ret []UserStat

@@ -128,7 +128,7 @@ Current Status
 
 ================= ====== ======= ====== =======
 name              Linux  FreeBSD MacOSX Windows
-cpu_times            x      x
+cpu_times            x      x              x
 cpu_count            x      x      x       x
 cpu_percent          x      x              x
 cpu_times_percent    x      x              x
@@ -138,7 +138,7 @@ disk_partitions      x      x      x       x
 disk_io_counters     x
 disk_usage           x      x      x       x
 net_io_counters      x      x      b       x
-boot_time            x      x      x       b
+boot_time            x      x      x       x
 users                x      x      x       x
 pids                 x      x      x       x
 pid_exists           x      x      x       x
@@ -202,14 +202,14 @@ hostname              x     x      x       x
   platformfamiliy     x     x      x
   virtualization      x
 **CPU**       
-  VendorID            x     x      x
-  Family              x     x      x
-  Model               x     x      x
-  Stepping            x     x      x
+  VendorID            x     x      x       x
+  Family              x     x      x       x
+  Model               x     x      x       x
+  Stepping            x     x      x       x
   PhysicalID          x
   CoreID              x
-  Cores               x
-  ModelName           x     x      x
+  Cores               x                    x
+  ModelName           x     x      x       x
 **LoadAvg**              
   Load1               x     x      x
   Load5               x     x      x
