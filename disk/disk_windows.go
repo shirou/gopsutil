@@ -191,7 +191,6 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 		}
 		ret[drive] = stat
 	}
-	fmt.Println(ret)
 
 	return ret, nil
 }
