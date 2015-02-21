@@ -1,104 +1,111 @@
-// +build freebsd
-// +build amd64
+// Created by cgo -godefs - DO NOT EDIT
+// cgo -godefs types_freebsd.go
 
 package disk
 
 const (
-	MntWait    = 1
-	MfsNameLen = 16 /* length of type name including null */
-	MNameLen   = 88 /* size of on/from name bufs */
+	sizeofPtr        = 0x8
+	sizeofShort      = 0x2
+	sizeofInt        = 0x4
+	sizeofLong       = 0x8
+	sizeofLongLong   = 0x8
+	sizeofLongDouble = 0x8
+
+	DEVSTAT_NO_DATA = 0x00
+	DEVSTAT_READ    = 0x01
+	DEVSTAT_WRITE   = 0x02
+	DEVSTAT_FREE    = 0x03
+
+	MNT_RDONLY      = 0x00000001
+	MNT_SYNCHRONOUS = 0x00000002
+	MNT_NOEXEC      = 0x00000004
+	MNT_NOSUID      = 0x00000008
+	MNT_UNION       = 0x00000020
+	MNT_ASYNC       = 0x00000040
+	MNT_SUIDDIR     = 0x00100000
+	MNT_SOFTDEP     = 0x00200000
+	MNT_NOSYMFOLLOW = 0x00400000
+	MNT_GJOURNAL    = 0x02000000
+	MNT_MULTILABEL  = 0x04000000
+	MNT_ACLS        = 0x08000000
+	MNT_NOATIME     = 0x10000000
+	MNT_NOCLUSTERR  = 0x40000000
+	MNT_NOCLUSTERW  = 0x80000000
+	MNT_NFS4ACLS    = 0x00000010
+
+	MNT_WAIT    = 1
+	MNT_NOWAIT  = 2
+	MNT_LAZY    = 3
+	MNT_SUSPEND = 4
 )
 
-// sys/mount.h
-const (
-	MntReadOnly     = 0x00000001 /* read only filesystem */
-	MntSynchronous  = 0x00000002 /* filesystem written synchronously */
-	MntNoExec       = 0x00000004 /* can't exec from filesystem */
-	MntNoSuid       = 0x00000008 /* don't honor setuid bits on fs */
-	MntUnion        = 0x00000020 /* union with underlying filesystem */
-	MntAsync        = 0x00000040 /* filesystem written asynchronously */
-	MntSuidDir      = 0x00100000 /* special handling of SUID on dirs */
-	MntSoftDep      = 0x00200000 /* soft updates being done */
-	MntNoSymFollow  = 0x00400000 /* do not follow symlinks */
-	MntGEOMJournal  = 0x02000000 /* GEOM journal support enabled */
-	MntMultilabel   = 0x04000000 /* MAC support for individual objects */
-	MntACLs         = 0x08000000 /* ACL support enabled */
-	MntNoATime      = 0x10000000 /* disable update of file access time */
-	MntClusterRead  = 0x40000000 /* disable cluster read */
-	MntClusterWrite = 0x80000000 /* disable cluster write */
-	MntNFS4ACLs     = 0x00000010
+type (
+	_C_short       int16
+	_C_int         int32
+	_C_long        int64
+	_C_long_long   int64
+	_C_long_double int64
 )
 
 type Statfs struct {
-	FVersion     uint32           /* structure version number */
-	FType        uint32           /* type of filesystem */
-	FFlags       uint64           /* copy of mount exported flags */
-	FBsize       uint64           /* filesystem fragment size */
-	FIosize      uint64           /* optimal transfer block size */
-	FBlocks      uint64           /* total data blocks in filesystem */
-	FBfree       uint64           /* free blocks in filesystem */
-	FBavail      int64            /* free blocks avail to non-superuser */
-	FFiles       uint64           /* total file nodes in filesystem */
-	FFfree       int64            /* free nodes avail to non-superuser */
-	FSyncwrites  uint64           /* count of sync writes since mount */
-	FAsyncwrites uint64           /* count of async writes since mount */
-	FSyncreads   uint64           /* count of sync reads since mount */
-	FAsyncreads  uint64           /* count of async reads since mount */
-	FSpare       [10]uint64       /* unused spare */
-	FNamemax     uint32           /* maximum filename length */
-	FOwner       uint32           /* user that mounted the filesystem */
-	FFsid        int32            /* filesystem id */
-	FCharspare   [80]byte         /* spare string space */
-	FFstypename  [MfsNameLen]byte /* filesystem type name */
-	FMntfromname [MNameLen]byte   /* mounted filesystem */
-	FMntonname   [MNameLen]byte   /* directory on which mounted */
+	Version     uint32
+	Type        uint32
+	Flags       uint64
+	Bsize       uint64
+	Iosize      uint64
+	Blocks      uint64
+	Bfree       uint64
+	Bavail      int64
+	Files       uint64
+	Ffree       int64
+	Syncwrites  uint64
+	Asyncwrites uint64
+	Syncreads   uint64
+	Asyncreads  uint64
+	Spare       [10]uint64
+	Namemax     uint32
+	Owner       uint32
+	Fsid        Fsid
+	Charspare   [80]int8
+	Fstypename  [16]int8
+	Mntfromname [88]int8
+	Mntonname   [88]int8
+}
+type Fsid struct {
+	Val [2]int32
 }
 
-// /usr/include/devstat.h
-// devstat_getdevs()
-// kern.devstat.all -> devstats list struct
+type Devstat struct {
+	Sequence0     uint32
+	Allocated     int32
+	Start_count   uint32
+	End_count     uint32
+	Busy_from     Bintime
+	Dev_links     _Ctype_struct___0
+	Device_number uint32
+	Device_name   [16]int8
+	Unit_number   int32
+	Bytes         [4]uint64
+	Operations    [4]uint64
+	Duration      [4]Bintime
+	Busy_time     Bintime
+	Creation_time Bintime
+	Block_size    uint32
+	Pad_cgo_0     [4]byte
+	Tag_types     [3]uint64
+	Flags         uint32
+	Device_type   uint32
+	Priority      uint32
+	Pad_cgo_1     [4]byte
+	Id            *byte
+	Sequence1     uint32
+	Pad_cgo_2     [4]byte
+}
+type Bintime struct {
+	Sec  int64
+	Frac uint64
+}
 
-// struct devinfo {
-//         struct devstat  *devices;
-//         u_int8_t        *mem_ptr;
-//         long            generation;
-//         int             numdevs;
-// };
-//
-// struct statinfo {
-//         long            cp_time[CPUSTATES];
-//         long            tk_nin;
-//         long            tk_nout;
-//         struct devinfo  *dinfo;
-//         long double     snap_time;
-// };
-
-// /usr/include/devinfo.h
-
-//    struct devinfo_dev {
-//               devinfo_handle_t    dd_handle;      /* device handle */
-//               devinfo_handle_t    dd_parent;      /* parent handle */
-//               char                *dd_name;       /* name of device */
-//               char                *dd_desc;       /* device description */
-//               char                *dd_drivername; /* name of attached driver */
-//               char                *dd_pnpinfo;    /* pnp info from parent bus */
-//               char                *dd_location;   /* Where bus thinks dev at */
-//               uint32_t            dd_devflags;    /* API flags */
-//               uint16_t            dd_flags;       /* internal dev flags */
-//               device_state_t      dd_state;       /* attachment state of dev */
-//	};
-//
-//           struct devinfo_rman {
-//               devinfo_handle_t    dm_handle;      /* resource manager handle */
-//               u_long              dm_start;       /* resource start */
-//               u_long              dm_size;        /* resource size */
-//               char                *dm_desc;       /* resource description */
-//           };
-//
-//           struct devinfo_res {
-//               devinfo_handle_t    dr_handle;      /* resource handle */
-//               devinfo_handle_t    dr_rman;        /* resource manager handle */
-//               devinfo_handle_t    dr_device;      /* owning device */
-//               u_long              dr_start;       /* region start */
-//               u_long              dr_size;        /* region size */
-//           };
+type _Ctype_struct___0 struct {
+	Empty uint64
+}

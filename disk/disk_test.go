@@ -35,11 +35,15 @@ func TestDisk_partitions(t *testing.T) {
 
 func TestDisk_io_counters(t *testing.T) {
 	ret, err := DiskIOCounters()
-	if err != nil || len(ret) == 0 {
+	if err != nil {
 		t.Errorf("error %v", err)
+	}
+	if len(ret) == 0 {
+		t.Errorf("ret is empty", ret)
 	}
 	empty := DiskIOCountersStat{}
 	for part, io := range ret {
+		fmt.Println(io)
 		if io == empty {
 			t.Errorf("io_counter error %v, %v", part, io)
 		}
