@@ -4,8 +4,6 @@ package process
 
 import (
 	"bytes"
-	"encoding/binary"
-	"syscall"
 	"unsafe"
 
 	common "github.com/shirou/gopsutil/common"
@@ -216,7 +214,7 @@ func processes() ([]Process, error) {
 	results := make([]Process, 0, 50)
 
 	mib := []int32{CTLKern, KernProc, KernProcAll}
-	buf, length, err := callSyscall(mib)
+	buf, length, err := common.CallSyscall(mib)
 	if err != nil {
 		return results, err
 	}
@@ -250,7 +248,7 @@ func parseKinfoProc(buf []byte) (KinfoProc, error) {
 	var k KinfoProc
 	br := bytes.NewReader(buf)
 
-	err := binary.Read(br, binary.LittleEndian, &k)
+	err := Read(br, LittleEndian, &k)
 	if err != nil {
 		return k, err
 	}
@@ -258,48 +256,10 @@ func parseKinfoProc(buf []byte) (KinfoProc, error) {
 	return k, nil
 }
 
-func callSyscall(mib []int32) ([]byte, uint64, error) {
-	miblen := uint64(len(mib))
-
-	// get required buffer size
-	length := uint64(0)
-	_, _, err := syscall.Syscall6(
-		syscall.SYS___SYSCTL,
-		uintptr(unsafe.Pointer(&mib[0])),
-		uintptr(miblen),
-		0,
-		uintptr(unsafe.Pointer(&length)),
-		0,
-		0)
-	if err != 0 {
-		var b []byte
-		return b, length, err
-	}
-	if length == 0 {
-		var b []byte
-		return b, length, err
-	}
-	// get proc info itself
-	buf := make([]byte, length)
-	_, _, err = syscall.Syscall6(
-		syscall.SYS___SYSCTL,
-		uintptr(unsafe.Pointer(&mib[0])),
-		uintptr(miblen),
-		uintptr(unsafe.Pointer(&buf[0])),
-		uintptr(unsafe.Pointer(&length)),
-		0,
-		0)
-	if err != 0 {
-		return buf, length, err
-	}
-
-	return buf, length, nil
-}
-
 func (p *Process) getKProc() (*KinfoProc, error) {
 	mib := []int32{CTLKern, KernProc, KernProcPID, p.Pid}
 
-	buf, length, err := callSyscall(mib)
+	buf, length, err := common.CallSyscall(mib)
 	if err != nil {
 		return nil, err
 	}
