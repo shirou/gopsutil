@@ -2,6 +2,10 @@ package process
 
 import (
 	"encoding/json"
+	"runtime"
+	"time"
+
+	cpu "github.com/shirou/gopsutil/cpu"
 )
 
 type Process struct {
@@ -13,6 +17,9 @@ type Process struct {
 	gids           []int32
 	numThreads     int32
 	memInfo        *MemoryInfoStat
+
+	lastCPUTimes *cpu.CPUTimesStat
+	lastCPUTime  time.Time
 }
 
 type OpenFilesStat struct {
@@ -87,4 +94,49 @@ func PidExists(pid int32) (bool, error) {
 	}
 
 	return false, err
+}
+
+// If interval is 0, return difference from last call(non-blocking).
+// If interval > 0, wait interval sec and return diffrence between start and end.
+func (p *Process) CPUPercent(interval time.Duration) (float64, error) {
+	calculate := func(t1, t2 *cpu.CPUTimesStat, delta float64) float64 {
+		if delta == 0 {
+			return 0
+		}
+		numcpu := runtime.NumCPU()
+		delta_proc := (t2.User - t1.User) + (t2.System - t1.System)
+		overall_percent := ((delta_proc / delta) * 100) * float64(numcpu)
+		return overall_percent
+	}
+
+	cpuTimes, err := p.CPUTimes()
+	if err != nil {
+		return 0, err
+	}
+
+	if interval > 0 {
+		p.lastCPUTimes = cpuTimes
+		p.lastCPUTime = time.Now()
+		time.Sleep(interval)
+		cpuTimes, err = p.CPUTimes()
+		if err != nil {
+			return 0, err
+		}
+	} else {
+		if p.lastCPUTimes == nil {
+			// invoked first time
+			p.lastCPUTimes, err = p.CPUTimes()
+			if err != nil {
+				return 0, err
+			}
+			p.lastCPUTime = time.Now()
+			return 0, nil
+		}
+	}
+
+	delta := (time.Now().Sub(p.lastCPUTime).Seconds()) * 1000
+	ret := calculate(p.lastCPUTimes, cpuTimes, float64(delta))
+	p.lastCPUTimes = cpuTimes
+	p.lastCPUTime = time.Now()
+	return ret, nil
 }

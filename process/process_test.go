@@ -4,6 +4,7 @@ import (
 	"os"
 	"runtime"
 	"testing"
+	"time"
 )
 
 func testGetProcess() Process {
@@ -124,5 +125,40 @@ func Test_Process_Nice(t *testing.T) {
 	if err != nil {
 		t.Errorf("geting nice error %v", err)
 		return
+	}
+}
+
+func Test_Process_CpuPercent(t *testing.T) {
+	p := testGetProcess()
+	percent, err := p.CPUPercent(0)
+	if err != nil {
+		t.Errorf("error %v", err)
+	}
+	duration := time.Duration(1000) * time.Microsecond
+	time.Sleep(duration)
+	percent, err = p.CPUPercent(0)
+	if err != nil {
+		t.Errorf("error %v", err)
+	}
+
+	numcpu := runtime.NumCPU()
+	if percent < 0.0 || percent > 100.0*float64(numcpu) {
+		t.Fatalf("CPUPercent value is invalid: %f", percent)
+	}
+}
+
+func Test_Process_CpuPercentLoop(t *testing.T) {
+	p := testGetProcess()
+	numcpu := runtime.NumCPU()
+
+	for i := 0; i < 2; i++ {
+		duration := time.Duration(100) * time.Microsecond
+		percent, err := p.CPUPercent(duration)
+		if err != nil {
+			t.Errorf("error %v", err)
+		}
+		if percent < 0.0 || percent > 100.0*float64(numcpu) {
+			t.Fatalf("CPUPercent value is invalid: %f", percent)
+		}
 	}
 }

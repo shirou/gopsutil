@@ -148,9 +148,6 @@ func (p *Process) CPUTimes() (*cpu.CPUTimesStat, error) {
 	}
 	return cpuTimes, nil
 }
-func (p *Process) CPUPercent() (int32, error) {
-	return 0, common.NotImplementedError
-}
 func (p *Process) CPUAffinity() ([]int32, error) {
 	return nil, common.NotImplementedError
 }
@@ -545,6 +542,7 @@ func (p *Process) fillFromStat() (string, int32, *cpu.CPUTimesStat, int64, int32
 	if err != nil {
 		return "", 0, nil, 0, 0, err
 	}
+
 	stime, err := strconv.ParseFloat(fields[14], 64)
 	if err != nil {
 		return "", 0, nil, 0, 0, err
