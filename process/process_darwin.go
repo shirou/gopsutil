@@ -4,6 +4,7 @@ package process
 
 import (
 	"bytes"
+	"syscall"
 	"unsafe"
 
 	common "github.com/shirou/gopsutil/common"
@@ -20,6 +21,10 @@ const (
 	KernProcAll      = 0  // everything
 	KernProcPathname = 12 // path to executable
 )
+
+type _Ctype_struct___0 struct {
+	Pad uint64
+}
 
 // MemoryInfoExStat is different between OSes
 type MemoryInfoExStat struct {
@@ -43,8 +48,6 @@ func Pids() ([]int32, error) {
 }
 
 func (p *Process) Ppid() (int32, error) {
-	return 0, common.NotImplementedError
-
 	k, err := p.getKProc()
 	if err != nil {
 		return 0, err
@@ -64,7 +67,7 @@ func (p *Process) Exe() (string, error) {
 	return "", common.NotImplementedError
 }
 func (p *Process) Cmdline() (string, error) {
-	return "", common.NotImplementedError
+	return p.Name()
 }
 func (p *Process) CreateTime() (int64, error) {
 	return 0, common.NotImplementedError
@@ -122,7 +125,11 @@ func (p *Process) Terminal() (string, error) {
 	return termmap[ttyNr], nil
 }
 func (p *Process) Nice() (int32, error) {
-	return 0, common.NotImplementedError
+	k, err := p.getKProc()
+	if err != nil {
+		return 0, err
+	}
+	return int32(k.Proc.P_nice), nil
 }
 func (p *Process) IOnice() (int32, error) {
 	return 0, common.NotImplementedError
@@ -210,7 +217,7 @@ func copyParams(k *KinfoProc, p *Process) error {
 func processes() ([]Process, error) {
 	results := make([]Process, 0, 50)
 
-	mib := []int32{CTLKern, KernProc, KernProcAll}
+	mib := []int32{CTLKern, KernProc, KernProcAll, 0}
 	buf, length, err := common.CallSyscall(mib)
 	if err != nil {
 		return results, err
@@ -220,9 +227,15 @@ func processes() ([]Process, error) {
 	k := KinfoProc{}
 	procinfoLen := int(unsafe.Sizeof(k))
 	count := int(length / uint64(procinfoLen))
+	/*
+		fmt.Println(length, procinfoLen, count)
+		b := buf[0*procinfoLen : 0*procinfoLen+procinfoLen]
+		fmt.Println(b)
+		kk, err := parseKinfoProc(b)
+		fmt.Printf("%#v", kk)
+	*/
 
 	// parse buf to procs
-
 	for i := 0; i < count; i++ {
 		b := buf[i*procinfoLen : i*procinfoLen+procinfoLen]
 		k, err := parseKinfoProc(b)
@@ -255,16 +268,20 @@ func parseKinfoProc(buf []byte) (KinfoProc, error) {
 
 func (p *Process) getKProc() (*KinfoProc, error) {
 	mib := []int32{CTLKern, KernProc, KernProcPID, p.Pid}
-
-	buf, length, err := common.CallSyscall(mib)
-	if err != nil {
-		return nil, err
-	}
 	procK := KinfoProc{}
-	if length != uint64(unsafe.Sizeof(procK)) {
-		return nil, err
+	length := uint64(unsafe.Sizeof(procK))
+	buf := make([]byte, length)
+	_, _, syserr := syscall.Syscall6(
+		syscall.SYS___SYSCTL,
+		uintptr(unsafe.Pointer(&mib[0])),
+		uintptr(len(mib)),
+		uintptr(unsafe.Pointer(&buf[0])),
+		uintptr(unsafe.Pointer(&length)),
+		0,
+		0)
+	if syserr != 0 {
+		return nil, syserr
 	}
-
 	k, err := parseKinfoProc(buf)
 	if err != nil {
 		return nil, err

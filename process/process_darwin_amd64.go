@@ -1,7 +1,5 @@
-// +build darwin
-// +build amd64
 // Created by cgo -godefs - DO NOT EDIT
-// cgo -godefs process/types_darwin.go
+// cgo -godefs types_darwin.go
 
 package process
 
@@ -63,7 +61,7 @@ type KinfoProc struct {
 }
 
 type Eproc struct {
-	Paddr     *Proc
+	Paddr     *uint64
 	Sess      *Session
 	Pcred     Upcred
 	Ucred     Uucred
@@ -94,7 +92,7 @@ type Proc struct{}
 type Session struct{}
 
 type ucred struct {
-	Link  UcredQueue
+	Link  _Ctype_struct___0
 	Ref   uint64
 	Posix Posix_cred
 	Label *Label
@@ -133,25 +131,25 @@ type Sigacts struct{}
 
 type ExternProc struct {
 	P_un        [16]byte
-	P_vmspace   *Vmspace
-	P_sigacts   *Sigacts
+	P_vmspace   uint64
+	P_sigacts   uint64
+	Pad_cgo_0   [3]byte
 	P_flag      int32
 	P_stat      int8
-	Pad_cgo_0   [3]byte
 	P_pid       int32
 	P_oppid     int32
 	P_dupfd     int32
 	Pad_cgo_1   [4]byte
-	User_stack  *int8
-	Exit_thread *byte
+	User_stack  uint64
+	Exit_thread uint64
 	P_debugger  int32
 	Sigwait     int32
 	P_estcpu    uint32
 	P_cpticks   int32
 	P_pctcpu    uint32
 	Pad_cgo_2   [4]byte
-	P_wchan     *byte
-	P_wmesg     *int8
+	P_wchan     uint64
+	P_wmesg     uint64
 	P_swtime    uint32
 	P_slptime   uint32
 	P_realtimer Itimerval
@@ -161,10 +159,10 @@ type ExternProc struct {
 	P_iticks    uint64
 	P_traceflag int32
 	Pad_cgo_3   [4]byte
-	P_tracep    *Vnode
+	P_tracep    uint64
 	P_siglist   int32
 	Pad_cgo_4   [4]byte
-	P_textvp    *Vnode
+	P_textvp    uint64
 	P_holdcnt   int32
 	P_sigmask   uint32
 	P_sigignore uint32
@@ -174,12 +172,12 @@ type ExternProc struct {
 	P_nice      int8
 	P_comm      [17]int8
 	Pad_cgo_5   [4]byte
-	P_pgrp      *Pgrp
-	P_addr      *UserStruct
+	P_pgrp      uint64
+	P_addr      uint64
 	P_xstat     uint16
 	P_acflag    uint16
 	Pad_cgo_6   [4]byte
-	P_ru        *Rusage
+	P_ru        uint64
 }
 
 type Itimerval struct {
