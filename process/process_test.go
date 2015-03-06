@@ -129,10 +129,11 @@ func Test_Process_Status(t *testing.T) {
 func Test_Process_Terminal(t *testing.T) {
 	p := testGetProcess()
 
-	v, err := p.Terminal()
+	_, err := p.Terminal()
 	if err != nil {
 		t.Errorf("geting terminal error %v", err)
 	}
+
 	/*
 		if v == "" {
 			t.Errorf("could not get terminal %v", v)
