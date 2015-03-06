@@ -121,7 +121,7 @@ func Test_Process_Status(t *testing.T) {
 	if err != nil {
 		t.Errorf("geting ppid error %v", err)
 	}
-	if v != "S+" {
+	if !strings.HasPrefix(v, "S") && v != "running"{
 		t.Errorf("could not get state %v", v)
 	}
 }
@@ -133,8 +133,8 @@ func Test_Process_Terminal(t *testing.T) {
 	if err != nil {
 		t.Errorf("geting terminal error %v", err)
 	}
-	if v != "S+" {
-		t.Errorf("could not get state %v", v)
+	if v == "" {
+		t.Errorf("could not get terminal %v", v)
 	}
 }
 
@@ -169,7 +169,7 @@ func Test_Process_Nice(t *testing.T) {
 	if err != nil {
 		t.Errorf("geting nice error %v", err)
 	}
-	if n != 0 {
+	if n != 0 && n != 20{
 		t.Errorf("invalid nice: %d", n)
 	}
 }
