@@ -4,6 +4,9 @@ package process
 
 import (
 	"bytes"
+	"os/exec"
+	"strconv"
+	"strings"
 	"syscall"
 	"unsafe"
 
@@ -48,12 +51,13 @@ func Pids() ([]int32, error) {
 }
 
 func (p *Process) Ppid() (int32, error) {
-	k, err := p.getKProc()
+	r, err := callPs("ppid", p.Pid)
+	v, err := strconv.Atoi(r[0])
 	if err != nil {
 		return 0, err
 	}
 
-	return k.Proc.P_pid, nil
+	return int32(v), err
 }
 func (p *Process) Name() (string, error) {
 	k, err := p.getKProc()
@@ -67,7 +71,8 @@ func (p *Process) Exe() (string, error) {
 	return "", common.NotImplementedError
 }
 func (p *Process) Cmdline() (string, error) {
-	return p.Name()
+	r, err := callPs("command", p.Pid)
+	return r[0], err
 }
 func (p *Process) CreateTime() (int64, error) {
 	return 0, common.NotImplementedError
@@ -79,12 +84,8 @@ func (p *Process) Parent() (*Process, error) {
 	return p, common.NotImplementedError
 }
 func (p *Process) Status() (string, error) {
-	k, err := p.getKProc()
-	if err != nil {
-		return "", err
-	}
-
-	return string(k.Proc.P_stat), nil // TODO
+	r, err := callPs("state", p.Pid)
+	return r[0], err
 }
 func (p *Process) Uids() ([]int32, error) {
 	k, err := p.getKProc()
@@ -110,19 +111,21 @@ func (p *Process) Gids() ([]int32, error) {
 	return gids, nil
 }
 func (p *Process) Terminal() (string, error) {
-	k, err := p.getKProc()
-	if err != nil {
-		return "", err
-	}
+	return "", common.NotImplementedError
+	/*
+		k, err := p.getKProc()
+		if err != nil {
+			return "", err
+		}
 
-	ttyNr := uint64(k.Eproc.Tdev)
+		ttyNr := uint64(k.Eproc.Tdev)
+		termmap, err := getTerminalMap()
+		if err != nil {
+			return "", err
+		}
 
-	termmap, err := getTerminalMap()
-	if err != nil {
-		return "", err
-	}
-
-	return termmap[ttyNr], nil
+		return termmap[ttyNr], nil
+	*/
 }
 func (p *Process) Nice() (int32, error) {
 	k, err := p.getKProc()
@@ -170,14 +173,27 @@ func (p *Process) CPUAffinity() ([]int32, error) {
 	return nil, common.NotImplementedError
 }
 func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
-	k, err := p.getKProc()
+	r, err := callPs("rss,vsize,pagein", p.Pid)
+	if err != nil {
+		return nil, err
+	}
+	rss, err := strconv.Atoi(r[0])
+	if err != nil {
+		return nil, err
+	}
+	vms, err := strconv.Atoi(r[1])
+	if err != nil {
+		return nil, err
+	}
+	pagein, err := strconv.Atoi(r[2])
 	if err != nil {
 		return nil, err
 	}
 
 	ret := &MemoryInfoStat{
-		RSS: uint64(k.Eproc.Xrssize),
-		VMS: uint64(k.Eproc.Xsize),
+		RSS:  uint64(rss),
+		VMS:  uint64(vms),
+		Swap: uint64(pagein),
 	}
 
 	return ret, nil
@@ -294,4 +310,24 @@ func NewProcess(pid int32) (*Process, error) {
 	p := &Process{Pid: pid}
 
 	return p, nil
+}
+
+// call ps command.
+// Return value deletes Header line(you must not input wrong arg).
+// And splited by Space. Caller have responsibility to manage.
+func callPs(arg string, pid int32) ([]string, error) {
+	out, err := exec.Command("/bin/ps", "-o", arg, "-p", strconv.Itoa(int(pid))).Output()
+	if err != nil {
+		return []string{}, err
+	}
+	lines := strings.Split(string(out), "\n")
+
+	var ret []string
+	for _, r := range strings.Split(lines[1], " ") {
+		if r == "" {
+			continue
+		}
+		ret = append(ret, strings.TrimSpace(r))
+	}
+	return ret, nil
 }

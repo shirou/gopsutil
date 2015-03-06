@@ -150,24 +150,24 @@ Process class
 
 ================ ===== ======= ====== =======
 name             Linux FreeBSD MacOSX Windows
-pid                 x     x      b       x
-ppid                x     x      b       x
-name                x     x      b
-cmdline             x
+pid                 x     x      x       x
+ppid                x     x      x       x
+name                x     x      x
+cmdline             x            x
 create_time         x
-status              x     x      b
+status              x     x      x
 cwd                 x
 exe                 x     x              x
-uids                x     x      b
-gids                x     x      b
-terminal            x     x      b
+uids                x     x      x
+gids                x     x      x
+terminal            x     x      x
 io_counters         x
-nice                x
+nice                x            x
 num_fds             x
 num_ctx_switches    x
-num_threads         x     x      b
+num_threads         x     x      x
 cpu_times           x
-memory_info         x     x      b
+memory_info         x     x      x
 memory_info_ex      x
 memory_maps         x
 open_files          x
@@ -176,7 +176,7 @@ suspend             x     x      x
 resume              x     x      x
 terminate           x     x      x
 kill                x     x      x
-username            x     x      b
+username            x           
 ionice
 rlimit
 num_handlres

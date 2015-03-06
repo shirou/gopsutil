@@ -3,6 +3,7 @@ package process
 import (
 	"os"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 )
@@ -74,7 +75,31 @@ func Test_Process_memory_maps(t *testing.T) {
 			t.Errorf("memory map get error %v", m)
 		}
 	}
+}
+func Test_Process_MemoryInfo(t *testing.T) {
+	p := testGetProcess()
 
+	v, err := p.MemoryInfo()
+	if err != nil {
+		t.Errorf("geting ppid error %v", err)
+	}
+	empty := MemoryInfoStat{}
+	if *v == empty {
+		t.Errorf("could not get memory info %v", v)
+	}
+}
+
+func Test_Process_CmdLine(t *testing.T) {
+	p := testGetProcess()
+
+	v, err := p.Cmdline()
+	if err != nil {
+		t.Errorf("geting ppid error %v", err)
+	}
+
+	if !strings.HasSuffix(v, "/_test/process.test") {
+		t.Errorf("invalid cmd line %v", v)
+	}
 }
 
 func Test_Process_Ppid(t *testing.T) {
@@ -89,12 +114,36 @@ func Test_Process_Ppid(t *testing.T) {
 	}
 }
 
+func Test_Process_Status(t *testing.T) {
+	p := testGetProcess()
+
+	v, err := p.Status()
+	if err != nil {
+		t.Errorf("geting ppid error %v", err)
+	}
+	if v != "S+" {
+		t.Errorf("could not get state %v", v)
+	}
+}
+
+func Test_Process_Terminal(t *testing.T) {
+	p := testGetProcess()
+
+	v, err := p.Terminal()
+	if err != nil {
+		t.Errorf("geting terminal error %v", err)
+	}
+	if v != "S+" {
+		t.Errorf("could not get state %v", v)
+	}
+}
+
 func Test_Process_IOCounters(t *testing.T) {
 	p := testGetProcess()
 
 	v, err := p.IOCounters()
 	if err != nil {
-		t.Errorf("geting ppid error %v", err)
+		t.Errorf("geting iocounter error %v", err)
 		return
 	}
 	empty := &IOCountersStat{}
