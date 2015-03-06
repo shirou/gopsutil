@@ -450,7 +450,7 @@ func (p *Process) fillFromStatus() error {
 		case "State":
 			// get between "(" and ")"
 			s := strings.Index(value, "(") + 1
-			e := strings.Index(value, "(") + 1
+			e := strings.Index(value, ")")
 			p.status = value[s:e]
 		case "Uid":
 			p.uids = make([]int32, 0, 4)
