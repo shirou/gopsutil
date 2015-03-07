@@ -62,13 +62,15 @@ func TestCpuInfo(t *testing.T) {
 }
 
 func testCPUPercent(t *testing.T, percpu bool) {
-	v, err := CPUPercent(time.Millisecond, percpu)
-	if err != nil {
-		t.Errorf("error %v", err)
-	}
 	numcpu := runtime.NumCPU()
-	if (percpu && len(v) != numcpu) || (!percpu && len(v) != 1) {
-		t.Fatalf("wrong number of entries from CPUPercent: %v", v)
+	if runtime.GOOS != "windows" {
+		v, err := CPUPercent(time.Millisecond, percpu)
+		if err != nil {
+			t.Errorf("error %v", err)
+		}
+		if (percpu && len(v) != numcpu) || (!percpu && len(v) != 1) {
+			t.Fatalf("wrong number of entries from CPUPercent: %v", v)
+		}
 	}
 	for i := 0; i < 100; i++ {
 		duration := time.Duration(10) * time.Microsecond
