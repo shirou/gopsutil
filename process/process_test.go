@@ -10,9 +10,6 @@ import (
 
 func testGetProcess() Process {
 	checkPid := os.Getpid() // process.test
-	if runtime.GOOS == "windows" {
-		checkPid = 7960
-	}
 	ret, _ := NewProcess(int32(checkPid))
 	return *ret
 }
@@ -42,9 +39,7 @@ func Test_Pid_exists(t *testing.T) {
 
 func Test_NewProcess(t *testing.T) {
 	checkPid := os.Getpid()
-	if runtime.GOOS == "windows" {
-		checkPid = 0
-	}
+
 	ret, err := NewProcess(int32(checkPid))
 	if err != nil {
 		t.Errorf("error %v", err)
@@ -60,9 +55,7 @@ func Test_NewProcess(t *testing.T) {
 
 func Test_Process_memory_maps(t *testing.T) {
 	checkPid := os.Getpid()
-	if runtime.GOOS == "windows" {
-		checkPid = 0
-	}
+
 	ret, err := NewProcess(int32(checkPid))
 
 	mmaps, err := ret.MemoryMaps(false)
@@ -84,7 +77,7 @@ func Test_Process_MemoryInfo(t *testing.T) {
 		t.Errorf("geting ppid error %v", err)
 	}
 	empty := MemoryInfoStat{}
-	if *v == empty {
+	if v == nil || *v == empty {
 		t.Errorf("could not get memory info %v", v)
 	}
 }
