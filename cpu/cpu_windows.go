@@ -98,6 +98,7 @@ func CPUPercent(interval time.Duration, percpu bool) ([]float64, error) {
 		if err != nil {
 			p = 0
 		}
+		// but windows can only get one percent.
 		ret = append(ret, float64(p)/100.0)
 	}
 	return ret, nil
