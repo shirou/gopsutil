@@ -44,7 +44,9 @@ func Pids() ([]int32, error) {
 	}
 
 	for _, p := range procs {
-		ret = append(ret, p.Pid)
+		if p.Pid > 0 {
+			ret = append(ret, p.Pid)
+		}
 	}
 
 	return ret, nil
@@ -72,7 +74,10 @@ func (p *Process) Exe() (string, error) {
 }
 func (p *Process) Cmdline() (string, error) {
 	r, err := callPs("command", p.Pid)
-	return r[0], err
+	if err != nil {
+		return "", err
+	}
+	return strings.Join(r, " "), err
 }
 func (p *Process) CreateTime() (int64, error) {
 	return 0, common.NotImplementedError
