@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 	"unsafe"
 
 	common "github.com/shirou/gopsutil/common"
@@ -76,6 +77,28 @@ func CPUInfo() ([]CPUInfoStat, error) {
 			Flags:      []string{},
 		}
 		ret = append(ret, cpu)
+	}
+	return ret, nil
+}
+
+func CPUPercent(interval time.Duration, percpu bool) ([]float64, error) {
+	ret := []float64{}
+
+	lines, err := common.GetWmic("cpu", "loadpercentage")
+	if err != nil {
+		return ret, err
+	}
+	for _, l := range lines {
+		t := strings.Split(l, ",")
+
+		if len(t) < 2 {
+			continue
+		}
+		p, err := strconv.Atoi(t[1])
+		if err != nil {
+			p = 0
+		}
+		ret = append(ret, float64(p)/100.0)
 	}
 	return ret, nil
 }
