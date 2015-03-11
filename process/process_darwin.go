@@ -38,15 +38,18 @@ type MemoryMapsStat struct {
 
 func Pids() ([]int32, error) {
 	var ret []int32
-	procs, err := processes()
+
+	pids, err := callPs("pid", 0)
 	if err != nil {
-		return ret, nil
+		return ret, err
 	}
 
-	for _, p := range procs {
-		if p.Pid > 0 {
-			ret = append(ret, p.Pid)
+	for _, pid := range pids {
+		v, err := strconv.Atoi(pid[0])
+		if err != nil {
+			return ret, err
 		}
+		ret = append(ret, int32(v))
 	}
 
 	return ret, nil
@@ -54,7 +57,7 @@ func Pids() ([]int32, error) {
 
 func (p *Process) Ppid() (int32, error) {
 	r, err := callPs("ppid", p.Pid)
-	v, err := strconv.Atoi(r[0])
+	v, err := strconv.Atoi(r[0][0])
 	if err != nil {
 		return 0, err
 	}
@@ -77,7 +80,7 @@ func (p *Process) Cmdline() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return strings.Join(r, " "), err
+	return strings.Join(r[0], " "), err
 }
 func (p *Process) CreateTime() (int64, error) {
 	return 0, common.NotImplementedError
@@ -90,7 +93,11 @@ func (p *Process) Parent() (*Process, error) {
 }
 func (p *Process) Status() (string, error) {
 	r, err := callPs("state", p.Pid)
-	return r[0], err
+	if err != nil {
+		return "", err
+	}
+
+	return r[0][0], err
 }
 func (p *Process) Uids() ([]int32, error) {
 	k, err := p.getKProc()
@@ -182,15 +189,15 @@ func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
 	if err != nil {
 		return nil, err
 	}
-	rss, err := strconv.Atoi(r[0])
+	rss, err := strconv.Atoi(r[0][0])
 	if err != nil {
 		return nil, err
 	}
-	vms, err := strconv.Atoi(r[1])
+	vms, err := strconv.Atoi(r[0][1])
 	if err != nil {
 		return nil, err
 	}
-	pagein, err := strconv.Atoi(r[2])
+	pagein, err := strconv.Atoi(r[0][2])
 	if err != nil {
 		return nil, err
 	}
@@ -320,19 +327,33 @@ func NewProcess(pid int32) (*Process, error) {
 // call ps command.
 // Return value deletes Header line(you must not input wrong arg).
 // And splited by Space. Caller have responsibility to manage.
-func callPs(arg string, pid int32) ([]string, error) {
-	out, err := exec.Command("/bin/ps", "-o", arg, "-p", strconv.Itoa(int(pid))).Output()
+// If passed arg pid is 0, get information from all process.
+func callPs(arg string, pid int32) ([][]string, error) {
+	var cmd []string
+	if pid == 0 { // will get from all processes.
+		cmd = []string{"-x", "-o", arg}
+	} else {
+		cmd = []string{"-x", "-o", arg, "-p", strconv.Itoa(int(pid))}
+	}
+	out, err := exec.Command("/bin/ps", cmd...).Output()
 	if err != nil {
-		return []string{}, err
+		return [][]string{}, err
 	}
 	lines := strings.Split(string(out), "\n")
 
-	var ret []string
-	for _, r := range strings.Split(lines[1], " ") {
-		if r == "" {
-			continue
+	var ret [][]string
+	for _, l := range lines[1:] {
+		var lr []string
+		for _, r := range strings.Split(l, " ") {
+			if r == "" {
+				continue
+			}
+			lr = append(lr, strings.TrimSpace(r))
 		}
-		ret = append(ret, strings.TrimSpace(r))
+		if len(lr) != 0 {
+			ret = append(ret, lr)
+		}
 	}
+
 	return ret, nil
 }

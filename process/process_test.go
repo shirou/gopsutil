@@ -33,7 +33,7 @@ func Test_Pid_exists(t *testing.T) {
 	}
 
 	if ret == false {
-		t.Errorf("could not get process exists %v", ret)
+		t.Errorf("could not get process exists: %v", ret)
 	}
 }
 
