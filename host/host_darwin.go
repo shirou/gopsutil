@@ -67,7 +67,7 @@ func BootTime() (uint64, error) {
 		return 0, err
 	}
 
-	return boottime, nil
+	return uint64(boottime), nil
 }
 
 func Users() ([]UserStat, error) {
