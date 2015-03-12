@@ -54,7 +54,7 @@ func HostInfo() (*HostInfoStat, error) {
 	return ret, nil
 }
 
-func BootTime() (int64, error) {
+func BootTime() (uint64, error) {
 	values, err := common.DoSysctrl("kern.boottime")
 	if err != nil {
 		return 0, err
