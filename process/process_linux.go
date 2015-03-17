@@ -550,8 +550,8 @@ func (p *Process) fillFromStat() (string, int32, *cpu.CPUTimesStat, int64, int32
 
 	cpuTimes := &cpu.CPUTimesStat{
 		CPU:    "cpu",
-		User:   float64(utime * (1000 / ClockTicks)),
-		System: float64(stime * (1000 / ClockTicks)),
+		User:   float64(utime / ClockTicks),
+		System: float64(stime / ClockTicks),
 	}
 
 	bootTime, _ := host.BootTime()
