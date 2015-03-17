@@ -99,11 +99,11 @@ func PidExists(pid int32) (bool, error) {
 // If interval is 0, return difference from last call(non-blocking).
 // If interval > 0, wait interval sec and return diffrence between start and end.
 func (p *Process) CPUPercent(interval time.Duration) (float64, error) {
+	numcpu := runtime.NumCPU()
 	calculate := func(t1, t2 *cpu.CPUTimesStat, delta float64) float64 {
 		if delta == 0 {
 			return 0
 		}
-		numcpu := runtime.NumCPU()
 		delta_proc := (t2.User - t1.User) + (t2.System - t1.System)
 		overall_percent := ((delta_proc / delta) * 100) * float64(numcpu)
 		return overall_percent
@@ -134,7 +134,7 @@ func (p *Process) CPUPercent(interval time.Duration) (float64, error) {
 		}
 	}
 
-	delta := (time.Now().Sub(p.lastCPUTime).Seconds()) * 1000
+	delta := (time.Now().Sub(p.lastCPUTime).Seconds()) * float64(numcpu)
 	ret := calculate(p.lastCPUTimes, cpuTimes, float64(delta))
 	p.lastCPUTimes = cpuTimes
 	p.lastCPUTime = time.Now()
