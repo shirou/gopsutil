@@ -155,7 +155,7 @@ func parseStatLine(line string) (*CPUTimesStat, error) {
 		return nil, err
 	}
 
-	cpu_tick := float64(100) // TODO: how to get _SC_CLK_TCK ?
+	cpu_tick := float64(common.GetClockTicksPerSecond()) // TODO: how to get _SC_CLK_TCK ?
 	ct := &CPUTimesStat{
 		CPU:     cpu,
 		User:    float64(user) / cpu_tick,
