@@ -4,7 +4,6 @@ package cpu
 
 import (
 	"strconv"
-	"strings"
 	"syscall"
 	"time"
 	"unsafe"
@@ -44,15 +43,11 @@ func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 
 func CPUInfo() ([]CPUInfoStat, error) {
 	var ret []CPUInfoStat
-	lines, err := common.GetWmic("cpu", "Family,L2CacheSize,Manufacturer,Name,NumberOfLogicalProcessors,ProcessorId,Stepping")
+	lines, err := common.GetWmic("cpu", "get", "Family,L2CacheSize,Manufacturer,Name,NumberOfLogicalProcessors,ProcessorId,Stepping")
 	if err != nil {
 		return ret, err
 	}
-	for i, l := range lines {
-		t := strings.Split(l, ",")
-		if len(t) < 2 {
-			continue
-		}
+	for i, t := range lines {
 		cache, err := strconv.Atoi(t[2])
 		if err != nil {
 			cache = 0
@@ -61,9 +56,12 @@ func CPUInfo() ([]CPUInfoStat, error) {
 		if err != nil {
 			cores = 0
 		}
-		stepping, err := strconv.Atoi(t[7])
-		if err != nil {
-			stepping = 0
+		stepping := 0
+		if len(t) > 7 {
+			stepping, err = strconv.Atoi(t[6])
+			if err != nil {
+				stepping = 0
+			}
 		}
 		cpu := CPUInfoStat{
 			CPU:        int32(i),
@@ -84,17 +82,15 @@ func CPUInfo() ([]CPUInfoStat, error) {
 func CPUPercent(interval time.Duration, percpu bool) ([]float64, error) {
 	ret := []float64{}
 
-	lines, err := common.GetWmic("cpu", "loadpercentage")
+	lines, err := common.GetWmic("cpu", "get", "loadpercentage")
 	if err != nil {
 		return ret, err
 	}
 	for _, l := range lines {
-		t := strings.Split(l, ",")
-
-		if len(t) < 2 {
+		if len(l) < 2 {
 			continue
 		}
-		p, err := strconv.Atoi(t[1])
+		p, err := strconv.Atoi(l[1])
 		if err != nil {
 			p = 0
 		}

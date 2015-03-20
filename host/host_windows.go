@@ -40,19 +40,15 @@ func HostInfo() (*HostInfoStat, error) {
 }
 
 func BootTime() (uint64, error) {
-	lines, err := common.GetWmic("os", "LastBootUpTime")
+	lines, err := common.GetWmic("os", "get", "LastBootUpTime")
 	if err != nil {
 		return 0, err
 	}
-	if len(lines) == 0 || lines[0] == "" {
+	if len(lines) == 0 || len(lines[0]) != 2 {
 		return 0, fmt.Errorf("could not get LastBootUpTime")
 	}
-	l := strings.Split(lines[0], ",")
-	if len(l) != 2 {
-		return 0, fmt.Errorf("could not parse LastBootUpTime")
-	}
 	format := "20060102150405"
-	t, err := time.Parse(format, strings.Split(l[1], ".")[0])
+	t, err := time.Parse(format, strings.Split(lines[0][1], ".")[0])
 	if err != nil {
 		return 0, err
 	}
