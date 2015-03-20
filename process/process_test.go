@@ -89,8 +89,7 @@ func Test_Process_CmdLine(t *testing.T) {
 	if err != nil {
 		t.Errorf("geting ppid error %v", err)
 	}
-
-	if !strings.HasSuffix(v, "/_test/process.test") {
+	if !strings.Contains(v, "process.test") {
 		t.Errorf("invalid cmd line %v", v)
 	}
 }
@@ -165,8 +164,19 @@ func Test_Process_Nice(t *testing.T) {
 	if err != nil {
 		t.Errorf("geting nice error %v", err)
 	}
-	if n != 0 && n != 20 {
+	if n != 0 && n != 20 && n != 8 {
 		t.Errorf("invalid nice: %d", n)
+	}
+}
+func Test_Process_NumThread(t *testing.T) {
+	p := testGetProcess()
+
+	n, err := p.NumThreads()
+	if err != nil {
+		t.Errorf("geting NumThread error %v", err)
+	}
+	if n < 0 {
+		t.Errorf("invalid NumThread: %d", n)
 	}
 }
 
@@ -177,8 +187,19 @@ func Test_Process_Name(t *testing.T) {
 	if err != nil {
 		t.Errorf("geting name error %v", err)
 	}
-	if n != "process.test" {
-		t.Errorf("invalid name %s", n)
+	if !strings.Contains(n, "process.test") {
+		t.Errorf("invalid Exe %s", n)
+	}
+}
+func Test_Process_Exe(t *testing.T) {
+	p := testGetProcess()
+
+	n, err := p.Exe()
+	if err != nil {
+		t.Errorf("geting Exe error %v", err)
+	}
+	if !strings.Contains(n, "process.test") {
+		t.Errorf("invalid Exe %s", n)
 	}
 }
 

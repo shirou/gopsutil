@@ -152,8 +152,8 @@ Process class
 name             Linux FreeBSD MacOSX Windows
 pid                 x     x      x       x
 ppid                x     x      x       x
-name                x     x      x
-cmdline             x            x
+name                x     x      x       x
+cmdline             x            x       x
 create_time         x
 status              x     x      x
 cwd                 x
@@ -162,10 +162,10 @@ uids                x     x      x
 gids                x     x      x
 terminal            x     x      x
 io_counters         x
-nice                x            x
+nice                x            x       x
 num_fds             x
 num_ctx_switches    x
-num_threads         x     x      x
+num_threads         x     x      x       x
 cpu_times           x
 memory_info         x     x      x
 memory_info_ex      x

@@ -4,6 +4,8 @@ package process
 
 import (
 	"errors"
+	"fmt"
+	"strconv"
 	"syscall"
 	"unsafe"
 
@@ -42,13 +44,13 @@ type MemoryMapsStat struct {
 }
 
 func Pids() ([]int32, error) {
-
 	var ret []int32
 
 	procs, err := processes()
 	if err != nil {
 		return ret, nil
 	}
+
 	for _, proc := range procs {
 		ret = append(ret, proc.Pid)
 	}
@@ -64,18 +66,38 @@ func (p *Process) Ppid() (int32, error) {
 	return ret, nil
 }
 func (p *Process) Name() (string, error) {
-	name := ""
-	return name, common.NotImplementedError
-}
-func (p *Process) Exe() (string, error) {
-	_, _, ret, err := p.getFromSnapProcess(p.Pid)
+	query := fmt.Sprintf("ProcessId = %d", p.Pid)
+	lines, err := common.GetWmic("process", "where", query, "get", "Name")
 	if err != nil {
 		return "", err
 	}
-	return ret, nil
+	if len(lines) == 0 {
+		return "", fmt.Errorf("could not get Name")
+	}
+	return lines[0][1], nil
+}
+func (p *Process) Exe() (string, error) {
+	query := fmt.Sprintf("ProcessId = %d", p.Pid)
+	lines, err := common.GetWmic("process", "where", query, "get", "ExecutablePath")
+	if err != nil {
+		return "", err
+	}
+	if len(lines) == 0 {
+		return "", fmt.Errorf("could not get ExecutablePath")
+	}
+	return lines[0][1], nil
 }
 func (p *Process) Cmdline() (string, error) {
-	return "", common.NotImplementedError
+	query := fmt.Sprintf("ProcessId = %d", p.Pid)
+	lines, err := common.GetWmic("process", "where", query, "get", "CommandLine")
+	if err != nil {
+		return "", err
+	}
+	if len(lines) == 0 {
+		return "", fmt.Errorf("could not get command line")
+	}
+
+	return lines[0][1], nil
 }
 func (p *Process) Cwd() (string, error) {
 	return "", common.NotImplementedError
@@ -101,8 +123,23 @@ func (p *Process) Gids() ([]int32, error) {
 func (p *Process) Terminal() (string, error) {
 	return "", common.NotImplementedError
 }
+
+// Nice returnes priority in Windows
 func (p *Process) Nice() (int32, error) {
-	return 0, common.NotImplementedError
+	query := fmt.Sprintf("ProcessId = %d", p.Pid)
+	lines, err := common.GetWmic("process", "where", query, "get", "Priority")
+	if err != nil {
+		return 0, err
+	}
+	if len(lines) == 0 {
+		return 0, fmt.Errorf("could not get command line")
+	}
+	priority, err := strconv.Atoi(lines[0][1])
+	if err != nil {
+		return 0, err
+	}
+
+	return int32(priority), nil
 }
 func (p *Process) IOnice() (int32, error) {
 	return 0, common.NotImplementedError
@@ -122,11 +159,20 @@ func (p *Process) NumFDs() (int32, error) {
 	return 0, common.NotImplementedError
 }
 func (p *Process) NumThreads() (int32, error) {
-	_, ret, _, err := p.getFromSnapProcess(p.Pid)
+	query := fmt.Sprintf("ProcessId = %d", p.Pid)
+	lines, err := common.GetWmic("process", "where", query, "get", "ThreadCount")
 	if err != nil {
 		return 0, err
 	}
-	return ret, nil
+	if len(lines) == 0 {
+		return 0, fmt.Errorf("could not get command line")
+	}
+	count, err := strconv.Atoi(lines[0][1])
+	if err != nil {
+		return 0, err
+	}
+
+	return int32(count), nil
 }
 func (p *Process) Threads() (map[string]string, error) {
 	ret := make(map[string]string, 0)
@@ -220,21 +266,19 @@ func (p *Process) getFromSnapProcess(pid int32) (int32, int32, string, error) {
 
 // Get processes
 func processes() ([]*Process, error) {
-	ps := make([]uint32, 255)
-	var read uint32
-	if w32.EnumProcesses(ps, uint32(len(ps)), &read) == false {
-		return nil, syscall.GetLastError()
+	lines, err := common.GetWmic("process", "get", "processid")
+	if err != nil {
+		return nil, err
 	}
-
 	var results []*Process
-	dwardSize := uint32(4)
-	for _, pid := range ps[:read/dwardSize] {
-		if pid == 0 {
+	for _, l := range lines {
+		pid, err := strconv.Atoi(l[1])
+		if err != nil {
 			continue
 		}
 		p, err := NewProcess(int32(pid))
 		if err != nil {
-			break
+			continue
 		}
 		results = append(results, p)
 	}
