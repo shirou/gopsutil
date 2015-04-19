@@ -3,10 +3,10 @@
 package host
 
 import (
-	"fmt"
 	"os"
-	"strings"
 	"time"
+
+	"github.com/StackExchange/wmi"
 
 	common "github.com/shirou/gopsutil/common"
 	process "github.com/shirou/gopsutil/process"
@@ -15,6 +15,10 @@ import (
 var (
 	procGetSystemTimeAsFileTime = common.Modkernel32.NewProc("GetSystemTimeAsFileTime")
 )
+
+type Win32_OperatingSystem struct {
+	LastBootUpTime time.Time
+}
 
 func HostInfo() (*HostInfoStat, error) {
 	ret := &HostInfoStat{}
@@ -40,19 +44,15 @@ func HostInfo() (*HostInfoStat, error) {
 }
 
 func BootTime() (uint64, error) {
-	lines, err := common.GetWmic("os", "get", "LastBootUpTime")
-	if err != nil {
-		return 0, err
-	}
-	if len(lines) == 0 || len(lines[0]) != 2 {
-		return 0, fmt.Errorf("could not get LastBootUpTime")
-	}
-	format := "20060102150405"
-	t, err := time.Parse(format, strings.Split(lines[0][1], ".")[0])
-	if err != nil {
-		return 0, err
-	}
 	now := time.Now()
+
+	var dst []Win32_OperatingSystem
+	q := wmi.CreateQuery(&dst, "")
+	err := wmi.Query(q, &dst)
+	if err != nil {
+		return 0, err
+	}
+	t := dst[0].LastBootUpTime.Local()
 	return uint64(now.Sub(t).Seconds()), nil
 }
 

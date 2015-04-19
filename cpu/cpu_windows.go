@@ -3,13 +3,27 @@
 package cpu
 
 import (
-	"strconv"
+	"fmt"
 	"syscall"
 	"time"
 	"unsafe"
 
+	"github.com/StackExchange/wmi"
+
 	common "github.com/shirou/gopsutil/common"
 )
+
+type Win32_Processor struct {
+	LoadPercentage            uint16
+	L2CacheSize               uint32
+	Family                    uint16
+	Manufacturer              string
+	Name                      string
+	NumberOfLogicalProcessors uint32
+	ProcessorId               string
+	Stepping                  *string
+	MaxClockSpeed             uint32
+}
 
 // TODO: Get percpu
 func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
@@ -43,59 +57,41 @@ func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 
 func CPUInfo() ([]CPUInfoStat, error) {
 	var ret []CPUInfoStat
-	lines, err := common.GetWmic("cpu", "get", "Family,L2CacheSize,Manufacturer,Name,NumberOfLogicalProcessors,ProcessorId,Stepping")
+	var dst []Win32_Processor
+	q := wmi.CreateQuery(&dst, "")
+	err := wmi.Query(q, &dst)
 	if err != nil {
 		return ret, err
 	}
-	for i, t := range lines {
-		cache, err := strconv.Atoi(t[2])
-		if err != nil {
-			cache = 0
-		}
-		cores, err := strconv.Atoi(t[5])
-		if err != nil {
-			cores = 0
-		}
-		stepping := 0
-		if len(t) > 7 {
-			stepping, err = strconv.Atoi(t[6])
-			if err != nil {
-				stepping = 0
-			}
-		}
+	for i, l := range dst {
 		cpu := CPUInfoStat{
 			CPU:        int32(i),
-			Family:     t[1],
-			CacheSize:  int32(cache),
-			VendorID:   t[3],
-			ModelName:  t[4],
-			Cores:      int32(cores),
-			PhysicalID: t[6],
-			Stepping:   int32(stepping),
+			Family:     fmt.Sprintf("%d", l.Family),
+			CacheSize:  int32(l.L2CacheSize),
+			VendorID:   l.Manufacturer,
+			ModelName:  l.Name,
+			Cores:      int32(l.NumberOfLogicalProcessors),
+			PhysicalID: l.ProcessorId,
+			Mhz:        float64(l.MaxClockSpeed),
 			Flags:      []string{},
 		}
 		ret = append(ret, cpu)
 	}
+
 	return ret, nil
 }
 
 func CPUPercent(interval time.Duration, percpu bool) ([]float64, error) {
-	ret := []float64{}
-
-	lines, err := common.GetWmic("cpu", "get", "loadpercentage")
+	var ret []float64
+	var dst []Win32_Processor
+	q := wmi.CreateQuery(&dst, "")
+	err := wmi.Query(q, &dst)
 	if err != nil {
 		return ret, err
 	}
-	for _, l := range lines {
-		if len(l) < 2 {
-			continue
-		}
-		p, err := strconv.Atoi(l[1])
-		if err != nil {
-			p = 0
-		}
-		// but windows can only get one percent.
-		ret = append(ret, float64(p)/100.0)
+	for _, l := range dst {
+		// use range but windows can only get one percent.
+		ret = append(ret, float64(l.LoadPercentage)/100.0)
 	}
 	return ret, nil
 }

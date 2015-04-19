@@ -3,9 +3,6 @@
 package common
 
 import (
-	"fmt"
-	"os/exec"
-	"strings"
 	"syscall"
 	"unsafe"
 )
@@ -73,37 +70,6 @@ func BytePtrToString(p *uint8) string {
 		i++
 	}
 	return string(a[:i])
-}
-
-// exec wmic and return lines splited by newline
-func GetWmic(target string, query ...string) ([][]string, error) {
-	cmd := []string{target}
-	cmd = append(cmd, query...)
-	cmd = append(cmd, "/format:csv")
-	out, err := exec.Command("wmic", cmd...).Output()
-	if err != nil {
-		return [][]string{}, err
-	}
-	lines := strings.Split(string(out), "\r\r\n")
-	if len(lines) <= 2 {
-		return [][]string{}, fmt.Errorf("wmic result malformed: [%q]", lines)
-	}
-	var ret [][]string
-	for _, l := range lines[2:] { // skip first two lines
-		var lr []string
-		for _, r := range strings.Split(l, ",") {
-			if r == "" {
-				continue
-			}
-			lr = append(lr, strings.TrimSpace(r))
-		}
-		if len(lr) != 0 {
-			ret = append(ret, lr)
-		}
-	}
-
-	return ret, nil
-
 }
 
 // CounterInfo
