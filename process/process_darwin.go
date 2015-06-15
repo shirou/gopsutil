@@ -25,6 +25,10 @@ const (
 	KernProcPathname = 12 // path to executable
 )
 
+const (
+	ClockTicks = 100 // C.sysconf(C._SC_CLK_TCK)
+)
+
 type _Ctype_struct___0 struct {
 	Pad uint64
 }
@@ -178,8 +182,50 @@ func (p *Process) Threads() (map[string]string, error) {
 	ret := make(map[string]string, 0)
 	return ret, common.NotImplementedError
 }
+
+func convertCpuTimes(s string) (ret float64, err error) {
+	var t int
+	var _tmp string
+	if strings.Contains(s, ":") {
+		_t := strings.Split(s, ":")
+		hour, err := strconv.Atoi(_t[0])
+		if err != nil {
+			return ret, err
+		}
+		t += hour * 60 * 100
+		_tmp = _t[1]
+	} else {
+		_tmp = s
+	}
+
+	_t := strings.Split(_tmp, ".")
+	if err != nil {
+		return ret, err
+	}
+	h, err := strconv.Atoi(_t[0])
+	t += h * 100
+	h, err = strconv.Atoi(_t[1])
+	t += h
+	return float64(t) / ClockTicks, nil
+}
 func (p *Process) CPUTimes() (*cpu.CPUTimesStat, error) {
-	return nil, common.NotImplementedError
+	r, err := callPs("utime,stime", p.Pid)
+
+	utime, err := convertCpuTimes(r[0][0])
+	if err != nil {
+		return nil, err
+	}
+	stime, err := convertCpuTimes(r[0][1])
+	if err != nil {
+		return nil, err
+	}
+
+	ret := &cpu.CPUTimesStat{
+		CPU:    "cpu",
+		User:   utime,
+		System: stime,
+	}
+	return ret, nil
 }
 func (p *Process) CPUAffinity() ([]int32, error) {
 	return nil, common.NotImplementedError
