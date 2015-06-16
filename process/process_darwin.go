@@ -43,7 +43,7 @@ type MemoryMapsStat struct {
 func Pids() ([]int32, error) {
 	var ret []int32
 
-	pids, err := callPs("pid", 0)
+	pids, err := callPs("pid", 0, false)
 	if err != nil {
 		return ret, err
 	}
@@ -60,7 +60,7 @@ func Pids() ([]int32, error) {
 }
 
 func (p *Process) Ppid() (int32, error) {
-	r, err := callPs("ppid", p.Pid)
+	r, err := callPs("ppid", p.Pid, false)
 	v, err := strconv.Atoi(r[0][0])
 	if err != nil {
 		return 0, err
@@ -80,7 +80,7 @@ func (p *Process) Exe() (string, error) {
 	return "", common.NotImplementedError
 }
 func (p *Process) Cmdline() (string, error) {
-	r, err := callPs("command", p.Pid)
+	r, err := callPs("command", p.Pid, false)
 	if err != nil {
 		return "", err
 	}
@@ -96,7 +96,7 @@ func (p *Process) Parent() (*Process, error) {
 	return p, common.NotImplementedError
 }
 func (p *Process) Status() (string, error) {
-	r, err := callPs("state", p.Pid)
+	r, err := callPs("state", p.Pid, false)
 	if err != nil {
 		return "", err
 	}
@@ -167,8 +167,6 @@ func (p *Process) NumFDs() (int32, error) {
 	return 0, common.NotImplementedError
 }
 func (p *Process) NumThreads() (int32, error) {
-	return 0, common.NotImplementedError
-
 	/*
 		k, err := p.getKProc()
 		if err != nil {
@@ -177,6 +175,12 @@ func (p *Process) NumThreads() (int32, error) {
 
 			return k.KiNumthreads, nil
 	*/
+
+	r, err := callPs("utime,stime", p.Pid, true)
+	if err != nil {
+		return 0, err
+	}
+	return int32(len(r)), nil
 }
 func (p *Process) Threads() (map[string]string, error) {
 	ret := make(map[string]string, 0)
@@ -209,7 +213,7 @@ func convertCpuTimes(s string) (ret float64, err error) {
 	return float64(t) / ClockTicks, nil
 }
 func (p *Process) CPUTimes() (*cpu.CPUTimesStat, error) {
-	r, err := callPs("utime,stime", p.Pid)
+	r, err := callPs("utime,stime", p.Pid, false)
 
 	utime, err := convertCpuTimes(r[0][0])
 	if err != nil {
@@ -231,7 +235,7 @@ func (p *Process) CPUAffinity() ([]int32, error) {
 	return nil, common.NotImplementedError
 }
 func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
-	r, err := callPs("rss,vsize,pagein", p.Pid)
+	r, err := callPs("rss,vsize,pagein", p.Pid, false)
 	if err != nil {
 		return nil, err
 	}
@@ -374,10 +378,12 @@ func NewProcess(pid int32) (*Process, error) {
 // Return value deletes Header line(you must not input wrong arg).
 // And splited by Space. Caller have responsibility to manage.
 // If passed arg pid is 0, get information from all process.
-func callPs(arg string, pid int32) ([][]string, error) {
+func callPs(arg string, pid int32, threadOption bool) ([][]string, error) {
 	var cmd []string
 	if pid == 0 { // will get from all processes.
 		cmd = []string{"-x", "-o", arg}
+	} else if threadOption {
+		cmd = []string{"-x", "-o", arg, "-M", "-p", strconv.Itoa(int(pid))}
 	} else {
 		cmd = []string{"-x", "-o", arg, "-p", strconv.Itoa(int(pid))}
 	}
