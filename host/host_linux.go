@@ -208,7 +208,12 @@ func GetPlatformInformation() (platform string, family string, version string, e
 		if err == nil {
 			version = getRedhatishVersion(contents)
 		}
-		// TODO: suse detection
+	} else if common.PathExists("/etc/SuSE-release") {
+		contents, err := common.ReadLines("/etc/SuSE-release")
+		if err == nil {
+			version = getSuseVersion(contents)
+			platform = getSusePlatform(contents)
+		}
 		// TODO: slackware detecion
 	} else if common.PathExists("/etc/arch-release") {
 		platform = "arch"
@@ -237,7 +242,7 @@ func GetPlatformInformation() (platform string, family string, version string, e
 		family = "fedora"
 	case "oracle", "centos", "redhat", "scientific", "enterpriseenterprise", "amazon", "xenserver", "cloudlinux", "ibm_powerkvm":
 		family = "rhel"
-	case "suse":
+	case "suse", "opensuse":
 		family = "suse"
 	case "gentoo":
 		family = "gentoo"
@@ -274,6 +279,26 @@ func getRedhatishPlatform(contents []string) string {
 	f := strings.Split(c, " ")
 
 	return f[0]
+}
+
+func getSuseVersion(contents []string) string {
+	version := ""
+	for _, line := range contents {
+		if matches := regexp.MustCompile(`VERSION = ([\d.]+)`).FindStringSubmatch(line); matches != nil {
+			version = matches[1]
+		} else if matches := regexp.MustCompile(`PATCHLEVEL = ([\d]+)`).FindStringSubmatch(line); matches != nil {
+			version = version + "." + matches[1]
+		}
+	}
+	return version
+}
+
+func getSusePlatform(contents []string) string {
+	c := strings.ToLower(strings.Join(contents, ""))
+	if strings.Contains(c, "opensuse") {
+		return "opensuse"
+	}
+	return "suse"
 }
 
 func GetVirtualization() (string, string, error) {
