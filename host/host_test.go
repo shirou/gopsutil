@@ -22,7 +22,7 @@ func TestBoot_time(t *testing.T) {
 		t.Errorf("error %v", err)
 	}
 	if v == 0 {
-		t.Errorf("Could not boot time %v", v)
+		t.Errorf("Could not get boot time %v", v)
 	}
 }
 

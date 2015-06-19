@@ -5,13 +5,14 @@ package host
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
-	"syscall"
 	"unsafe"
 
 	common "github.com/shirou/gopsutil/common"
@@ -54,12 +55,27 @@ func HostInfo() (*HostInfoStat, error) {
 	return ret, nil
 }
 
+// BootTime returns the system boot time expressed in seconds since the epoch.
 func BootTime() (uint64, error) {
-	sysinfo := &syscall.Sysinfo_t{}
-	if err := syscall.Sysinfo(sysinfo); err != nil {
+	lines, err := common.ReadLines("/proc/stat")
+	if err != nil {
 		return 0, err
 	}
-	return uint64(sysinfo.Uptime), nil
+	for _, line := range lines {
+		if strings.HasPrefix(line, "btime") {
+			f := strings.Fields(line)
+			if len(f) != 2 {
+				return 0, fmt.Errorf("wrong btime format")
+			}
+			b, err := strconv.ParseInt(f[1], 10, 64)
+			if err != nil {
+				return 0, err
+			}
+			return uint64(b), nil
+		}
+	}
+
+	return 0, fmt.Errorf("could not find btime")
 }
 
 func Users() ([]UserStat, error) {
