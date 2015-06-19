@@ -239,3 +239,15 @@ func Test_Process_CpuPercentLoop(t *testing.T) {
 		}
 	}
 }
+
+func Test_Process_CreateTime(t *testing.T) {
+	p := testGetProcess()
+
+	c, err := p.CreateTime()
+	if err != nil {
+		t.Errorf("error %v", err)
+	}
+	if c < 1420000000 {
+		t.Errorf("process created time is wrong.")
+	}
+}
