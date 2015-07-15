@@ -150,10 +150,6 @@ func parseStatLine(line string) (*CPUTimesStat, error) {
 	if err != nil {
 		return nil, err
 	}
-	stolen, err := strconv.ParseFloat(fields[8], 64)
-	if err != nil {
-		return nil, err
-	}
 
 	cpu_tick := float64(100) // TODO: how to get _SC_CLK_TCK ?
 	ct := &CPUTimesStat{
@@ -165,24 +161,23 @@ func parseStatLine(line string) (*CPUTimesStat, error) {
 		Iowait:  float64(iowait) / cpu_tick,
 		Irq:     float64(irq) / cpu_tick,
 		Softirq: float64(softirq) / cpu_tick,
-		Stolen:  float64(stolen) / cpu_tick,
 	}
-	if len(fields) > 9 { // Linux >= 2.6.11
-		steal, err := strconv.ParseFloat(fields[9], 64)
+	if len(fields) > 8 { // Linux >= 2.6.11
+		steal, err := strconv.ParseFloat(fields[8], 64)
 		if err != nil {
 			return nil, err
 		}
 		ct.Steal = float64(steal)
 	}
-	if len(fields) > 10 { // Linux >= 2.6.24
-		guest, err := strconv.ParseFloat(fields[10], 64)
+	if len(fields) > 9 { // Linux >= 2.6.24
+		guest, err := strconv.ParseFloat(fields[9], 64)
 		if err != nil {
 			return nil, err
 		}
 		ct.Guest = float64(guest)
 	}
-	if len(fields) > 11 { // Linux >= 3.2.0
-		guestNice, err := strconv.ParseFloat(fields[11], 64)
+	if len(fields) > 10 { // Linux >= 3.2.0
+		guestNice, err := strconv.ParseFloat(fields[10], 64)
 		if err != nil {
 			return nil, err
 		}
