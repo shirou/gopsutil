@@ -10,6 +10,23 @@ import (
 	common "github.com/shirou/gopsutil/common"
 )
 
+/*
+#include <unistd.h>
+long sysconf(int name);
+*/
+import "C" // get cpu tick
+
+var _cpu_tick int
+
+// Call C func to get the value of cpu tick
+func get_cpu_tick() int {
+	if _cpu_tick <= 0 {
+		_cpu_tick = int(C.sysconf(C._SC_CLK_TCK))
+
+	}
+	return _cpu_tick
+}
+
 func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 	filename := "/proc/stat"
 	var lines = []string{}
@@ -155,7 +172,7 @@ func parseStatLine(line string) (*CPUTimesStat, error) {
 		return nil, err
 	}
 
-	cpu_tick := float64(100) // TODO: how to get _SC_CLK_TCK ?
+	cpu_tick := float64(get_cpu_tick())
 	ct := &CPUTimesStat{
 		CPU:     cpu,
 		User:    float64(user) / cpu_tick,
