@@ -4,11 +4,25 @@ package cpu
 
 import (
 	"errors"
+	"os/exec"
 	"strconv"
 	"strings"
 
 	common "github.com/shirou/gopsutil/common"
 )
+
+var cpu_tick = float64(100)
+
+func init() {
+	out, err := exec.Command("/usr/bin/getconf", "CLK_TCK").Output()
+	// ignore errors
+	if err == nil {
+		i, err := strconv.ParseFloat(string(out), 64)
+		if err == nil {
+			cpu_tick = float64(i)
+		}
+	}
+}
 
 func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 	filename := "/proc/stat"
@@ -151,7 +165,6 @@ func parseStatLine(line string) (*CPUTimesStat, error) {
 		return nil, err
 	}
 
-	cpu_tick := float64(100) // TODO: how to get _SC_CLK_TCK ?
 	ct := &CPUTimesStat{
 		CPU:     cpu,
 		User:    float64(user) / cpu_tick,

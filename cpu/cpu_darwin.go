@@ -21,10 +21,18 @@ const (
 	CPUStates = 5
 )
 
-// time.h
-const (
-	ClocksPerSec = 128
-)
+var ClocksPerSec = float64(128)
+
+func init() {
+	out, err := exec.Command("/usr/bin/getconf", "CLK_TCK").Output()
+	// ignore errors
+	if err == nil {
+		i, err := strconv.ParseFloat(string(out), 64)
+		if err == nil {
+			ClocksPerSec = float64(i)
+		}
+	}
+}
 
 func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 	var ret []CPUTimesStat
