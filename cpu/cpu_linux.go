@@ -17,7 +17,7 @@ func init() {
 	out, err := exec.Command("/usr/bin/getconf", "CLK_TCK").Output()
 	// ignore errors
 	if err == nil {
-		i, err := strconv.ParseFloat(string(out), 64)
+		i, err := strconv.ParseFloat(strings.TrimSpace(string(out)), 64)
 		if err == nil {
 			cpu_tick = float64(i)
 		}
