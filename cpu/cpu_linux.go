@@ -180,21 +180,21 @@ func parseStatLine(line string) (*CPUTimesStat, error) {
 		if err != nil {
 			return nil, err
 		}
-		ct.Steal = float64(steal)
+		ct.Steal = float64(steal) / cpu_tick
 	}
 	if len(fields) > 9 { // Linux >= 2.6.24
 		guest, err := strconv.ParseFloat(fields[9], 64)
 		if err != nil {
 			return nil, err
 		}
-		ct.Guest = float64(guest)
+		ct.Guest = float64(guest) / cpu_tick
 	}
 	if len(fields) > 10 { // Linux >= 3.2.0
 		guestNice, err := strconv.ParseFloat(fields[10], 64)
 		if err != nil {
 			return nil, err
 		}
-		ct.GuestNice = float64(guestNice)
+		ct.GuestNice = float64(guestNice) / cpu_tick
 	}
 
 	return ct, nil
