@@ -328,7 +328,7 @@ func GetVirtualization() (string, string, error) {
 		if common.PathExists("/proc/xen/capabilities") {
 			contents, err := common.ReadLines("/proc/xen/capabilities")
 			if err == nil {
-				if common.StringsContains(contents, "control_d") {
+				if common.StringsHas(contents, "control_d") {
 					role = "host"
 				}
 			}
@@ -353,9 +353,9 @@ func GetVirtualization() (string, string, error) {
 	if common.PathExists("/proc/cpuinfo") {
 		contents, err := common.ReadLines("/proc/cpuinfo")
 		if err == nil {
-			if common.StringsContains(contents, "QEMU Virtual CPU") ||
-				common.StringsContains(contents, "Common KVM processor") ||
-				common.StringsContains(contents, "Common 32-bit KVM processor") {
+			if common.StringsHas(contents, "QEMU Virtual CPU") ||
+				common.StringsHas(contents, "Common KVM processor") ||
+				common.StringsHas(contents, "Common 32-bit KVM processor") {
 				system = "kvm"
 				role = "guest"
 			}
@@ -376,8 +376,8 @@ func GetVirtualization() (string, string, error) {
 		contents, err := common.ReadLines("/proc/self/status")
 		if err == nil {
 
-			if common.StringsContains(contents, "s_context:") ||
-				common.StringsContains(contents, "VxID:") {
+			if common.StringsHas(contents, "s_context:") ||
+				common.StringsHas(contents, "VxID:") {
 				system = "linux-vserver"
 			}
 			// TODO: guest or host
@@ -387,8 +387,8 @@ func GetVirtualization() (string, string, error) {
 	if common.PathExists("/proc/self/cgroup") {
 		contents, err := common.ReadLines("/proc/self/cgroup")
 		if err == nil {
-			if common.StringsContains(contents, "lxc") ||
-				common.StringsContains(contents, "docker") {
+			if common.StringsHas(contents, "lxc") ||
+				common.StringsHas(contents, "docker") {
 				system = "lxc"
 				role = "guest"
 			} else if common.PathExists("/usr/bin/lxc-version") { // TODO: which
