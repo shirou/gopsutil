@@ -110,10 +110,20 @@ func mustParseFloat64(val string) float64 {
 	return vv
 }
 
-// Check the target string slice containes src or not
-func StringContains(target []string, src string) bool {
+// StringsHas checks the target string slice containes src or not
+func StringsHas(target []string, src string) bool {
 	for _, t := range target {
 		if strings.TrimSpace(t) == src {
+			return true
+		}
+	}
+	return false
+}
+
+// StringsContains checks the src in any string of the target string slice
+func StringsContains(target []string, src string) bool {
+	for _, t := range target {
+		if strings.Contains(t, src) {
 			return true
 		}
 	}

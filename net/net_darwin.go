@@ -26,7 +26,7 @@ func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 			// skip first line
 			continue
 		}
-		if common.StringContains(exists, values[0]) {
+		if common.StringsHas(exists, values[0]) {
 			// skip if already get
 			continue
 		}
