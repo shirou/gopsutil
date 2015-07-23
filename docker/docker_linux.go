@@ -4,6 +4,7 @@ package docker
 
 import (
 	"encoding/json"
+	"errors"
 	"os/exec"
 	"path"
 	"strconv"
@@ -25,7 +26,7 @@ type CgroupMemStat struct {
 	Pgmajfault              uint64 `json:"pgmajfault"`
 	InactiveAnon            uint64 `json:"inactive_anon"`
 	ActiveAnon              uint64 `json:"active_anon"`
-	InctiveFile             uint64 `json:"inactive_file"`
+	InactiveFile            uint64 `json:"inactive_file"`
 	ActiveFile              uint64 `json:"active_file"`
 	Unevictable             uint64 `json:"unevictable"`
 	HierarchicalMemoryLimit uint64 `json:"hierarchical_memory_limit"`
@@ -44,10 +45,17 @@ type CgroupMemStat struct {
 	TotalUnevictable        uint64 `json:"total_unevictable"`
 }
 
+var ErrDockerNotAvailable = errors.New("docker not available")
+
 // GetDockerIDList returnes a list of DockerID.
 // This requires certain permission.
 func GetDockerIDList() ([]string, error) {
-	out, err := exec.Command("docker", "ps", "-q", "--no-trunc").Output()
+	path, err := exec.LookPath("docker")
+	if err != nil {
+		return nil, ErrDockerNotAvailable
+	}
+
+	out, err := exec.Command(path, "ps", "-q", "--no-trunc").Output()
 	if err != nil {
 		return []string{}, err
 	}
@@ -55,6 +63,9 @@ func GetDockerIDList() ([]string, error) {
 	ret := make([]string, 0, len(lines))
 
 	for _, l := range lines {
+		if l == "" {
+			continue
+		}
 		ret = append(ret, l)
 	}
 
@@ -145,7 +156,7 @@ func CgroupMem(containerid string, base string) (*CgroupMemStat, error) {
 		case "active_anon":
 			ret.ActiveAnon = v
 		case "inactive_file":
-			ret.InctiveFile = v
+			ret.InactiveFile = v
 		case "active_file":
 			ret.ActiveFile = v
 		case "unevictable":
