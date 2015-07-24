@@ -14,7 +14,7 @@ import (
 
 const HELPER_PATH = "/tmp/gopsutil_cpu_helper"
 
-var ClocksPerSec = float64(128)
+var ClocksPerSec = float64(100)
 
 func init() {
 	out, err := exec.Command("/usr/bin/getconf", "CLK_TCK").Output()
