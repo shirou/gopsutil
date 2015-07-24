@@ -4,6 +4,7 @@ package cpu
 
 import (
 	"fmt"
+	"io"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -11,15 +12,7 @@ import (
 	common "github.com/shirou/gopsutil/common"
 )
 
-// sys/resource.h
-const (
-	CPUser    = 0
-	CPNice    = 1
-	CPSys     = 2
-	CPIntr    = 3
-	CPIdle    = 4
-	CPUStates = 5
-)
+const HELPER_PATH = "/tmp/gopsutil_cpu_helper"
 
 var ClocksPerSec = float64(128)
 
@@ -32,65 +25,74 @@ func init() {
 			ClocksPerSec = float64(i)
 		}
 	}
+
+	// adhoc compile on the host. Errors will be ignored.
+	// gcc is required to compile.
+	if !common.PathExists(HELPER_PATH) {
+		cmd := exec.Command("gcc", "-o", HELPER_PATH, "-x", "c", "-")
+		stdin, err := cmd.StdinPipe()
+		if err != nil {
+			return
+		}
+		io.WriteString(stdin, cpu_helper_src)
+		stdin.Close()
+		cmd.Output()
+	}
 }
 
 func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 	var ret []CPUTimesStat
-
-	var sysctlCall string
-	var ncpu int
-	if percpu {
-		sysctlCall = "kern.cp_times"
-		ncpu, _ = CPUCounts(true)
-	} else {
-		sysctlCall = "kern.cp_time"
-		ncpu = 1
+	if !common.PathExists(HELPER_PATH) {
+		return nil, fmt.Errorf("gopsutil helper(%s) does not exists. gcc required.", HELPER_PATH)
 	}
 
-	cpuTimes, err := common.DoSysctrl(sysctlCall)
+	out, err := exec.Command(HELPER_PATH).Output()
 	if err != nil {
 		return ret, err
 	}
 
-	for i := 0; i < ncpu; i++ {
-		offset := CPUStates * i
-		user, err := strconv.ParseFloat(cpuTimes[CPUser+offset], 64)
+	for _, line := range strings.Split(string(out), "\n") {
+		f := strings.Split(string(line), ",")
+		if len(f) != 5 {
+			continue
+		}
+		cpu, err := strconv.ParseFloat(f[0], 64)
 		if err != nil {
 			return ret, err
 		}
-		nice, err := strconv.ParseFloat(cpuTimes[CPNice+offset], 64)
+		// cpu:99 means total, so just ignore if percpu
+		if (percpu && cpu == 99) || (!percpu && cpu != 99) {
+			continue
+		}
+		user, err := strconv.ParseFloat(f[1], 64)
 		if err != nil {
 			return ret, err
 		}
-		sys, err := strconv.ParseFloat(cpuTimes[CPSys+offset], 64)
+		sys, err := strconv.ParseFloat(f[2], 64)
 		if err != nil {
 			return ret, err
 		}
-		idle, err := strconv.ParseFloat(cpuTimes[CPIdle+offset], 64)
+		idle, err := strconv.ParseFloat(f[3], 64)
 		if err != nil {
 			return ret, err
 		}
-		intr, err := strconv.ParseFloat(cpuTimes[CPIntr+offset], 64)
+		nice, err := strconv.ParseFloat(f[4], 64)
 		if err != nil {
 			return ret, err
 		}
-
 		c := CPUTimesStat{
 			User:   float64(user / ClocksPerSec),
 			Nice:   float64(nice / ClocksPerSec),
 			System: float64(sys / ClocksPerSec),
 			Idle:   float64(idle / ClocksPerSec),
-			Irq:    float64(intr / ClocksPerSec),
 		}
 		if !percpu {
 			c.CPU = "cpu-total"
 		} else {
-			c.CPU = fmt.Sprintf("cpu%d", i)
+			c.CPU = fmt.Sprintf("cpu%d", uint16(cpu))
 		}
-
 		ret = append(ret, c)
 	}
-
 	return ret, nil
 }
 
@@ -155,3 +157,51 @@ func CPUInfo() ([]CPUInfoStat, error) {
 
 	return append(ret, c), nil
 }
+
+const cpu_helper_src = `
+#include <mach/mach.h>
+#include <mach/mach_error.h>
+#include <stdio.h>
+
+int main() {
+  	natural_t cpuCount;
+	processor_info_array_t ia;
+	mach_msg_type_number_t ic;
+
+	kern_return_t error = host_processor_info(mach_host_self(),
+		PROCESSOR_CPU_LOAD_INFO, &cpuCount, &ia, &ic);
+	if (error) {
+		return error;
+	}
+
+	processor_cpu_load_info_data_t* cpuLoadInfo =
+		(processor_cpu_load_info_data_t*) ia;
+
+	unsigned int all[4];
+	// cpu_no,user,system,idle,nice
+	for (int cpu=0; cpu<cpuCount; cpu++){
+	  printf("%d,", cpu);
+	  for (int i=0; i<4; i++){
+		printf("%d", cpuLoadInfo[cpu].cpu_ticks[i]);
+		all[i] = all[i] + cpuLoadInfo[cpu].cpu_ticks[i];
+		if (i != 3){
+		  printf(",");
+		}else{
+		  printf("\n");
+		}
+	  }
+	}
+	printf("99,");
+	for (int i=0; i<4; i++){
+	  printf("%d", all[i]);
+	  if (i != 3){
+		printf(",");
+	  }else{
+		printf("\n");
+	  }
+	}
+
+	vm_deallocate(mach_task_self(), (vm_address_t)ia, ic);
+	return error;
+}
+`
