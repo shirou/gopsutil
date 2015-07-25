@@ -5,6 +5,7 @@ package cpu
 import (
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -13,6 +14,10 @@ import (
 )
 
 const HELPER_PATH = "/tmp/gopsutil_cpu_helper"
+
+// enable cpu helper. It may become security problem.
+// This env valiable approach will be changed.
+const HELPER_ENABLE_ENV = "ALLLOW_INSECURE_CPU_HELPER"
 
 var ClocksPerSec = float64(100)
 
@@ -28,7 +33,7 @@ func init() {
 
 	// adhoc compile on the host. Errors will be ignored.
 	// gcc is required to compile.
-	if !common.PathExists(HELPER_PATH) {
+	if !common.PathExists(HELPER_PATH) && os.Getenv(HELPER_ENABLE_ENV) == "yes" {
 		cmd := exec.Command("gcc", "-o", HELPER_PATH, "-x", "c", "-")
 		stdin, err := cmd.StdinPipe()
 		if err != nil {
@@ -43,7 +48,7 @@ func init() {
 func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 	var ret []CPUTimesStat
 	if !common.PathExists(HELPER_PATH) {
-		return nil, fmt.Errorf("gopsutil helper(%s) does not exists. gcc required.", HELPER_PATH)
+		return nil, fmt.Errorf("could not get cpu time")
 	}
 
 	out, err := exec.Command(HELPER_PATH).Output()
