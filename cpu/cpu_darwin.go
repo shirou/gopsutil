@@ -7,13 +7,14 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 
 	common "github.com/shirou/gopsutil/common"
 )
 
-const HELPER_PATH = "/tmp/gopsutil_cpu_helper"
+var HELPER_PATH = filepath.Join(os.Getenv("HOME"), ".gopsutil_cpu_helper")
 
 // enable cpu helper. It may become security problem.
 // This env valiable approach will be changed.
