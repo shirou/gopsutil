@@ -4,7 +4,6 @@ package docker
 
 import (
 	"encoding/json"
-	"errors"
 	"os/exec"
 	"path"
 	"strconv"

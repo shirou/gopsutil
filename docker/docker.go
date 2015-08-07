@@ -2,7 +2,8 @@ package docker
 
 import "errors"
 
-var ErrNotAvailable = errors.New("docker not available")
+var ErrDockerNotAvailable = errors.New("docker not available")
+var ErrCgroupNotAvailable = errors.New("cgroup not available")
 
 type CgroupMemStat struct {
 	ContainerID             string `json:"container_id"`
