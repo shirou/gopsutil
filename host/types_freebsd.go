@@ -9,7 +9,8 @@ package host
 /*
 #define KERNEL
 #include <sys/types.h>
-#include <utmp.h>
+#include <sys/time.h>
+#include <utmpx.h>
 
 enum {
 	sizeofPtr = sizeof(void*),
@@ -38,3 +39,5 @@ type (
 )
 
 type Utmp C.struct_utmp
+type Utmpx C.struct_utmpx
+type Timeval C.struct_timeval

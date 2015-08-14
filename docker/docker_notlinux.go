@@ -5,7 +5,6 @@ package docker
 import (
 	"encoding/json"
 
-	"github.com/shirou/gopsutil/common"
 	"github.com/shirou/gopsutil/cpu"
 )
 

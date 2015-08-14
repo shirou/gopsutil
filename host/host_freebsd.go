@@ -77,9 +77,13 @@ func BootTime() (int64, error) {
 }
 
 func Users() ([]UserStat, error) {
-	utmpfile := "/var/run/utmp"
-	var ret []UserStat
+	utmpfile := "/var/run/utx.active"
+	if !common.PathExists(utmpfile) {
+		utmpfile = "/var/run/utmp" // before 9.0
+		return getUsersFromUtmp(utmpfile)
+	}
 
+	var ret []UserStat
 	file, err := os.Open(utmpfile)
 	if err != nil {
 		return ret, err
@@ -90,24 +94,25 @@ func Users() ([]UserStat, error) {
 		return ret, err
 	}
 
-	u := Utmp{}
-	entrySize := int(unsafe.Sizeof(u))
+	u := Utmpx{}
+	entrySize := int(unsafe.Sizeof(u)) - 3
+	entrySize = 197 // TODO: why should 197
 	count := len(buf) / entrySize
 
 	for i := 0; i < count; i++ {
 		b := buf[i*entrySize : i*entrySize+entrySize]
-
-		var u Utmp
+		var u Utmpx
 		br := bytes.NewReader(b)
 		err := binary.Read(br, binary.LittleEndian, &u)
-		if err != nil || u.Time == 0 {
+		if err != nil || u.Type != 4 {
 			continue
 		}
+		sec := (binary.LittleEndian.Uint32(u.Tv.Sec[:])) / 2 // TODO:
 		user := UserStat{
-			User:     common.IntToString(u.Name[:]),
+			User:     common.IntToString(u.User[:]),
 			Terminal: common.IntToString(u.Line[:]),
 			Host:     common.IntToString(u.Host[:]),
-			Started:  int(u.Time),
+			Started:  int(sec),
 		}
 
 		ret = append(ret, user)
@@ -140,4 +145,41 @@ func GetVirtualization() (string, string, error) {
 	role := ""
 
 	return system, role, nil
+}
+
+// before 9.0
+func getUsersFromUtmp(utmpfile string) ([]UserStat, error) {
+	var ret []UserStat
+	file, err := os.Open(utmpfile)
+	if err != nil {
+		return ret, err
+	}
+	buf, err := ioutil.ReadAll(file)
+	if err != nil {
+		return ret, err
+	}
+
+	u := Utmp{}
+	entrySize := int(unsafe.Sizeof(u))
+	count := len(buf) / entrySize
+
+	for i := 0; i < count; i++ {
+		b := buf[i*entrySize : i*entrySize+entrySize]
+		var u Utmp
+		br := bytes.NewReader(b)
+		err := binary.Read(br, binary.LittleEndian, &u)
+		if err != nil || u.Time == 0 {
+			continue
+		}
+		user := UserStat{
+			User:     common.IntToString(u.Name[:]),
+			Terminal: common.IntToString(u.Line[:]),
+			Host:     common.IntToString(u.Host[:]),
+			Started:  int(u.Time),
+		}
+
+		ret = append(ret, user)
+	}
+
+	return ret, nil
 }
