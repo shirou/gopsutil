@@ -98,3 +98,7 @@ func Getfsstat(buf []Statfs_t, flags int) (n int, err error) {
 	}
 	return
 }
+
+func getFsType(stat syscall.Statfs_t) string {
+	return common.IntToString(stat.Fstypename[:])
+}
