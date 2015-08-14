@@ -18,6 +18,7 @@ func TestDisk_usage(t *testing.T) {
 	if v.Path != path {
 		t.Errorf("error %v", err)
 	}
+	fmt.Println(v)
 }
 
 func TestDisk_partitions(t *testing.T) {
