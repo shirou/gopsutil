@@ -10,11 +10,11 @@ func DiskUsage(path string) (*DiskUsageStat, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	bsize := stat.Bsize
 
 	ret := &DiskUsageStat{
 		Path:        path,
+		Fstype:      getFsType(stat),
 		Total:       (uint64(stat.Blocks) * uint64(bsize)),
 		Free:        (uint64(stat.Bfree) * uint64(bsize)),
 		InodesTotal: (uint64(stat.Files)),
