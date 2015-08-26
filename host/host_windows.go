@@ -27,41 +27,30 @@ type Win32_OperatingSystem struct {
 }
 
 func HostInfo() (*HostInfoStat, error) {
-	ret := &HostInfoStat{}
 	hostname, err := os.Hostname()
 	if err != nil {
-		return ret, err
+		return nil, err
 	}
 
-	_, err = GetOSInfo()
-	if err != nil {
-		return ret, err
+	ret := &HostInfoStat{
+		Hostname: hostname,
+		OS:       runtime.GOOS,
+	}
+
+	platform, family, version, err := GetPlatformInformation()
+	if err == nil {
+		ret.Platform = platform
+		ret.PlatformFamily = family
+		ret.PlatformVersion = version
+	} else {
+	  return ret, err
 	}
 	
-	ret.Hostname = hostname
 	ret.Uptime, err = BootTime()
 	if err != nil {
 		return ret, err
 	}
 	
-	// PlatformFamily
-	switch osInfo.ProductType {
-	case 1:
-		ret.PlatformFamily = "Desktop OS"
-	case 2:
-		ret.PlatformFamily = "Server OS (Domain Controller)"
-	case 3:
-		ret.PlatformFamily = "Server OS"
-	}
-	
-	// Platform
-	ret.Platform = strings.Trim(osInfo.Caption, " ")
-	
-	// Platform Version
-	ret.PlatformVersion = osInfo.Version
-	
-	ret.OS = runtime.GOOS
-
 	procs, err := process.Pids()
 	if err != nil {
 		return ret, err
@@ -95,6 +84,33 @@ func BootTime() (uint64, error) {
 	now := time.Now()
 	t := osInfo.LastBootUpTime.Local()
 	return uint64(now.Sub(t).Seconds()), nil
+}
+
+func GetPlatformInformation() (platform string, family string, version string, err error) {
+	if osInfo == nil {
+		_, err = GetOSInfo()
+		if err != nil {
+			return
+		}
+	}
+
+	// Platform
+	platform = strings.Trim(osInfo.Caption, " ")
+	
+	// PlatformFamily
+	switch osInfo.ProductType {
+	case 1:
+		family = "Desktop OS"
+	case 2:
+		family = "Server OS (Domain Controller)"
+	case 3:
+		family = "Server OS"
+	}
+	
+	// Platform Version
+	version = osInfo.Version
+
+	return
 }
 
 func Users() ([]UserStat, error) {
