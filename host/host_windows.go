@@ -5,6 +5,8 @@ package host
 import (
 	"os"
 	"time"
+	"runtime"
+	"strings"
 
 	"github.com/StackExchange/wmi"
 
@@ -14,9 +16,13 @@ import (
 
 var (
 	procGetSystemTimeAsFileTime = common.Modkernel32.NewProc("GetSystemTimeAsFileTime")
+	osInfo *Win32_OperatingSystem
 )
 
 type Win32_OperatingSystem struct {
+	Version     string
+	Caption     string
+	ProductType uint32
 	LastBootUpTime time.Time
 }
 
@@ -27,11 +33,34 @@ func HostInfo() (*HostInfoStat, error) {
 		return ret, err
 	}
 
-	ret.Hostname = hostname
-	uptime, err := BootTime()
-	if err == nil {
-		ret.Uptime = uptime
+	_, err = GetOSInfo()
+	if err != nil {
+		return ret, err
 	}
+	
+	ret.Hostname = hostname
+	ret.Uptime, err = BootTime()
+	if err != nil {
+		return ret, err
+	}
+	
+	// PlatformFamily
+	switch osInfo.ProductType {
+	case 1:
+		ret.PlatformFamily = "Desktop OS"
+	case 2:
+		ret.PlatformFamily = "Server OS (Domain Controller)"
+	case 3:
+		ret.PlatformFamily = "Server OS"
+	}
+	
+	// Platform
+	ret.Platform = strings.Trim(osInfo.Caption, " ")
+	
+	// Platform Version
+	ret.PlatformVersion = osInfo.Version
+	
+	ret.OS = runtime.GOOS
 
 	procs, err := process.Pids()
 	if err != nil {
@@ -43,16 +72,28 @@ func HostInfo() (*HostInfoStat, error) {
 	return ret, nil
 }
 
-func BootTime() (uint64, error) {
-	now := time.Now()
-
+func GetOSInfo() (Win32_OperatingSystem, error) {
 	var dst []Win32_OperatingSystem
 	q := wmi.CreateQuery(&dst, "")
 	err := wmi.Query(q, &dst)
 	if err != nil {
-		return 0, err
+		return Win32_OperatingSystem{}, err
 	}
-	t := dst[0].LastBootUpTime.Local()
+	
+	osInfo = &dst[0]
+	
+	return dst[0], nil
+}
+
+func BootTime() (uint64, error) {
+	if osInfo == nil {
+		_, err := GetOSInfo()
+		if err != nil {
+			return 0, err
+		}
+	}
+	now := time.Now()
+	t := osInfo.LastBootUpTime.Local()
 	return uint64(now.Sub(t).Seconds()), nil
 }
 
