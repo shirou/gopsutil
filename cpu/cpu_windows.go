@@ -19,7 +19,7 @@ type Win32_Processor struct {
 	Manufacturer              string
 	Name                      string
 	NumberOfLogicalProcessors uint32
-	ProcessorId               string
+	ProcessorId               *string
 	Stepping                  *string
 	MaxClockSpeed             uint32
 }
@@ -62,14 +62,17 @@ func CPUInfo() ([]CPUInfoStat, error) {
 	if err != nil {
 		return ret, err
 	}
-	for i, l := range dst {
+	
+	procID := ""
+	
+	for i, l := range dst {		
 		cpu := CPUInfoStat{
 			CPU:        int32(i),
 			Family:     fmt.Sprintf("%d", l.Family),
 			VendorID:   l.Manufacturer,
 			ModelName:  l.Name,
 			Cores:      int32(l.NumberOfLogicalProcessors),
-			PhysicalID: l.ProcessorId,
+			PhysicalID: procID,
 			Mhz:        float64(l.MaxClockSpeed),
 			Flags:      []string{},
 		}
