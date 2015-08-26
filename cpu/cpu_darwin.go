@@ -156,9 +156,19 @@ func CPUInfo() ([]CPUInfoStat, error) {
 		} else if strings.HasPrefix(line, "machdep.cpu.vendor") {
 			c.VendorID = values[1]
 		}
+	}
 
-		// TODO:
-		// c.Mhz = mustParseFloat64(values[1])
+	// Use the rated frequency of the CPU. This is a static value and does not
+	// account for low power or Turbo Boost modes.
+	out, err = exec.Command("/usr/sbin/sysctl", "hw.cpufrequency").Output()
+	if err != nil {
+		return ret, err
+	}
+
+	values := strings.Fields(string(out))
+	c.Mhz, err = strconv.ParseFloat(values[1], 64)
+	if err != nil {
+		return ret, err
 	}
 
 	return append(ret, c), nil
