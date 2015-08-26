@@ -15,7 +15,6 @@ import (
 
 type Win32_Processor struct {
 	LoadPercentage            uint16
-	L2CacheSize               uint32
 	Family                    uint16
 	Manufacturer              string
 	Name                      string
@@ -67,7 +66,6 @@ func CPUInfo() ([]CPUInfoStat, error) {
 		cpu := CPUInfoStat{
 			CPU:        int32(i),
 			Family:     fmt.Sprintf("%d", l.Family),
-			CacheSize:  int32(l.L2CacheSize),
 			VendorID:   l.Manufacturer,
 			ModelName:  l.Name,
 			Cores:      int32(l.NumberOfLogicalProcessors),
