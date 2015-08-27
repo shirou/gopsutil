@@ -166,10 +166,11 @@ func CPUInfo() ([]CPUInfoStat, error) {
 	}
 
 	values := strings.Fields(string(out))
-	c.Mhz, err = strconv.ParseFloat(values[1], 64)
+	mhz, err := strconv.ParseFloat(values[1], 64)
 	if err != nil {
 		return ret, err
 	}
+	c.Mhz = mhz / 1000000.0
 
 	return append(ret, c), nil
 }
