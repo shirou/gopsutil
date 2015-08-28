@@ -63,9 +63,14 @@ func CPUInfo() ([]CPUInfoStat, error) {
 		return ret, err
 	}
 	
-	procID := ""
-	
+	var procID string
 	for i, l := range dst {		
+		procID = ""
+		if l.ProcessorId != nil {
+			procID = *l.ProcessorId
+		}
+		
+		
 		cpu := CPUInfoStat{
 			CPU:        int32(i),
 			Family:     fmt.Sprintf("%d", l.Family),
