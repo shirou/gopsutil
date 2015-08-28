@@ -15,12 +15,11 @@ import (
 
 type Win32_Processor struct {
 	LoadPercentage            uint16
-	L2CacheSize               uint32
 	Family                    uint16
 	Manufacturer              string
 	Name                      string
 	NumberOfLogicalProcessors uint32
-	ProcessorId               string
+	ProcessorId               *string
 	Stepping                  *string
 	MaxClockSpeed             uint32
 }
@@ -63,15 +62,22 @@ func CPUInfo() ([]CPUInfoStat, error) {
 	if err != nil {
 		return ret, err
 	}
-	for i, l := range dst {
+	
+	var procID string
+	for i, l := range dst {		
+		procID = ""
+		if l.ProcessorId != nil {
+			procID = *l.ProcessorId
+		}
+		
+		
 		cpu := CPUInfoStat{
 			CPU:        int32(i),
 			Family:     fmt.Sprintf("%d", l.Family),
-			CacheSize:  int32(l.L2CacheSize),
 			VendorID:   l.Manufacturer,
 			ModelName:  l.Name,
 			Cores:      int32(l.NumberOfLogicalProcessors),
-			PhysicalID: l.ProcessorId,
+			PhysicalID: procID,
 			Mhz:        float64(l.MaxClockSpeed),
 			Flags:      []string{},
 		}
