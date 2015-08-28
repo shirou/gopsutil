@@ -3,7 +3,10 @@
 package host
 
 import (
+	"fmt"
 	"os"
+	"os/exec"
+	"regexp"
 	"time"
 
 	"github.com/StackExchange/wmi"
@@ -14,6 +17,9 @@ import (
 
 var (
 	procGetSystemTimeAsFileTime = common.Modkernel32.NewProc("GetSystemTimeAsFileTime")
+	reWindowsName               = regexp.MustCompile("OS Name:\\s+(.+)")
+	reWindowsVersion            = regexp.MustCompile("OS Version:\\s+(.+)")
+	reWindowsFamily             = regexp.MustCompile("OS Configuration:\\s+(.+)")
 )
 
 type Win32_OperatingSystem struct {
@@ -25,6 +31,13 @@ func HostInfo() (*HostInfoStat, error) {
 	hostname, err := os.Hostname()
 	if err != nil {
 		return ret, err
+	}
+
+	platform, family, version, err := GetPlatformInformation()
+	if err == nil {
+		ret.Platform = platform
+		ret.PlatformFamily = family
+		ret.PlatformVersion = version
 	}
 
 	ret.Hostname = hostname
@@ -61,4 +74,38 @@ func Users() ([]UserStat, error) {
 	var ret []UserStat
 
 	return ret, nil
+}
+
+func readValue(input string, re *regexp.Regexp, index int) (string, error) {
+	items := re.FindStringSubmatch(input)
+	if index >= len(items) {
+		return "", fmt.Errorf("Tried to read out of bounds index `%d` from items: %#v", index, items)
+	}
+	return items[index], nil
+}
+
+func GetPlatformInformation() (string, string, string, error) {
+	platform, family, version := "", "", ""
+
+	out, err := exec.Command("systeminfo").Output()
+	if err != nil {
+		return platform, family, version, fmt.Errorf("Failed to run systeminfo: %s", err)
+	}
+
+	platform, err = readValue(string(out), reWindowsName, 1)
+	if err != nil {
+		return platform, family, version, fmt.Errorf("Failed reading OS name: %s", err)
+	}
+
+	version, err = readValue(string(out), reWindowsVersion, 1)
+	if err != nil {
+		return platform, family, version, fmt.Errorf("Failed reading OS version: %s", err)
+	}
+
+	family, err = readValue(string(out), reWindowsFamily, 1)
+	if err != nil {
+		return platform, family, version, fmt.Errorf("Failed reading OS family: %s", err)
+	}
+
+	return platform, family, version, nil
 }
