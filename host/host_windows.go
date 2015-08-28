@@ -4,6 +4,7 @@ package host
 
 import (
 	"os"
+	"fmt"
 	"time"
 	"runtime"
 	"strings"
@@ -23,6 +24,7 @@ type Win32_OperatingSystem struct {
 	Version     string
 	Caption     string
 	ProductType uint32
+	BuildNumber string
 	LastBootUpTime time.Time
 }
 
@@ -100,15 +102,15 @@ func GetPlatformInformation() (platform string, family string, version string, e
 	// PlatformFamily
 	switch osInfo.ProductType {
 	case 1:
-		family = "Desktop OS"
+		family = "Standalone Workstation"
 	case 2:
-		family = "Server OS (Domain Controller)"
+		family = "Server (Domain Controller)"
 	case 3:
-		family = "Server OS"
+		family = "Server"
 	}
 	
 	// Platform Version
-	version = osInfo.Version
+	version = fmt.Sprintf("%s Build %s", osInfo.Version, osInfo.BuildNumber)
 
 	return
 }
