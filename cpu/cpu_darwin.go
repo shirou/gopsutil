@@ -2,104 +2,131 @@
 
 package cpu
 
+/*
+#include <stdlib.h>
+#include <sys/sysctl.h>
+#include <sys/mount.h>
+#include <mach/mach_init.h>
+#include <mach/mach_host.h>
+#include <mach/host_info.h>
+#include <libproc.h>
+#include <mach/processor_info.h>
+#include <mach/vm_map.h>
+*/
+import "C"
+
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
-	"io"
-	"os"
 	"os/exec"
-	"path/filepath"
 	"strconv"
 	"strings"
-
-	common "github.com/shirou/gopsutil/common"
+	"unsafe"
 )
 
-var HELPER_PATH = filepath.Join(os.Getenv("HOME"), ".gopsutil_cpu_helper")
+// sys/resource.h
+const (
+	CPUser    = 0
+	CPNice    = 1
+	CPSys     = 2
+	CPIntr    = 3
+	CPIdle    = 4
+	CPUStates = 5
+)
 
-// enable cpu helper. It may become security problem.
-// This env valiable approach will be changed.
-const HELPER_ENABLE_ENV = "ALLLOW_INSECURE_CPU_HELPER"
+// default value. from time.h
+var ClocksPerSec = float64(128)
 
-var ClocksPerSec = float64(100)
+// these CPU times for darwin is borrowed from influxdb/telegraf.
 
-func init() {
-	out, err := exec.Command("/usr/bin/getconf", "CLK_TCK").Output()
-	// ignore errors
-	if err == nil {
-		i, err := strconv.ParseFloat(strings.TrimSpace(string(out)), 64)
-		if err == nil {
-			ClocksPerSec = float64(i)
-		}
+func perCPUTimes() ([]CPUTimesStat, error) {
+	var (
+		count   C.mach_msg_type_number_t
+		cpuload *C.processor_cpu_load_info_data_t
+		ncpu    C.natural_t
+	)
+
+	status := C.host_processor_info(C.host_t(C.mach_host_self()),
+		C.PROCESSOR_CPU_LOAD_INFO,
+		&ncpu,
+		(*C.processor_info_array_t)(unsafe.Pointer(&cpuload)),
+		&count)
+
+	if status != C.KERN_SUCCESS {
+		return nil, fmt.Errorf("host_processor_info error=%d", status)
 	}
 
-	// adhoc compile on the host. Errors will be ignored.
-	// gcc is required to compile.
-	if !common.PathExists(HELPER_PATH) && os.Getenv(HELPER_ENABLE_ENV) == "yes" {
-		cmd := exec.Command("gcc", "-o", HELPER_PATH, "-x", "c", "-")
-		stdin, err := cmd.StdinPipe()
+	// jump through some cgo casting hoops and ensure we properly free
+	// the memory that cpuload points to
+	target := C.vm_map_t(C.mach_task_self_)
+	address := C.vm_address_t(uintptr(unsafe.Pointer(cpuload)))
+	defer C.vm_deallocate(target, address, C.vm_size_t(ncpu))
+
+	// the body of struct processor_cpu_load_info
+	// aka processor_cpu_load_info_data_t
+	var cpu_ticks [C.CPU_STATE_MAX]uint32
+
+	// copy the cpuload array to a []byte buffer
+	// where we can binary.Read the data
+	size := int(ncpu) * binary.Size(cpu_ticks)
+	buf := C.GoBytes(unsafe.Pointer(cpuload), C.int(size))
+
+	bbuf := bytes.NewBuffer(buf)
+
+	var ret []CPUTimesStat
+
+	for i := 0; i < int(ncpu); i++ {
+		err := binary.Read(bbuf, binary.LittleEndian, &cpu_ticks)
 		if err != nil {
-			return
+			return nil, err
 		}
-		io.WriteString(stdin, cpu_helper_src)
-		stdin.Close()
-		cmd.Output()
+
+		c := CPUTimesStat{
+			CPU:    fmt.Sprintf("cpu%d", i),
+			User:   float64(cpu_ticks[C.CPU_STATE_USER]) / ClocksPerSec,
+			System: float64(cpu_ticks[C.CPU_STATE_SYSTEM]) / ClocksPerSec,
+			Nice:   float64(cpu_ticks[C.CPU_STATE_NICE]) / ClocksPerSec,
+			Idle:   float64(cpu_ticks[C.CPU_STATE_IDLE]) / ClocksPerSec,
+		}
+
+		ret = append(ret, c)
 	}
+
+	return ret, nil
+}
+
+func allCPUTimes() ([]CPUTimesStat, error) {
+	var count C.mach_msg_type_number_t = C.HOST_CPU_LOAD_INFO_COUNT
+	var cpuload C.host_cpu_load_info_data_t
+
+	status := C.host_statistics(C.host_t(C.mach_host_self()),
+		C.HOST_CPU_LOAD_INFO,
+		C.host_info_t(unsafe.Pointer(&cpuload)),
+		&count)
+
+	if status != C.KERN_SUCCESS {
+		return nil, fmt.Errorf("host_statistics error=%d", status)
+	}
+
+	c := CPUTimesStat{
+		CPU:    "cpu-total",
+		User:   float64(cpuload.cpu_ticks[C.CPU_STATE_USER]) / ClocksPerSec,
+		System: float64(cpuload.cpu_ticks[C.CPU_STATE_SYSTEM]) / ClocksPerSec,
+		Nice:   float64(cpuload.cpu_ticks[C.CPU_STATE_NICE]) / ClocksPerSec,
+		Idle:   float64(cpuload.cpu_ticks[C.CPU_STATE_IDLE]) / ClocksPerSec,
+	}
+
+	return []CPUTimesStat{c}, nil
+
 }
 
 func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
-	var ret []CPUTimesStat
-	if !common.PathExists(HELPER_PATH) {
-		return nil, fmt.Errorf("could not get cpu time")
+	if percpu {
+		return perCPUTimes()
 	}
 
-	out, err := exec.Command(HELPER_PATH).Output()
-	if err != nil {
-		return ret, err
-	}
-
-	for _, line := range strings.Split(string(out), "\n") {
-		f := strings.Split(string(line), ",")
-		if len(f) != 5 {
-			continue
-		}
-		cpu, err := strconv.ParseFloat(f[0], 64)
-		if err != nil {
-			return ret, err
-		}
-		// cpu:99 means total, so just ignore if percpu
-		if (percpu && cpu == 99) || (!percpu && cpu != 99) {
-			continue
-		}
-		user, err := strconv.ParseFloat(f[1], 64)
-		if err != nil {
-			return ret, err
-		}
-		sys, err := strconv.ParseFloat(f[2], 64)
-		if err != nil {
-			return ret, err
-		}
-		idle, err := strconv.ParseFloat(f[3], 64)
-		if err != nil {
-			return ret, err
-		}
-		nice, err := strconv.ParseFloat(f[4], 64)
-		if err != nil {
-			return ret, err
-		}
-		c := CPUTimesStat{
-			User:   float64(user / ClocksPerSec),
-			Nice:   float64(nice / ClocksPerSec),
-			System: float64(sys / ClocksPerSec),
-			Idle:   float64(idle / ClocksPerSec),
-		}
-		if !percpu {
-			c.CPU = "cpu-total"
-		} else {
-			c.CPU = fmt.Sprintf("cpu%d", uint16(cpu))
-		}
-		ret = append(ret, c)
-	}
-	return ret, nil
+	return allCPUTimes()
 }
 
 // Returns only one CPUInfoStat on FreeBSD
@@ -174,51 +201,3 @@ func CPUInfo() ([]CPUInfoStat, error) {
 
 	return append(ret, c), nil
 }
-
-const cpu_helper_src = `
-#include <mach/mach.h>
-#include <mach/mach_error.h>
-#include <stdio.h>
-
-int main() {
-  	natural_t cpuCount;
-	processor_info_array_t ia;
-	mach_msg_type_number_t ic;
-
-	kern_return_t error = host_processor_info(mach_host_self(),
-		PROCESSOR_CPU_LOAD_INFO, &cpuCount, &ia, &ic);
-	if (error) {
-		return error;
-	}
-
-	processor_cpu_load_info_data_t* cpuLoadInfo =
-		(processor_cpu_load_info_data_t*) ia;
-
-	unsigned int all[4];
-	// cpu_no,user,system,idle,nice
-	for (int cpu=0; cpu<cpuCount; cpu++){
-	  printf("%d,", cpu);
-	  for (int i=0; i<4; i++){
-		printf("%d", cpuLoadInfo[cpu].cpu_ticks[i]);
-		all[i] = all[i] + cpuLoadInfo[cpu].cpu_ticks[i];
-		if (i != 3){
-		  printf(",");
-		}else{
-		  printf("\n");
-		}
-	  }
-	}
-	printf("99,");
-	for (int i=0; i<4; i++){
-	  printf("%d", all[i]);
-	  if (i != 3){
-		printf(",");
-	  }else{
-		printf("\n");
-	  }
-	}
-
-	vm_deallocate(mach_task_self(), (vm_address_t)ia, ic);
-	return error;
-}
-`
