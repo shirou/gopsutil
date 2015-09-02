@@ -27,7 +27,7 @@ var (
 const WaitMSec = 500
 
 func DiskUsage(path string) (*DiskUsageStat, error) {
-	ret := DiskUsageStat{}
+	ret := &DiskUsageStat{}
 
 	lpFreeBytesAvailable := int64(0)
 	lpTotalNumberOfBytes := int64(0)
@@ -40,7 +40,7 @@ func DiskUsage(path string) (*DiskUsageStat, error) {
 	if diskret == 0 {
 		return nil, err
 	}
-	ret := &DiskUsageStat{
+	ret = &DiskUsageStat{
 		Path:  path,
 		Total: uint64(lpTotalNumberOfBytes),
 		Free:  uint64(lpTotalNumberOfFreeBytes),
