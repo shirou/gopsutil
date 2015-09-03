@@ -172,6 +172,6 @@ func parseDevstat(buf []byte) (Devstat, error) {
 	return ds, nil
 }
 
-func getFType(stat syscall.Statfs_t) string {
+func getFsType(stat syscall.Statfs_t) string {
 	return common.IntToString(stat.Fstypename[:])
 }
