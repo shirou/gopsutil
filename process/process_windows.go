@@ -147,6 +147,23 @@ func (p *Process) Cmdline() (string, error) {
 	}
 	return *dst[0].CommandLine, nil
 }
+func (p *Process) CreateTime() (int64, error) {
+	var dst []Win32_Process
+	query := fmt.Sprintf("WHERE ProcessId = %d", p.Pid)
+	q := wmi.CreateQuery(&dst, query)
+	err := wmi.Query(q, &dst)
+	if err != nil {
+		return 0, err
+	}
+	if len(dst) != 1 {
+		return 0, fmt.Errorf("could not get CreationDate")
+	}
+	date := *dst[0].CreationDate
+	return date.Unix(), nil
+
+	return 0, common.NotImplementedError
+}
+
 func (p *Process) Cwd() (string, error) {
 	return "", common.NotImplementedError
 }
