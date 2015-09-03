@@ -14,7 +14,7 @@ import (
 )
 
 type Win32_Processor struct {
-	LoadPercentage            uint16
+	LoadPercentage            *uint16
 	Family                    uint16
 	Manufacturer              string
 	Name                      string
@@ -62,15 +62,14 @@ func CPUInfo() ([]CPUInfoStat, error) {
 	if err != nil {
 		return ret, err
 	}
-	
+
 	var procID string
-	for i, l := range dst {		
+	for i, l := range dst {
 		procID = ""
 		if l.ProcessorId != nil {
 			procID = *l.ProcessorId
 		}
-		
-		
+
 		cpu := CPUInfoStat{
 			CPU:        int32(i),
 			Family:     fmt.Sprintf("%d", l.Family),
@@ -97,7 +96,10 @@ func CPUPercent(interval time.Duration, percpu bool) ([]float64, error) {
 	}
 	for _, l := range dst {
 		// use range but windows can only get one percent.
-		ret = append(ret, float64(l.LoadPercentage)/100.0)
+		if l.LoadPercentage == nil {
+			continue
+		}
+		ret = append(ret, float64(*l.LoadPercentage)/100.0)
 	}
 	return ret, nil
 }
