@@ -108,60 +108,50 @@ func (p *Process) Ppid() (int32, error) {
 	}
 	return ret, nil
 }
-func (p *Process) Name() (string, error) {
+
+func GetWin32Proc(pid int32) ([]Win32_Process, error) {
 	var dst []Win32_Process
-	query := fmt.Sprintf("WHERE ProcessId = %d", p.Pid)
+	query := fmt.Sprintf("WHERE ProcessId = %d", pid)
 	q := wmi.CreateQuery(&dst, query)
 	err := wmi.Query(q, &dst)
 	if err != nil {
-		return "", err
+		return []Win32_Process{}, fmt.Errorf("could not get win32Proc: %s", err)
 	}
 	if len(dst) != 1 {
-		return "", fmt.Errorf("could not get Name")
+		return []Win32_Process{}, fmt.Errorf("could not get win32Proc: empty")
+	}
+	return dst, nil
+}
+
+func (p *Process) Name() (string, error) {
+	dst, err := GetWin32Proc(p.Pid)
+	if err != nil {
+		return "", fmt.Errorf("could not get Name: %s", err)
 	}
 	return dst[0].Name, nil
 }
 func (p *Process) Exe() (string, error) {
-	var dst []Win32_Process
-	query := fmt.Sprintf("WHERE ProcessId = %d", p.Pid)
-	q := wmi.CreateQuery(&dst, query)
-	err := wmi.Query(q, &dst)
+	dst, err := GetWin32Proc(p.Pid)
 	if err != nil {
-		return "", err
-	}
-	if len(dst) != 1 {
-		return "", fmt.Errorf("could not get ExecutablePath")
+		return "", fmt.Errorf("could not get ExecutablePath: %s", err)
 	}
 	return *dst[0].ExecutablePath, nil
 }
 func (p *Process) Cmdline() (string, error) {
-	var dst []Win32_Process
-	query := fmt.Sprintf("WHERE ProcessId = %d", p.Pid)
-	q := wmi.CreateQuery(&dst, query)
-	err := wmi.Query(q, &dst)
+	dst, err := GetWin32Proc(p.Pid)
 	if err != nil {
-		return "", err
-	}
-	if len(dst) != 1 {
-		return "", fmt.Errorf("could not get CommandLine")
+		return "", fmt.Errorf("could not get CommandLine: %s", err)
 	}
 	return *dst[0].CommandLine, nil
 }
+
 func (p *Process) CreateTime() (int64, error) {
-	var dst []Win32_Process
-	query := fmt.Sprintf("WHERE ProcessId = %d", p.Pid)
-	q := wmi.CreateQuery(&dst, query)
-	err := wmi.Query(q, &dst)
+	dst, err := GetWin32Proc(p.Pid)
 	if err != nil {
-		return 0, err
-	}
-	if len(dst) != 1 {
-		return 0, fmt.Errorf("could not get CreationDate")
+		return 0, fmt.Errorf("could not get CreationDate: %s", err)
 	}
 	date := *dst[0].CreationDate
 	return date.Unix(), nil
-
-	return 0, common.NotImplementedError
 }
 
 func (p *Process) Cwd() (string, error) {
@@ -191,15 +181,9 @@ func (p *Process) Terminal() (string, error) {
 
 // Nice returnes priority in Windows
 func (p *Process) Nice() (int32, error) {
-	var dst []Win32_Process
-	query := fmt.Sprintf("WHERE ProcessId = %d", p.Pid)
-	q := wmi.CreateQuery(&dst, query)
-	err := wmi.Query(q, &dst)
+	dst, err := GetWin32Proc(p.Pid)
 	if err != nil {
-		return 0, err
-	}
-	if len(dst) != 1 {
-		return 0, fmt.Errorf("could not get Priority")
+		return 0, fmt.Errorf("could not get Priority: %s", err)
 	}
 	return int32(dst[0].Priority), nil
 }
@@ -221,15 +205,9 @@ func (p *Process) NumFDs() (int32, error) {
 	return 0, common.NotImplementedError
 }
 func (p *Process) NumThreads() (int32, error) {
-	var dst []Win32_Process
-	query := fmt.Sprintf("WHERE ProcessId = %d", p.Pid)
-	q := wmi.CreateQuery(&dst, query)
-	err := wmi.Query(q, &dst)
+	dst, err := GetWin32Proc(p.Pid)
 	if err != nil {
-		return 0, err
-	}
-	if len(dst) != 1 {
-		return 0, fmt.Errorf("could not get ThreadCount")
+		return 0, fmt.Errorf("could not get ThreadCount: %s", err)
 	}
 	return int32(dst[0].ThreadCount), nil
 }
