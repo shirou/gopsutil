@@ -13,9 +13,11 @@ import (
 )
 
 const (
-	CTLKern        = 1
-	KernDevstat    = 773
-	KernDevstatAll = 772
+	CTLKern = 1
+	//	KernDevstat    = 773 // for freebsd 8.4
+	//	KernDevstatAll = 772 // for freebsd 8.4
+	KernDevstat    = 974
+	KernDevstatAll = 975
 )
 
 func DiskPartitions(all bool) ([]DiskPartitionStat, error) {

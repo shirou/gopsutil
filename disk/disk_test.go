@@ -18,7 +18,6 @@ func TestDisk_usage(t *testing.T) {
 	if v.Path != path {
 		t.Errorf("error %v", err)
 	}
-	fmt.Println(v)
 }
 
 func TestDisk_partitions(t *testing.T) {
@@ -44,7 +43,6 @@ func TestDisk_io_counters(t *testing.T) {
 	}
 	empty := DiskIOCountersStat{}
 	for part, io := range ret {
-		fmt.Println(io)
 		if io == empty {
 			t.Errorf("io_counter error %v, %v", part, io)
 		}
