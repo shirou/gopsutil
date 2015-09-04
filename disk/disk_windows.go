@@ -55,7 +55,6 @@ func DiskUsage(path string) (*DiskUsageStat, error) {
 }
 
 func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
-	fmt.Println("IN DISK PARTITIONS")
 	var ret []DiskPartitionStat
 	lpBuffer := make([]byte, 254)
 	diskret, _, err := procGetLogicalDriveStringsW.Call(
