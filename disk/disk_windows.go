@@ -41,11 +41,11 @@ func DiskUsage(path string) (*DiskUsageStat, error) {
 		return nil, err
 	}
 	ret = &DiskUsageStat{
-		Path:  path,
-		Total: uint64(lpTotalNumberOfBytes),
-		Free:  uint64(lpTotalNumberOfFreeBytes),
-		// Used: uint64(lpTotalNumberOfBytes) - uint64(lpTotalNumberOfFreeBytes)
-		// UsedPercent: (float64(lpTotalNumberOfBytes) - float64(lpTotalNumberOfFreeBytes)) / float64(lpTotalNumberOfBytes) * 100
+		Path:        path,
+		Total:       uint64(lpTotalNumberOfBytes),
+		Free:        uint64(lpTotalNumberOfFreeBytes),
+		Used:        uint64(lpTotalNumberOfBytes) - uint64(lpTotalNumberOfFreeBytes),
+		UsedPercent: (float64(lpTotalNumberOfBytes) - float64(lpTotalNumberOfFreeBytes)) / float64(lpTotalNumberOfBytes) * 100,
 		// InodesTotal: 0,
 		// InodesFree: 0,
 		// InodesUsed: 0,
@@ -55,6 +55,7 @@ func DiskUsage(path string) (*DiskUsageStat, error) {
 }
 
 func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
+	fmt.Println("IN DISK PARTITIONS")
 	var ret []DiskPartitionStat
 	lpBuffer := make([]byte, 254)
 	diskret, _, err := procGetLogicalDriveStringsW.Call(
@@ -93,6 +94,9 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 					uintptr(unsafe.Pointer(&lpFileSystemNameBuffer[0])),
 					uintptr(len(lpFileSystemNameBuffer)))
 				if driveret == 0 {
+					if typeret == 5 {
+						continue //device is not ready will happen if there is no disk in the drive
+					}
 					return ret, err
 				}
 				opts := "rw"
