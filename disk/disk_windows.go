@@ -4,10 +4,10 @@ package disk
 
 import (
 	"bytes"
-	"fmt"
 	"syscall"
-	"time"
 	"unsafe"
+
+	"github.com/StackExchange/wmi"
 
 	common "github.com/shirou/gopsutil/common"
 )
@@ -23,6 +23,16 @@ var (
 	FileFileCompression = int64(16)     // 0x00000010
 	FileReadOnlyVolume  = int64(524288) // 0x00080000
 )
+
+type Win32_PerfFormattedData struct {
+	Name                    string
+	AvgDiskBytesPerRead     uint64
+	AvgDiskBytesPerWrite    uint64
+	AvgDiskReadQueueLength  uint64
+	AvgDiskWriteQueueLength uint64
+	AvgDisksecPerRead       uint64
+	AvgDisksecPerWrite      uint64
+}
 
 const WaitMSec = 500
 
@@ -121,78 +131,25 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 
 func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 	ret := make(map[string]DiskIOCountersStat, 0)
-	query, err := common.CreateQuery()
+	var dst []Win32_PerfFormattedData
+
+	err := wmi.Query("SELECT * FROM Win32_PerfFormattedData_PerfDisk_LogicalDisk ", &dst)
 	if err != nil {
 		return ret, err
 	}
-
-	drivebuf := make([]byte, 256)
-	r, _, err := procGetLogicalDriveStringsW.Call(
-		uintptr(len(drivebuf)),
-		uintptr(unsafe.Pointer(&drivebuf[0])))
-
-	if r == 0 {
-		return ret, err
-	}
-
-	drivemap := make(map[string][]*common.CounterInfo, 0)
-	for _, v := range drivebuf {
-		if v >= 65 && v <= 90 {
-			drive := string(v)
-			r, _, err = procGetDriveType.Call(uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(drive + `:\`))))
-			if r != common.DRIVE_FIXED {
-				continue
-			}
-			drivemap[drive] = make([]*common.CounterInfo, 0, 2)
-			var counter *common.CounterInfo
-
-			counter, err = common.CreateCounter(query,
-				"read",
-				fmt.Sprintf(`\PhysicalDisk(0 %s:)\Disk Reads/sec`, drive))
-			if err != nil {
-				return nil, err
-			}
-			drivemap[drive] = append(drivemap[drive], counter)
-			counter, err = common.CreateCounter(query,
-				"write",
-				fmt.Sprintf(`\PhysicalDisk(0 %s:)\Disk Writes/sec`, drive))
-			if err != nil {
-				return nil, err
-			}
-			drivemap[drive] = append(drivemap[drive], counter)
+	for _, d := range dst {
+		if len(d.Name) > 3 { // not get _Total or Harddrive
+			continue
+		}
+		ret[d.Name] = DiskIOCountersStat{
+			Name:       d.Name,
+			ReadCount:  uint64(d.AvgDiskReadQueueLength),
+			WriteCount: d.AvgDiskWriteQueueLength,
+			ReadBytes:  uint64(d.AvgDiskBytesPerRead),
+			WriteBytes: uint64(d.AvgDiskBytesPerWrite),
+			ReadTime:   d.AvgDisksecPerRead,
+			WriteTime:  d.AvgDisksecPerWrite,
 		}
 	}
-	r, _, err = common.PdhCollectQueryData.Call(uintptr(query))
-	if r != 0 && err != nil {
-		return nil, err
-	}
-	time.Sleep(time.Duration(WaitMSec) * time.Millisecond)
-	r, _, err = common.PdhCollectQueryData.Call(uintptr(query))
-	if r != 0 && err != nil {
-		return nil, err
-	}
-
-	for drive, counters := range drivemap {
-		stat := DiskIOCountersStat{}
-		for _, v := range counters {
-			var fmtValue common.PDH_FMT_COUNTERVALUE_LARGE
-			r, _, err := common.PdhGetFormattedCounterValue.Call(uintptr(v.Counter), common.PDH_FMT_LARGE, uintptr(0), uintptr(unsafe.Pointer(&fmtValue)))
-			if r != 0 && r != common.PDH_INVALID_DATA {
-				return nil, err
-			}
-
-			switch v.PostName {
-			case "read":
-				stat.ReadCount = uint64(fmtValue.LargeValue)
-			case "write":
-				stat.WriteCount = uint64(fmtValue.LargeValue)
-			default:
-				return ret, fmt.Errorf("unknown postname: %s", v.PostName)
-			}
-			stat.Name = drive
-		}
-		ret[drive] = stat
-	}
-
 	return ret, nil
 }
