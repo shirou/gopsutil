@@ -99,7 +99,7 @@ func CPUPercent(interval time.Duration, percpu bool) ([]float64, error) {
 		if l.LoadPercentage == nil {
 			continue
 		}
-		ret = append(ret, float64(*l.LoadPercentage)/100.0)
+		ret = append(ret, float64(*l.LoadPercentage))
 	}
 	return ret, nil
 }
