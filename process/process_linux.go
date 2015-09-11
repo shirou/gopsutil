@@ -97,12 +97,24 @@ func (p *Process) Parent() (*Process, error) {
 	return nil, common.NotImplementedError
 }
 func (p *Process) Status() (string, error) {
+	err := p.fillFromStatus()
+	if err != nil {
+		return "", err
+	}
 	return p.status, nil
 }
 func (p *Process) Uids() ([]int32, error) {
+	err := p.fillFromStatus()
+	if err != nil {
+		return []int32{}, err
+	}
 	return p.uids, nil
 }
 func (p *Process) Gids() ([]int32, error) {
+	err := p.fillFromStatus()
+	if err != nil {
+		return []int32{}, err
+	}
 	return p.gids, nil
 }
 func (p *Process) Terminal() (string, error) {
@@ -129,6 +141,10 @@ func (p *Process) IOCounters() (*IOCountersStat, error) {
 	return p.fillFromIO()
 }
 func (p *Process) NumCtxSwitches() (*NumCtxSwitchesStat, error) {
+	err := p.fillFromStatus()
+	if err != nil {
+		return nil, err
+	}
 	return p.numCtxSwitches, nil
 }
 func (p *Process) NumFDs() (int32, error) {
@@ -136,6 +152,10 @@ func (p *Process) NumFDs() (int32, error) {
 	return numFds, err
 }
 func (p *Process) NumThreads() (int32, error) {
+	err := p.fillFromStatus()
+	if err != nil {
+		return 0, err
+	}
 	return p.numThreads, nil
 }
 func (p *Process) Threads() (map[string]string, error) {
