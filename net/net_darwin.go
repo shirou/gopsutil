@@ -43,7 +43,7 @@ func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 			base = 0
 		}
 
-		parsed := make([]uint64, 0, 6)
+		parsed := make([]uint64, 0, 7)
 		vv := []string{
 			values[base+3], // Ipkts == PacketsRecv
 			values[base+4], // Ierrs == Errin
@@ -52,6 +52,10 @@ func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 			values[base+7], // Oerrs == Errout
 			values[base+8], // Obytes == BytesSent
 		}
+		if len(values) == 12 {
+			vv = append(vv, values[base+10])
+		}
+
 		for _, target := range vv {
 			if target == "-" {
 				parsed = append(parsed, 0)
@@ -73,6 +77,9 @@ func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 			PacketsSent: parsed[3],
 			Errout:      parsed[4],
 			BytesSent:   parsed[5],
+		}
+		if len(parsed) == 7 {
+			n.Dropout = parsed[6]
 		}
 		ret = append(ret, n)
 	}
