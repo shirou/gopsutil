@@ -10,6 +10,11 @@ import (
 	"github.com/shirou/gopsutil/common"
 )
 
+// example of netstat -idbn output on yosemite
+// Name  Mtu   Network       Address            Ipkts Ierrs     Ibytes    Opkts Oerrs     Obytes  Coll Drop
+// lo0   16384 <Link#1>                        869107     0  169411755   869107     0  169411755     0   0
+// lo0   16384 ::1/128     ::1                 869107     -  169411755   869107     -  169411755     -   -
+// lo0   16384 127           127.0.0.1         869107     -  169411755   869107     -  169411755     -   -
 func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 	out, err := exec.Command("/usr/sbin/netstat", "-ibdn").Output()
 	if err != nil {
