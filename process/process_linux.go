@@ -153,6 +153,10 @@ func (p *Process) CPUAffinity() ([]int32, error) {
 	return nil, common.NotImplementedError
 }
 func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
+	_, _, err := p.fillFromStatm()
+	if err != nil {
+		return nil, err
+	}
 	return p.memInfo, nil
 }
 func (p *Process) MemoryInfoEx() (*MemoryInfoExStat, error) {
