@@ -215,6 +215,10 @@ func convertCpuTimes(s string) (ret float64, err error) {
 func (p *Process) CPUTimes() (*cpu.CPUTimesStat, error) {
 	r, err := callPs("utime,stime", p.Pid, false)
 
+	if err != nil {
+		return nil, err
+	}
+
 	utime, err := convertCpuTimes(r[0][0])
 	if err != nil {
 		return nil, err
