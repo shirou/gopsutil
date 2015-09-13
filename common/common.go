@@ -17,7 +17,7 @@ import (
 
 var NotImplementedError = errors.New("not implemented yet")
 
-// ReadLines reads contents from file and splits them by new line.
+// ReadLines reads contents from a file and splits them by new lines.
 // A convenience wrapper to ReadLinesOffsetN(filename, 0, -1).
 func ReadLines(filename string) ([]string, error) {
 	return ReadLinesOffsetN(filename, 0, -1)
