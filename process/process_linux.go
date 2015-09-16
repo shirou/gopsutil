@@ -4,6 +4,7 @@ package process
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -11,10 +12,10 @@ import (
 	"strings"
 	"syscall"
 
-	common "github.com/shirou/gopsutil/common"
-	cpu "github.com/shirou/gopsutil/cpu"
-	host "github.com/shirou/gopsutil/host"
-	net "github.com/shirou/gopsutil/net"
+	"github.com/shirou/gopsutil/common"
+	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/host"
+	"github.com/shirou/gopsutil/net"
 )
 
 const (
@@ -94,7 +95,18 @@ func (p *Process) Cwd() (string, error) {
 	return p.fillFromCwd()
 }
 func (p *Process) Parent() (*Process, error) {
-	return nil, common.NotImplementedError
+	r, err := callLsof("R", p.Pid)
+	if err != nil {
+		return nil, err
+	}
+	if len(r) != 1 { // TODO: pid 1
+		return nil, fmt.Errorf("wrong number of parents")
+	}
+	v, err := strconv.Atoi(r[0])
+	if err != nil {
+		return nil, err
+	}
+	return NewProcess(int32(v))
 }
 func (p *Process) Status() (string, error) {
 	err := p.fillFromStatus()
@@ -615,6 +627,29 @@ func Pids() ([]int32, error) {
 			continue
 		}
 		ret = append(ret, int32(pid))
+	}
+
+	return ret, nil
+}
+
+func callLsof(arg string, pid int32) ([]string, error) {
+	var cmd []string
+	if pid == 0 { // will get from all processes.
+		cmd = []string{"-F" + arg}
+	} else {
+		cmd = []string{"-a", "-F" + arg, "-p", strconv.Itoa(int(pid))}
+	}
+	out, err := invoke.Command("/usr/bin/lsof", cmd...)
+	if err != nil {
+		return []string{}, err
+	}
+	lines := strings.Split(string(out), "\n")
+
+	var ret []string
+	for _, l := range lines[1:] {
+		if strings.HasPrefix(l, arg) {
+			ret = append(ret, l[1:]) // delete first char
+		}
 	}
 
 	return ret, nil

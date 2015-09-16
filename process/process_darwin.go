@@ -4,6 +4,7 @@ package process
 
 import (
 	"bytes"
+	"fmt"
 	"strconv"
 	"strings"
 	"syscall"
@@ -92,7 +93,22 @@ func (p *Process) Cwd() (string, error) {
 	return "", common.NotImplementedError
 }
 func (p *Process) Parent() (*Process, error) {
-	return p, common.NotImplementedError
+	rr, err := common.CallLsof(invoke, p.Pid, "-FR")
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range rr {
+		if strings.HasPrefix(r, "p") { // skip if process
+			continue
+		}
+		l := string(r)
+		v, err := strconv.Atoi(strings.Replace(l, "R", "", 1))
+		if err != nil {
+			return nil, err
+		}
+		return NewProcess(int32(v))
+	}
+	return nil, fmt.Errorf("could not find parent line")
 }
 func (p *Process) Status() (string, error) {
 	r, err := callPs("state", p.Pid, false)
@@ -166,15 +182,6 @@ func (p *Process) NumFDs() (int32, error) {
 	return 0, common.NotImplementedError
 }
 func (p *Process) NumThreads() (int32, error) {
-	/*
-		k, err := p.getKProc()
-		if err != nil {
-			return 0, err
-		}
-
-			return k.KiNumthreads, nil
-	*/
-
 	r, err := callPs("utime,stime", p.Pid, true)
 	if err != nil {
 		return 0, err

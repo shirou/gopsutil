@@ -1,7 +1,6 @@
 package process
 
 import (
-	"fmt"
 	"os"
 	"runtime"
 	"strings"
@@ -38,7 +37,7 @@ func Test_Pids_Fail(t *testing.T) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	invoke = common.FakeInvoke{Suffix: "fail", Error: fmt.Errorf("hoge")}
+	invoke = common.FakeInvoke{Suffix: "fail"}
 	ret, err := Pids()
 	invoke = common.Invoke{}
 	if err != nil {
@@ -48,7 +47,6 @@ func Test_Pids_Fail(t *testing.T) {
 		t.Errorf("wrong getted pid nums: %v/%d", ret, len(ret))
 	}
 }
-
 func Test_Pid_exists(t *testing.T) {
 	checkPid := os.Getpid()
 
@@ -274,5 +272,20 @@ func Test_Process_CreateTime(t *testing.T) {
 	}
 	if c < 1420000000 {
 		t.Errorf("process created time is wrong.")
+	}
+}
+
+func Test_Parent(t *testing.T) {
+	p := testGetProcess()
+
+	c, err := p.Parent()
+	if err != nil {
+		t.Fatalf("error %v", err)
+	}
+	if c == nil {
+		t.Fatalf("could not get parent")
+	}
+	if c.Pid == 0 {
+		t.Fatalf("wrong parent pid")
 	}
 }

@@ -2,6 +2,7 @@ package net
 
 import (
 	"fmt"
+	"os"
 	"testing"
 )
 
@@ -119,4 +120,24 @@ func TestNetInterfaces(t *testing.T) {
 			t.Errorf("Invalid NetInterface: %v", vv)
 		}
 	}
+}
+
+func TestNetConnections(t *testing.T) {
+	if ci := os.Getenv("CI"); ci != "" { // skip if test on drone.io
+		return
+	}
+
+	v, err := NetConnections("inet")
+	if err != nil {
+		t.Errorf("could not get NetConnections: %v", err)
+	}
+	if len(v) == 0 {
+		t.Errorf("could not get NetConnections: %v", v)
+	}
+	for _, vv := range v {
+		if vv.Family == 0 {
+			t.Errorf("invalid NetConnections: %v", vv)
+		}
+	}
+
 }
