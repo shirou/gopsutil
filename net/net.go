@@ -3,7 +3,15 @@ package net
 import (
 	"encoding/json"
 	"net"
+
+	"github.com/shirou/gopsutil/common"
 )
+
+var invoke common.Invoker
+
+func init() {
+	invoke = common.Invoke{}
+}
 
 type NetIOCountersStat struct {
 	Name        string `json:"name"`         // interface name

@@ -81,3 +81,9 @@ func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 
 	return ret, nil
 }
+
+func NetConnections(kind string) ([]NetConnectionStat, error) {
+	var ret []NetConnectionStat
+
+	return ret, common.NotImplementedError
+}

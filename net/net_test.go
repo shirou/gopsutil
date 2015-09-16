@@ -120,3 +120,19 @@ func TestNetInterfaces(t *testing.T) {
 		}
 	}
 }
+
+func TestNetConnections(t *testing.T) {
+	v, err := NetConnections("inet")
+	if err != nil {
+		t.Errorf("could not get NetConnections: %v", err)
+	}
+	if len(v) == 0 {
+		t.Errorf("could not get NetConnections: %v", v)
+	}
+	for _, vv := range v {
+		if vv.Family == 0 {
+			t.Errorf("invalid NetConnections: %v", vv)
+		}
+	}
+
+}

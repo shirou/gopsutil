@@ -93,18 +93,22 @@ func (p *Process) Cwd() (string, error) {
 	return "", common.NotImplementedError
 }
 func (p *Process) Parent() (*Process, error) {
-	r, err := callLsof("R", p.Pid)
+	rr, err := common.CallLsof(invoke, p.Pid, "-FR")
 	if err != nil {
 		return nil, err
 	}
-	if len(r) != 1 { // TODO: pid 1
-		return nil, fmt.Errorf("wrong number of parents")
+	for _, r := range rr {
+		if strings.HasPrefix(r, "p") { // skip if process
+			continue
+		}
+		l := string(r)
+		v, err := strconv.Atoi(strings.Replace(l, "R", "", 1))
+		if err != nil {
+			return nil, err
+		}
+		return NewProcess(int32(v))
 	}
-	v, err := strconv.Atoi(r[0])
-	if err != nil {
-		return nil, err
-	}
-	return NewProcess(int32(v))
+	return nil, fmt.Errorf("could not find parent line")
 }
 func (p *Process) Status() (string, error) {
 	r, err := callPs("state", p.Pid, false)
@@ -410,29 +414,6 @@ func callPs(arg string, pid int32, threadOption bool) ([][]string, error) {
 		}
 		if len(lr) != 0 {
 			ret = append(ret, lr)
-		}
-	}
-
-	return ret, nil
-}
-
-func callLsof(arg string, pid int32) ([]string, error) {
-	var cmd []string
-	if pid == 0 { // will get from all processes.
-		cmd = []string{"-F" + arg}
-	} else {
-		cmd = []string{"-a", "-F" + arg, "-p", strconv.Itoa(int(pid))}
-	}
-	out, err := invoke.Command("/usr/sbin/lsof", cmd...)
-	if err != nil {
-		return []string{}, err
-	}
-	lines := strings.Split(string(out), "\n")
-
-	var ret []string
-	for _, l := range lines[1:] {
-		if strings.HasPrefix(l, arg) {
-			ret = append(ret, l[1:]) // delete first char
 		}
 	}
 

@@ -280,12 +280,12 @@ func Test_Parent(t *testing.T) {
 
 	c, err := p.Parent()
 	if err != nil {
-		t.Errorf("error %v", err)
+		t.Fatalf("error %v", err)
 	}
 	if c == nil {
-		t.Errorf("could not get parent")
+		t.Fatalf("could not get parent")
 	}
 	if c.Pid == 0 {
-		t.Errorf("wrong parent pid")
+		t.Fatalf("wrong parent pid")
 	}
 }
