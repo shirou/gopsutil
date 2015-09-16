@@ -128,10 +128,10 @@ Current Status
 
 ================= ====== ======= ====== =======
 name              Linux  FreeBSD MacOSX Windows
-cpu_times            x      x              x
+cpu_times            x      x      x       x
 cpu_count            x      x      x       x
-cpu_percent          x      x              x
-cpu_times_percent    x      x              x
+cpu_percent          x      x      x       x
+cpu_times_percent    x      x      x       x
 virtual_memory       x      x      x       x
 swap_memory          x      x      x
 disk_partitions      x      x      x       x
@@ -142,7 +142,9 @@ boot_time            x      x      x       x
 users                x      x      x       x
 pids                 x      x      x       x
 pid_exists           x      x      x       x
-net_connections
+net_connections      x             x
+net_if_addrs
+net_if_stats
 ================= ====== ======= ====== =======
 
 Process class
