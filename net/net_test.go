@@ -2,6 +2,7 @@ package net
 
 import (
 	"fmt"
+	"os"
 	"testing"
 )
 
@@ -122,6 +123,10 @@ func TestNetInterfaces(t *testing.T) {
 }
 
 func TestNetConnections(t *testing.T) {
+	if ci := os.Getenv("CI"); ci != "" { // skip if test on drone.io
+		return
+	}
+
 	v, err := NetConnections("inet")
 	if err != nil {
 		t.Errorf("could not get NetConnections: %v", err)
