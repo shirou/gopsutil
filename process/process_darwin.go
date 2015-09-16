@@ -4,6 +4,7 @@ package process
 
 import (
 	"bytes"
+	"fmt"
 	"strconv"
 	"strings"
 	"syscall"
@@ -92,7 +93,18 @@ func (p *Process) Cwd() (string, error) {
 	return "", common.NotImplementedError
 }
 func (p *Process) Parent() (*Process, error) {
-	return p, common.NotImplementedError
+	r, err := callLsof("R", p.Pid)
+	if err != nil {
+		return nil, err
+	}
+	if len(r) != 1 { // TODO: pid 1
+		return nil, fmt.Errorf("wrong number of parents")
+	}
+	v, err := strconv.Atoi(r[0])
+	if err != nil {
+		return nil, err
+	}
+	return NewProcess(int32(v))
 }
 func (p *Process) Status() (string, error) {
 	r, err := callPs("state", p.Pid, false)
@@ -166,15 +178,6 @@ func (p *Process) NumFDs() (int32, error) {
 	return 0, common.NotImplementedError
 }
 func (p *Process) NumThreads() (int32, error) {
-	/*
-		k, err := p.getKProc()
-		if err != nil {
-			return 0, err
-		}
-
-			return k.KiNumthreads, nil
-	*/
-
 	r, err := callPs("utime,stime", p.Pid, true)
 	if err != nil {
 		return 0, err
@@ -407,6 +410,29 @@ func callPs(arg string, pid int32, threadOption bool) ([][]string, error) {
 		}
 		if len(lr) != 0 {
 			ret = append(ret, lr)
+		}
+	}
+
+	return ret, nil
+}
+
+func callLsof(arg string, pid int32) ([]string, error) {
+	var cmd []string
+	if pid == 0 { // will get from all processes.
+		cmd = []string{"-F" + arg}
+	} else {
+		cmd = []string{"-a", "-F" + arg, "-p", strconv.Itoa(int(pid))}
+	}
+	out, err := invoke.Command("/usr/sbin/lsof", cmd...)
+	if err != nil {
+		return []string{}, err
+	}
+	lines := strings.Split(string(out), "\n")
+
+	var ret []string
+	for _, l := range lines[1:] {
+		if strings.HasPrefix(l, arg) {
+			ret = append(ret, l[1:]) // delete first char
 		}
 	}
 
