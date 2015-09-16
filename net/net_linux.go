@@ -3,6 +3,7 @@
 package net
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -134,7 +135,7 @@ func NetConnections(kind string) ([]NetConnectionStat, error) {
 		}
 		n, err := parseNetLine(rr)
 		if err != nil {
-			// fmt.Println(err) // TODO: should debug print?
+			fmt.Println(err) // TODO: should debug print?
 			continue
 		}
 
