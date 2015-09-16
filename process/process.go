@@ -5,8 +5,15 @@ import (
 	"runtime"
 	"time"
 
-	cpu "github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/common"
+	"github.com/shirou/gopsutil/cpu"
 )
+
+var invoke common.Invoker
+
+func init() {
+	invoke = common.Invoke{}
+}
 
 type Process struct {
 	Pid            int32 `json:"pid"`

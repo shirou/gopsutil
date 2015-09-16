@@ -9,11 +9,59 @@ package common
 import (
 	"bufio"
 	"errors"
+	"io/ioutil"
+	"net/url"
 	"os"
+	"os/exec"
+	"path"
 	"reflect"
+	"runtime"
 	"strconv"
 	"strings"
 )
+
+type Invoker interface {
+	Command(string, ...string) ([]byte, error)
+}
+
+type Invoke struct{}
+
+func (i Invoke) Command(name string, arg ...string) ([]byte, error) {
+	return exec.Command(name, arg...).Output()
+}
+
+type FakeInvoke struct {
+	CommandExpectedDir string // CommandExpectedDir specifies dir which includes expected outputs.
+	Suffix             string // Suffix species expected file name suffix such as "fail"
+	Error              error  // If Error specfied, return the error.
+}
+
+// Command in FakeInvoke returns from expected file if exists.
+func (i FakeInvoke) Command(name string, arg ...string) ([]byte, error) {
+	if i.Error != nil {
+		return []byte{}, i.Error
+	}
+
+	arch := runtime.GOOS
+
+	fname := strings.Join(append([]string{name}, arg...), "")
+	fname = url.QueryEscape(fname)
+	var dir string
+	if i.CommandExpectedDir == "" {
+		dir = "expected"
+	} else {
+		dir = i.CommandExpectedDir
+	}
+	fpath := path.Join(dir, arch, fname)
+	if i.Suffix != "" {
+		fpath += "_" + i.Suffix
+	}
+	if PathExists(fpath) {
+		return ioutil.ReadFile(fpath)
+	} else {
+		return exec.Command(name, arg...).Output()
+	}
+}
 
 var NotImplementedError = errors.New("not implemented yet")
 

@@ -4,15 +4,14 @@ package process
 
 import (
 	"bytes"
-	"os/exec"
 	"strconv"
 	"strings"
 	"syscall"
 	"unsafe"
 
-	common "github.com/shirou/gopsutil/common"
-	cpu "github.com/shirou/gopsutil/cpu"
-	net "github.com/shirou/gopsutil/net"
+	"github.com/shirou/gopsutil/common"
+	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/net"
 )
 
 // copied from sys/sysctl.h
@@ -391,7 +390,7 @@ func callPs(arg string, pid int32, threadOption bool) ([][]string, error) {
 	} else {
 		cmd = []string{"-x", "-o", arg, "-p", strconv.Itoa(int(pid))}
 	}
-	out, err := exec.Command("/bin/ps", cmd...).Output()
+	out, err := invoke.Command("/bin/ps", cmd...)
 	if err != nil {
 		return [][]string{}, err
 	}

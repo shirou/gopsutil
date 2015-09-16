@@ -1,12 +1,18 @@
 package process
 
 import (
+	"fmt"
 	"os"
 	"runtime"
 	"strings"
+	"sync"
 	"testing"
 	"time"
+
+	"github.com/shirou/gopsutil/common"
 )
+
+var mu sync.Mutex
 
 func testGetProcess() Process {
 	checkPid := os.Getpid() // process.test
@@ -21,6 +27,21 @@ func Test_Pids(t *testing.T) {
 	}
 	if len(ret) == 0 {
 		t.Errorf("could not get pids %v", ret)
+	}
+}
+
+func Test_Pids_Fail(t *testing.T) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	invoke = common.FakeInvoke{Suffix: "fail", Error: fmt.Errorf("hoge")}
+	ret, err := Pids()
+	invoke = common.Invoke{}
+	if err != nil {
+		t.Errorf("error %v", err)
+	}
+	if len(ret) != 9 {
+		t.Errorf("wrong getted pid nums: %v/%d", ret, len(ret))
 	}
 }
 
