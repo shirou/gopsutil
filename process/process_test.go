@@ -31,6 +31,10 @@ func Test_Pids(t *testing.T) {
 }
 
 func Test_Pids_Fail(t *testing.T) {
+	if runtime.GOOS != "darwin" {
+		t.Skip("darwin only")
+	}
+
 	mu.Lock()
 	defer mu.Unlock()
 
