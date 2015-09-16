@@ -3,6 +3,7 @@
 package common
 
 import (
+	"os/exec"
 	"strconv"
 	"strings"
 )
@@ -15,7 +16,11 @@ func CallLsof(invoke Invoker, pid int32, args ...string) ([]string, error) {
 		cmd = []string{"-a", "-n", "-P", "-p", strconv.Itoa(int(pid))}
 	}
 	cmd = append(cmd, args...)
-	out, err := invoke.Command("/usr/bin/lsof", cmd...)
+	lsof, err := exec.LookPath("lsof")
+	if err != nil {
+		return []string{}, err
+	}
+	out, err := invoke.Command(lsof, cmd...)
 	if err != nil {
 		return []string{}, err
 	}
