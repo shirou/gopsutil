@@ -286,7 +286,7 @@ func (p *Process) OpenFiles() ([]OpenFilesStat, error) {
 }
 
 func (p *Process) Connections() ([]net.NetConnectionStat, error) {
-	return nil, common.NotImplementedError
+	return net.NetConnectionsPid("all", p.Pid)
 }
 
 func (p *Process) IsRunning() (bool, error) {

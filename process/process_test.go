@@ -97,7 +97,7 @@ func Test_Process_MemoryInfo(t *testing.T) {
 
 	v, err := p.MemoryInfo()
 	if err != nil {
-		t.Errorf("geting ppid error %v", err)
+		t.Errorf("geting memory info error %v", err)
 	}
 	empty := MemoryInfoStat{}
 	if v == nil || *v == empty {
@@ -110,7 +110,7 @@ func Test_Process_CmdLine(t *testing.T) {
 
 	v, err := p.Cmdline()
 	if err != nil {
-		t.Errorf("geting ppid error %v", err)
+		t.Errorf("geting cmdline error %v", err)
 	}
 	if !strings.Contains(v, "process.test") {
 		t.Errorf("invalid cmd line %v", v)
@@ -134,7 +134,7 @@ func Test_Process_Status(t *testing.T) {
 
 	v, err := p.Status()
 	if err != nil {
-		t.Errorf("geting ppid error %v", err)
+		t.Errorf("geting status error %v", err)
 	}
 	if !strings.HasPrefix(v, "S") && v != "running" && v != "sleeping" {
 		t.Errorf("could not get state %v", v)
@@ -287,5 +287,20 @@ func Test_Parent(t *testing.T) {
 	}
 	if c.Pid == 0 {
 		t.Fatalf("wrong parent pid")
+	}
+}
+
+func Test_Connections(t *testing.T) {
+	p := testGetProcess()
+
+	c, err := p.Connections()
+	if err != nil {
+		t.Fatalf("error %v", err)
+	}
+	// TODO:
+	// Since go test open no conneciton, ret is empty.
+	// should invoke child process or other solutions.
+	if len(c) != 0 {
+		t.Fatalf("wrong connections")
 	}
 }

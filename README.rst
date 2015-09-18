@@ -186,8 +186,9 @@ threads
 cpu_percent
 cpu_affinity
 memory_percent
+parent              x            x
 children
-connections
+connections         x            x
 is_running
 ================ ===== ======= ====== =======
 
@@ -231,7 +232,6 @@ hostname              x     x      x       x
   - wait_procs
   - Process class
 
-    - parent (use ppid instead)
     - as_dict
     - wait
 
