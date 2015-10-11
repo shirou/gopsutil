@@ -22,9 +22,9 @@ func CallLsof(invoke Invoker, pid int32, args ...string) ([]string, error) {
 	}
 	out, err := invoke.Command(lsof, cmd...)
 	if err != nil {
-		// if no pid found, lsof returnes code 1 but have output.
+		// if no pid found, lsof returnes code 1.
 		if err.Error() == "exit status 1" && len(out) == 0 {
-			return []string{}, err
+			return []string{}, nil
 		}
 	}
 	lines := strings.Split(string(out), "\n")
