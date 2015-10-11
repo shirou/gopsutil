@@ -108,7 +108,7 @@ func NetConnectionsPid(kind string, pid int32) ([]NetConnectionStat, error) {
 	case "all":
 		fallthrough
 	case "inet":
-		args = append(args, "tcp")
+		args = append(args, "tcp", "-i", "udp")
 	case "inet4":
 		args = append(args, "4")
 	case "inet6":
