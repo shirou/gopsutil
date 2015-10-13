@@ -26,14 +26,13 @@ type LSB struct {
 }
 
 func HostInfo() (*HostInfoStat, error) {
-	hostname, err := os.Hostname()
-	if err != nil {
-		return nil, err
+	ret := &HostInfoStat{
+		OS: runtime.GOOS,
 	}
 
-	ret := &HostInfoStat{
-		Hostname: hostname,
-		OS:       runtime.GOOS,
+	hostname, err := os.Hostname()
+	if err == nil {
+		ret.Hostname = hostname
 	}
 
 	platform, family, version, err := GetPlatformInformation()
