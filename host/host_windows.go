@@ -12,7 +12,7 @@ import (
 	"github.com/StackExchange/wmi"
 
 	common "github.com/shirou/gopsutil/common"
-	process "github.com/shirou/gopsutil/process"
+	process "github.com/shirou/gopsutil/common/process"
 )
 
 var (
@@ -43,6 +43,8 @@ func HostInfo() (*HostInfoStat, error) {
 		ret.Platform = platform
 		ret.PlatformFamily = family
 		ret.PlatformVersion = version
+	} else {
+		return ret, err
 	}
 
 	ret.Uptime, err = BootTime()

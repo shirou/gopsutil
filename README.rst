@@ -8,7 +8,7 @@ gopsutil: psutil for golang
         :target: https://coveralls.io/r/shirou/gopsutil?branch=master
 
 
-This is a port of psutil (http://pythonhosted.org/psutil/). The challenge is porting all 
+This is a port of psutil (http://pythonhosted.org/psutil/). The challenge is porting all
 psutil functions on some architectures...
 
 .. highlights:: Package Structure Changed!
@@ -59,6 +59,7 @@ The output is below.
   Total: 3179569152, Free:284233728, UsedPercent:84.508194%
   {"total":3179569152,"available":492572672,"used":2895335424,"usedPercent":84.50819439828305, (snip)}
 
+You can set an alternative location to /proc by setting the HOST_PROC environment variable.
 
 Documentation
 ------------------------
@@ -178,7 +179,7 @@ suspend             x     x      x
 resume              x     x      x
 terminate           x     x      x
 kill                x     x      x
-username            x           
+username            x
 ionice
 rlimit
 num_handlres
@@ -204,7 +205,7 @@ hostname              x     x      x       x
   platform            x     x      x
   platformfamiliy     x     x      x
   virtualization      x
-**CPU**       
+**CPU**
   VendorID            x     x      x       x
   Family              x     x      x       x
   Model               x     x      x       x
@@ -213,16 +214,16 @@ hostname              x     x      x       x
   CoreID              x
   Cores               x                    x
   ModelName           x     x      x       x
-**LoadAvg**              
+**LoadAvg**
   Load1               x     x      x
   Load5               x     x      x
   Load15              x     x      x
-**GetDockerID**          
+**GetDockerID**
   container id        x     no    no      no
-**CgroupsCPU**           
+**CgroupsCPU**
   user                x     no    no      no
   system              x     no    no      no
-**CgroupsMem**           
+**CgroupsMem**
   various             x     no    no      no
 ================== ===== ======= ====== =======
 
