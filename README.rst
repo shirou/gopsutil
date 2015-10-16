@@ -183,7 +183,7 @@ ionice
 rlimit
 num_handlres
 threads
-cpu_percent
+cpu_percent         x            x
 cpu_affinity
 memory_percent
 parent              x            x
