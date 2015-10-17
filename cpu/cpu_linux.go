@@ -3,6 +3,7 @@
 package cpu
 
 import (
+	"fmt"
 	"errors"
 	"os/exec"
 	"strconv"
@@ -55,19 +56,36 @@ func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 	return ret, nil
 }
 
+func finishCPUInfo(c *CPUInfoStat) error {
+	if c.Mhz == 0 {
+		lines, err := common.ReadLines(fmt.Sprintf("/sys/devices/system/cpu/cpu%d/cpufreq/cpuinfo_max_freq", c.CPU))
+		if err == nil {
+			value, err := strconv.ParseFloat(lines[0], 64)
+			if err != nil {
+				return err
+			}
+			c.Mhz = value
+		}
+	}
+	if len(c.CoreID) == 0 {
+		lines, err := common.ReadLines(fmt.Sprintf("/sys/devices/system/cpu/cpu%d/topology/core_id", c.CPU))
+		if err == nil {	
+			c.CoreID = lines[0]
+		}
+	}
+	return nil
+}
+
 func CPUInfo() ([]CPUInfoStat, error) {
 	filename := "/proc/cpuinfo"
 	lines, _ := common.ReadLines(filename)
 
 	var ret []CPUInfoStat
 
-	var c CPUInfoStat
+	c := CPUInfoStat{CPU: -1}
 	for _, line := range lines {
 		fields := strings.Split(line, ":")
 		if len(fields) < 2 {
-			if c.VendorID != "" {
-				ret = append(ret, c)
-			}
 			continue
 		}
 		key := strings.TrimSpace(fields[0])
@@ -75,6 +93,13 @@ func CPUInfo() ([]CPUInfoStat, error) {
 
 		switch key {
 		case "processor":
+			if c.CPU >= 0 {
+				err := finishCPUInfo(&c)
+				if err != nil {
+					return ret, err
+				}
+				ret = append(ret, c)
+			}
 			c = CPUInfoStat{}
 			t, err := strconv.ParseInt(value, 10, 64)
 			if err != nil {
@@ -117,9 +142,18 @@ func CPUInfo() ([]CPUInfoStat, error) {
 				return ret, err
 			}
 			c.Cores = int32(t)
-		case "flags":
-			c.Flags = strings.Split(value, ",")
+		case "flags","Features":
+			c.Flags = strings.FieldsFunc(value, func(r rune) bool {
+				return r == ',' || r == ' '
+			})
 		}
+	}
+	if c.CPU >= 0 {
+		err := finishCPUInfo(&c)
+		if err != nil {
+			return ret, err
+		}
+		ret = append(ret, c)
 	}
 	return ret, nil
 }
