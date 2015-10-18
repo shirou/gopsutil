@@ -60,6 +60,7 @@ The output is below.
   {"total":3179569152,"available":492572672,"used":2895335424,"usedPercent":84.50819439828305, (snip)}
 
 You can set an alternative location to /proc by setting the HOST_PROC environment variable.
+You can set an alternative location to /sys by setting the HOST_SYS environment variable.
 
 Documentation
 ------------------------

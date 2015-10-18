@@ -3,6 +3,7 @@
 package cpu
 
 import (
+	"path/filepath"
 	"fmt"
 	"errors"
 	"os/exec"
@@ -56,9 +57,14 @@ func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 	return ret, nil
 }
 
+func sysCpuPath(cpu int32, relPath string) string {
+	root :=  common.GetEnv("HOST_SYS", "/sys")
+	return filepath.Join(root, fmt.Sprintf("devices/system/cpu/cpu%d", cpu), relPath)
+}
+
 func finishCPUInfo(c *CPUInfoStat) error {
 	if c.Mhz == 0 {
-		lines, err := common.ReadLines(fmt.Sprintf("/sys/devices/system/cpu/cpu%d/cpufreq/cpuinfo_max_freq", c.CPU))
+		lines, err := common.ReadLines(sysCpuPath(c.CPU, "cpufreq/cpuinfo_max_freq"))
 		if err == nil {
 			value, err := strconv.ParseFloat(lines[0], 64)
 			if err != nil {
@@ -68,7 +74,7 @@ func finishCPUInfo(c *CPUInfoStat) error {
 		}
 	}
 	if len(c.CoreID) == 0 {
-		lines, err := common.ReadLines(fmt.Sprintf("/sys/devices/system/cpu/cpu%d/topology/core_id", c.CPU))
+		lines, err := common.ReadLines(sysCpuPath(c.CPU, "topology/core_id"))
 		if err == nil {	
 			c.CoreID = lines[0]
 		}
@@ -77,7 +83,7 @@ func finishCPUInfo(c *CPUInfoStat) error {
 }
 
 func CPUInfo() ([]CPUInfoStat, error) {
-	filename := common.GetEnv("HOST_PROC", "/proc") + "cpuinfo"
+	filename := filepath.Join(common.GetEnv("HOST_PROC", "/proc"), "cpuinfo")
 	lines, _ := common.ReadLines(filename)
 
 	var ret []CPUInfoStat
