@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	common "github.com/shirou/gopsutil/common"
+	"github.com/shirou/gopsutil/internal/common"
 )
 
 // NetIOCounters returnes network I/O statistics for every network
@@ -15,7 +15,7 @@ import (
 // every network interface installed on the system is returned
 // separately.
 func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
-	filename := common.GetEnv("HOST_PROC", "/proc") + "/net/dev"
+	filename := common.HostProc("net/dev")
 	lines, err := common.ReadLines(filename)
 	if err != nil {
 		return nil, err

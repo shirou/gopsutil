@@ -4,14 +4,14 @@ package docker
 
 import (
 	"encoding/json"
-        "os"
+	"os"
 	"os/exec"
 	"path"
 	"strconv"
 	"strings"
 
-	common "github.com/shirou/gopsutil/common"
 	cpu "github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/internal/common"
 )
 
 // GetDockerIDList returnes a list of DockerID.
@@ -49,9 +49,9 @@ func CgroupCPU(containerid string, base string) (*cpu.CPUTimesStat, error) {
 	}
 	statfile := path.Join(base, containerid, "cpuacct.stat")
 
-        if _, err := os.Stat(statfile); os.IsNotExist(err) {
-            statfile = path.Join("/sys/fs/cgroup/cpuacct/system.slice",  "docker-" + containerid + ".scope", "cpuacct.stat")
-        }
+	if _, err := os.Stat(statfile); os.IsNotExist(err) {
+		statfile = path.Join("/sys/fs/cgroup/cpuacct/system.slice", "docker-"+containerid+".scope", "cpuacct.stat")
+	}
 
 	lines, err := common.ReadLines(statfile)
 	if err != nil {
@@ -91,9 +91,9 @@ func CgroupMem(containerid string, base string) (*CgroupMemStat, error) {
 	}
 	statfile := path.Join(base, containerid, "memory.stat")
 
-        if _, err := os.Stat(statfile); os.IsNotExist(err) {
-            statfile = path.Join("/sys/fs/cgroup/memory/system.slice",  "docker-" + containerid + ".scope", "memory.stat")
-        }
+	if _, err := os.Stat(statfile); os.IsNotExist(err) {
+		statfile = path.Join("/sys/fs/cgroup/memory/system.slice", "docker-"+containerid+".scope", "memory.stat")
+	}
 
 	// empty containerid means all cgroup
 	if len(containerid) == 0 {

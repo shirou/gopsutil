@@ -3,14 +3,13 @@
 package cpu
 
 import (
-	"path/filepath"
-	"fmt"
 	"errors"
+	"fmt"
 	"os/exec"
 	"strconv"
 	"strings"
 
-	common "github.com/shirou/gopsutil/common"
+	"github.com/shirou/gopsutil/internal/common"
 )
 
 var cpu_tick = float64(100)
@@ -27,7 +26,7 @@ func init() {
 }
 
 func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
-	filename := common.GetEnv("HOST_PROC", "/proc") + "/stat"
+	filename := common.HostProc("stat")
 	var lines = []string{}
 	if percpu {
 		var startIdx uint = 1
@@ -58,8 +57,7 @@ func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 }
 
 func sysCpuPath(cpu int32, relPath string) string {
-	root :=  common.GetEnv("HOST_SYS", "/sys")
-	return filepath.Join(root, fmt.Sprintf("devices/system/cpu/cpu%d", cpu), relPath)
+	return common.HostSys(fmt.Sprintf("devices/system/cpu/cpu%d", cpu), relPath)
 }
 
 func finishCPUInfo(c *CPUInfoStat) error {
@@ -75,7 +73,7 @@ func finishCPUInfo(c *CPUInfoStat) error {
 	}
 	if len(c.CoreID) == 0 {
 		lines, err := common.ReadLines(sysCpuPath(c.CPU, "topology/core_id"))
-		if err == nil {	
+		if err == nil {
 			c.CoreID = lines[0]
 		}
 	}
@@ -83,7 +81,7 @@ func finishCPUInfo(c *CPUInfoStat) error {
 }
 
 func CPUInfo() ([]CPUInfoStat, error) {
-	filename := filepath.Join(common.GetEnv("HOST_PROC", "/proc"), "cpuinfo")
+	filename := common.HostProc("cpuinfo")
 	lines, _ := common.ReadLines(filename)
 
 	var ret []CPUInfoStat
@@ -148,7 +146,7 @@ func CPUInfo() ([]CPUInfoStat, error) {
 				return ret, err
 			}
 			c.Cores = int32(t)
-		case "flags","Features":
+		case "flags", "Features":
 			c.Flags = strings.FieldsFunc(value, func(r rune) bool {
 				return r == ',' || r == ' '
 			})
