@@ -11,8 +11,8 @@ import (
 
 	"github.com/StackExchange/wmi"
 
-	common "github.com/shirou/gopsutil/common"
-	process "github.com/shirou/gopsutil/common/process"
+	"github.com/shirou/gopsutil/internal/common"
+	process "github.com/shirou/gopsutil/process"
 )
 
 var (
