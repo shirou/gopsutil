@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/shirou/gopsutil/common"
+	"github.com/shirou/gopsutil/internal/common"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/net"
 )

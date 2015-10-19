@@ -7,7 +7,7 @@ import (
 	"encoding/binary"
 	"unsafe"
 
-	common "github.com/shirou/gopsutil/common"
+	"github.com/shirou/gopsutil/internal/common"
 	cpu "github.com/shirou/gopsutil/cpu"
 	net "github.com/shirou/gopsutil/net"
 )
