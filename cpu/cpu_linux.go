@@ -80,13 +80,20 @@ func finishCPUInfo(c *CPUInfoStat) error {
 	return nil
 }
 
+// CPUInfo on linux will return 1 item per physical thread.
+//
+// CPUs have three levels of counting: sockets, cores, threads.
+// Cores with HyperThreading count as having 2 threads per core.
+// Sockets often come with many physical CPU cores.
+// For example a single socket board with two cores each with HT will
+// return 4 CPUInfoStat structs on Linux and the "Cores" field set to 1.
 func CPUInfo() ([]CPUInfoStat, error) {
 	filename := common.HostProc("cpuinfo")
 	lines, _ := common.ReadLines(filename)
 
 	var ret []CPUInfoStat
 
-	c := CPUInfoStat{CPU: -1}
+	c := CPUInfoStat{CPU: -1, Cores: 1}
 	for _, line := range lines {
 		fields := strings.Split(line, ":")
 		if len(fields) < 2 {
@@ -104,7 +111,7 @@ func CPUInfo() ([]CPUInfoStat, error) {
 				}
 				ret = append(ret, c)
 			}
-			c = CPUInfoStat{}
+			c = CPUInfoStat{Cores: 1}
 			t, err := strconv.ParseInt(value, 10, 64)
 			if err != nil {
 				return ret, err
@@ -140,12 +147,6 @@ func CPUInfo() ([]CPUInfoStat, error) {
 			c.PhysicalID = value
 		case "core id":
 			c.CoreID = value
-		case "cpu cores":
-			t, err := strconv.ParseInt(value, 10, 64)
-			if err != nil {
-				return ret, err
-			}
-			c.Cores = int32(t)
 		case "flags", "Features":
 			c.Flags = strings.FieldsFunc(value, func(r rune) bool {
 				return r == ',' || r == ' '
