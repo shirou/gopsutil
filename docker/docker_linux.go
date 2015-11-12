@@ -45,12 +45,12 @@ func GetDockerIDList() ([]string, error) {
 // containerid = docker-<container id>.scope and base=/sys/fs/cgroup/cpuacct/system.slice/
 func CgroupCPU(containerid string, base string) (*cpu.CPUTimesStat, error) {
 	if len(base) == 0 {
-		base = "/sys/fs/cgroup/cpuacct/docker"
+		base = common.HostSys("fs/cgroup/cpuacct/docker")
 	}
 	statfile := path.Join(base, containerid, "cpuacct.stat")
 
 	if _, err := os.Stat(statfile); os.IsNotExist(err) {
-		statfile = path.Join("/sys/fs/cgroup/cpuacct/system.slice", "docker-"+containerid+".scope", "cpuacct.stat")
+		statfile = path.Join(common.HostSys("fs/cgroup/cpuacct/system.slice"), "docker-"+containerid+".scope", "cpuacct.stat")
 	}
 
 	lines, err := common.ReadLines(statfile)
@@ -82,17 +82,17 @@ func CgroupCPU(containerid string, base string) (*cpu.CPUTimesStat, error) {
 }
 
 func CgroupCPUDocker(containerid string) (*cpu.CPUTimesStat, error) {
-	return CgroupCPU(containerid, "/sys/fs/cgroup/cpuacct/docker")
+	return CgroupCPU(containerid, common.HostSys("fs/cgroup/cpuacct/docker"))
 }
 
 func CgroupMem(containerid string, base string) (*CgroupMemStat, error) {
 	if len(base) == 0 {
-		base = "/sys/fs/cgroup/memory/docker"
+		base = common.HostSys("fs/cgroup/memory/docker")
 	}
 	statfile := path.Join(base, containerid, "memory.stat")
 
 	if _, err := os.Stat(statfile); os.IsNotExist(err) {
-		statfile = path.Join("/sys/fs/cgroup/memory/system.slice", "docker-"+containerid+".scope", "memory.stat")
+		statfile = path.Join(common.HostSys("fs/cgroup/memory/system.slice"), "docker-"+containerid+".scope", "memory.stat")
 	}
 
 	// empty containerid means all cgroup
@@ -171,7 +171,7 @@ func CgroupMem(containerid string, base string) (*CgroupMemStat, error) {
 }
 
 func CgroupMemDocker(containerid string) (*CgroupMemStat, error) {
-	return CgroupMem(containerid, "/sys/fs/cgroup/memory/docker")
+	return CgroupMem(containerid, common.HostSys("fs/cgroup/memory/docker"))
 }
 
 func (m CgroupMemStat) String() string {
