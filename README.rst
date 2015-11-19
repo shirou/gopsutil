@@ -119,6 +119,11 @@ Several methods have been added which are not present in psutil, but will provid
 
   - various status
 
+- net_protocols (linux only)
+
+  - system wide stats on network protocols (i.e IP, TCP, UDP, etc.)
+  - sourced from /proc/net/snmp
+
 Some codes are ported from Ohai. many thanks.
 
 
@@ -145,6 +150,7 @@ users                x      x      x       x
 pids                 x      x      x       x
 pid_exists           x      x      x       x
 net_connections      x             x
+net_protocols        x
 net_if_addrs
 net_if_stats
 ================= ====== ======= ====== =======
