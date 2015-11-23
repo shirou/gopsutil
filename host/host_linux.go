@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 	"unsafe"
 
 	"github.com/shirou/gopsutil/internal/common"
@@ -46,9 +47,10 @@ func HostInfo() (*HostInfoStat, error) {
 		ret.VirtualizationSystem = system
 		ret.VirtualizationRole = role
 	}
-	uptime, err := BootTime()
+	boot, err := BootTime()
 	if err == nil {
-		ret.Uptime = uptime
+		ret.BootTime = boot
+		ret.Uptime = uptime(boot)
 	}
 
 	return ret, nil
@@ -76,6 +78,18 @@ func BootTime() (uint64, error) {
 	}
 
 	return 0, fmt.Errorf("could not find btime")
+}
+
+func uptime(boot uint64) uint64 {
+	return uint64(time.Now().Unix()) - boot
+}
+
+func Uptime() (uint64, error) {
+	boot, err := BootTime()
+	if err != nil {
+		return 0, err
+	}
+	return uptime(boot), nil
 }
 
 func Users() ([]UserStat, error) {
