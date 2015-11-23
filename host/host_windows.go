@@ -47,9 +47,10 @@ func HostInfo() (*HostInfoStat, error) {
 		return ret, err
 	}
 
-	ret.Uptime, err = BootTime()
-	if err != nil {
-		return ret, err
+	boot, err := BootTime()
+	if err == nil {
+		ret.BootTime = boot
+		ret.Uptime = uptime(boot)
 	}
 
 	procs, err := process.Pids()
@@ -85,6 +86,18 @@ func BootTime() (uint64, error) {
 	now := time.Now()
 	t := osInfo.LastBootUpTime.Local()
 	return uint64(now.Sub(t).Seconds()), nil
+}
+
+func uptime(boot uint64) uint64 {
+	return uint64(time.Now().Unix()) - boot
+}
+
+func Uptime() (uint64, error) {
+	boot, err := BootTime()
+	if err != nil {
+		return 0, err
+	}
+	return uptime(boot), nil
 }
 
 func GetPlatformInformation() (platform string, family string, version string, err error) {
