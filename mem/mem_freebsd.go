@@ -75,7 +75,7 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 		Cached:   parsed[4] * p,
 		Buffers:  parsed[5],
 		Wired:    parsed[6] * p,
-	}
+	}, nil
 
 	ret.Available = ret.Inactive + ret.Cached + ret.Free
 	ret.Used = ret.Active + ret.Wired + ret.Cached
@@ -91,7 +91,6 @@ func SwapMemory() (*SwapMemoryStat, error) {
 	if err != nil {
 		return nil, err
 	}
-	var ret *SwapMemoryStat
 	for _, line := range strings.Split(string(out), "\n") {
 		values := strings.Fields(line)
 		// skip title line
@@ -117,7 +116,7 @@ func SwapMemory() (*SwapMemoryStat, error) {
 			return nil, err
 		}
 
-		ret = &SwapMemoryStat{
+		return &SwapMemoryStat{
 			Total:       total_v,
 			Used:        used_v,
 			Free:        free_v,
@@ -125,5 +124,5 @@ func SwapMemory() (*SwapMemoryStat, error) {
 		}
 	}
 
-	return ret, nil
+	return nil, errors.New("no swap devices found")
 }
