@@ -7,8 +7,8 @@ import (
 	"encoding/binary"
 	"unsafe"
 
-	"github.com/shirou/gopsutil/internal/common"
 	cpu "github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/internal/common"
 	net "github.com/shirou/gopsutil/net"
 )
 
@@ -168,7 +168,19 @@ func (p *Process) MemoryPercent() (float32, error) {
 }
 
 func (p *Process) Children() ([]*Process, error) {
-	return nil, common.NotImplementedError
+	pids, err := common.CallPgrep(invoke, p.Pid)
+	if err != nil {
+		return nil, err
+	}
+	ret := make([]*Process, 0, len(pids))
+	for _, pid := range pids {
+		np, err := NewProcess(pid)
+		if err != nil {
+			return nil, err
+		}
+		ret = append(ret, np)
+	}
+	return ret, nil
 }
 
 func (p *Process) OpenFiles() ([]OpenFilesStat, error) {

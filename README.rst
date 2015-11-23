@@ -195,7 +195,7 @@ cpu_percent         x            x
 cpu_affinity
 memory_percent
 parent              x            x
-children
+children            x     x      x
 connections         x            x
 is_running
 ================ ===== ======= ====== =======
