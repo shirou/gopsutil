@@ -38,3 +38,29 @@ func CallLsof(invoke Invoker, pid int32, args ...string) ([]string, error) {
 	}
 	return ret, nil
 }
+
+func CallPgrep(invoke Invoker, pid int32) ([]int32, error) {
+	var cmd []string
+	cmd = []string{"-P", strconv.Itoa(int(pid))}
+	pgrep, err := exec.LookPath("pgrep")
+	if err != nil {
+		return []int32{}, err
+	}
+	out, err := invoke.Command(pgrep, cmd...)
+	if err != nil {
+		return []int32{}, err
+	}
+	lines := strings.Split(string(out), "\n")
+	ret := make([]int32, 0, len(lines))
+	for _, l := range lines {
+		if len(l) == 0 {
+			continue
+		}
+		i, err := strconv.Atoi(l)
+		if err != nil {
+			continue
+		}
+		ret = append(ret, int32(i))
+	}
+	return ret, nil
+}
