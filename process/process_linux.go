@@ -219,7 +219,16 @@ func (p *Process) Children() ([]*Process, error) {
 }
 
 func (p *Process) OpenFiles() ([]OpenFilesStat, error) {
-	return nil, common.NotImplementedError
+	_, ofs, err := p.fillFromfd()
+	if err != nil {
+		return nil, err
+	}
+	ret := make([]OpenFilesStat, 0, len(ofs))
+	for i, o := range ofs {
+		ret[i] = *o
+	}
+
+	return ret, nil
 }
 
 func (p *Process) Connections() ([]net.NetConnectionStat, error) {
