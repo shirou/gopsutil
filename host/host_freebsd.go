@@ -55,7 +55,7 @@ func HostInfo() (*HostInfoStat, error) {
 	return ret, nil
 }
 
-func BootTime() (int64, error) {
+func BootTime() (uint64, error) {
 	values, err := common.DoSysctrl("kern.boottime")
 	if err != nil {
 		return 0, err
@@ -63,7 +63,7 @@ func BootTime() (int64, error) {
 	// ex: { sec = 1392261637, usec = 627534 } Thu Feb 13 12:20:37 2014
 	v := strings.Replace(values[2], ",", "", 1)
 
-	boottime, err := strconv.ParseInt(v, 10, 64)
+	boottime, err := strconv.ParseUint(v, 10, 64)
 	if err != nil {
 		return 0, err
 	}
