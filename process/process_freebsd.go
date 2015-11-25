@@ -6,6 +6,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"unsafe"
+	"strings"
+	"syscall"
 
 	cpu "github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/internal/common"
@@ -53,7 +55,19 @@ func (p *Process) Exe() (string, error) {
 	return "", common.NotImplementedError
 }
 func (p *Process) Cmdline() (string, error) {
-	return "", common.NotImplementedError
+	mib := []int32{CTLKern, KernProc, KernProcArgs, p.Pid}
+	buf, _, err := common.CallSyscall(mib)
+	if err != nil {
+		return "", err
+	}
+	ret := strings.FieldsFunc(string(buf), func(r rune) bool {
+		if r == '\u0000' {
+			return true
+		}
+		return false
+	})
+
+	return strings.Join(ret, " "), nil
 }
 func (p *Process) CreateTime() (int64, error) {
 	return 0, common.NotImplementedError
@@ -121,7 +135,14 @@ func (p *Process) Rlimit() ([]RlimitStat, error) {
 	return rlimit, common.NotImplementedError
 }
 func (p *Process) IOCounters() (*IOCountersStat, error) {
-	return nil, common.NotImplementedError
+	k, err := p.getKProc()
+	if err != nil {
+		return nil, err
+	}
+	return &IOCountersStat{
+		ReadCount:  uint64(k.KiRusage.Inblock),
+		WriteCount: uint64(k.KiRusage.Oublock),
+	}, nil
 }
 func (p *Process) NumCtxSwitches() (*NumCtxSwitchesStat, error) {
 	return nil, common.NotImplementedError
@@ -142,7 +163,15 @@ func (p *Process) Threads() (map[string]string, error) {
 	return ret, common.NotImplementedError
 }
 func (p *Process) CPUTimes() (*cpu.CPUTimesStat, error) {
-	return nil, common.NotImplementedError
+	k, err := p.getKProc()
+	if err != nil {
+		return nil, err
+	}
+	return &cpu.CPUTimesStat{
+		CPU:    "cpu",
+		User:   float64(k.KiRusage.Utime.Sec) + float64(k.KiRusage.Utime.Usec)/1000000,
+		System: float64(k.KiRusage.Stime.Sec) + float64(k.KiRusage.Stime.Usec)/1000000,
+	}, nil
 }
 func (p *Process) CPUAffinity() ([]int32, error) {
 	return nil, common.NotImplementedError
@@ -152,13 +181,16 @@ func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	ret := &MemoryInfoStat{
-		RSS: uint64(k.KiRssize),
-		VMS: uint64(k.KiSize),
+	v, err := syscall.Sysctl("vm.stats.vm.v_page_size")
+	if err != nil {
+		return nil, err
 	}
+	pageSize := binary.LittleEndian.Uint16([]byte(v))
 
-	return ret, nil
+	return &MemoryInfoStat{
+		RSS: uint64(k.KiRssize) * uint64(pageSize),
+		VMS: uint64(k.KiSize),
+	}, nil
 }
 func (p *Process) MemoryInfoEx() (*MemoryInfoExStat, error) {
 	return nil, common.NotImplementedError
@@ -241,11 +273,7 @@ func parseKinfoProc(buf []byte) (KinfoProc, error) {
 	var k KinfoProc
 	br := bytes.NewReader(buf)
 	err := binary.Read(br, binary.LittleEndian, &k)
-	if err != nil {
-		return k, err
-	}
-
-	return k, nil
+	return k, err
 }
 
 func (p *Process) getKProc() (*KinfoProc, error) {
