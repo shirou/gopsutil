@@ -65,8 +65,8 @@ type NetInterfaceStat struct {
 }
 
 type NetFilterStat struct {
-	ConnTrackCount	int32	`json:"conntrackcount"`
-	ConnTrackMax	int32	`json:"conntrackmax"`
+	ConnTrackCount	int64	`json:"conntrackcount"`
+	ConnTrackMax	int64	`json:"conntrackmax"`
 }
 
 var constMap = map[string]int{
