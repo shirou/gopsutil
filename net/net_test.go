@@ -196,3 +196,23 @@ func TestNetConnections(t *testing.T) {
 	}
 
 }
+
+func TestNetFilterCounters(t *testing.T) {
+	if ci := os.Getenv("CI"); ci != "" { // skip if test on drone.io
+		return
+	}
+
+	v, err := NetFilterCounters()
+	if err != nil {
+		t.Errorf("could not get NetConnections: %v", err)
+	}
+	if len(v) == 0 {
+		t.Errorf("could not get NetConnections: %v", v)
+	}
+	for _, vv := range v {
+		if vv.ConnTrackMax == 0 {
+			t.Errorf("nf_conntrack_max needs to be greater than zero: %v", vv)
+		}
+	}
+
+}
