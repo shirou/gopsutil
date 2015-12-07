@@ -582,26 +582,31 @@ func (p *Process) fillFromStat() (string, int32, *cpu.CPUTimesStat, int64, int32
 	}
 	fields := strings.Fields(string(contents))
 
+	i := 1
+	for !strings.HasSuffix(fields[i], ")") {
+		i++
+	}
+
 	termmap, err := getTerminalMap()
 	terminal := ""
 	if err == nil {
-		t, err := strconv.ParseUint(fields[6], 10, 64)
+		t, err := strconv.ParseUint(fields[i+5], 10, 64)
 		if err != nil {
 			return "", 0, nil, 0, 0, err
 		}
 		terminal = termmap[t]
 	}
 
-	ppid, err := strconv.ParseInt(fields[3], 10, 32)
+	ppid, err := strconv.ParseInt(fields[i+2], 10, 32)
 	if err != nil {
 		return "", 0, nil, 0, 0, err
 	}
-	utime, err := strconv.ParseFloat(fields[13], 64)
+	utime, err := strconv.ParseFloat(fields[i+12], 64)
 	if err != nil {
 		return "", 0, nil, 0, 0, err
 	}
 
-	stime, err := strconv.ParseFloat(fields[14], 64)
+	stime, err := strconv.ParseFloat(fields[i+13], 64)
 	if err != nil {
 		return "", 0, nil, 0, 0, err
 	}
@@ -613,7 +618,7 @@ func (p *Process) fillFromStat() (string, int32, *cpu.CPUTimesStat, int64, int32
 	}
 
 	bootTime, _ := host.BootTime()
-	t, err := strconv.ParseUint(fields[21], 10, 64)
+	t, err := strconv.ParseUint(fields[i+20], 10, 64)
 	if err != nil {
 		return "", 0, nil, 0, 0, err
 	}
