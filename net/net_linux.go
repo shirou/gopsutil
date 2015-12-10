@@ -116,7 +116,7 @@ func NetProtoCounters(protocols []string) ([]NetProtoCountersStat, error) {
 		protos[p] = true
 	}
 
-	filename := "/proc/net/snmp"
+	filename := common.HostProc("net/snmp")
 	lines, err := common.ReadLines(filename)
 	if err != nil {
 		return nil, err
