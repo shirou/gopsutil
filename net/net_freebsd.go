@@ -32,6 +32,9 @@ func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 		}
 		exists = append(exists, values[0])
 
+		if len(values) < 12 {
+			continue
+		}
 		base := 1
 		// sometimes Address is ommitted
 		if len(values) < 13 {
