@@ -263,8 +263,8 @@ func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
 	}
 
 	ret := &MemoryInfoStat{
-		RSS:  uint64(rss),
-		VMS:  uint64(vms),
+		RSS:  uint64(rss) * 1024,
+		VMS:  uint64(vms) * 1024,
 		Swap: uint64(pagein),
 	}
 
