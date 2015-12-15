@@ -9,9 +9,9 @@ import (
 	"strings"
 	"syscall"
 
-	cpu "github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/internal/common"
-	net "github.com/shirou/gopsutil/net"
+	cpu "github.com/yhat/gopsutil/cpu"
+	"github.com/yhat/gopsutil/internal/common"
+	net "github.com/yhat/gopsutil/net"
 )
 
 // MemoryInfoExStat is different between OSes
