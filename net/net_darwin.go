@@ -17,7 +17,7 @@ import (
 // lo0   16384 ::1/128     ::1                 869107     -  169411755   869107     -  169411755     -   -
 // lo0   16384 127           127.0.0.1         869107     -  169411755   869107     -  169411755     -   -
 func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
-	out, err := exec.Command("/usr/sbin/netstat", "-ibdn").Output()
+	out, err := exec.Command("/usr/sbin/netstat", "-ibdnW").Output()
 	if err != nil {
 		return nil, err
 	}
