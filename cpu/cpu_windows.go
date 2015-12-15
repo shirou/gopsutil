@@ -10,7 +10,7 @@ import (
 
 	"github.com/StackExchange/wmi"
 
-	"github.com/yhat/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/internal/common"
 )
 
 type Win32_Processor struct {

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/yhat/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/internal/common"
 )
 
 const (

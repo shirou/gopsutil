@@ -8,7 +8,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/yhat/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/internal/common"
 )
 
 var invoke common.Invoker

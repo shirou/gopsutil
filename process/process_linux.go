@@ -12,10 +12,10 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/yhat/gopsutil/cpu"
-	"github.com/yhat/gopsutil/host"
-	"github.com/yhat/gopsutil/internal/common"
-	"github.com/yhat/gopsutil/net"
+	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/host"
+	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/net"
 )
 
 const (

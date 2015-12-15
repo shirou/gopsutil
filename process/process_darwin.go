@@ -10,9 +10,9 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/yhat/gopsutil/cpu"
-	"github.com/yhat/gopsutil/internal/common"
-	"github.com/yhat/gopsutil/net"
+	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/net"
 )
 
 // copied from sys/sysctl.h

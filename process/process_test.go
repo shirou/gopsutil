@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/yhat/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/internal/common"
 )
 
 var mu sync.Mutex
