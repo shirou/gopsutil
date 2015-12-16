@@ -64,6 +64,11 @@ type NetInterfaceStat struct {
 	Addrs        []NetInterfaceAddr `json:"addrs"`
 }
 
+type NetFilterStat struct {
+	ConnTrackCount	int64	`json:"conntrack_count"`
+	ConnTrackMax	int64	`json:"conntrack_max"`
+}
+
 var constMap = map[string]int{
 	"TCP":  syscall.SOCK_STREAM,
 	"UDP":  syscall.SOCK_DGRAM,
