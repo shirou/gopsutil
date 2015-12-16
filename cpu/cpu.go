@@ -67,8 +67,3 @@ func (c CPUInfoStat) String() string {
 	s, _ := json.Marshal(c)
 	return string(s)
 }
-
-func init() {
-	lastCPUTimes, _ = CPUTimes(false)
-	lastPerCPUTimes, _ = CPUTimes(true)
-}

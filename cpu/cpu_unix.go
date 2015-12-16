@@ -2,12 +2,10 @@
 
 package cpu
 
-import "time"
-
-func init() {
-	lastCPUTimes, _ = CPUTimes(false)
-	lastPerCPUTimes, _ = CPUTimes(true)
-}
+import (
+	"fmt"
+	"time"
+)
 
 func CPUPercent(interval time.Duration, percpu bool) ([]float64, error) {
 	getAllBusy := func(t CPUTimesStat) (float64, float64) {
@@ -29,33 +27,33 @@ func CPUPercent(interval time.Duration, percpu bool) ([]float64, error) {
 		return (t2Busy - t1Busy) / (t2All - t1All) * 100
 	}
 
-	cpuTimes, err := CPUTimes(percpu)
+	// Get CPU usage at the start of the interval.
+	cpuTimes1, err := CPUTimes(percpu)
 	if err != nil {
 		return nil, err
 	}
 
 	if interval > 0 {
-		if !percpu {
-			lastCPUTimes = cpuTimes
-		} else {
-			lastPerCPUTimes = cpuTimes
-		}
 		time.Sleep(interval)
-		cpuTimes, err = CPUTimes(percpu)
-		if err != nil {
-			return nil, err
-		}
 	}
 
-	ret := make([]float64, len(cpuTimes))
-	if !percpu {
-		ret[0] = calculate(lastCPUTimes[0], cpuTimes[0])
-		lastCPUTimes = cpuTimes
-	} else {
-		for i, t := range cpuTimes {
-			ret[i] = calculate(lastPerCPUTimes[i], t)
-		}
-		lastPerCPUTimes = cpuTimes
+	// And at the end of the interval.
+	cpuTimes2, err := CPUTimes(percpu)
+	if err != nil {
+		return nil, err
+	}
+
+	// Make sure the CPU measurements have the same length.
+	if len(cpuTimes1) != len(cpuTimes2) {
+		return nil, fmt.Errorf(
+			"received two CPU counts: %d != %d",
+			len(cpuTimes1), len(cpuTimes2),
+		)
+	}
+
+	ret := make([]float64, len(cpuTimes1))
+	for i, t := range cpuTimes2 {
+		ret[i] = calculate(cpuTimes1[i], t)
 	}
 	return ret, nil
 }
