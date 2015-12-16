@@ -64,7 +64,7 @@ func (i FakeInvoke) Command(name string, arg ...string) ([]byte, error) {
 	}
 }
 
-var NotImplementedError = errors.New("not implemented yet")
+var NotImplementedError = errors.New("GOPSUTIL not implemented yet")
 
 // ReadLines reads contents from a file and splits them by new lines.
 // A convenience wrapper to ReadLinesOffsetN(filename, 0, -1).
