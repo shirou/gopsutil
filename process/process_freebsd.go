@@ -5,9 +5,9 @@ package process
 import (
 	"bytes"
 	"encoding/binary"
-	"unsafe"
 	"strings"
 	"syscall"
+	"unsafe"
 
 	cpu "github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/internal/common"

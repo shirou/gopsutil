@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 
 	"github.com/shirou/gopsutil/cpu"
-        "github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/internal/common"
 )
 
 // GetDockerIDList returnes a list of DockerID.

@@ -165,8 +165,8 @@ func NetProtoCounters(protocols []string) ([]NetProtoCountersStat, error) {
 // the currently in use conntrack count and the max.
 // If the file does not exist or is invalid it will return nil.
 func NetFilterCounters() ([]NetFilterStat, error) {
-    countfile := common.HostProc("sys/net/netfilter/nf_conntrack_count")
-    maxfile := common.HostProc("sys/net/netfilter/nf_conntrack_max")
+	countfile := common.HostProc("sys/net/netfilter/nf_conntrack_count")
+	maxfile := common.HostProc("sys/net/netfilter/nf_conntrack_max")
 
 	count, err := common.ReadInts(countfile)
 
@@ -174,7 +174,7 @@ func NetFilterCounters() ([]NetFilterStat, error) {
 		return nil, err
 	}
 	stats := make([]NetFilterStat, 0, 1)
-	
+
 	max, err := common.ReadInts(maxfile)
 	if err != nil {
 		return nil, err
