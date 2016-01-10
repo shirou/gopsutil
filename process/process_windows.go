@@ -12,8 +12,8 @@ import (
 	"github.com/StackExchange/wmi"
 	"github.com/shirou/w32"
 
-	"github.com/shirou/gopsutil/internal/common"
 	cpu "github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/internal/common"
 	net "github.com/shirou/gopsutil/net"
 )
 

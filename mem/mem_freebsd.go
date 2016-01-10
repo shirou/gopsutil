@@ -3,10 +3,11 @@
 package mem
 
 import (
+	"errors"
 	"os/exec"
 	"strconv"
 	"strings"
-	"errors"
+
 	"github.com/shirou/gopsutil/internal/common"
 )
 
