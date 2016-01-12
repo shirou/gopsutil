@@ -247,7 +247,7 @@ func GetPlatformInformation() (platform string, family string, version string, e
 		// TODO: slackware detecion
 	} else if common.PathExists("/etc/arch-release") {
 		platform = "arch"
-		// TODO: exherbo detection
+		version = lsb.Release
 	} else if lsb.ID == "RedHat" {
 		platform = "redhat"
 		version = lsb.Release
