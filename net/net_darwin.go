@@ -92,6 +92,15 @@ func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 	return ret, nil
 }
 
+// NetIOCountersByFile is an method which is added just a compatibility for linux.
+func NetIOCountersByFile(pernic bool, filename string) ([]NetIOCountersStat, error) {
+	return NetIOCounters(pernic)
+}
+
+func NetFilterCounters() ([]NetFilterStat, error) {
+	return nil, errors.New("NetFilterCounters not implemented for darwin")
+}
+
 // NetProtoCounters returns network statistics for the entire system
 // If protocols is empty then all protocols are returned, otherwise
 // just the protocols in the list are returned.

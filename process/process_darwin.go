@@ -301,6 +301,10 @@ func (p *Process) Connections() ([]net.NetConnectionStat, error) {
 	return net.NetConnectionsPid("all", p.Pid)
 }
 
+func (p *Process) NetIOCounters(pernic bool) ([]net.NetIOCountersStat, error) {
+	return nil, common.NotImplementedError
+}
+
 func (p *Process) IsRunning() (bool, error) {
 	return true, common.NotImplementedError
 }

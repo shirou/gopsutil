@@ -17,6 +17,10 @@ import (
 // separately.
 func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 	filename := common.HostProc("net/dev")
+	return NetIOCountersByFile(pernic, filename)
+}
+
+func NetIOCountersByFile(pernic bool, filename string) ([]NetIOCountersStat, error) {
 	lines, err := common.ReadLines(filename)
 	if err != nil {
 		return nil, err
