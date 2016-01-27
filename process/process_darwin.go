@@ -5,6 +5,7 @@ package process
 import (
 	"bytes"
 	"fmt"
+	"os/exec"
 	"strconv"
 	"strings"
 	"syscall"
@@ -401,15 +402,20 @@ func NewProcess(pid int32) (*Process, error) {
 // And splited by Space. Caller have responsibility to manage.
 // If passed arg pid is 0, get information from all process.
 func callPs(arg string, pid int32, threadOption bool) ([][]string, error) {
+	bin, err := exec.LookPath("ps")
+	if err != nil {
+		return [][]string{}, err
+	}
+
 	var cmd []string
 	if pid == 0 { // will get from all processes.
-		cmd = []string{"-x", "-o", arg}
+		cmd = []string{"-ax", "-o", arg}
 	} else if threadOption {
-		cmd = []string{"-x", "-o", arg, "-M", "-p", strconv.Itoa(int(pid))}
+		cmd = []string{"-ax", "-o", arg, "-M", "-p", strconv.Itoa(int(pid))}
 	} else {
-		cmd = []string{"-x", "-o", arg, "-p", strconv.Itoa(int(pid))}
+		cmd = []string{"-ax", "-o", arg, "-p", strconv.Itoa(int(pid))}
 	}
-	out, err := invoke.Command("/bin/ps", cmd...)
+	out, err := invoke.Command(bin, cmd...)
 	if err != nil {
 		return [][]string{}, err
 	}
