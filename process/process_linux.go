@@ -235,6 +235,11 @@ func (p *Process) Connections() ([]net.NetConnectionStat, error) {
 	return net.NetConnectionsPid("all", p.Pid)
 }
 
+func (p *Process) NetIOCounters(pernic bool) ([]net.NetIOCountersStat, error) {
+	filename := common.HostProc(strconv.Itoa(int(p.Pid)), "net/dev")
+	return net.NetIOCountersByFile(pernic, filename)
+}
+
 func (p *Process) IsRunning() (bool, error) {
 	return true, common.NotImplementedError
 }

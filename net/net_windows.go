@@ -74,6 +74,11 @@ func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 	return ret, nil
 }
 
+// NetIOCountersByFile is an method which is added just a compatibility for linux.
+func NetIOCountersByFile(pernic bool, filename string) ([]NetIOCountersStat, error) {
+	return NetIOCounters(pernic)
+}
+
 // Return a list of network connections opened by a process
 func NetConnections(kind string) ([]NetConnectionStat, error) {
 	var ret []NetConnectionStat
@@ -96,6 +101,10 @@ func getAdapterList() (*syscall.IpAdapterInfo, error) {
 		return nil, os.NewSyscallError("GetAdaptersInfo", err)
 	}
 	return a, nil
+}
+
+func NetFilterCounters() ([]NetFilterStat, error) {
+	return nil, errors.New("NetFilterCounters not implemented for windows")
 }
 
 // NetProtoCounters returns network statistics for the entire system
