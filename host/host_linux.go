@@ -26,6 +26,9 @@ type LSB struct {
 	Description string
 }
 
+// from utmp.h
+const USER_PROCESS = 7
+
 func HostInfo() (*HostInfoStat, error) {
 	ret := &HostInfoStat{
 		OS: runtime.GOOS,
@@ -118,6 +121,9 @@ func Users() ([]UserStat, error) {
 		br := bytes.NewReader(b)
 		err := binary.Read(br, binary.LittleEndian, &u)
 		if err != nil {
+			continue
+		}
+		if u.Type != USER_PROCESS {
 			continue
 		}
 		user := UserStat{
