@@ -17,6 +17,9 @@ import (
 	"github.com/shirou/gopsutil/internal/common"
 )
 
+// from utmpx.h
+const USER_PROCESS = 7
+
 func HostInfo() (*HostInfoStat, error) {
 	ret := &HostInfoStat{
 		OS:             runtime.GOOS,
@@ -103,7 +106,7 @@ func Users() ([]UserStat, error) {
 		if err != nil {
 			continue
 		}
-		if u.Type != 7 { // skip if not USERPROCESS
+		if u.Type != USER_PROCESS {
 			continue
 		}
 		user := UserStat{
