@@ -415,9 +415,9 @@ func callPs(arg string, pid int32, threadOption bool) ([][]string, error) {
 	if pid == 0 { // will get from all processes.
 		cmd = []string{"-ax", "-o", arg}
 	} else if threadOption {
-		cmd = []string{"-ax", "-o", arg, "-M", "-p", strconv.Itoa(int(pid))}
+		cmd = []string{"-x", "-o", arg, "-M", "-p", strconv.Itoa(int(pid))}
 	} else {
-		cmd = []string{"-ax", "-o", arg, "-p", strconv.Itoa(int(pid))}
+		cmd = []string{"-x", "-o", arg, "-p", strconv.Itoa(int(pid))}
 	}
 	out, err := invoke.Command(bin, cmd...)
 	if err != nil {
