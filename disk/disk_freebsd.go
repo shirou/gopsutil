@@ -2,6 +2,14 @@
 
 package disk
 
+/*
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/sysctl.h>
+*/
+import "C"
+
 import (
 	"bytes"
 	"encoding/binary"
@@ -19,6 +27,19 @@ const (
 	KernDevstat    = 974
 	KernDevstatAll = 975
 )
+
+var DiskMib []int32
+
+func init() {
+	cs := C.CString("kern.devstat.all")
+	defer C.free(unsafe.Pointer(cs))
+	omib := [4]C.int{}
+	size := 4
+	C.sysctlnametomib(cs, (*C.int)(unsafe.Pointer(&omib[0])), (*C.size_t)(unsafe.Pointer(&size)))
+	for i := 0; i < size; i++ {
+		DiskMib = append(DiskMib, int32(omib[i]))
+	}
+}
 
 func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 	var ret []DiskPartitionStat
@@ -101,16 +122,15 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 
 	//	sysctl.sysctl ('kern.devstat.all', 0)
 	ret := make(map[string]DiskIOCountersStat)
-	mib := []int32{CTLKern, KernDevstat, KernDevstatAll}
 
-	buf, length, err := common.CallSyscall(mib)
+	buf, length, err := common.CallSyscall(DiskMib)
 	if err != nil {
 		return nil, err
 	}
 
 	ds := Devstat{}
 	devstatLen := int(unsafe.Sizeof(ds))
-	count := int(length / uint64(devstatLen))
+	count := int(uint64(length) / uint64(devstatLen))
 
 	buf = buf[8:] // devstat.all has version in the head.
 	// parse buf to Devstat
