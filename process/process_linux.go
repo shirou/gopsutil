@@ -19,7 +19,7 @@ import (
 	"github.com/shirou/gopsutil/net"
 )
 
-var ErrorNoChildren = errors.New("Process does not have children or does not exist")
+var ErrorNoChildren = errors.New("Process does not have children")
 
 const (
 	PrioProcess = 0 // linux/resource.h
