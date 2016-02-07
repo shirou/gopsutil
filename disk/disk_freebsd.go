@@ -12,14 +12,6 @@ import (
 	"github.com/shirou/gopsutil/internal/common"
 )
 
-const (
-	CTLKern = 1
-	//	KernDevstat    = 773 // for freebsd 8.4
-	//	KernDevstatAll = 772 // for freebsd 8.4
-	KernDevstat    = 974
-	KernDevstatAll = 975
-)
-
 func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 	var ret []DiskPartitionStat
 
@@ -98,19 +90,18 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 	// statinfo->devinfo->devstat
 	// /usr/include/devinfo.h
-
-	//	sysctl.sysctl ('kern.devstat.all', 0)
 	ret := make(map[string]DiskIOCountersStat)
-	mib := []int32{CTLKern, KernDevstat, KernDevstatAll}
 
-	buf, length, err := common.CallSyscall(mib)
+	r, err := syscall.Sysctl("kern.devstat.all")
 	if err != nil {
 		return nil, err
 	}
+	buf := []byte(r)
+	length := len(buf)
 
 	ds := Devstat{}
 	devstatLen := int(unsafe.Sizeof(ds))
-	count := int(length / uint64(devstatLen))
+	count := int(uint64(length) / uint64(devstatLen))
 
 	buf = buf[8:] // devstat.all has version in the head.
 	// parse buf to Devstat

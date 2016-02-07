@@ -22,13 +22,14 @@ func DoSysctrl(mib string) ([]string, error) {
 }
 
 func CallSyscall(mib []int32) ([]byte, uint64, error) {
+	mibptr := unsafe.Pointer(&mib[0])
 	miblen := uint64(len(mib))
 
 	// get required buffer size
 	length := uint64(0)
 	_, _, err := syscall.Syscall6(
 		syscall.SYS___SYSCTL,
-		uintptr(unsafe.Pointer(&mib[0])),
+		uintptr(mibptr),
 		uintptr(miblen),
 		0,
 		uintptr(unsafe.Pointer(&length)),
@@ -46,7 +47,7 @@ func CallSyscall(mib []int32) ([]byte, uint64, error) {
 	buf := make([]byte, length)
 	_, _, err = syscall.Syscall6(
 		syscall.SYS___SYSCTL,
-		uintptr(unsafe.Pointer(&mib[0])),
+		uintptr(mibptr),
 		uintptr(miblen),
 		uintptr(unsafe.Pointer(&buf[0])),
 		uintptr(unsafe.Pointer(&length)),
