@@ -19,7 +19,7 @@ import (
 	"github.com/shirou/gopsutil/net"
 )
 
-var ErrorNoChildren = errors.New("Process does not have children")
+var ErrorNoChildren = errors.New("process does not have children")
 
 const (
 	PrioProcess = 0 // linux/resource.h
@@ -208,7 +208,7 @@ func (p *Process) MemoryPercent() (float32, error) {
 func (p *Process) Children() ([]*Process, error) {
 	pids, err := common.CallPgrep(invoke, p.Pid)
 	if err != nil {
-		if err == common.ErrorNoChildren {
+		if pids == nil || len(pids) == 0 {
 			return nil, ErrorNoChildren
 		}
 		return nil, err

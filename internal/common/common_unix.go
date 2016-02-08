@@ -3,13 +3,10 @@
 package common
 
 import (
-	"errors"
 	"os/exec"
 	"strconv"
 	"strings"
 )
-
-var ErrorNoChildren = errors.New("Process does not have children or does not exist")
 
 func CallLsof(invoke Invoker, pid int32, args ...string) ([]string, error) {
 	var cmd []string
@@ -51,7 +48,7 @@ func CallPgrep(invoke Invoker, pid int32) ([]int32, error) {
 	}
 	out, err := invoke.Command(pgrep, cmd...)
 	if err != nil {
-		return []int32{}, ErrorNoChildren
+		return []int32{}, err
 	}
 	lines := strings.Split(string(out), "\n")
 	ret := make([]int32, 0, len(lines))
