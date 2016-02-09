@@ -4,6 +4,7 @@ package process
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -17,6 +18,8 @@ import (
 	"github.com/shirou/gopsutil/internal/common"
 	"github.com/shirou/gopsutil/net"
 )
+
+var ErrorNoChildren = errors.New("process does not have children")
 
 const (
 	PrioProcess = 0 // linux/resource.h
@@ -205,6 +208,9 @@ func (p *Process) MemoryPercent() (float32, error) {
 func (p *Process) Children() ([]*Process, error) {
 	pids, err := common.CallPgrep(invoke, p.Pid)
 	if err != nil {
+		if pids == nil || len(pids) == 0 {
+			return nil, ErrorNoChildren
+		}
 		return nil, err
 	}
 	ret := make([]*Process, 0, len(pids))
