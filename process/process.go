@@ -141,13 +141,7 @@ func calculatePercent(t1, t2 *cpu.CPUTimesStat, delta float64, numcpu int) float
 	if delta == 0 {
 		return 0
 	}
-	delta_proc := totalCpuTime(t2) - totalCpuTime(t1)
+	delta_proc := t2.Total() - t1.Total()
 	overall_percent := ((delta_proc / delta) * 100) * float64(numcpu)
 	return overall_percent
-}
-
-func totalCpuTime(t *cpu.CPUTimesStat) float64 {
-	total := t.User + t.System + t.Nice + t.Iowait + t.Irq + t.Softirq + t.Steal +
-		t.Guest + t.GuestNice + t.Idle
-	return total
 }
