@@ -125,18 +125,10 @@ func (p *Process) Uids() ([]int32, error) {
 		return nil, err
 	}
 
-	uids := make([]int32, 0, 3)
-
 	// See: http://unix.superglobalmegacorp.com/Net2/newsrc/sys/ucred.h.html
 	userEffectiveUID := int32(k.Eproc.Ucred.Uid)
 
-	// See: http://unix.superglobalmegacorp.com/Net2/newsrc/sys/proc.h.html
-	procRealUID := int32(k.Eproc.Pcred.P_ruid)
-	procSavedEffectiveUID := int32(k.Eproc.Pcred.P_svuid)
-
-	uids = append(uids, userEffectiveUID, procRealUID, procSavedEffectiveUID)
-
-	return uids, nil
+	return []int32{userEffectiveUID}, nil
 }
 func (p *Process) Gids() ([]int32, error) {
 	k, err := p.getKProc()
