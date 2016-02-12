@@ -2,6 +2,7 @@ package process
 
 import (
 	"os"
+	"os/user"
 	"runtime"
 	"strings"
 	"sync"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/shirou/gopsutil/internal/common"
+	"github.com/stretchr/testify/assert"
 )
 
 var mu sync.Mutex
@@ -326,5 +328,14 @@ func Test_Children(t *testing.T) {
 	if len(c) == 0 {
 		t.Fatalf("children is empty")
 	}
+}
 
+func Test_Username(t *testing.T) {
+	myPid := os.Getpid()
+	currentUser, _ := user.Current()
+	myUsername := currentUser.Username
+
+	process, _ := NewProcess(int32(myPid))
+	pidUsername, _ := process.Username()
+	assert.Equal(t, myUsername, pidUsername)
 }

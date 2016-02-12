@@ -125,11 +125,10 @@ func (p *Process) Uids() ([]int32, error) {
 		return nil, err
 	}
 
-	uids := make([]int32, 0, 3)
+	// See: http://unix.superglobalmegacorp.com/Net2/newsrc/sys/ucred.h.html
+	userEffectiveUID := int32(k.Eproc.Ucred.Uid)
 
-	uids = append(uids, int32(k.Eproc.Pcred.P_ruid), int32(k.Eproc.Ucred.Uid), int32(k.Eproc.Pcred.P_svuid))
-
-	return uids, nil
+	return []int32{userEffectiveUID}, nil
 }
 func (p *Process) Gids() ([]int32, error) {
 	k, err := p.getKProc()
@@ -371,6 +370,8 @@ func parseKinfoProc(buf []byte) (KinfoProc, error) {
 	return k, nil
 }
 
+// Returns a proc as defined here:
+// http://unix.superglobalmegacorp.com/Net2/newsrc/sys/kinfo_proc.h.html
 func (p *Process) getKProc() (*KinfoProc, error) {
 	mib := []int32{CTLKern, KernProc, KernProcPID, p.Pid}
 	procK := KinfoProc{}
