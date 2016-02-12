@@ -4,6 +4,7 @@ package process
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"os/exec"
 	"strconv"
@@ -362,7 +363,7 @@ func parseKinfoProc(buf []byte) (KinfoProc, error) {
 	var k KinfoProc
 	br := bytes.NewReader(buf)
 
-	err := Read(br, LittleEndian, &k)
+	err := common.Read(br, binary.LittleEndian, &k)
 	if err != nil {
 		return k, err
 	}
