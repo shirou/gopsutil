@@ -157,7 +157,7 @@ func parseDevstat(buf []byte) (Devstat, error) {
 	var ds Devstat
 	br := bytes.NewReader(buf)
 	//	err := binary.Read(br, binary.LittleEndian, &ds)
-	err := Read(br, binary.LittleEndian, &ds)
+	err := common.Read(br, binary.LittleEndian, &ds)
 	if err != nil {
 		return ds, err
 	}

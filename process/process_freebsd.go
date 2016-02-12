@@ -185,7 +185,7 @@ func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
 	if err != nil {
 		return nil, err
 	}
-	pageSize := binary.LittleEndian.Uint16([]byte(v))
+	pageSize := common.LittleEndian.Uint16([]byte(v))
 
 	return &MemoryInfoStat{
 		RSS: uint64(k.KiRssize) * uint64(pageSize),
