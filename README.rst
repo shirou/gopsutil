@@ -1,8 +1,8 @@
 gopsutil: psutil for golang
 ==============================
 
-.. image:: https://drone.io/github.com/shirou/gopsutil/status.png
-        :target: https://drone.io/github.com/shirou/gopsutil
+.. image:: https://circleci.com/gh/shirou/gopsutil.svg?&style=shield
+        :target: https://circleci.com/gh/shirou/gopsutil
 
 .. image:: https://coveralls.io/repos/shirou/gopsutil/badge.svg?branch=master
         :target: https://coveralls.io/r/shirou/gopsutil?branch=master
