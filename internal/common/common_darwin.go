@@ -3,6 +3,7 @@
 package common
 
 import (
+	"os"
 	"os/exec"
 	"strings"
 	"syscall"
@@ -10,6 +11,7 @@ import (
 )
 
 func DoSysctrl(mib string) ([]string, error) {
+	os.Setenv("LC_ALL", "C")
 	out, err := exec.Command("/usr/sbin/sysctl", "-n", mib).Output()
 	if err != nil {
 		return []string{}, err
