@@ -7,6 +7,7 @@ import (
 
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/mem"
 )
 
 var invoke common.Invoker
@@ -144,4 +145,21 @@ func calculatePercent(t1, t2 *cpu.CPUTimesStat, delta float64, numcpu int) float
 	delta_proc := t2.Total() - t1.Total()
 	overall_percent := ((delta_proc / delta) * 100) * float64(numcpu)
 	return overall_percent
+}
+
+// MemoryPercent returns how many percent of the total RAM this process uses
+func (p *Process) MemoryPercent() (float32, error) {
+	machineMemory, err := mem.VirtualMemory()
+	if err != nil {
+		return 0, err
+	}
+	total := machineMemory.Total
+
+	processMemory, err := p.MemoryInfo()
+	if err != nil {
+		return 0, err
+	}
+	used := processMemory.RSS
+
+	return (100 * float32(used) / float32(total)), nil
 }

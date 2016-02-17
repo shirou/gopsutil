@@ -195,9 +195,6 @@ func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
 func (p *Process) MemoryInfoEx() (*MemoryInfoExStat, error) {
 	return nil, common.NotImplementedError
 }
-func (p *Process) MemoryPercent() (float32, error) {
-	return 0, common.NotImplementedError
-}
 
 func (p *Process) Children() ([]*Process, error) {
 	pids, err := common.CallPgrep(invoke, p.Pid)
