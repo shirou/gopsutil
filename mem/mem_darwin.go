@@ -10,26 +10,13 @@ import "C"
 
 import (
 	"fmt"
-	"os/exec"
 	"strconv"
 	"strings"
+	"syscall"
 	"unsafe"
 
 	"github.com/shirou/gopsutil/internal/common"
 )
-
-func getPageSize() (uint64, error) {
-	out, err := exec.Command("pagesize").Output()
-	if err != nil {
-		return 0, err
-	}
-	o := strings.TrimSpace(string(out))
-	p, err := strconv.ParseUint(o, 10, 64)
-	if err != nil {
-		return 0, err
-	}
-	return p, nil
-}
 
 // VirtualMemory returns VirtualmemoryStat.
 func VirtualMemory() (*VirtualMemoryStat, error) {
@@ -55,7 +42,7 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 
 	usedCount := totalCount - vmstat.free_count
 
-	pageSize := uint64(C.getpagesize())
+	pageSize := uint64(syscall.Getpagesize())
 	return &VirtualMemoryStat{
 		Total:       pageSize * uint64(totalCount),
 		Available:   pageSize * uint64(availableCount),
