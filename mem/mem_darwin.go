@@ -2,10 +2,18 @@
 
 package mem
 
+/*
+#include <unistd.h>
+#include <mach/mach_host.h>
+*/
+import "C"
+
 import (
+	"fmt"
 	"os/exec"
 	"strconv"
 	"strings"
+	"unsafe"
 
 	"github.com/shirou/gopsutil/internal/common"
 )
@@ -23,91 +31,41 @@ func getPageSize() (uint64, error) {
 	return p, nil
 }
 
-// Runs vm_stat and returns Free and inactive pages
-func getVmStat(pagesize uint64, vms *VirtualMemoryStat) error {
-	out, err := exec.Command("vm_stat").Output()
-	if err != nil {
-		return err
-	}
-	return parseVmStat(string(out), pagesize, vms)
-}
-
-func parseVmStat(out string, pagesize uint64, vms *VirtualMemoryStat) error {
-	var err error
-
-	lines := strings.Split(out, "\n")
-	for _, line := range lines {
-		fields := strings.Split(line, ":")
-		if len(fields) < 2 {
-			continue
-		}
-		key := strings.TrimSpace(fields[0])
-		value := strings.Trim(fields[1], " .")
-		switch key {
-		case "Pages free":
-			free, e := strconv.ParseUint(value, 10, 64)
-			if e != nil {
-				err = e
-			}
-			vms.Free = free * pagesize
-		case "Pages inactive":
-			inactive, e := strconv.ParseUint(value, 10, 64)
-			if e != nil {
-				err = e
-			}
-			vms.Cached += inactive * pagesize
-			vms.Inactive = inactive * pagesize
-		case "Pages active":
-			active, e := strconv.ParseUint(value, 10, 64)
-			if e != nil {
-				err = e
-			}
-			vms.Active = active * pagesize
-		case "Pages wired down":
-			wired, e := strconv.ParseUint(value, 10, 64)
-			if e != nil {
-				err = e
-			}
-			vms.Wired = wired * pagesize
-		case "Pages purgeable":
-			purgeable, e := strconv.ParseUint(value, 10, 64)
-			if e != nil {
-				err = e
-			}
-			vms.Cached += purgeable * pagesize
-		}
-	}
-	return err
-}
-
 // VirtualMemory returns VirtualmemoryStat.
 func VirtualMemory() (*VirtualMemoryStat, error) {
-	ret := &VirtualMemoryStat{}
+	count := C.mach_msg_type_number_t(C.HOST_VM_INFO_COUNT)
+	var vmstat C.vm_statistics_data_t
 
-	p, err := getPageSize()
-	if err != nil {
-		return nil, err
-	}
-	t, err := common.DoSysctrl("hw.memsize")
-	if err != nil {
-		return nil, err
-	}
-	total, err := strconv.ParseUint(t[0], 10, 64)
-	if err != nil {
-		return nil, err
-	}
-	err = getVmStat(p, ret)
-	if err != nil {
-		return nil, err
+	status := C.host_statistics(C.host_t(C.mach_host_self()),
+		C.HOST_VM_INFO,
+		C.host_info_t(unsafe.Pointer(&vmstat)),
+		&count)
+
+	if status != C.KERN_SUCCESS {
+		return nil, fmt.Errorf("host_statistics error=%d", status)
 	}
 
-	ret.Available = ret.Free + ret.Cached
-	ret.Total = total
+	totalCount := vmstat.wire_count +
+		vmstat.active_count +
+		vmstat.inactive_count +
+		vmstat.free_count
 
-	ret.Used = ret.Total - ret.Free
-	ret.UsedPercent = float64(ret.Total-ret.Available) / float64(ret.Total) * 100.0
+	availableCount := vmstat.inactive_count + vmstat.free_count
+	usedPercent := 100 * float64(totalCount-availableCount) / float64(totalCount)
 
-	return ret, nil
+	usedCount := totalCount - vmstat.free_count
+
+	pageSize := uint64(C.getpagesize())
+	return &VirtualMemoryStat{
+		Total:       pageSize * uint64(totalCount),
+		Available:   pageSize * uint64(availableCount),
+		Used:        pageSize * uint64(usedCount),
+		UsedPercent: usedPercent,
+		Free:        pageSize * uint64(vmstat.free_count),
+		Active:      pageSize * uint64(vmstat.active_count),
+		Inactive:    pageSize * uint64(vmstat.inactive_count),
+		Wired:       pageSize * uint64(vmstat.wire_count),
+	}, nil
 }
 
 // SwapMemory returns swapinfo.
