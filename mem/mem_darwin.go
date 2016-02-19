@@ -3,7 +3,6 @@
 package mem
 
 /*
-#include <unistd.h>
 #include <mach/mach_host.h>
 */
 import "C"
