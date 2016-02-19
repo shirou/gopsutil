@@ -4,9 +4,11 @@ package mem
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-var vm_stat_out = `
+var vmStatOut = `
 Mach Virtual Memory Statistics: (page size of 4096 bytes)
 Pages free:                              105885.
 Pages active:                            725641.
@@ -34,7 +36,7 @@ Swapouts:                               3283599.
 
 func TestParseVmStat(t *testing.T) {
 	ret := &VirtualMemoryStat{}
-	err := parseVmStat(vm_stat_out, 4096, ret)
+	err := parseVmStat(vmStatOut, 4096, ret)
 
 	if err != nil {
 		t.Errorf("Expected no error, got %s\n", err.Error())
@@ -64,4 +66,33 @@ func TestParseVmStat(t *testing.T) {
 		t.Errorf("Cached pages, actual: %d, expected: %f", ret.Cached,
 			128967*4096+449242.*4096)
 	}
+}
+
+func TestVirtualMemoryDarwin(t *testing.T) {
+	v, err := VirtualMemory()
+	assert.Nil(t, err)
+
+	assert.True(t, v.Total > 0)
+
+	assert.True(t, v.Available > 0)
+	assert.True(t, v.Available < v.Total)
+	assert.Equal(t, v.Available, v.Total-v.Wired-v.Active, "%v", v)
+
+	assert.True(t, v.Used > 0)
+	assert.True(t, v.Used < v.Total)
+
+	assert.True(t, v.UsedPercent > 0)
+	assert.True(t, v.UsedPercent < 100)
+
+	assert.True(t, v.Free > 0)
+	assert.True(t, v.Free < v.Available)
+
+	assert.True(t, v.Active > 0)
+	assert.True(t, v.Active < v.Total)
+
+	assert.True(t, v.Inactive > 0)
+	assert.True(t, v.Inactive < v.Total)
+
+	assert.True(t, v.Wired > 0)
+	assert.True(t, v.Wired < v.Total)
 }
