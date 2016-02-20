@@ -38,6 +38,11 @@ func LoadAvg() (*LoadAvgStat, error) {
 	return ret, nil
 }
 
+
+// Misc returnes miscellaneous host-wide statistics.
+// darwin use ps command to get process running/blocked count.
+// Almost same as FreeBSD implementation, but state is different.
+// U means 'Uninterruptible Sleep'.
 func Misc() (*MiscStat, error) {
 	bin, err := exec.LookPath("ps")
 	if err != nil {

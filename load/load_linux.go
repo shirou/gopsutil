@@ -41,6 +41,9 @@ func LoadAvg() (*LoadAvgStat, error) {
 	return ret, nil
 }
 
+
+// Misc returnes miscellaneous host-wide statistics.
+// Note: the name should be changed near future.
 func Misc() (*MiscStat, error) {
 	filename := common.HostProc("stat")
 	out, err := ioutil.ReadFile(filename)
