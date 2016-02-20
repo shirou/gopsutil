@@ -14,9 +14,12 @@ func TestVirtualMemoryDarwin(t *testing.T) {
 
 	assert.True(t, v.Total > 0)
 
+	assert.Equal(t, v.Total, v.Active+v.Inactive+v.Free+v.Wired)
+
 	assert.True(t, v.Available > 0)
 	assert.True(t, v.Available < v.Total)
 	assert.Equal(t, v.Available, v.Total-v.Wired-v.Active, "%v", v)
+	assert.Equal(t, v.Available, v.Free+v.Inactive, "%v", v)
 
 	assert.True(t, v.Used > 0)
 	assert.True(t, v.Used < v.Total)
