@@ -43,17 +43,13 @@ func LoadAvg() (*LoadAvgStat, error) {
 
 func Misc() (*MiscStat, error) {
 	filename := common.HostProc("stat")
-	lines, err := ioutil.ReadFile(filename)
+	out, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	ret := &Misc{
-		ProcsRunning: pr,
-		ProcsBlocked: pb,
-		Ctxt:         ctxt,
-	}
-
+	ret := &MiscStat{}
+	lines := strings.Split(string(out), "\n")
 	for _, line := range lines {
 		fields := strings.Fields(line)
 		if len(fields) != 2 {
@@ -65,11 +61,11 @@ func Misc() (*MiscStat, error) {
 		}
 		switch fields[0] {
 		case "procs_running":
-			ret.ProcessRunning = v
+			ret.ProcsRunning = int(v)
 		case "procs_blocked":
-			ret.ProcessBlocked = v
+			ret.ProcsBlocked = int(v)
 		case "ctxt":
-			ret.Ctxt = v
+			ret.Ctxt = int(v)
 		default:
 			continue
 		}
