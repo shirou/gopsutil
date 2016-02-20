@@ -11,3 +11,9 @@ func LoadAvg() (*LoadAvgStat, error) {
 
 	return &ret, common.NotImplementedError
 }
+
+func Misc() (*MiscStat, error) {
+	ret := MiscStat{}
+
+	return &ret, common.NotImplementedError
+}

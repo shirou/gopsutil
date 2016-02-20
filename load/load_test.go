@@ -28,3 +28,27 @@ func TestLoadAvgStat_String(t *testing.T) {
 		t.Errorf("LoadAvgStat string is invalid: %v", v)
 	}
 }
+
+func TestMisc(t *testing.T) {
+	v, err := Misc()
+	if err != nil {
+		t.Errorf("error %v", err)
+	}
+
+	empty := &MiscStat{}
+	if v == empty {
+		t.Errorf("error load: %v", v)
+	}
+}
+
+func TestMiscStatString(t *testing.T) {
+	v := MiscStat{
+		ProcsRunning: 1,
+		ProcsBlocked: 2,
+		Ctxt:         3,
+	}
+	e := `{"procsRunning":1,"procsBlocked":2,"ctxt":3}`
+	if e != fmt.Sprintf("%v", v) {
+		t.Errorf("TestMiscString string is invalid: %v", v)
+	}
+}

@@ -40,3 +40,41 @@ func LoadAvg() (*LoadAvgStat, error) {
 
 	return ret, nil
 }
+
+func Misc() (*MiscStat, error) {
+	filename := common.HostProc("stat")
+	lines, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	ret := &Misc{
+		ProcsRunning: pr,
+		ProcsBlocked: pb,
+		Ctxt:         ctxt,
+	}
+
+	for _, line := range lines {
+		fields := strings.Fields(line)
+		if len(fields) != 2 {
+			continue
+		}
+		v, err := strconv.ParseInt(fields[1], 10, 64)
+		if err != nil {
+			continue
+		}
+		switch fields[0] {
+		case "procs_running":
+			ret.ProcessRunning = v
+		case "procs_blocked":
+			ret.ProcessBlocked = v
+		case "ctxt":
+			ret.Ctxt = v
+		default:
+			continue
+		}
+
+	}
+
+	return ret, nil
+}
