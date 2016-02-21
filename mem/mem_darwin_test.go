@@ -3,6 +3,9 @@
 package mem
 
 import (
+	"os/exec"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,13 +15,16 @@ func TestVirtualMemoryDarwin(t *testing.T) {
 	v, err := VirtualMemory()
 	assert.Nil(t, err)
 
-	assert.True(t, v.Total > 0)
-
-	assert.Equal(t, v.Total, v.Active+v.Inactive+v.Free+v.Wired)
+	outBytes, err := exec.Command("/usr/sbin/sysctl", "hw.memsize").Output()
+	assert.Nil(t, err)
+	outString := string(outBytes)
+	outString = strings.TrimSpace(outString)
+	outParts := strings.Split(outString, " ")
+	actualTotal, err := strconv.ParseInt(outParts[1], 10, 64)
+	assert.Nil(t, err)
+	assert.Equal(t, uint64(actualTotal), v.Total)
 
 	assert.True(t, v.Available > 0)
-	assert.True(t, v.Available < v.Total)
-	assert.Equal(t, v.Available, v.Total-v.Wired-v.Active, "%v", v)
 	assert.Equal(t, v.Available, v.Free+v.Inactive, "%v", v)
 
 	assert.True(t, v.Used > 0)
