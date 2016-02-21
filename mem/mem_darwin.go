@@ -3,112 +3,11 @@
 package mem
 
 import (
-	"os/exec"
 	"strconv"
 	"strings"
 
 	"github.com/shirou/gopsutil/internal/common"
 )
-
-func getPageSize() (uint64, error) {
-	out, err := exec.Command("pagesize").Output()
-	if err != nil {
-		return 0, err
-	}
-	o := strings.TrimSpace(string(out))
-	p, err := strconv.ParseUint(o, 10, 64)
-	if err != nil {
-		return 0, err
-	}
-	return p, nil
-}
-
-// Runs vm_stat and returns Free and inactive pages
-func getVmStat(pagesize uint64, vms *VirtualMemoryStat) error {
-	out, err := exec.Command("vm_stat").Output()
-	if err != nil {
-		return err
-	}
-	return parseVmStat(string(out), pagesize, vms)
-}
-
-func parseVmStat(out string, pagesize uint64, vms *VirtualMemoryStat) error {
-	var err error
-
-	lines := strings.Split(out, "\n")
-	for _, line := range lines {
-		fields := strings.Split(line, ":")
-		if len(fields) < 2 {
-			continue
-		}
-		key := strings.TrimSpace(fields[0])
-		value := strings.Trim(fields[1], " .")
-		switch key {
-		case "Pages free":
-			free, e := strconv.ParseUint(value, 10, 64)
-			if e != nil {
-				err = e
-			}
-			vms.Free = free * pagesize
-		case "Pages inactive":
-			inactive, e := strconv.ParseUint(value, 10, 64)
-			if e != nil {
-				err = e
-			}
-			vms.Cached += inactive * pagesize
-			vms.Inactive = inactive * pagesize
-		case "Pages active":
-			active, e := strconv.ParseUint(value, 10, 64)
-			if e != nil {
-				err = e
-			}
-			vms.Active = active * pagesize
-		case "Pages wired down":
-			wired, e := strconv.ParseUint(value, 10, 64)
-			if e != nil {
-				err = e
-			}
-			vms.Wired = wired * pagesize
-		case "Pages purgeable":
-			purgeable, e := strconv.ParseUint(value, 10, 64)
-			if e != nil {
-				err = e
-			}
-			vms.Cached += purgeable * pagesize
-		}
-	}
-	return err
-}
-
-// VirtualMemory returns VirtualmemoryStat.
-func VirtualMemory() (*VirtualMemoryStat, error) {
-	ret := &VirtualMemoryStat{}
-
-	p, err := getPageSize()
-	if err != nil {
-		return nil, err
-	}
-	t, err := common.DoSysctrl("hw.memsize")
-	if err != nil {
-		return nil, err
-	}
-	total, err := strconv.ParseUint(t[0], 10, 64)
-	if err != nil {
-		return nil, err
-	}
-	err = getVmStat(p, ret)
-	if err != nil {
-		return nil, err
-	}
-
-	ret.Available = ret.Free + ret.Cached
-	ret.Total = total
-
-	ret.Used = ret.Total - ret.Free
-	ret.UsedPercent = float64(ret.Total-ret.Available) / float64(ret.Total) * 100.0
-
-	return ret, nil
-}
 
 // SwapMemory returns swapinfo.
 func SwapMemory() (*SwapMemoryStat, error) {
