@@ -9,6 +9,7 @@ package mem
 import "C"
 
 import (
+	"encoding/binary"
 	"fmt"
 	"syscall"
 	"unsafe"
@@ -28,19 +29,24 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 		return nil, fmt.Errorf("host_statistics error=%d", status)
 	}
 
-	totalCount := vmstat.wire_count +
-		vmstat.active_count +
-		vmstat.inactive_count +
-		vmstat.free_count
+	pageSize := uint64(syscall.Getpagesize())
+
+	totalString, err := syscall.Sysctl("hw.memsize")
+	if err != nil {
+		return nil, err
+	}
+	// syscall.sysctl() helpfully removes the last byte of the result if it's 0 :/
+	totalString += "\x00"
+	total := uint64(binary.LittleEndian.Uint64([]byte(totalString)))
+	totalCount := C.natural_t(total / pageSize)
 
 	availableCount := vmstat.inactive_count + vmstat.free_count
 	usedPercent := 100 * float64(totalCount-availableCount) / float64(totalCount)
 
-	usedCount := totalCount - vmstat.free_count
+	usedCount := totalCount - availableCount
 
-	pageSize := uint64(syscall.Getpagesize())
 	return &VirtualMemoryStat{
-		Total:       pageSize * uint64(totalCount),
+		Total:       total,
 		Available:   pageSize * uint64(availableCount),
 		Used:        pageSize * uint64(usedCount),
 		UsedPercent: usedPercent,
