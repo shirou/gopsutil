@@ -8,8 +8,6 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
-
-	"github.com/shirou/gopsutil/internal/common"
 )
 
 // Runs vm_stat and returns Free and inactive pages
@@ -67,11 +65,7 @@ func parseVMStat(out string, vms *VirtualMemoryStat) error {
 func VirtualMemory() (*VirtualMemoryStat, error) {
 	ret := &VirtualMemoryStat{}
 
-	t, err := common.DoSysctrl("hw.memsize")
-	if err != nil {
-		return nil, err
-	}
-	total, err := strconv.ParseUint(t[0], 10, 64)
+	total, err := getHwMemsize()
 	if err != nil {
 		return nil, err
 	}
@@ -83,8 +77,8 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 	ret.Available = ret.Free + ret.Inactive
 	ret.Total = total
 
-	ret.Used = ret.Total - ret.Free
-	ret.UsedPercent = float64(ret.Total-ret.Available) / float64(ret.Total) * 100.0
+	ret.Used = ret.Total - ret.Available
+	ret.UsedPercent = 100 * float64(ret.Used) / float64(ret.Total)
 
 	return ret, nil
 }

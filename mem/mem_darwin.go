@@ -3,11 +3,28 @@
 package mem
 
 import (
+	"encoding/binary"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/shirou/gopsutil/internal/common"
 )
+
+func getHwMemsize() (uint64, error) {
+	totalString, err := syscall.Sysctl("hw.memsize")
+	if err != nil {
+		return 0, err
+	}
+
+	// syscall.sysctl() helpfully assumes the result is a null-terminated string and
+	// removes the last byte of the result if it's 0 :/
+	totalString += "\x00"
+
+	total := uint64(binary.LittleEndian.Uint64([]byte(totalString)))
+
+	return total, nil
+}
 
 // SwapMemory returns swapinfo.
 func SwapMemory() (*SwapMemoryStat, error) {

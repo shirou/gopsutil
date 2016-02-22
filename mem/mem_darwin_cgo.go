@@ -9,7 +9,6 @@ package mem
 import "C"
 
 import (
-	"encoding/binary"
 	"fmt"
 	"syscall"
 	"unsafe"
@@ -30,14 +29,10 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 	}
 
 	pageSize := uint64(syscall.Getpagesize())
-
-	totalString, err := syscall.Sysctl("hw.memsize")
+	total, err := getHwMemsize()
 	if err != nil {
 		return nil, err
 	}
-	// syscall.sysctl() helpfully removes the last byte of the result if it's 0 :/
-	totalString += "\x00"
-	total := uint64(binary.LittleEndian.Uint64([]byte(totalString)))
 	totalCount := C.natural_t(total / pageSize)
 
 	availableCount := vmstat.inactive_count + vmstat.free_count
