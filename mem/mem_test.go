@@ -3,6 +3,8 @@ package mem
 import (
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestVirtual_memory(t *testing.T) {
@@ -14,6 +16,21 @@ func TestVirtual_memory(t *testing.T) {
 	if v == empty {
 		t.Errorf("error %v", v)
 	}
+
+	assert.True(t, v.Total > 0)
+	assert.True(t, v.Available > 0)
+	assert.True(t, v.Used > 0)
+
+	assert.Equal(t, v.Total, v.Available+v.Used,
+		"Total should be computable from available + used: %v", v)
+
+	assert.True(t, v.Free > 0)
+	assert.True(t, v.Available > v.Free,
+		"Free should be a subset of Available: %v", v)
+
+	assert.InDelta(t, v.UsedPercent,
+		100*float64(v.Used)/float64(v.Total), 0.1,
+		"UsedPercent should be how many percent of Total is Used: %v", v)
 }
 
 func TestSwap_memory(t *testing.T) {
@@ -35,7 +52,7 @@ func TestVirtualMemoryStat_String(t *testing.T) {
 		UsedPercent: 30.1,
 		Free:        40,
 	}
-	e := `{"total":10,"available":20,"used":30,"used_percent":30.1,"free":40,"active":0,"inactive":0,"buffers":0,"cached":0,"wired":0,"shared":0}`
+	e := `{"total":10,"available":20,"used":30,"used_percent":30.1,"free":40,"active":0,"inactive":0,"wired":0,"buffers":0,"cached":0}`
 	if e != fmt.Sprintf("%v", v) {
 		t.Errorf("VirtualMemoryStat string is invalid: %v", v)
 	}
