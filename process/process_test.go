@@ -1,6 +1,7 @@
 package process
 
 import (
+	"fmt"
 	"os"
 	"os/user"
 	"runtime"
@@ -338,4 +339,31 @@ func Test_Username(t *testing.T) {
 	process, _ := NewProcess(int32(myPid))
 	pidUsername, _ := process.Username()
 	assert.Equal(t, myUsername, pidUsername)
+}
+
+func Test_CPUTimes(t *testing.T) {
+	pid := os.Getpid()
+	process, err := NewProcess(int32(pid))
+	assert.Nil(t, err)
+
+	spinSeconds := 0.2
+	cpuTimes0, err := process.CPUTimes()
+	assert.Nil(t, err)
+
+	// Spin for a duration of spinSeconds
+	t0 := time.Now()
+	tGoal := t0.Add(time.Duration(spinSeconds*1000) * time.Millisecond)
+	assert.Nil(t, err)
+	for time.Now().Before(tGoal) {
+		// This block intentionally left blank
+	}
+
+	cpuTimes1, err := process.CPUTimes()
+	assert.Nil(t, err)
+
+	measuredElapsed := cpuTimes1.Total() - cpuTimes0.Total()
+	message := fmt.Sprintf("Measured %fs != spun time of %fs\ncpuTimes0=%v\ncpuTimes1=%v",
+		measuredElapsed, spinSeconds, cpuTimes0, cpuTimes1)
+	assert.True(t, measuredElapsed > float64(spinSeconds)/5, message)
+	assert.True(t, measuredElapsed < float64(spinSeconds)*5, message)
 }
