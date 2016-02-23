@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -673,7 +674,11 @@ func callLsof(arg string, pid int32) ([]string, error) {
 	} else {
 		cmd = []string{"-a", "-F" + arg, "-p", strconv.Itoa(int(pid))}
 	}
-	out, err := invoke.Command("/usr/bin/lsof", cmd...)
+	lsof, err := exec.LookPath("lsof")
+	if err != nil {
+		return []string{}, err
+	}
+	out, err := invoke.Command(lsof, cmd...)
 	if err != nil {
 		return []string{}, err
 	}
