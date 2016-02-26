@@ -3,7 +3,9 @@
 package load
 
 import (
+	"os/exec"
 	"strconv"
+	"strings"
 
 	"github.com/shirou/gopsutil/internal/common"
 )
@@ -34,4 +36,30 @@ func LoadAvg() (*LoadAvgStat, error) {
 	}
 
 	return ret, nil
+}
+
+// Misc returnes miscellaneous host-wide statistics.
+// darwin use ps command to get process running/blocked count.
+// Almost same as Darwin implementation, but state is different.
+func Misc() (*MiscStat, error) {
+	bin, err := exec.LookPath("ps")
+	if err != nil {
+		return nil, err
+	}
+	out, err := invoke.Command(bin, "axo", "state")
+	if err != nil {
+		return nil, err
+	}
+	lines := strings.Split(string(out), "\n")
+
+	ret := MiscStat{}
+	for _, l := range lines {
+		if strings.Contains(l, "R") {
+			ret.ProcsRunning += 1
+		} else if strings.Contains(l, "D") {
+			ret.ProcsBlocked += 1
+		}
+	}
+
+	return &ret, nil
 }

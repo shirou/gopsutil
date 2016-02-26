@@ -40,3 +40,40 @@ func LoadAvg() (*LoadAvgStat, error) {
 
 	return ret, nil
 }
+
+
+// Misc returnes miscellaneous host-wide statistics.
+// Note: the name should be changed near future.
+func Misc() (*MiscStat, error) {
+	filename := common.HostProc("stat")
+	out, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	ret := &MiscStat{}
+	lines := strings.Split(string(out), "\n")
+	for _, line := range lines {
+		fields := strings.Fields(line)
+		if len(fields) != 2 {
+			continue
+		}
+		v, err := strconv.ParseInt(fields[1], 10, 64)
+		if err != nil {
+			continue
+		}
+		switch fields[0] {
+		case "procs_running":
+			ret.ProcsRunning = int(v)
+		case "procs_blocked":
+			ret.ProcsBlocked = int(v)
+		case "ctxt":
+			ret.Ctxt = int(v)
+		default:
+			continue
+		}
+
+	}
+
+	return ret, nil
+}
