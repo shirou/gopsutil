@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/user"
+	"reflect"
 	"runtime"
 	"strings"
 	"sync"
@@ -117,6 +118,18 @@ func Test_Process_CmdLine(t *testing.T) {
 	}
 	if !strings.Contains(v, "process.test") {
 		t.Errorf("invalid cmd line %v", v)
+	}
+}
+
+func Test_Process_CmdLineSlice(t *testing.T) {
+	p := testGetProcess()
+
+	v, err := p.CmdlineSlice()
+	if err != nil {
+		t.Fatalf("geting cmdline slice error %v", err)
+	}
+	if !reflect.DeepEqual(v, os.Args) {
+		t.Errorf("returned cmdline slice not as expected:\nexp: %v\ngot: %v", os.Args, v)
 	}
 }
 

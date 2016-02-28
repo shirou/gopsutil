@@ -144,7 +144,9 @@ func (p *Process) Cmdline() (string, error) {
 	}
 	return *dst[0].CommandLine, nil
 }
-
+func (p *Process) CmdlineSlice() ([]string, error) {
+	return nil, common.NotImplementedError
+}
 func (p *Process) CreateTime() (int64, error) {
 	dst, err := GetWin32Proc(p.Pid)
 	if err != nil {
