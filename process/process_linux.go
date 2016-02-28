@@ -421,6 +421,9 @@ func (p *Process) fillSliceFromCmdline() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	if len(cmdline) == 0 {
+		return nil, nil
+	}
 	if cmdline[len(cmdline)-1] == 0 {
 		cmdline = cmdline[:len(cmdline)-1]
 	}

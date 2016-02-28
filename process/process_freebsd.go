@@ -77,6 +77,9 @@ func (p *Process) CmdlineSlice() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	if len(buf) == 0 {
+		return nil, nil
+	}
 	if buf[len(buf)-1] == 0 {
 		buf = buf[:len(buf)-1]
 	}
