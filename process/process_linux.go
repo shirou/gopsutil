@@ -3,6 +3,7 @@
 package process
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -91,9 +92,19 @@ func (p *Process) Name() (string, error) {
 func (p *Process) Exe() (string, error) {
 	return p.fillFromExe()
 }
+
+// Cmdline returns the command line arguments of the process as a string with
+// each argument separated by 0x20 ascii character.
 func (p *Process) Cmdline() (string, error) {
 	return p.fillFromCmdline()
 }
+
+// CmdlineSlice returns the command line arguments of the process as a slice with each
+// element being an argument.
+func (p *Process) CmdlineSlice() ([]string, error) {
+	return p.fillSliceFromCmdline()
+}
+
 func (p *Process) CreateTime() (int64, error) {
 	_, _, _, createTime, _, err := p.fillFromStat()
 	if err != nil {
@@ -408,6 +419,28 @@ func (p *Process) fillFromCmdline() (string, error) {
 	})
 
 	return strings.Join(ret, " "), nil
+}
+
+func (p *Process) fillSliceFromCmdline() ([]string, error) {
+	pid := p.Pid
+	cmdPath := common.HostProc(strconv.Itoa(int(pid)), "cmdline")
+	cmdline, err := ioutil.ReadFile(cmdPath)
+	if err != nil {
+		return nil, err
+	}
+	if len(cmdline) == 0 {
+		return nil, nil
+	}
+	if cmdline[len(cmdline)-1] == 0 {
+		cmdline = cmdline[:len(cmdline)-1]
+	}
+	parts := bytes.Split(cmdline, []byte{0})
+	var strParts []string
+	for _, p := range parts {
+		strParts = append(strParts, string(p))
+	}
+
+	return strParts, nil
 }
 
 // Get IO status from /proc/(pid)/io

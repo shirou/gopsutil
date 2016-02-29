@@ -5,6 +5,7 @@ package process
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"syscall"
 	"time"
 	"unsafe"
@@ -143,6 +144,17 @@ func (p *Process) Cmdline() (string, error) {
 		return "", fmt.Errorf("could not get CommandLine: %s", err)
 	}
 	return *dst[0].CommandLine, nil
+}
+
+// CmdlineSlice returns the command line arguments of the process as a slice with each
+// element being an argument. This merely returns the CommandLine informations passed
+// to the process split on the 0x20 ASCII character.
+func (p *Process) CmdlineSlice() ([]string, error) {
+	cmdline, err := p.Cmdline()
+	if err != nil {
+		return nil, err
+	}
+	return strings.Split(cmdline, " "), nil
 }
 
 func (p *Process) CreateTime() (int64, error) {

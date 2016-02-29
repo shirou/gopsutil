@@ -54,6 +54,7 @@ func (p *Process) Name() (string, error) {
 func (p *Process) Exe() (string, error) {
 	return "", common.NotImplementedError
 }
+
 func (p *Process) Cmdline() (string, error) {
 	mib := []int32{CTLKern, KernProc, KernProcArgs, p.Pid}
 	buf, _, err := common.CallSyscall(mib)
@@ -68,6 +69,27 @@ func (p *Process) Cmdline() (string, error) {
 	})
 
 	return strings.Join(ret, " "), nil
+}
+
+func (p *Process) CmdlineSlice() ([]string, error) {
+	mib := []int32{CTLKern, KernProc, KernProcArgs, p.Pid}
+	buf, _, err := common.CallSyscall(mib)
+	if err != nil {
+		return nil, err
+	}
+	if len(buf) == 0 {
+		return nil, nil
+	}
+	if buf[len(buf)-1] == 0 {
+		buf = buf[:len(buf)-1]
+	}
+	parts := bytes.Split(buf, []byte{0})
+	var strParts []string
+	for _, p := range parts {
+		strParts = append(strParts, string(p))
+	}
+
+	return strParts, nil
 }
 func (p *Process) CreateTime() (int64, error) {
 	return 0, common.NotImplementedError
