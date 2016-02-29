@@ -374,6 +374,9 @@ func Test_CPUTimes(t *testing.T) {
 	cpuTimes1, err := process.CPUTimes()
 	assert.Nil(t, err)
 
+	if cpuTimes0 == nil || cpuTimes1 == nil {
+		t.FailNow()
+	}
 	measuredElapsed := cpuTimes1.Total() - cpuTimes0.Total()
 	message := fmt.Sprintf("Measured %fs != spun time of %fs\ncpuTimes0=%v\ncpuTimes1=%v",
 		measuredElapsed, spinSeconds, cpuTimes0, cpuTimes1)
