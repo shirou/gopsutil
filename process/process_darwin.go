@@ -81,6 +81,9 @@ func (p *Process) Name() (string, error) {
 func (p *Process) Exe() (string, error) {
 	return "", common.NotImplementedError
 }
+
+// Cmdline returns the command line arguments of the process as a string with
+// each argument separated by 0x20 ascii character.
 func (p *Process) Cmdline() (string, error) {
 	r, err := callPs("command", p.Pid, false)
 	if err != nil {
@@ -88,8 +91,18 @@ func (p *Process) Cmdline() (string, error) {
 	}
 	return strings.Join(r[0], " "), err
 }
+
+// CmdlineSlice returns the command line arguments of the process as a slice with each
+// element being an argument. Because of current deficiencies in the way that the command
+// line arguments are found, single arguments that have spaces in the will actually be
+// reported as two separate items. In order to do something better CGO would be needed
+// to use the native darwin functions.
 func (p *Process) CmdlineSlice() ([]string, error) {
-	return nil, common.NotImplementedError
+	r, err := callPs("command", p.Pid, false)
+	if err != nil {
+		return nil, err
+	}
+	return r[0], err
 }
 func (p *Process) CreateTime() (int64, error) {
 	return 0, common.NotImplementedError
