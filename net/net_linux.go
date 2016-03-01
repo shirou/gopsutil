@@ -3,9 +3,15 @@
 package net
 
 import (
+	"encoding/hex"
 	"errors"
+	"fmt"
+	"io/ioutil"
+	"net"
+	"os"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/shirou/gopsutil/internal/common"
 )
@@ -191,4 +197,292 @@ func NetFilterCounters() ([]NetFilterStat, error) {
 
 	stats = append(stats, payload)
 	return stats, nil
+}
+
+type netConnectionKindType struct {
+	family   int
+	sockType int
+}
+
+var KindTCP4 = netConnectionKindType{
+	family:   syscall.AF_INET,
+	sockType: syscall.SOCK_STREAM,
+}
+var KindTCP6 = netConnectionKindType{
+	family:   syscall.AF_INET6,
+	sockType: syscall.SOCK_STREAM,
+}
+var KindUDP4 = netConnectionKindType{
+	family:   syscall.AF_INET,
+	sockType: syscall.SOCK_DGRAM,
+}
+var KindUDP6 = netConnectionKindType{
+	family:   syscall.AF_INET6,
+	sockType: syscall.SOCK_DGRAM,
+}
+var KindUNIX = netConnectionKindType{
+	family: syscall.AF_UNIX,
+}
+
+var netConnectionKindMap = map[string][]netConnectionKindType{
+	"all":   []netConnectionKindType{KindTCP4, KindTCP6, KindUDP4, KindUDP6, KindUNIX},
+	"tcp":   []netConnectionKindType{KindTCP4, KindTCP6},
+	"tcp4":  []netConnectionKindType{KindTCP4},
+	"tcp6":  []netConnectionKindType{KindTCP6},
+	"udp":   []netConnectionKindType{KindUDP4, KindUDP6},
+	"udp4":  []netConnectionKindType{KindUDP4},
+	"udp6":  []netConnectionKindType{KindUDP6},
+	"unix":  []netConnectionKindType{KindUNIX},
+	"inet":  []netConnectionKindType{KindTCP4, KindTCP6, KindUDP4, KindUDP6},
+	"inet4": []netConnectionKindType{KindTCP4, KindUDP4},
+	"inet6": []netConnectionKindType{KindTCP6, KindUDP6},
+}
+
+type inodeMap struct {
+	pid int32
+	fd  string
+}
+
+type bb struct {
+	fd        int
+	family    int
+	sockType  int
+	laddr     string
+	raddr     string
+	status    string
+	bound_pid int32
+}
+
+// Return a list of network connections opened.
+func NetConnections(kind string) ([]NetConnectionStat, error) {
+	return NetConnectionsPid(kind, 0)
+}
+
+// Return a list of network connections opened by a process.
+func NetConnectionsPid(kind string, pid int32) ([]NetConnectionStat, error) {
+	tmap, ok := netConnectionKindMap[kind]
+	if !ok {
+		return nil, fmt.Errorf("invalid kind, %s", kind)
+	}
+	root := common.HostProc()
+	var err error
+	var inodes map[string][]inodeMap
+	if pid == 0 {
+		inodes, err = getProcInodesAll(root)
+	} else {
+		inodes, err = getProcInodes(root, pid)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("cound not get pid(s), %d", pid)
+	}
+
+	for _, t := range tmap {
+		fmt.Println(t)
+		fmt.Println(inodes)
+
+		var path string
+		var ls []string
+		switch t.family {
+		case syscall.AF_INET:
+			path = fmt.Sprintf("%d/net/%s", pid, "tcp")
+			ls, err = processInet(path, t, inodes, pid)
+		case syscall.AF_INET6:
+			path = fmt.Sprintf("%d/net/%s", pid, "tcp6")
+			ls, err = processInet(path, t, inodes, pid)
+		case syscall.AF_UNIX:
+			path = fmt.Sprintf("%d/net/%s", pid, "unix")
+			ls, err = processInet(path, t, inodes, pid)
+		}
+		if err != nil {
+			return nil, err
+		}
+		for _, sss := range ls {
+			fmt.Println(sss)
+		}
+
+	}
+
+	return []NetConnectionStat{}, nil
+}
+
+// getProcInodes returnes fd of the pid.
+func getProcInodes(root string, pid int32) (map[string][]inodeMap, error) {
+	ret := make(map[string][]inodeMap)
+
+	dir := fmt.Sprintf("%s/%d/fd", root, pid)
+
+	files, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return ret, nil
+	}
+	for _, fd := range files {
+		inodePath := fmt.Sprintf("%s/%d/fd/%s", root, pid, fd.Name())
+
+		inode, err := os.Readlink(inodePath)
+		if err != nil {
+			continue
+		}
+
+		fmt.Println(inodePath)
+		if strings.HasPrefix(inode, "socket:[") {
+			// the process is using a socket
+			l := len(inode)
+			inode = inode[8 : l-1]
+		}
+
+		_, ok := ret[inode]
+		if !ok {
+			ret[inode] = make([]inodeMap, 0)
+		}
+
+		i := inodeMap{
+			pid: pid,
+			fd:  fd.Name(),
+		}
+		ret[inode] = append(ret[inode], i)
+	}
+
+	return ret, nil
+}
+
+// Pids retunres all pids.
+// Note: this is a copy of process_linux.Pids()
+// FIXME: Import process occures import cycle.
+// move to common made other platform breaking. Need consider.
+func Pids() ([]int32, error) {
+	var ret []int32
+
+	d, err := os.Open(common.HostProc())
+	if err != nil {
+		return nil, err
+	}
+	defer d.Close()
+
+	fnames, err := d.Readdirnames(-1)
+	if err != nil {
+		return nil, err
+	}
+	for _, fname := range fnames {
+		pid, err := strconv.ParseInt(fname, 10, 32)
+		if err != nil {
+			// if not numeric name, just skip
+			continue
+		}
+		ret = append(ret, int32(pid))
+	}
+
+	return ret, nil
+}
+
+func getProcInodesAll(root string) (map[string][]inodeMap, error) {
+	pids, err := Pids()
+	if err != nil {
+		return nil, err
+	}
+	ret := make(map[string][]inodeMap)
+
+	for _, pid := range pids {
+		t, err := getProcInodes(root, pid)
+		if err != nil {
+			return ret, err
+		}
+		if len(t) == 0 {
+			continue
+		}
+		// TODO: update ret.
+
+		fmt.Println(t)
+	}
+
+	return ret, nil
+}
+
+// decodeAddress decode addresse represents addr in proc/net/*
+// ex:
+// "0500000A:0016" -> "10.0.0.5", 22
+// "0085002452100113070057A13F025401:0035" -> "2400:8500:1301:1052:a157:7:154:23f", 53
+func decodeAddress(family int, src string) (net.IP, int, error) {
+	t := strings.Split(src, ":")
+	if len(t) != 2 {
+		return nil, 0, fmt.Errorf("does not contain port, %s", src)
+	}
+	addr := t[0]
+	port, err := strconv.ParseInt("0x"+t[1], 0, 64)
+	if err != nil {
+		return nil, 0, fmt.Errorf("invalid port, %s", src)
+	}
+	decoded, err := hex.DecodeString(addr)
+	if err != nil {
+		return nil, 0, fmt.Errorf("decode error:", err)
+	}
+	var ip net.IP
+	// Assumes this is little_endian
+	if family == syscall.AF_INET {
+		ip = net.IP(Reverse(decoded))
+	} else { // IPv6
+		ip, err = parseIPv6HexString(decoded)
+		if err != nil {
+			return nil, 0, err
+		}
+	}
+	return ip, int(port), nil
+}
+
+// Reverse reverses array of bytes.
+func Reverse(s []byte) []byte {
+	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
+		s[i], s[j] = s[j], s[i]
+	}
+	return s
+}
+
+// parseIPv6HexString parse array of bytes to IPv6 string
+func parseIPv6HexString(src []byte) (net.IP, error) {
+	if len(src) != 16 {
+		return nil, fmt.Errorf("invalid IPv6 string")
+	}
+
+	buf := make([]byte, 0, 16)
+	for i := 0; i < len(src); i += 4 {
+		r := Reverse(src[i : i+4])
+		buf = append(buf, r...)
+	}
+	return net.IP(buf), nil
+}
+
+func processInet(file string, kind netConnectionKindType, inodes map[string][]inodeMap, filterPid int32) ([]string, error) {
+
+	if strings.HasSuffix(file, "6") && !common.PathExists(file) {
+		// IPv6 not supported, return empty.
+		return []string{}, nil
+	}
+	lines, err := common.ReadLines(file)
+	if err != nil {
+		return nil, err
+	}
+	// skip first line
+	for _, line := range lines[1:] {
+		l := strings.Fields(line)
+		if len(l) < 10 {
+			continue
+		}
+		laddr := l[1]
+		raddr := l[2]
+		status := l[3]
+		inode, err := strconv.Atoi(l[9])
+		if err != nil {
+			continue
+		}
+		fmt.Println(laddr)
+		fmt.Println(raddr)
+		fmt.Println(status)
+		fmt.Println(inode)
+	}
+
+	return nil, nil
+}
+
+func processUnix(file string, kind netConnectionKindType, inodes map[string][]inodeMap, filterPid int32) ([]string, error) {
+
+	return nil, nil
 }
