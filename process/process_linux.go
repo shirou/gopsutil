@@ -70,7 +70,8 @@ func NewProcess(pid int32) (*Process, error) {
 	p := &Process{
 		Pid: int32(pid),
 	}
-	_, err := os.Open(common.HostProc(strconv.Itoa(int(p.Pid))))
+	file, err := os.Open(common.HostProc(strconv.Itoa(int(p.Pid))))
+	defer file.Close()
 	return p, err
 }
 
