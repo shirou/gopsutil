@@ -383,3 +383,18 @@ func Test_CPUTimes(t *testing.T) {
 	assert.True(t, measuredElapsed > float64(spinSeconds)/5, message)
 	assert.True(t, measuredElapsed < float64(spinSeconds)*5, message)
 }
+
+func Test_OpenFiles(t *testing.T) {
+	pid := os.Getpid()
+	p, err := NewProcess(int32(pid))
+	assert.Nil(t, err)
+
+	v, err := p.OpenFiles()
+	assert.Nil(t, err)
+	assert.NotEmpty(t, v) // test always open files.
+
+	for _, vv := range v {
+		assert.NotEqual(t, "", vv.Path)
+	}
+
+}
