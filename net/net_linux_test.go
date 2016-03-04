@@ -1,7 +1,6 @@
 package net
 
 import (
-	"fmt"
 	"syscall"
 	"testing"
 
@@ -11,14 +10,12 @@ import (
 
 func TestGetProcInodes(t *testing.T) {
 	root := common.HostProc("")
+	//	checkPid := os.Getpid() // process.test
+	checkPid := 13378
 
-	// /proc/19957/fd
-
-	v, err := getProcInodes(root, 19957)
-	if err != nil {
-		t.Fatal(err)
-	}
-	fmt.Println(v)
+	v, err := getProcInodes(root, int32(checkPid))
+	assert.Nil(t, err)
+	assert.NotEmpty(t, v)
 }
 
 type AddrTest struct {
@@ -59,13 +56,13 @@ func TestDecodeAddress(t *testing.T) {
 		if len(src) > 13 {
 			family = syscall.AF_INET6
 		}
-		ip, port, err := decodeAddress(family, src)
+		addr, err := decodeAddress(uint32(family), src)
 		if dst.Error {
 			assert.NotNil(err, src)
 		} else {
 			assert.Nil(err, src)
-			assert.Equal(dst.IP, ip.String(), src)
-			assert.Equal(dst.Port, port, src)
+			assert.Equal(dst.IP, addr.IP, src)
+			assert.Equal(dst.Port, int(addr.Port), src)
 		}
 	}
 }

@@ -199,58 +199,80 @@ func NetFilterCounters() ([]NetFilterStat, error) {
 	return stats, nil
 }
 
-type netConnectionKindType struct {
-	family   int
-	sockType int
+// http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
+var TCPStatuses = map[string]string{
+	"01": "ESTABLISHED",
+	"02": "SYN_SENT",
+	"03": "SYN_RECV",
+	"04": "FIN_WAIT1",
+	"05": "FIN_WAIT2",
+	"06": "TIME_WAIT",
+	"07": "CLOSE",
+	"08": "CLOSE_WAIT",
+	"09": "LAST_ACK",
+	"0A": "LISTEN",
+	"0B": "CLOSING",
 }
 
-var KindTCP4 = netConnectionKindType{
+type netConnectionKindType struct {
+	family   uint32
+	sockType uint32
+	f        string // file name
+}
+
+var kindTCP4 = netConnectionKindType{
 	family:   syscall.AF_INET,
 	sockType: syscall.SOCK_STREAM,
+	f:        "tcp",
 }
-var KindTCP6 = netConnectionKindType{
+var kindTCP6 = netConnectionKindType{
 	family:   syscall.AF_INET6,
 	sockType: syscall.SOCK_STREAM,
+	f:        "tcp6",
 }
-var KindUDP4 = netConnectionKindType{
+var kindUDP4 = netConnectionKindType{
 	family:   syscall.AF_INET,
 	sockType: syscall.SOCK_DGRAM,
+	f:        "udp",
 }
-var KindUDP6 = netConnectionKindType{
+var kindUDP6 = netConnectionKindType{
 	family:   syscall.AF_INET6,
 	sockType: syscall.SOCK_DGRAM,
+	f:        "udp6",
 }
-var KindUNIX = netConnectionKindType{
+var kindUNIX = netConnectionKindType{
 	family: syscall.AF_UNIX,
+	f:      "unix",
 }
 
 var netConnectionKindMap = map[string][]netConnectionKindType{
-	"all":   []netConnectionKindType{KindTCP4, KindTCP6, KindUDP4, KindUDP6, KindUNIX},
-	"tcp":   []netConnectionKindType{KindTCP4, KindTCP6},
-	"tcp4":  []netConnectionKindType{KindTCP4},
-	"tcp6":  []netConnectionKindType{KindTCP6},
-	"udp":   []netConnectionKindType{KindUDP4, KindUDP6},
-	"udp4":  []netConnectionKindType{KindUDP4},
-	"udp6":  []netConnectionKindType{KindUDP6},
-	"unix":  []netConnectionKindType{KindUNIX},
-	"inet":  []netConnectionKindType{KindTCP4, KindTCP6, KindUDP4, KindUDP6},
-	"inet4": []netConnectionKindType{KindTCP4, KindUDP4},
-	"inet6": []netConnectionKindType{KindTCP6, KindUDP6},
+	"all":   []netConnectionKindType{kindTCP4, kindTCP6, kindUDP4, kindUDP6, kindUNIX},
+	"tcp":   []netConnectionKindType{kindTCP4, kindTCP6},
+	"tcp4":  []netConnectionKindType{kindTCP4},
+	"tcp6":  []netConnectionKindType{kindTCP6},
+	"udp":   []netConnectionKindType{kindUDP4, kindUDP6},
+	"udp4":  []netConnectionKindType{kindUDP4},
+	"udp6":  []netConnectionKindType{kindUDP6},
+	"unix":  []netConnectionKindType{kindUNIX},
+	"inet":  []netConnectionKindType{kindTCP4, kindTCP6, kindUDP4, kindUDP6},
+	"inet4": []netConnectionKindType{kindTCP4, kindUDP4},
+	"inet6": []netConnectionKindType{kindTCP6, kindUDP6},
 }
 
 type inodeMap struct {
 	pid int32
-	fd  string
+	fd  uint32
 }
 
-type bb struct {
-	fd        int
-	family    int
-	sockType  int
-	laddr     string
-	raddr     string
-	status    string
-	bound_pid int32
+type connTmp struct {
+	fd       uint32
+	family   uint32
+	sockType uint32
+	laddr    Addr
+	raddr    Addr
+	status   string
+	pid      int32
+	boundPid int32
 }
 
 // Return a list of network connections opened.
@@ -271,38 +293,47 @@ func NetConnectionsPid(kind string, pid int32) ([]NetConnectionStat, error) {
 		inodes, err = getProcInodesAll(root)
 	} else {
 		inodes, err = getProcInodes(root, pid)
+		if len(inodes) == 0 {
+			// no connection for the pid
+			return []NetConnectionStat{}, nil
+		}
 	}
 	if err != nil {
 		return nil, fmt.Errorf("cound not get pid(s), %d", pid)
 	}
 
-	for _, t := range tmap {
-		fmt.Println(t)
-		fmt.Println(inodes)
+	var ret []NetConnectionStat
 
+	for _, t := range tmap {
 		var path string
-		var ls []string
+		var ls []connTmp
+		path = fmt.Sprintf("%s/net/%s", root, t.f)
 		switch t.family {
 		case syscall.AF_INET:
-			path = fmt.Sprintf("%d/net/%s", pid, "tcp")
-			ls, err = processInet(path, t, inodes, pid)
+			fallthrough
 		case syscall.AF_INET6:
-			path = fmt.Sprintf("%d/net/%s", pid, "tcp6")
 			ls, err = processInet(path, t, inodes, pid)
 		case syscall.AF_UNIX:
-			path = fmt.Sprintf("%d/net/%s", pid, "unix")
-			ls, err = processInet(path, t, inodes, pid)
+			ls, err = processUnix(path, t, inodes, pid)
 		}
 		if err != nil {
 			return nil, err
 		}
-		for _, sss := range ls {
-			fmt.Println(sss)
+		for _, c := range ls {
+			ret = append(ret, NetConnectionStat{
+				Fd:     c.fd,
+				Family: t.family,
+				Type:   t.sockType,
+				Laddr:  c.laddr,
+				Raddr:  c.raddr,
+				Status: c.status,
+				Pid:    c.pid,
+			})
 		}
 
 	}
 
-	return []NetConnectionStat{}, nil
+	return ret, nil
 }
 
 // getProcInodes returnes fd of the pid.
@@ -310,7 +341,6 @@ func getProcInodes(root string, pid int32) (map[string][]inodeMap, error) {
 	ret := make(map[string][]inodeMap)
 
 	dir := fmt.Sprintf("%s/%d/fd", root, pid)
-
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
 		return ret, nil
@@ -322,8 +352,6 @@ func getProcInodes(root string, pid int32) (map[string][]inodeMap, error) {
 		if err != nil {
 			continue
 		}
-
-		fmt.Println(inodePath)
 		if strings.HasPrefix(inode, "socket:[") {
 			// the process is using a socket
 			l := len(inode)
@@ -334,10 +362,14 @@ func getProcInodes(root string, pid int32) (map[string][]inodeMap, error) {
 		if !ok {
 			ret[inode] = make([]inodeMap, 0)
 		}
+		fd, err := strconv.Atoi(fd.Name())
+		if err != nil {
+			continue
+		}
 
 		i := inodeMap{
 			pid: pid,
-			fd:  fd.Name(),
+			fd:  uint32(fd),
 		}
 		ret[inode] = append(ret[inode], i)
 	}
@@ -390,10 +422,8 @@ func getProcInodesAll(root string) (map[string][]inodeMap, error) {
 			continue
 		}
 		// TODO: update ret.
-
-		fmt.Println(t)
+		ret = updateMap(ret, t)
 	}
-
 	return ret, nil
 }
 
@@ -401,19 +431,19 @@ func getProcInodesAll(root string) (map[string][]inodeMap, error) {
 // ex:
 // "0500000A:0016" -> "10.0.0.5", 22
 // "0085002452100113070057A13F025401:0035" -> "2400:8500:1301:1052:a157:7:154:23f", 53
-func decodeAddress(family int, src string) (net.IP, int, error) {
+func decodeAddress(family uint32, src string) (Addr, error) {
 	t := strings.Split(src, ":")
 	if len(t) != 2 {
-		return nil, 0, fmt.Errorf("does not contain port, %s", src)
+		return Addr{}, fmt.Errorf("does not contain port, %s", src)
 	}
 	addr := t[0]
 	port, err := strconv.ParseInt("0x"+t[1], 0, 64)
 	if err != nil {
-		return nil, 0, fmt.Errorf("invalid port, %s", src)
+		return Addr{}, fmt.Errorf("invalid port, %s", src)
 	}
 	decoded, err := hex.DecodeString(addr)
 	if err != nil {
-		return nil, 0, fmt.Errorf("decode error:", err)
+		return Addr{}, fmt.Errorf("decode error:", err)
 	}
 	var ip net.IP
 	// Assumes this is little_endian
@@ -422,10 +452,13 @@ func decodeAddress(family int, src string) (net.IP, int, error) {
 	} else { // IPv6
 		ip, err = parseIPv6HexString(decoded)
 		if err != nil {
-			return nil, 0, err
+			return Addr{}, err
 		}
 	}
-	return ip, int(port), nil
+	return Addr{
+		IP:   ip.String(),
+		Port: uint32(port),
+	}, nil
 }
 
 // Reverse reverses array of bytes.
@@ -450,17 +483,18 @@ func parseIPv6HexString(src []byte) (net.IP, error) {
 	return net.IP(buf), nil
 }
 
-func processInet(file string, kind netConnectionKindType, inodes map[string][]inodeMap, filterPid int32) ([]string, error) {
+func processInet(file string, kind netConnectionKindType, inodes map[string][]inodeMap, filterPid int32) ([]connTmp, error) {
 
 	if strings.HasSuffix(file, "6") && !common.PathExists(file) {
 		// IPv6 not supported, return empty.
-		return []string{}, nil
+		return []connTmp{}, nil
 	}
 	lines, err := common.ReadLines(file)
 	if err != nil {
 		return nil, err
 	}
 	// skip first line
+	var ret []connTmp
 	for _, line := range lines[1:] {
 		l := strings.Fields(line)
 		if len(l) < 10 {
@@ -469,20 +503,58 @@ func processInet(file string, kind netConnectionKindType, inodes map[string][]in
 		laddr := l[1]
 		raddr := l[2]
 		status := l[3]
-		inode, err := strconv.Atoi(l[9])
+		inode := l[9]
+		pid := int32(0)
+		fd := uint32(0)
+		i, exists := inodes[inode]
+		if exists {
+			pid = i[0].pid
+			fd = i[0].fd
+		}
+		if filterPid > 0 && filterPid != pid {
+			continue
+		}
+		if kind.sockType == syscall.SOCK_STREAM {
+			status = TCPStatuses[status]
+		} else {
+			status = "NONE"
+		}
+		la, err := decodeAddress(kind.family, laddr)
 		if err != nil {
 			continue
 		}
-		fmt.Println(laddr)
-		fmt.Println(raddr)
-		fmt.Println(status)
-		fmt.Println(inode)
+		ra, err := decodeAddress(kind.family, raddr)
+		if err != nil {
+			continue
+		}
+
+		ret = append(ret, connTmp{
+			fd:       fd,
+			family:   kind.family,
+			sockType: kind.sockType,
+			laddr:    la,
+			raddr:    ra,
+			status:   status,
+			pid:      pid,
+		})
 	}
 
-	return nil, nil
+	return ret, nil
 }
 
-func processUnix(file string, kind netConnectionKindType, inodes map[string][]inodeMap, filterPid int32) ([]string, error) {
+func processUnix(file string, kind netConnectionKindType, inodes map[string][]inodeMap, filterPid int32) ([]connTmp, error) {
 
-	return nil, nil
+	return []connTmp{}, nil
+}
+
+func updateMap(src map[string][]inodeMap, add map[string][]inodeMap) map[string][]inodeMap {
+	for key, value := range add {
+		a, exists := src[key]
+		if !exists {
+			src[key] = value
+			continue
+		}
+		src[key] = append(a, value...)
+	}
+	return src
 }
