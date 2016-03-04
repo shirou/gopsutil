@@ -246,7 +246,7 @@ func (p *Process) OpenFiles() ([]OpenFilesStat, error) {
 	if err != nil {
 		return nil, err
 	}
-	ret := make([]OpenFilesStat, 0, len(ofs))
+	ret := make([]OpenFilesStat, len(ofs))
 	for i, o := range ofs {
 		ret[i] = *o
 	}
@@ -361,7 +361,7 @@ func (p *Process) fillFromfd() (int32, []*OpenFilesStat, error) {
 	fnames, err := d.Readdirnames(-1)
 	numFDs := int32(len(fnames))
 
-	openfiles := make([]*OpenFilesStat, numFDs)
+	openfiles := make([]*OpenFilesStat, 0)
 	for _, fd := range fnames {
 		fpath := filepath.Join(statPath, fd)
 		filepath, err := os.Readlink(fpath)
