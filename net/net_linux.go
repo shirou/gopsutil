@@ -303,6 +303,7 @@ func NetConnectionsPid(kind string, pid int32) ([]NetConnectionStat, error) {
 		return nil, fmt.Errorf("cound not get pid(s), %d", pid)
 	}
 
+	dupCheckMap := make(map[string]bool)
 	var ret []NetConnectionStat
 
 	for _, t := range tmap {
@@ -323,8 +324,8 @@ func NetConnectionsPid(kind string, pid int32) ([]NetConnectionStat, error) {
 		for _, c := range ls {
 			conn := NetConnectionStat{
 				Fd:     c.fd,
-				Family: t.family,
-				Type:   t.sockType,
+				Family: c.family,
+				Type:   c.sockType,
 				Laddr:  c.laddr,
 				Raddr:  c.raddr,
 				Status: c.status,
@@ -335,7 +336,13 @@ func NetConnectionsPid(kind string, pid int32) ([]NetConnectionStat, error) {
 			} else {
 				conn.Pid = c.pid
 			}
-			ret = append(ret, conn)
+			// check duplicate using JSON format
+			json := conn.String()
+			_, exists := dupCheckMap[json]
+			if !exists {
+				ret = append(ret, conn)
+				dupCheckMap[json] = true
+			}
 		}
 
 	}
@@ -359,12 +366,12 @@ func getProcInodes(root string, pid int32) (map[string][]inodeMap, error) {
 		if err != nil {
 			continue
 		}
-		if strings.HasPrefix(inode, "socket:[") {
-			// the process is using a socket
-			l := len(inode)
-			inode = inode[8 : l-1]
+		if !strings.HasPrefix(inode, "socket:[") {
+			continue
 		}
-
+		// the process is using a socket
+		l := len(inode)
+		inode = inode[8 : l-1]
 		_, ok := ret[inode]
 		if !ok {
 			ret[inode] = make([]inodeMap, 0)
@@ -380,7 +387,6 @@ func getProcInodes(root string, pid int32) (map[string][]inodeMap, error) {
 		}
 		ret[inode] = append(ret[inode], i)
 	}
-
 	return ret, nil
 }
 
@@ -559,12 +565,12 @@ func processUnix(file string, kind netConnectionKindType, inodes map[string][]in
 	// skip first line
 	for _, line := range lines[1:] {
 		tokens := strings.Fields(line)
-		if len(tokens) < 7 {
+		if len(tokens) < 6 {
 			continue
 		}
 		st, err := strconv.Atoi(tokens[4])
 		if err != nil {
-			continue
+			return nil, err
 		}
 
 		inode := tokens[6]
@@ -572,7 +578,9 @@ func processUnix(file string, kind netConnectionKindType, inodes map[string][]in
 		var pairs []inodeMap
 		pairs, exists := inodes[inode]
 		if !exists {
-			pairs = []inodeMap{}
+			pairs = []inodeMap{
+				inodeMap{},
+			}
 		}
 		for _, pair := range pairs {
 			if filterPid > 0 && filterPid != pair.pid {
@@ -582,19 +590,21 @@ func processUnix(file string, kind netConnectionKindType, inodes map[string][]in
 			if len(tokens) == 8 {
 				path = tokens[len(tokens)-1]
 			}
-
 			ret = append(ret, connTmp{
+				fd:       pair.fd,
 				family:   kind.family,
 				sockType: uint32(st),
-				raddr:    Addr{},
-				pid:      pair.pid,
-				status:   "NONE",
-				path:     path,
+				laddr: Addr{
+					IP: path,
+				},
+				pid:    pair.pid,
+				status: "NONE",
+				path:   path,
 			})
 		}
 	}
 
-	return []connTmp{}, nil
+	return ret, nil
 }
 
 func updateMap(src map[string][]inodeMap, add map[string][]inodeMap) map[string][]inodeMap {
