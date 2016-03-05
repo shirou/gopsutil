@@ -1,6 +1,7 @@
 package net
 
 import (
+	"os"
 	"syscall"
 	"testing"
 
@@ -10,8 +11,7 @@ import (
 
 func TestGetProcInodes(t *testing.T) {
 	root := common.HostProc("")
-	//	checkPid := os.Getpid() // process.test
-	checkPid := 13378
+	checkPid := os.Getpid() // process.test
 
 	v, err := getProcInodes(root, int32(checkPid))
 	assert.Nil(t, err)

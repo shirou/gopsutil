@@ -273,6 +273,7 @@ type connTmp struct {
 	status   string
 	pid      int32
 	boundPid int32
+	path     string
 }
 
 // Return a list of network connections opened.
@@ -320,7 +321,7 @@ func NetConnectionsPid(kind string, pid int32) ([]NetConnectionStat, error) {
 			return nil, err
 		}
 		for _, c := range ls {
-			ret = append(ret, NetConnectionStat{
+			conn := NetConnectionStat{
 				Fd:     c.fd,
 				Family: t.family,
 				Type:   t.sockType,
@@ -328,7 +329,13 @@ func NetConnectionsPid(kind string, pid int32) ([]NetConnectionStat, error) {
 				Raddr:  c.raddr,
 				Status: c.status,
 				Pid:    c.pid,
-			})
+			}
+			if c.pid == 0 {
+				conn.Pid = c.boundPid
+			} else {
+				conn.Pid = c.pid
+			}
+			ret = append(ret, conn)
 		}
 
 	}
@@ -493,8 +500,8 @@ func processInet(file string, kind netConnectionKindType, inodes map[string][]in
 	if err != nil {
 		return nil, err
 	}
-	// skip first line
 	var ret []connTmp
+	// skip first line
 	for _, line := range lines[1:] {
 		l := strings.Fields(line)
 		if len(l) < 10 {
@@ -543,6 +550,49 @@ func processInet(file string, kind netConnectionKindType, inodes map[string][]in
 }
 
 func processUnix(file string, kind netConnectionKindType, inodes map[string][]inodeMap, filterPid int32) ([]connTmp, error) {
+	lines, err := common.ReadLines(file)
+	if err != nil {
+		return nil, err
+	}
+
+	var ret []connTmp
+	// skip first line
+	for _, line := range lines[1:] {
+		tokens := strings.Fields(line)
+		if len(tokens) < 7 {
+			continue
+		}
+		st, err := strconv.Atoi(tokens[4])
+		if err != nil {
+			continue
+		}
+
+		inode := tokens[6]
+
+		var pairs []inodeMap
+		pairs, exists := inodes[inode]
+		if !exists {
+			pairs = []inodeMap{}
+		}
+		for _, pair := range pairs {
+			if filterPid > 0 && filterPid != pair.pid {
+				continue
+			}
+			var path string
+			if len(tokens) == 8 {
+				path = tokens[len(tokens)-1]
+			}
+
+			ret = append(ret, connTmp{
+				family:   kind.family,
+				sockType: uint32(st),
+				raddr:    Addr{},
+				pid:      pair.pid,
+				status:   "NONE",
+				path:     path,
+			})
+		}
+	}
 
 	return []connTmp{}, nil
 }
