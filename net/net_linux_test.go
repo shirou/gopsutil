@@ -1,7 +1,6 @@
 package net
 
 import (
-	"os"
 	"syscall"
 	"testing"
 
@@ -9,11 +8,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetProcInodes(t *testing.T) {
+func TestGetProcInodesAll(t *testing.T) {
 	root := common.HostProc("")
-	checkPid := os.Getpid() // process.test
-
-	v, err := getProcInodes(root, int32(checkPid))
+	v, err := getProcInodesAll(root)
 	assert.Nil(t, err)
 	assert.NotEmpty(t, v)
 }
