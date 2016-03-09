@@ -118,6 +118,7 @@ func (p *Process) CPUPercent(interval time.Duration) (float64, error) {
 		p.lastCPUTime = now
 		time.Sleep(interval)
 		cpuTimes, err = p.CPUTimes()
+		now = time.Now()
 		if err != nil {
 			return 0, err
 		}
