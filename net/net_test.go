@@ -91,7 +91,7 @@ func TestNetIOCountersPerNic(t *testing.T) {
 	}
 }
 
-func Test_getNetIOCountersAll(t *testing.T) {
+func TestGetNetIOCountersAll(t *testing.T) {
 	n := []NetIOCountersStat{
 		NetIOCountersStat{
 			Name:        "a",

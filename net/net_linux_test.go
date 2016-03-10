@@ -68,3 +68,8 @@ func TestDecodeAddress(t *testing.T) {
 		}
 	}
 }
+
+func TestReverse(t *testing.T) {
+	src := []byte{0x01, 0x02, 0x03}
+	assert.Equal(t, []byte{0x03, 0x02, 0x01}, Reverse(src))
+}

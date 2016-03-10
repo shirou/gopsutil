@@ -217,32 +217,32 @@ var TCPStatuses = map[string]string{
 type netConnectionKindType struct {
 	family   uint32
 	sockType uint32
-	f        string // file name
+	filename string
 }
 
 var kindTCP4 = netConnectionKindType{
 	family:   syscall.AF_INET,
 	sockType: syscall.SOCK_STREAM,
-	f:        "tcp",
+	filename: "tcp",
 }
 var kindTCP6 = netConnectionKindType{
 	family:   syscall.AF_INET6,
 	sockType: syscall.SOCK_STREAM,
-	f:        "tcp6",
+	filename: "tcp6",
 }
 var kindUDP4 = netConnectionKindType{
 	family:   syscall.AF_INET,
 	sockType: syscall.SOCK_DGRAM,
-	f:        "udp",
+	filename: "udp",
 }
 var kindUDP6 = netConnectionKindType{
 	family:   syscall.AF_INET6,
 	sockType: syscall.SOCK_DGRAM,
-	f:        "udp6",
+	filename: "udp6",
 }
 var kindUNIX = netConnectionKindType{
-	family: syscall.AF_UNIX,
-	f:      "unix",
+	family:   syscall.AF_UNIX,
+	filename: "unix",
 }
 
 var netConnectionKindMap = map[string][]netConnectionKindType{
@@ -309,7 +309,7 @@ func NetConnectionsPid(kind string, pid int32) ([]NetConnectionStat, error) {
 	for _, t := range tmap {
 		var path string
 		var ls []connTmp
-		path = fmt.Sprintf("%s/net/%s", root, t.f)
+		path = fmt.Sprintf("%s/net/%s", root, t.filename)
 		switch t.family {
 		case syscall.AF_INET:
 			fallthrough
@@ -456,7 +456,7 @@ func decodeAddress(family uint32, src string) (Addr, error) {
 	}
 	decoded, err := hex.DecodeString(addr)
 	if err != nil {
-		return Addr{}, fmt.Errorf("decode error:", err)
+		return Addr{}, fmt.Errorf("decode error, %s", err)
 	}
 	var ip net.IP
 	// Assumes this is little_endian
