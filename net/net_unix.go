@@ -1,4 +1,4 @@
-// +build linux freebsd darwin
+// +build freebsd darwin
 
 package net
 

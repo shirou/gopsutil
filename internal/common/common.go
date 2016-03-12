@@ -206,6 +206,16 @@ func StringsContains(target []string, src string) bool {
 	return false
 }
 
+// IntContains checks the src in any int of the target int slice.
+func IntContains(target []int, src int) bool {
+	for _, t := range target {
+		if src == t {
+			return true
+		}
+	}
+	return false
+}
+
 // get struct attributes.
 // This method is used only for debugging platform dependent code.
 func attributes(m interface{}) map[string]reflect.Type {
