@@ -17,10 +17,6 @@ psutil functions on some architectures...
 
    Package (a.k.a. directory) structure has been changed!! see `issue 24 <https://github.com/shirou/gopsutil/issues/24>`_
 
-.. highlights:: golang 1.4 will become REQUIRED!
-
-   Since syscall package becomes frozen, we should use golang/x/sys of golang 1.4 as soon as possible.
-
 
 Available Architectures
 ------------------------------------
@@ -63,6 +59,7 @@ The output is below.
 
 You can set an alternative location to /proc by setting the HOST_PROC environment variable.
 You can set an alternative location to /sys by setting the HOST_SYS environment variable.
+You can set an alternative location to /etc by setting the HOST_ETC environment variable.
 
 Documentation
 ------------------------

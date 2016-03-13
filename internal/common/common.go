@@ -274,3 +274,7 @@ func HostProc(combineWith ...string) string {
 func HostSys(combineWith ...string) string {
 	return GetEnv("HOST_SYS", "/sys", combineWith...)
 }
+
+func HostEtc(combineWith ...string) string {
+	return GetEnv("HOST_ETC", "/etc", combineWith...)
+}

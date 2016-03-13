@@ -141,8 +141,8 @@ func Users() ([]UserStat, error) {
 
 func getLSB() (*LSB, error) {
 	ret := &LSB{}
-	if common.PathExists("/etc/lsb-release") {
-		contents, err := common.ReadLines("/etc/lsb-release")
+	if common.PathExists(common.HostEtc("lsb-release")) {
+		contents, err := common.ReadLines(common.HostEtc("lsb-release"))
 		if err != nil {
 			return ret, err // return empty
 		}
@@ -196,19 +196,20 @@ func GetPlatformInformation() (platform string, family string, version string, e
 		lsb = &LSB{}
 	}
 
-	if common.PathExists("/etc/oracle-release") {
+	if common.PathExists(common.HostEtc("oracle-release")) {
 		platform = "oracle"
-		contents, err := common.ReadLines("/etc/oracle-release")
+		contents, err := common.ReadLines(common.HostEtc("oracle-release"))
 		if err == nil {
 			version = getRedhatishVersion(contents)
 		}
-	} else if common.PathExists("/etc/enterprise-release") {
+
+	} else if common.PathExists(common.HostEtc("enterprise-release")) {
 		platform = "oracle"
-		contents, err := common.ReadLines("/etc/enterprise-release")
+		contents, err := common.ReadLines(common.HostEtc("enterprise-release"))
 		if err == nil {
 			version = getRedhatishVersion(contents)
 		}
-	} else if common.PathExists("/etc/debian_version") {
+	} else if common.PathExists(common.HostEtc("debian_version")) {
 		if lsb.ID == "Ubuntu" {
 			platform = "ubuntu"
 			version = lsb.Release
@@ -221,37 +222,37 @@ func GetPlatformInformation() (platform string, family string, version string, e
 			} else {
 				platform = "debian"
 			}
-			contents, err := common.ReadLines("/etc/debian_version")
+			contents, err := common.ReadLines(common.HostEtc("debian_version"))
 			if err == nil {
 				version = contents[0]
 			}
 		}
-	} else if common.PathExists("/etc/redhat-release") {
-		contents, err := common.ReadLines("/etc/redhat-release")
+	} else if common.PathExists(common.HostEtc("redhat-release")) {
+		contents, err := common.ReadLines(common.HostEtc("redhat-release"))
 		if err == nil {
 			version = getRedhatishVersion(contents)
 			platform = getRedhatishPlatform(contents)
 		}
-	} else if common.PathExists("/etc/system-release") {
-		contents, err := common.ReadLines("/etc/system-release")
+	} else if common.PathExists(common.HostEtc("system-release")) {
+		contents, err := common.ReadLines(common.HostEtc("system-release"))
 		if err == nil {
 			version = getRedhatishVersion(contents)
 			platform = getRedhatishPlatform(contents)
 		}
-	} else if common.PathExists("/etc/gentoo-release") {
+	} else if common.PathExists(common.HostEtc("gentoo-release")) {
 		platform = "gentoo"
-		contents, err := common.ReadLines("/etc/gentoo-release")
+		contents, err := common.ReadLines(common.HostEtc("gentoo-release"))
 		if err == nil {
 			version = getRedhatishVersion(contents)
 		}
-	} else if common.PathExists("/etc/SuSE-release") {
-		contents, err := common.ReadLines("/etc/SuSE-release")
+	} else if common.PathExists(common.HostEtc("SuSE-release")) {
+		contents, err := common.ReadLines(common.HostEtc("SuSE-release"))
 		if err == nil {
 			version = getSuseVersion(contents)
 			platform = getSusePlatform(contents)
 		}
 		// TODO: slackware detecion
-	} else if common.PathExists("/etc/arch-release") {
+	} else if common.PathExists(common.HostEtc("arch-release")) {
 		platform = "arch"
 		version = lsb.Release
 	} else if lsb.ID == "RedHat" {

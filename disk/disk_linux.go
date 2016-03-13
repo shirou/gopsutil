@@ -214,8 +214,7 @@ var fsTypeMap = map[int64]string{
 // Get disk partitions.
 // should use setmntent(3) but this implement use /etc/mtab file
 func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
-
-	filename := "/etc/mtab"
+	filename := common.HostEtc("mtab")
 	lines, err := common.ReadLines(filename)
 	if err != nil {
 		return nil, err
