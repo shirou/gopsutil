@@ -3,7 +3,10 @@ package net
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"testing"
+
+	"github.com/shirou/gopsutil/internal/common"
 )
 
 func TestAddrString(t *testing.T) {
@@ -200,6 +203,13 @@ func TestNetConnections(t *testing.T) {
 func TestNetFilterCounters(t *testing.T) {
 	if ci := os.Getenv("CI"); ci != "" { // skip if test on drone.io
 		return
+	}
+
+	if runtime.GOOS == "linux" {
+		// some test environment has not the path.
+		if !common.PathExists("/proc/sys/net/netfilter/nf_conntrack_count") {
+			t.SkipNow()
+		}
 	}
 
 	v, err := NetFilterCounters()
