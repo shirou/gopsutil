@@ -39,6 +39,10 @@ const (
 	MNT_SUSPEND = 4
 )
 
+const (
+	sizeOfDevstat = 0x120
+)
+
 type (
 	_C_short       int16
 	_C_int         int32

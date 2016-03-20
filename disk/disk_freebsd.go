@@ -99,14 +99,12 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 	buf := []byte(r)
 	length := len(buf)
 
-	ds := Devstat{}
-	devstatLen := int(unsafe.Sizeof(ds))
-	count := int(uint64(length) / uint64(devstatLen))
+	count := int(uint64(length) / uint64(sizeOfDevstat))
 
 	buf = buf[8:] // devstat.all has version in the head.
 	// parse buf to Devstat
 	for i := 0; i < count; i++ {
-		b := buf[i*devstatLen : i*devstatLen+devstatLen]
+		b := buf[i*sizeOfDevstat : i*sizeOfDevstat+sizeOfDevstat]
 		d, err := parseDevstat(b)
 		if err != nil {
 			continue
