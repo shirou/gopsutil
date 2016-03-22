@@ -10,7 +10,7 @@ import (
 	"github.com/shirou/gopsutil/internal/common"
 )
 
-func LoadAvg() (*LoadAvgStat, error) {
+func Avg() (*AvgStat, error) {
 	filename := common.HostProc("loadavg")
 	line, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -32,7 +32,7 @@ func LoadAvg() (*LoadAvgStat, error) {
 		return nil, err
 	}
 
-	ret := &LoadAvgStat{
+	ret := &AvgStat{
 		Load1:  load1,
 		Load5:  load5,
 		Load15: load15,
@@ -40,7 +40,6 @@ func LoadAvg() (*LoadAvgStat, error) {
 
 	return ret, nil
 }
-
 
 // Misc returnes miscellaneous host-wide statistics.
 // Note: the name should be changed near future.

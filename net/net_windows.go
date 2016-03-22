@@ -30,7 +30,7 @@ const (
 	TCPTableOwnerModuleAll
 )
 
-func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
+func IOCounters(pernic bool) ([]IOCountersStat, error) {
 	ifs, err := net.Interfaces()
 	if err != nil {
 		return nil, err
@@ -40,13 +40,13 @@ func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 	if err != nil {
 		return nil, err
 	}
-	var ret []NetIOCountersStat
+	var ret []IOCountersStat
 
 	for _, ifi := range ifs {
 		name := ifi.Name
 		for ; ai != nil; ai = ai.Next {
 			name = common.BytePtrToString(&ai.Description[0])
-			c := NetIOCountersStat{
+			c := IOCountersStat{
 				Name: name,
 			}
 
@@ -69,19 +69,19 @@ func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
 	}
 
 	if pernic == false {
-		return getNetIOCountersAll(ret)
+		return getIOCountersAll(ret)
 	}
 	return ret, nil
 }
 
 // NetIOCountersByFile is an method which is added just a compatibility for linux.
-func NetIOCountersByFile(pernic bool, filename string) ([]NetIOCountersStat, error) {
-	return NetIOCounters(pernic)
+func IOCountersByFile(pernic bool, filename string) ([]IOCountersStat, error) {
+	return IOCounters(pernic)
 }
 
 // Return a list of network connections opened by a process
-func NetConnections(kind string) ([]NetConnectionStat, error) {
-	var ret []NetConnectionStat
+func Connections(kind string) ([]ConnectionStat, error) {
+	var ret []ConnectionStat
 
 	return ret, common.NotImplementedError
 }
@@ -103,7 +103,7 @@ func getAdapterList() (*syscall.IpAdapterInfo, error) {
 	return a, nil
 }
 
-func NetFilterCounters() ([]NetFilterStat, error) {
+func FilterCounters() ([]FilterStat, error) {
 	return nil, errors.New("NetFilterCounters not implemented for windows")
 }
 
@@ -111,6 +111,6 @@ func NetFilterCounters() ([]NetFilterStat, error) {
 // If protocols is empty then all protocols are returned, otherwise
 // just the protocols in the list are returned.
 // Not Implemented for Windows
-func NetProtoCounters(protocols []string) ([]NetProtoCountersStat, error) {
+func ProtoCounters(protocols []string) ([]ProtoCountersStat, error) {
 	return nil, errors.New("NetProtoCounters not implemented for windows")
 }

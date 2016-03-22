@@ -26,7 +26,7 @@ type Process struct {
 	numThreads     int32
 	memInfo        *MemoryInfoStat
 
-	lastCPUTimes *cpu.CPUTimesStat
+	lastCPUTimes *cpu.TimesStat
 	lastCPUTime  time.Time
 }
 
@@ -106,8 +106,8 @@ func PidExists(pid int32) (bool, error) {
 
 // If interval is 0, return difference from last call(non-blocking).
 // If interval > 0, wait interval sec and return diffrence between start and end.
-func (p *Process) CPUPercent(interval time.Duration) (float64, error) {
-	cpuTimes, err := p.CPUTimes()
+func (p *Process) Percent(interval time.Duration) (float64, error) {
+	cpuTimes, err := p.Times()
 	if err != nil {
 		return 0, err
 	}
@@ -117,7 +117,7 @@ func (p *Process) CPUPercent(interval time.Duration) (float64, error) {
 		p.lastCPUTimes = cpuTimes
 		p.lastCPUTime = now
 		time.Sleep(interval)
-		cpuTimes, err = p.CPUTimes()
+		cpuTimes, err = p.Times()
 		now = time.Now()
 		if err != nil {
 			return 0, err
@@ -139,7 +139,7 @@ func (p *Process) CPUPercent(interval time.Duration) (float64, error) {
 	return ret, nil
 }
 
-func calculatePercent(t1, t2 *cpu.CPUTimesStat, delta float64, numcpu int) float64 {
+func calculatePercent(t1, t2 *cpu.TimesStat, delta float64, numcpu int) float64 {
 	if delta == 0 {
 		return 0
 	}

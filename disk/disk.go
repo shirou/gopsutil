@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 )
 
-type DiskUsageStat struct {
+type UsageStat struct {
 	Path              string  `json:"path"`
 	Fstype            string  `json:"fstype"`
 	Total             uint64  `json:"total"`
@@ -17,14 +17,14 @@ type DiskUsageStat struct {
 	InodesUsedPercent float64 `json:"inodes_used_percent"`
 }
 
-type DiskPartitionStat struct {
+type PartitionStat struct {
 	Device     string `json:"device"`
 	Mountpoint string `json:"mountpoint"`
 	Fstype     string `json:"fstype"`
 	Opts       string `json:"opts"`
 }
 
-type DiskIOCountersStat struct {
+type IOCountersStat struct {
 	ReadCount    uint64 `json:"read_count"`
 	WriteCount   uint64 `json:"write_count"`
 	ReadBytes    uint64 `json:"read_bytes"`
@@ -36,17 +36,17 @@ type DiskIOCountersStat struct {
 	SerialNumber string `json:"serial_number"`
 }
 
-func (d DiskUsageStat) String() string {
+func (d UsageStat) String() string {
 	s, _ := json.Marshal(d)
 	return string(s)
 }
 
-func (d DiskPartitionStat) String() string {
+func (d PartitionStat) String() string {
 	s, _ := json.Marshal(d)
 	return string(s)
 }
 
-func (d DiskIOCountersStat) String() string {
+func (d IOCountersStat) String() string {
 	s, _ := json.Marshal(d)
 	return string(s)
 }

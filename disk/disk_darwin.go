@@ -9,8 +9,8 @@ import (
 	"github.com/shirou/gopsutil/internal/common"
 )
 
-func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
-	var ret []DiskPartitionStat
+func Partitions(all bool) ([]PartitionStat, error) {
+	var ret []PartitionStat
 
 	count, err := Getfsstat(nil, MntWait)
 	if err != nil {
@@ -68,7 +68,7 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 		if stat.Flags&MntNFS4ACLs != 0 {
 			opts += ",nfs4acls"
 		}
-		d := DiskPartitionStat{
+		d := PartitionStat{
 			Device:     common.IntToString(stat.Mntfromname[:]),
 			Mountpoint: common.IntToString(stat.Mntonname[:]),
 			Fstype:     common.IntToString(stat.Fstypename[:]),
@@ -80,7 +80,7 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 	return ret, nil
 }
 
-func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
+func IOCounters() (map[string]IOCountersStat, error) {
 	return nil, common.NotImplementedError
 }
 

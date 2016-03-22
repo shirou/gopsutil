@@ -44,7 +44,7 @@ func GetDockerIDList() ([]string, error) {
 // containerId is same as docker id if you use docker.
 // If you use container via systemd.slice, you could use
 // containerId = docker-<container id>.scope and base=/sys/fs/cgroup/cpuacct/system.slice/
-func CgroupCPU(containerId string, base string) (*cpu.CPUTimesStat, error) {
+func CgroupCPU(containerId string, base string) (*cpu.TimesStat, error) {
 	statfile := getCgroupFilePath(containerId, base, "cpuacct", "cpuacct.stat")
 	lines, err := common.ReadLines(statfile)
 	if err != nil {
@@ -54,7 +54,7 @@ func CgroupCPU(containerId string, base string) (*cpu.CPUTimesStat, error) {
 	if len(containerId) == 0 {
 		containerId = "all"
 	}
-	ret := &cpu.CPUTimesStat{CPU: containerId}
+	ret := &cpu.TimesStat{CPU: containerId}
 	for _, line := range lines {
 		fields := strings.Split(line, " ")
 		if fields[0] == "user" {
@@ -74,7 +74,7 @@ func CgroupCPU(containerId string, base string) (*cpu.CPUTimesStat, error) {
 	return ret, nil
 }
 
-func CgroupCPUDocker(containerid string) (*cpu.CPUTimesStat, error) {
+func CgroupCPUDocker(containerid string) (*cpu.TimesStat, error) {
 	return CgroupCPU(containerid, common.HostSys("fs/cgroup/cpuacct/docker"))
 }
 

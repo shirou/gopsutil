@@ -36,8 +36,8 @@ type Win32_PerfFormattedData struct {
 
 const WaitMSec = 500
 
-func DiskUsage(path string) (*DiskUsageStat, error) {
-	ret := &DiskUsageStat{}
+func Usage(path string) (*UsageStat, error) {
+	ret := &UsageStat{}
 
 	lpFreeBytesAvailable := int64(0)
 	lpTotalNumberOfBytes := int64(0)
@@ -50,7 +50,7 @@ func DiskUsage(path string) (*DiskUsageStat, error) {
 	if diskret == 0 {
 		return nil, err
 	}
-	ret = &DiskUsageStat{
+	ret = &UsageStat{
 		Path:        path,
 		Total:       uint64(lpTotalNumberOfBytes),
 		Free:        uint64(lpTotalNumberOfFreeBytes),
@@ -64,8 +64,8 @@ func DiskUsage(path string) (*DiskUsageStat, error) {
 	return ret, nil
 }
 
-func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
-	var ret []DiskPartitionStat
+func Partitions(all bool) ([]PartitionStat, error) {
+	var ret []PartitionStat
 	lpBuffer := make([]byte, 254)
 	diskret, _, err := procGetLogicalDriveStringsW.Call(
 		uintptr(len(lpBuffer)),
@@ -116,7 +116,7 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 					opts += ".compress"
 				}
 
-				d := DiskPartitionStat{
+				d := PartitionStat{
 					Mountpoint: path,
 					Device:     path,
 					Fstype:     string(bytes.Replace(lpFileSystemNameBuffer, []byte("\x00"), []byte(""), -1)),
@@ -129,8 +129,8 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 	return ret, nil
 }
 
-func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
-	ret := make(map[string]DiskIOCountersStat, 0)
+func IOCounters() (map[string]IOCountersStat, error) {
+	ret := make(map[string]IOCountersStat, 0)
 	var dst []Win32_PerfFormattedData
 
 	err := wmi.Query("SELECT * FROM Win32_PerfFormattedData_PerfDisk_LogicalDisk ", &dst)
@@ -141,7 +141,7 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 		if len(d.Name) > 3 { // not get _Total or Harddrive
 			continue
 		}
-		ret[d.Name] = DiskIOCountersStat{
+		ret[d.Name] = IOCountersStat{
 			Name:       d.Name,
 			ReadCount:  uint64(d.AvgDiskReadQueueLength),
 			WriteCount: d.AvgDiskWriteQueueLength,

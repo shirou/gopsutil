@@ -143,7 +143,7 @@ func (p *Process) Uids() ([]int32, error) {
 	}
 
 	// See: http://unix.superglobalmegacorp.com/Net2/newsrc/sys/ucred.h.html
-	userEffectiveUID := int32(k.Eproc.Ucred.Uid)
+	userEffectiveUID := int32(k.Eproc.Ucred.UID)
 
 	return []int32{userEffectiveUID}, nil
 }
@@ -210,7 +210,7 @@ func (p *Process) Threads() (map[string]string, error) {
 	return ret, common.NotImplementedError
 }
 
-func convertCpuTimes(s string) (ret float64, err error) {
+func convertCPUTimes(s string) (ret float64, err error) {
 	var t int
 	var _tmp string
 	if strings.Contains(s, ":") {
@@ -235,23 +235,23 @@ func convertCpuTimes(s string) (ret float64, err error) {
 	t += h
 	return float64(t) / ClockTicks, nil
 }
-func (p *Process) CPUTimes() (*cpu.CPUTimesStat, error) {
+func (p *Process) Times() (*cpu.TimesStat, error) {
 	r, err := callPs("utime,stime", p.Pid, false)
 
 	if err != nil {
 		return nil, err
 	}
 
-	utime, err := convertCpuTimes(r[0][0])
+	utime, err := convertCPUTimes(r[0][0])
 	if err != nil {
 		return nil, err
 	}
-	stime, err := convertCpuTimes(r[0][1])
+	stime, err := convertCPUTimes(r[0][1])
 	if err != nil {
 		return nil, err
 	}
 
-	ret := &cpu.CPUTimesStat{
+	ret := &cpu.TimesStat{
 		CPU:    "cpu",
 		User:   utime,
 		System: stime,
@@ -311,11 +311,11 @@ func (p *Process) OpenFiles() ([]OpenFilesStat, error) {
 	return nil, common.NotImplementedError
 }
 
-func (p *Process) Connections() ([]net.NetConnectionStat, error) {
-	return net.NetConnectionsPid("all", p.Pid)
+func (p *Process) Connections() ([]net.ConnectionStat, error) {
+	return net.ConnectionsPid("all", p.Pid)
 }
 
-func (p *Process) NetIOCounters(pernic bool) ([]net.NetIOCountersStat, error) {
+func (p *Process) IOCounters(pernic bool) ([]net.IOCountersStat, error) {
 	return nil, common.NotImplementedError
 }
 

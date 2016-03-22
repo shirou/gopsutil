@@ -27,7 +27,7 @@ type Utmp struct {
 type Utmpx struct {
 	Type int16
 	Tv   Timeval
-	Id   [8]int8
+	ID   [8]int8
 	Pid  int32
 	User [32]int8
 	Line [16]int8

@@ -95,7 +95,7 @@ type Devstat struct {
 	Flags         uint32
 	Device_type   uint32
 	Priority      uint32
-	Id            *byte
+	ID            *byte
 	Sequence1     uint32
 }
 type Bintime struct {

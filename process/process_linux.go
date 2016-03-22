@@ -197,7 +197,7 @@ func (p *Process) Threads() (map[string]string, error) {
 	ret := make(map[string]string, 0)
 	return ret, nil
 }
-func (p *Process) CPUTimes() (*cpu.CPUTimesStat, error) {
+func (p *Process) Times() (*cpu.TimesStat, error) {
 	_, _, cpuTimes, _, _, err := p.fillFromStat()
 	if err != nil {
 		return nil, err
@@ -254,13 +254,13 @@ func (p *Process) OpenFiles() ([]OpenFilesStat, error) {
 	return ret, nil
 }
 
-func (p *Process) Connections() ([]net.NetConnectionStat, error) {
-	return net.NetConnectionsPid("all", p.Pid)
+func (p *Process) Connections() ([]net.ConnectionStat, error) {
+	return net.ConnectionsPid("all", p.Pid)
 }
 
-func (p *Process) NetIOCounters(pernic bool) ([]net.NetIOCountersStat, error) {
+func (p *Process) IOCounters(pernic bool) ([]net.IOCountersStat, error) {
 	filename := common.HostProc(strconv.Itoa(int(p.Pid)), "net/dev")
-	return net.NetIOCountersByFile(pernic, filename)
+	return net.IOCountersByFile(pernic, filename)
 }
 
 func (p *Process) IsRunning() (bool, error) {
@@ -623,7 +623,7 @@ func (p *Process) fillFromStatus() error {
 	return nil
 }
 
-func (p *Process) fillFromStat() (string, int32, *cpu.CPUTimesStat, int64, int32, error) {
+func (p *Process) fillFromStat() (string, int32, *cpu.TimesStat, int64, int32, error) {
 	pid := p.Pid
 	statPath := common.HostProc(strconv.Itoa(int(pid)), "stat")
 	contents, err := ioutil.ReadFile(statPath)
@@ -661,7 +661,7 @@ func (p *Process) fillFromStat() (string, int32, *cpu.CPUTimesStat, int64, int32
 		return "", 0, nil, 0, 0, err
 	}
 
-	cpuTimes := &cpu.CPUTimesStat{
+	cpuTimes := &cpu.TimesStat{
 		CPU:    "cpu",
 		User:   float64(utime / ClockTicks),
 		System: float64(stime / ClockTicks),

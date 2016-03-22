@@ -6,7 +6,7 @@ import (
 
 // A HostInfoStat describes the host status.
 // This is not in the psutil but it useful.
-type HostInfoStat struct {
+type InfoStat struct {
 	Hostname             string `json:"hostname"`
 	Uptime               uint64 `json:"uptime"`
 	BootTime             uint64 `json:"boot_time"`
@@ -27,7 +27,7 @@ type UserStat struct {
 	Started  int    `json:"started"`
 }
 
-func (h HostInfoStat) String() string {
+func (h InfoStat) String() string {
 	s, _ := json.Marshal(h)
 	return string(s)
 }

@@ -9,14 +9,14 @@ import (
 )
 
 func TestCpu_times(t *testing.T) {
-	v, err := CPUTimes(false)
+	v, err := Times(false)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
 	if len(v) == 0 {
 		t.Error("could not get CPUs ", err)
 	}
-	empty := CPUTimesStat{}
+	empty := TimesStat{}
 	for _, vv := range v {
 		if vv == empty {
 			t.Errorf("could not get CPU User: %v", vv)
@@ -25,7 +25,7 @@ func TestCpu_times(t *testing.T) {
 }
 
 func TestCpu_counts(t *testing.T) {
-	v, err := CPUCounts(true)
+	v, err := Counts(true)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -35,7 +35,7 @@ func TestCpu_counts(t *testing.T) {
 }
 
 func TestCPUTimeStat_String(t *testing.T) {
-	v := CPUTimesStat{
+	v := TimesStat{
 		CPU:    "cpu0",
 		User:   100.1,
 		System: 200.1,
@@ -48,7 +48,7 @@ func TestCPUTimeStat_String(t *testing.T) {
 }
 
 func TestCpuInfo(t *testing.T) {
-	v, err := CPUInfo()
+	v, err := Info()
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -68,7 +68,7 @@ func testCPUPercent(t *testing.T, percpu bool) {
 
 	if runtime.GOOS != "windows" {
 		testCount = 100
-		v, err := CPUPercent(time.Millisecond, percpu)
+		v, err := Percent(time.Millisecond, percpu)
 		if err != nil {
 			t.Errorf("error %v", err)
 		}
@@ -81,7 +81,7 @@ func testCPUPercent(t *testing.T, percpu bool) {
 	}
 	for i := 0; i < testCount; i++ {
 		duration := time.Duration(10) * time.Microsecond
-		v, err := CPUPercent(duration, percpu)
+		v, err := Percent(duration, percpu)
 		if err != nil {
 			t.Errorf("error %v", err)
 		}

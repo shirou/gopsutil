@@ -25,7 +25,7 @@ func init() {
 	}
 }
 
-func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
+func Times(percpu bool) ([]TimesStat, error) {
 	filename := common.HostProc("stat")
 	var lines = []string{}
 	if percpu {
@@ -43,7 +43,7 @@ func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 		lines, _ = common.ReadLinesOffsetN(filename, 0, 1)
 	}
 
-	ret := make([]CPUTimesStat, 0, len(lines))
+	ret := make([]TimesStat, 0, len(lines))
 
 	for _, line := range lines {
 		ct, err := parseStatLine(line)
@@ -60,7 +60,7 @@ func sysCpuPath(cpu int32, relPath string) string {
 	return common.HostSys(fmt.Sprintf("devices/system/cpu/cpu%d", cpu), relPath)
 }
 
-func finishCPUInfo(c *CPUInfoStat) error {
+func finishCPUInfo(c *InfoStat) error {
 	if c.Mhz == 0 {
 		lines, err := common.ReadLines(sysCpuPath(c.CPU, "cpufreq/cpuinfo_max_freq"))
 		if err == nil {
@@ -87,13 +87,13 @@ func finishCPUInfo(c *CPUInfoStat) error {
 // Sockets often come with many physical CPU cores.
 // For example a single socket board with two cores each with HT will
 // return 4 CPUInfoStat structs on Linux and the "Cores" field set to 1.
-func CPUInfo() ([]CPUInfoStat, error) {
+func Info() ([]InfoStat, error) {
 	filename := common.HostProc("cpuinfo")
 	lines, _ := common.ReadLines(filename)
 
-	var ret []CPUInfoStat
+	var ret []InfoStat
 
-	c := CPUInfoStat{CPU: -1, Cores: 1}
+	c := InfoStat{CPU: -1, Cores: 1}
 	for _, line := range lines {
 		fields := strings.Split(line, ":")
 		if len(fields) < 2 {
@@ -111,7 +111,7 @@ func CPUInfo() ([]CPUInfoStat, error) {
 				}
 				ret = append(ret, c)
 			}
-			c = CPUInfoStat{Cores: 1}
+			c = InfoStat{Cores: 1}
 			t, err := strconv.ParseInt(value, 10, 64)
 			if err != nil {
 				return ret, err
@@ -163,7 +163,7 @@ func CPUInfo() ([]CPUInfoStat, error) {
 	return ret, nil
 }
 
-func parseStatLine(line string) (*CPUTimesStat, error) {
+func parseStatLine(line string) (*TimesStat, error) {
 	fields := strings.Fields(line)
 
 	if strings.HasPrefix(fields[0], "cpu") == false {
@@ -204,7 +204,7 @@ func parseStatLine(line string) (*CPUTimesStat, error) {
 		return nil, err
 	}
 
-	ct := &CPUTimesStat{
+	ct := &TimesStat{
 		CPU:     cpu,
 		User:    float64(user) / cpu_tick,
 		Nice:    float64(nice) / cpu_tick,

@@ -184,12 +184,12 @@ func (p *Process) Threads() (map[string]string, error) {
 	ret := make(map[string]string, 0)
 	return ret, common.NotImplementedError
 }
-func (p *Process) CPUTimes() (*cpu.CPUTimesStat, error) {
+func (p *Process) Times() (*cpu.TimesStat, error) {
 	k, err := p.getKProc()
 	if err != nil {
 		return nil, err
 	}
-	return &cpu.CPUTimesStat{
+	return &cpu.TimesStat{
 		CPU:    "cpu",
 		User:   float64(k.KiRusage.Utime.Sec) + float64(k.KiRusage.Utime.Usec)/1000000,
 		System: float64(k.KiRusage.Stime.Sec) + float64(k.KiRusage.Stime.Usec)/1000000,
@@ -238,11 +238,11 @@ func (p *Process) OpenFiles() ([]OpenFilesStat, error) {
 	return nil, common.NotImplementedError
 }
 
-func (p *Process) Connections() ([]net.NetConnectionStat, error) {
+func (p *Process) Connections() ([]net.ConnectionStat, error) {
 	return nil, common.NotImplementedError
 }
 
-func (p *Process) NetIOCounters(pernic bool) ([]net.NetIOCountersStat, error) {
+func (p *Process) IOCounters(pernic bool) ([]net.IOCountersStat, error) {
 	return nil, common.NotImplementedError
 }
 

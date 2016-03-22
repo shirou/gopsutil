@@ -11,7 +11,7 @@ func TestDisk_usage(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		path = "C:"
 	}
-	v, err := DiskUsage(path)
+	v, err := Usage(path)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -21,11 +21,11 @@ func TestDisk_usage(t *testing.T) {
 }
 
 func TestDisk_partitions(t *testing.T) {
-	ret, err := DiskPartitions(false)
+	ret, err := Partitions(false)
 	if err != nil || len(ret) == 0 {
 		t.Errorf("error %v", err)
 	}
-	empty := DiskPartitionStat{}
+	empty := PartitionStat{}
 	for _, disk := range ret {
 		if disk == empty {
 			t.Errorf("Could not get device info %v", disk)
@@ -34,14 +34,14 @@ func TestDisk_partitions(t *testing.T) {
 }
 
 func TestDisk_io_counters(t *testing.T) {
-	ret, err := DiskIOCounters()
+	ret, err := IOCounters()
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
 	if len(ret) == 0 {
 		t.Errorf("ret is empty, %v", ret)
 	}
-	empty := DiskIOCountersStat{}
+	empty := IOCountersStat{}
 	for part, io := range ret {
 		if io == empty {
 			t.Errorf("io_counter error %v, %v", part, io)
@@ -50,7 +50,7 @@ func TestDisk_io_counters(t *testing.T) {
 }
 
 func TestDiskUsageStat_String(t *testing.T) {
-	v := DiskUsageStat{
+	v := UsageStat{
 		Path:              "/",
 		Total:             1000,
 		Free:              2000,
@@ -69,7 +69,7 @@ func TestDiskUsageStat_String(t *testing.T) {
 }
 
 func TestDiskPartitionStat_String(t *testing.T) {
-	v := DiskPartitionStat{
+	v := PartitionStat{
 		Device:     "sd01",
 		Mountpoint: "/",
 		Fstype:     "ext4",
@@ -82,7 +82,7 @@ func TestDiskPartitionStat_String(t *testing.T) {
 }
 
 func TestDiskIOCountersStat_String(t *testing.T) {
-	v := DiskIOCountersStat{
+	v := IOCountersStat{
 		Name:         "sd01",
 		ReadCount:    100,
 		WriteCount:   200,

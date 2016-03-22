@@ -6,11 +6,11 @@ import (
 )
 
 func TestHostInfo(t *testing.T) {
-	v, err := HostInfo()
+	v, err := Info()
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
-	empty := &HostInfoStat{}
+	empty := &InfoStat{}
 	if v == empty {
 		t.Errorf("Could not get hostinfo %v", v)
 	}
@@ -40,7 +40,7 @@ func TestUsers(t *testing.T) {
 }
 
 func TestHostInfoStat_String(t *testing.T) {
-	v := HostInfoStat{
+	v := InfoStat{
 		Hostname: "test",
 		Uptime:   3000,
 		Procs:    100,

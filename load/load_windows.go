@@ -6,8 +6,8 @@ import (
 	"github.com/shirou/gopsutil/internal/common"
 )
 
-func LoadAvg() (*LoadAvgStat, error) {
-	ret := LoadAvgStat{}
+func Avg() (*AvgStat, error) {
+	ret := AvgStat{}
 
 	return &ret, common.NotImplementedError
 }

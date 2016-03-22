@@ -4,7 +4,7 @@ package disk
 
 import "syscall"
 
-func DiskUsage(path string) (*DiskUsageStat, error) {
+func Usage(path string) (*UsageStat, error) {
 	stat := syscall.Statfs_t{}
 	err := syscall.Statfs(path, &stat)
 	if err != nil {
@@ -12,7 +12,7 @@ func DiskUsage(path string) (*DiskUsageStat, error) {
 	}
 	bsize := stat.Bsize
 
-	ret := &DiskUsageStat{
+	ret := &UsageStat{
 		Path:        path,
 		Fstype:      getFsType(stat),
 		Total:       (uint64(stat.Blocks) * uint64(bsize)),

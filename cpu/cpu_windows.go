@@ -25,8 +25,8 @@ type Win32_Processor struct {
 }
 
 // TODO: Get percpu
-func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
-	var ret []CPUTimesStat
+func Times(percpu bool) ([]TimesStat, error) {
+	var ret []TimesStat
 
 	var lpIdleTime common.FILETIME
 	var lpKernelTime common.FILETIME
@@ -46,7 +46,7 @@ func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 	kernel := ((HIT * float64(lpKernelTime.DwHighDateTime)) + (LOT * float64(lpKernelTime.DwLowDateTime)))
 	system := (kernel - idle)
 
-	ret = append(ret, CPUTimesStat{
+	ret = append(ret, TimesStat{
 		Idle:   float64(idle),
 		User:   float64(user),
 		System: float64(system),
@@ -54,8 +54,8 @@ func CPUTimes(percpu bool) ([]CPUTimesStat, error) {
 	return ret, nil
 }
 
-func CPUInfo() ([]CPUInfoStat, error) {
-	var ret []CPUInfoStat
+func Info() ([]InfoStat, error) {
+	var ret []InfoStat
 	var dst []Win32_Processor
 	q := wmi.CreateQuery(&dst, "")
 	err := wmi.Query(q, &dst)
@@ -70,7 +70,7 @@ func CPUInfo() ([]CPUInfoStat, error) {
 			procID = *l.ProcessorId
 		}
 
-		cpu := CPUInfoStat{
+		cpu := InfoStat{
 			CPU:        int32(i),
 			Family:     fmt.Sprintf("%d", l.Family),
 			VendorID:   l.Manufacturer,
@@ -86,7 +86,7 @@ func CPUInfo() ([]CPUInfoStat, error) {
 	return ret, nil
 }
 
-func CPUPercent(interval time.Duration, percpu bool) ([]float64, error) {
+func Percent(interval time.Duration, percpu bool) ([]float64, error) {
 	var ret []float64
 	var dst []Win32_Processor
 	q := wmi.CreateQuery(&dst, "")

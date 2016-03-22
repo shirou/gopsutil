@@ -227,7 +227,7 @@ func (p *Process) Threads() (map[string]string, error) {
 	ret := make(map[string]string, 0)
 	return ret, common.NotImplementedError
 }
-func (p *Process) CPUTimes() (*cpu.CPUTimesStat, error) {
+func (p *Process) Times() (*cpu.TimesStat, error) {
 	return nil, common.NotImplementedError
 }
 func (p *Process) CPUAffinity() ([]int32, error) {
@@ -248,11 +248,11 @@ func (p *Process) OpenFiles() ([]OpenFilesStat, error) {
 	return nil, common.NotImplementedError
 }
 
-func (p *Process) Connections() ([]net.NetConnectionStat, error) {
+func (p *Process) Connections() ([]net.ConnectionStat, error) {
 	return nil, common.NotImplementedError
 }
 
-func (p *Process) NetIOCounters(pernic bool) ([]net.NetIOCountersStat, error) {
+func (p *Process) IOCounters(pernic bool) ([]net.IOCountersStat, error) {
 	return nil, common.NotImplementedError
 }
 
