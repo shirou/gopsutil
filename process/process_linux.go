@@ -258,7 +258,7 @@ func (p *Process) Connections() ([]net.ConnectionStat, error) {
 	return net.ConnectionsPid("all", p.Pid)
 }
 
-func (p *Process) IOCounters(pernic bool) ([]net.IOCountersStat, error) {
+func (p *Process) NetIOCounters(pernic bool) ([]net.IOCountersStat, error) {
 	filename := common.HostProc(strconv.Itoa(int(p.Pid)), "net/dev")
 	return net.IOCountersByFile(pernic, filename)
 }

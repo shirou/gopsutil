@@ -242,7 +242,7 @@ func (p *Process) Connections() ([]net.ConnectionStat, error) {
 	return nil, common.NotImplementedError
 }
 
-func (p *Process) IOCounters(pernic bool) ([]net.IOCountersStat, error) {
+func (p *Process) NetIOCounters(pernic bool) ([]net.IOCountersStat, error) {
 	return nil, common.NotImplementedError
 }
 

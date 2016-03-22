@@ -2,6 +2,13 @@
 # 
 # go get golang.org/x/tools/cmd/gorename
 
+#
+# Note:
+#   process has IOCounters() for file IO, and also NetIOCounters() for Net IO.
+#   This scripts replace process.NetIOCounters() to IOCounters().
+#   So you need hand-fixing process.
+
+
 TARGETS=`cat <<EOF
 CPUTimesStat -> TimesStat
 CPUInfoStat -> InfoStat
