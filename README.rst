@@ -13,9 +13,10 @@ gopsutil: psutil for golang
 This is a port of psutil (http://pythonhosted.org/psutil/). The challenge is porting all
 psutil functions on some architectures...
 
-.. highlights:: Package Structure Changed!
 
-   Package (a.k.a. directory) structure has been changed!! see `issue 24 <https://github.com/shirou/gopsutil/issues/24>`_
+.. highlights:: Breaking Changes will comes!
+
+   We introduced versioning by using gopkgin. And breaking changes will be introduced at v2. See `issue 174 <https://github.com/shirou/gopsutil/issues/174>`_ .
 
 
 Available Architectures
@@ -32,12 +33,14 @@ All works are implemented without cgo by porting c struct to golang struct.
 Usage
 ---------
 
+Note: gopsutil.v2 breaks compatibility. If you want to stay with compatibility, please use `gopkg.in/shirou/gopsutil.v1`.
+
 .. code:: go
 
    import (
    	"fmt"
 
-   	"github.com/shirou/gopsutil/mem"
+    mem "gopkg.in/shirou/gopsutil.v2"
    )
 
    func main() {
