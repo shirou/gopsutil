@@ -40,7 +40,7 @@ Note: gopsutil.v2 breaks compatibility. If you want to stay with compatibility, 
    import (
    	"fmt"
 
-    mem "gopkg.in/shirou/gopsutil.v2"
+    mem "gopkg.in/shirou/gopsutil.v2/mem"
    )
 
    func main() {
