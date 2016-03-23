@@ -18,22 +18,22 @@ type TimesStat struct {
 	Softirq   float64 `json:"softirq"`
 	Steal     float64 `json:"steal"`
 	Guest     float64 `json:"guest"`
-	GuestNice float64 `json:"guest_nice"`
+	GuestNice float64 `json:"guestNice"`
 	Stolen    float64 `json:"stolen"`
 }
 
 type InfoStat struct {
 	CPU        int32    `json:"cpu"`
-	VendorID   string   `json:"vendor_id"`
+	VendorID   string   `json:"vendorId"`
 	Family     string   `json:"family"`
 	Model      string   `json:"model"`
 	Stepping   int32    `json:"stepping"`
-	PhysicalID string   `json:"physical_id"`
-	CoreID     string   `json:"core_id"`
+	PhysicalID string   `json:"physicalId"`
+	CoreID     string   `json:"coreId"`
 	Cores      int32    `json:"cores"`
-	ModelName  string   `json:"model_name"`
+	ModelName  string   `json:"modelName"`
 	Mhz        float64  `json:"mhz"`
-	CacheSize  int32    `json:"cache_size"`
+	CacheSize  int32    `json:"cacheSize"`
 	Flags      []string `json:"flags"`
 }
 
@@ -56,7 +56,7 @@ func (c TimesStat) String() string {
 		`"softirq":` + strconv.FormatFloat(c.Softirq, 'f', 1, 64),
 		`"steal":` + strconv.FormatFloat(c.Steal, 'f', 1, 64),
 		`"guest":` + strconv.FormatFloat(c.Guest, 'f', 1, 64),
-		`"guest_nice":` + strconv.FormatFloat(c.GuestNice, 'f', 1, 64),
+		`"guestNice":` + strconv.FormatFloat(c.GuestNice, 'f', 1, 64),
 		`"stolen":` + strconv.FormatFloat(c.Stolen, 'f', 1, 64),
 	}
 

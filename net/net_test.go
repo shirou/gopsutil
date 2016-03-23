@@ -23,7 +23,7 @@ func TestNetIOCountersStatString(t *testing.T) {
 		Name:      "test",
 		BytesSent: 100,
 	}
-	e := `{"name":"test","bytes_sent":100,"bytes_recv":0,"packets_sent":0,"packets_recv":0,"errin":0,"errout":0,"dropin":0,"dropout":0}`
+	e := `{"name":"test","bytesSent":100,"bytesRecv":0,"packetsSent":0,"packetsRecv":0,"errin":0,"errout":0,"dropin":0,"dropout":0}`
 	if e != fmt.Sprintf("%v", v) {
 		t.Errorf("NetIOCountersStat string is invalid: %v", v)
 	}
@@ -207,7 +207,7 @@ func TestNetFilterCounters(t *testing.T) {
 
 	if runtime.GOOS == "linux" {
 		// some test environment has not the path.
-		if !common.PathExists("/proc/sys/net/netfilter/nf_conntrack_count") {
+		if !common.PathExists("/proc/sys/net/netfilter/nf_conntrackCount") {
 			t.SkipNow()
 		}
 	}
@@ -221,7 +221,7 @@ func TestNetFilterCounters(t *testing.T) {
 	}
 	for _, vv := range v {
 		if vv.ConnTrackMax == 0 {
-			t.Errorf("nf_conntrack_max needs to be greater than zero: %v", vv)
+			t.Errorf("nf_conntrackMax needs to be greater than zero: %v", vv)
 		}
 	}
 

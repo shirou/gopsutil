@@ -72,7 +72,7 @@ func finishCPUInfo(c *InfoStat) error {
 		}
 	}
 	if len(c.CoreID) == 0 {
-		lines, err := common.ReadLines(sysCpuPath(c.CPU, "topology/core_id"))
+		lines, err := common.ReadLines(sysCpuPath(c.CPU, "topology/coreId"))
 		if err == nil {
 			c.CoreID = lines[0]
 		}
@@ -117,7 +117,7 @@ func Info() ([]InfoStat, error) {
 				return ret, err
 			}
 			c.CPU = int32(t)
-		case "vendor_id":
+		case "vendorId":
 			c.VendorID = value
 		case "cpu family":
 			c.Family = value

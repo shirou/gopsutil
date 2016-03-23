@@ -19,6 +19,12 @@ psutil functions on some architectures...
    We introduced versioning by using gopkgin. And breaking changes will be introduced at v2. See `issue 174 <https://github.com/shirou/gopsutil/issues/174>`_ .
 
 
+Migrating to v2
+-------------------------
+
+On gopsutil itself, `v2migration.sh <https://github.com/shirou/gopsutil/blob/v2/v2migration.sh>`_ is used for migration. It can not be commly used, but it may help to your migration.
+
+
 Available Architectures
 ------------------------------------
 

@@ -101,9 +101,9 @@ func CgroupMem(containerId string, base string) (*CgroupMemStat, error) {
 			ret.Cache = v
 		case "rss":
 			ret.RSS = v
-		case "rss_huge":
+		case "rssHuge":
 			ret.RSSHuge = v
-		case "mapped_file":
+		case "mappedFile":
 			ret.MappedFile = v
 		case "pgpgin":
 			ret.Pgpgin = v
@@ -113,43 +113,43 @@ func CgroupMem(containerId string, base string) (*CgroupMemStat, error) {
 			ret.Pgfault = v
 		case "pgmajfault":
 			ret.Pgmajfault = v
-		case "inactive_anon":
+		case "inactiveAnon":
 			ret.InactiveAnon = v
-		case "active_anon":
+		case "activeAnon":
 			ret.ActiveAnon = v
-		case "inactive_file":
+		case "inactiveFile":
 			ret.InactiveFile = v
-		case "active_file":
+		case "activeFile":
 			ret.ActiveFile = v
 		case "unevictable":
 			ret.Unevictable = v
-		case "hierarchical_memory_limit":
+		case "hierarchicalMemoryLimit":
 			ret.HierarchicalMemoryLimit = v
-		case "total_cache":
+		case "totalCache":
 			ret.TotalCache = v
-		case "total_rss":
+		case "totalRss":
 			ret.TotalRSS = v
-		case "total_rss_huge":
+		case "totalRssHuge":
 			ret.TotalRSSHuge = v
-		case "total_mapped_file":
+		case "totalMappedFile":
 			ret.TotalMappedFile = v
-		case "total_pgpgin":
+		case "totalPgpgin":
 			ret.TotalPgpgIn = v
-		case "total_pgpgout":
+		case "totalPgpgout":
 			ret.TotalPgpgOut = v
-		case "total_pgfault":
+		case "totalPgfault":
 			ret.TotalPgFault = v
-		case "total_pgmajfault":
+		case "totalPgmajfault":
 			ret.TotalPgMajFault = v
-		case "total_inactive_anon":
+		case "totalInactiveAnon":
 			ret.TotalInactiveAnon = v
-		case "total_active_anon":
+		case "totalActiveAnon":
 			ret.TotalActiveAnon = v
-		case "total_inactive_file":
+		case "totalInactiveFile":
 			ret.TotalInactiveFile = v
-		case "total_active_file":
+		case "totalActiveFile":
 			ret.TotalActiveFile = v
-		case "total_unevictable":
+		case "totalUnevictable":
 			ret.TotalUnevictable = v
 		}
 	}
@@ -162,11 +162,11 @@ func CgroupMem(containerId string, base string) (*CgroupMemStat, error) {
 	if err == nil {
 		ret.MemMaxUsageInBytes = r
 	}
-	r, err = getCgroupMemFile(containerId, base, "memory.limit_in_bytes")
+	r, err = getCgroupMemFile(containerId, base, "memoryLimitInBbytes")
 	if err == nil {
 		ret.MemLimitInBytes = r
 	}
-	r, err = getCgroupMemFile(containerId, base, "memory.failcnt")
+	r, err = getCgroupMemFile(containerId, base, "memoryFailcnt")
 	if err == nil {
 		ret.MemFailCnt = r
 	}

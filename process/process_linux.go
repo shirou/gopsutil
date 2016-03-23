@@ -48,10 +48,10 @@ type MemoryMapsStat struct {
 	Rss          uint64 `json:"rss"`
 	Size         uint64 `json:"size"`
 	Pss          uint64 `json:"pss"`
-	SharedClean  uint64 `json:"shared_clean"`
-	SharedDirty  uint64 `json:"shared_dirty"`
-	PrivateClean uint64 `json:"private_clean"`
-	PrivateDirty uint64 `json:"private_dirty"`
+	SharedClean  uint64 `json:"sharedClean"`
+	SharedDirty  uint64 `json:"sharedDirty"`
+	PrivateClean uint64 `json:"privateClean"`
+	PrivateDirty uint64 `json:"privateDirty"`
 	Referenced   uint64 `json:"referenced"`
 	Anonymous    uint64 `json:"anonymous"`
 	Swap         uint64 `json:"swap"`
@@ -473,9 +473,9 @@ func (p *Process) fillFromIO() (*IOCountersStat, error) {
 			ret.ReadCount = t
 		case "syscw":
 			ret.WriteCount = t
-		case "read_bytes":
+		case "readBytes":
 			ret.ReadBytes = t
-		case "write_bytes":
+		case "writeBytes":
 			ret.WriteBytes = t
 		}
 	}
