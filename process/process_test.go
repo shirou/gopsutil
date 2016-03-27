@@ -152,7 +152,7 @@ func Test_Process_Status(t *testing.T) {
 	if err != nil {
 		t.Errorf("geting status error %v", err)
 	}
-	if !strings.HasPrefix(v, "S") && v != "running" && v != "sleeping" {
+	if v != "R" && v != "S" {
 		t.Errorf("could not get state %v", v)
 	}
 }
