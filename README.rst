@@ -179,8 +179,8 @@ exe                 x     x              x
 uids                x     x      x
 gids                x     x      x
 terminal            x     x      x
-io_counters         x
-nice                x            x       x
+io_counters         x     x
+nice                x     x      x       x
 num_fds             x
 num_ctx_switches    x
 num_threads         x     x      x       x

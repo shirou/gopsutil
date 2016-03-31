@@ -163,7 +163,11 @@ func (p *Process) Terminal() (string, error) {
 	return termmap[ttyNr], nil
 }
 func (p *Process) Nice() (int32, error) {
-	return 0, common.NotImplementedError
+	k, err := p.getKProc()
+	if err != nil {
+		return 0, err
+	}
+	return int32(k.Nice), nil
 }
 func (p *Process) IOnice() (int32, error) {
 	return 0, common.NotImplementedError
