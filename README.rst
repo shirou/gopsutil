@@ -46,7 +46,7 @@ Note: gopsutil.v2 breaks compatibility. If you want to stay with compatibility, 
    import (
    	"fmt"
 
-    mem "gopkg.in/shirou/gopsutil.v2"
+    mem "gopkg.in/shirou/gopsutil.v2/mem"
    )
 
    func main() {
@@ -185,8 +185,8 @@ exe                 x     x              x
 uids                x     x      x
 gids                x     x      x
 terminal            x     x      x
-io_counters         x
-nice                x            x       x
+io_counters         x     x
+nice                x     x      x       x
 num_fds             x
 num_ctx_switches    x
 num_threads         x     x      x       x

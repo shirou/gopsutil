@@ -7,7 +7,6 @@ import (
 	"encoding/binary"
 	"strings"
 	"syscall"
-	"unsafe"
 
 	cpu "github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/internal/common"
@@ -41,7 +40,7 @@ func (p *Process) Ppid() (int32, error) {
 		return 0, err
 	}
 
-	return k.KiPpid, nil
+	return k.Ppid, nil
 }
 func (p *Process) Name() (string, error) {
 	k, err := p.getKProc()
@@ -49,7 +48,7 @@ func (p *Process) Name() (string, error) {
 		return "", err
 	}
 
-	return string(k.KiComm[:]), nil
+	return common.IntToString(k.Comm[:]), nil
 }
 func (p *Process) Exe() (string, error) {
 	return "", common.NotImplementedError
@@ -105,8 +104,25 @@ func (p *Process) Status() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	var s string
+	switch k.Stat {
+	case SIDL:
+		s = "I"
+	case SRUN:
+		s = "R"
+	case SSLEEP:
+		s = "S"
+	case SSTOP:
+		s = "T"
+	case SZOMB:
+		s = "Z"
+	case SWAIT:
+		s = "W"
+	case SLOCK:
+		s = "L"
+	}
 
-	return string(k.KiStat[:]), nil
+	return s, nil
 }
 func (p *Process) Uids() ([]int32, error) {
 	k, err := p.getKProc()
@@ -116,7 +132,7 @@ func (p *Process) Uids() ([]int32, error) {
 
 	uids := make([]int32, 0, 3)
 
-	uids = append(uids, int32(k.KiRuid), int32(k.KiUID), int32(k.KiSvuid))
+	uids = append(uids, int32(k.Ruid), int32(k.Uid), int32(k.Svuid))
 
 	return uids, nil
 }
@@ -127,7 +143,7 @@ func (p *Process) Gids() ([]int32, error) {
 	}
 
 	gids := make([]int32, 0, 3)
-	gids = append(gids, int32(k.KiRgid), int32(k.KiNgroups[0]), int32(k.KiSvuid))
+	gids = append(gids, int32(k.Rgid), int32(k.Ngroups), int32(k.Svgid))
 
 	return gids, nil
 }
@@ -137,7 +153,7 @@ func (p *Process) Terminal() (string, error) {
 		return "", err
 	}
 
-	ttyNr := uint64(k.KiTdev)
+	ttyNr := uint64(k.Tdev)
 
 	termmap, err := getTerminalMap()
 	if err != nil {
@@ -147,7 +163,11 @@ func (p *Process) Terminal() (string, error) {
 	return termmap[ttyNr], nil
 }
 func (p *Process) Nice() (int32, error) {
-	return 0, common.NotImplementedError
+	k, err := p.getKProc()
+	if err != nil {
+		return 0, err
+	}
+	return int32(k.Nice), nil
 }
 func (p *Process) IOnice() (int32, error) {
 	return 0, common.NotImplementedError
@@ -162,8 +182,8 @@ func (p *Process) IOCounters() (*IOCountersStat, error) {
 		return nil, err
 	}
 	return &IOCountersStat{
-		ReadCount:  uint64(k.KiRusage.Inblock),
-		WriteCount: uint64(k.KiRusage.Oublock),
+		ReadCount:  uint64(k.Rusage.Inblock),
+		WriteCount: uint64(k.Rusage.Oublock),
 	}, nil
 }
 func (p *Process) NumCtxSwitches() (*NumCtxSwitchesStat, error) {
@@ -178,7 +198,7 @@ func (p *Process) NumThreads() (int32, error) {
 		return 0, err
 	}
 
-	return k.KiNumthreads, nil
+	return k.Numthreads, nil
 }
 func (p *Process) Threads() (map[string]string, error) {
 	ret := make(map[string]string, 0)
@@ -191,8 +211,8 @@ func (p *Process) Times() (*cpu.TimesStat, error) {
 	}
 	return &cpu.TimesStat{
 		CPU:    "cpu",
-		User:   float64(k.KiRusage.Utime.Sec) + float64(k.KiRusage.Utime.Usec)/1000000,
-		System: float64(k.KiRusage.Stime.Sec) + float64(k.KiRusage.Stime.Usec)/1000000,
+		User:   float64(k.Rusage.Utime.Sec) + float64(k.Rusage.Utime.Usec)/1000000,
+		System: float64(k.Rusage.Stime.Sec) + float64(k.Rusage.Stime.Usec)/1000000,
 	}, nil
 }
 func (p *Process) CPUAffinity() ([]int32, error) {
@@ -210,8 +230,8 @@ func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
 	pageSize := common.LittleEndian.Uint16([]byte(v))
 
 	return &MemoryInfoStat{
-		RSS: uint64(k.KiRssize) * uint64(pageSize),
-		VMS: uint64(k.KiSize),
+		RSS: uint64(k.Rssize) * uint64(pageSize),
+		VMS: uint64(k.Size),
 	}, nil
 }
 func (p *Process) MemoryInfoEx() (*MemoryInfoExStat, error) {
@@ -254,11 +274,6 @@ func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 	return &ret, common.NotImplementedError
 }
 
-func copyParams(k *KinfoProc, p *Process) error {
-
-	return nil
-}
-
 func processes() ([]Process, error) {
 	results := make([]Process, 0, 50)
 
@@ -269,22 +284,19 @@ func processes() ([]Process, error) {
 	}
 
 	// get kinfo_proc size
-	k := KinfoProc{}
-	procinfoLen := int(unsafe.Sizeof(k))
-	count := int(length / uint64(procinfoLen))
+	count := int(length / uint64(sizeOfKinfoProc))
 
 	// parse buf to procs
 	for i := 0; i < count; i++ {
-		b := buf[i*procinfoLen : i*procinfoLen+procinfoLen]
+		b := buf[i*sizeOfKinfoProc : (i+1)*sizeOfKinfoProc]
 		k, err := parseKinfoProc(b)
 		if err != nil {
 			continue
 		}
-		p, err := NewProcess(int32(k.KiPid))
+		p, err := NewProcess(int32(k.Pid))
 		if err != nil {
 			continue
 		}
-		copyParams(&k, p)
 
 		results = append(results, *p)
 	}
@@ -295,7 +307,7 @@ func processes() ([]Process, error) {
 func parseKinfoProc(buf []byte) (KinfoProc, error) {
 	var k KinfoProc
 	br := bytes.NewReader(buf)
-	err := binary.Read(br, binary.LittleEndian, &k)
+	err := common.Read(br, binary.LittleEndian, &k)
 	return k, err
 }
 
@@ -306,8 +318,7 @@ func (p *Process) getKProc() (*KinfoProc, error) {
 	if err != nil {
 		return nil, err
 	}
-	procK := KinfoProc{}
-	if length != uint64(unsafe.Sizeof(procK)) {
+	if length != sizeOfKinfoProc {
 		return nil, err
 	}
 
@@ -315,7 +326,6 @@ func (p *Process) getKProc() (*KinfoProc, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return &k, nil
 }
 

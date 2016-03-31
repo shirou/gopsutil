@@ -65,7 +65,10 @@ const (
 	MNT_NOWAIT  = 2 /* start all I/O, but do not wait for it */
 	MNT_LAZY    = 3 /* push data not written by filesystem syncer */
 	MNT_SUSPEND = 4 /* Suspend file system after sync */
+)
 
+const (
+	sizeOfDevstat = C.sizeof_struct_devstat
 )
 
 // Basic types

@@ -13,6 +13,21 @@ const (
 	KernProcArgs     = 7  // get/set arguments/proctitle
 )
 
+const (
+	SIDL   = 1
+	SRUN   = 2
+	SSLEEP = 3
+	SSTOP  = 4
+	SZOMB  = 5
+	SWAIT  = 6
+	SLOCK  = 7
+)
+
+const (
+	sizeOfKinfoVmentry = 0x244 // TODO: really?
+	sizeOfKinfoProc    = 0x220
+)
+
 type Timespec struct {
 	Sec  int32
 	Nsec int32
@@ -44,83 +59,83 @@ type Rusage struct {
 
 // copied from sys/user.h
 type KinfoProc struct {
-	KiStructsize   int32
-	KiLayout       int32
-	KiArgs         int32
-	KiPaddr        int32
-	KiAddr         int32
-	KiTracep       int32
-	KiTextvp       int32
-	KiFd           int32
-	KiVmspace      int32
-	KiWchan        int32
-	KiPid          int32
-	KiPpid         int32
-	KiPgid         int32
-	KiTpgid        int32
-	KiSid          int32
-	KiTsid         int32
-	KiJobc         [2]byte
-	KiSpareShort1  [2]byte
-	KiTdev         int32
-	KiSiglist      [16]byte
-	KiSigmask      [16]byte
-	KiSigignore    [16]byte
-	KiSigcatch     [16]byte
-	KiUID          int32
-	KiRuid         int32
-	KiSvuid        int32
-	KiRgid         int32
-	KiSvgid        int32
-	KiNgroups      [2]byte
-	KiSpareShort2  [2]byte
-	KiGroups       [64]byte
-	KiSize         int32
-	KiRssize       int32
-	KiSwrss        int32
-	KiTsize        int32
-	KiDsize        int32
-	KiSsize        int32
-	KiXstat        [2]byte
-	KiAcflag       [2]byte
-	KiPctcpu       int32
-	KiEstcpu       int32
-	KiSlptime      int32
-	KiSwtime       int32
-	KiCow          int32
-	KiRuntime      int64
-	KiStart        [8]byte
-	KiChildtime    [8]byte
-	KiFlag         int32
-	KiKflag        int32
-	KiTraceflag    int32
-	KiStat         [1]byte
-	KiNice         [1]byte
-	KiLock         [1]byte
-	KiRqindex      [1]byte
-	KiOncpu        [1]byte
-	KiLastcpu      [1]byte
-	KiOcomm        [17]byte
-	KiWmesg        [9]byte
-	KiLogin        [18]byte
-	KiLockname     [9]byte
-	KiComm         [20]byte
-	KiEmul         [17]byte
-	KiSparestrings [68]byte
-	KiSpareints    [36]byte
-	KiCrFlags      int32
-	KiJid          int32
-	KiNumthreads   int32
-	KiTid          int32
-	KiPri          int32
-	KiRusage       Rusage
-	KiRusageCh     [72]byte
-	KiPcb          int32
-	KiKstack       int32
-	KiUdata        int32
-	KiTdaddr       int32
-	KiSpareptrs    [24]byte
-	KiSpareint64s  [48]byte
-	KiSflag        int32
-	KiTdflags      int32
+	Structsize   int32
+	Layout       int32
+	Args         int32
+	Paddr        int32
+	Addr         int32
+	Tracep       int32
+	Textvp       int32
+	Fd           int32
+	Vmspace      int32
+	Wchan        int32
+	Pid          int32
+	Ppid         int32
+	Pgid         int32
+	Tpgid        int32
+	Sid          int32
+	Tsid         int32
+	Jobc         [2]byte
+	SpareShort1  [2]byte
+	Tdev         int32
+	Siglist      [16]byte
+	Sigmask      [16]byte
+	Sigignore    [16]byte
+	Sigcatch     [16]byte
+	Uid          int32
+	Ruid         int32
+	Svuid        int32
+	Rgid         int32
+	Svgid        int32
+	Ngroups      int16
+	SpareShort2  [2]byte
+	Groups       [64]byte
+	Size         int32
+	Rssize       int32
+	Swrss        int32
+	Tsize        int32
+	Dsize        int32
+	Ssize        int32
+	Xstat        [2]byte
+	Acflag       [2]byte
+	Pctcpu       int32
+	Estcpu       int32
+	Slptime      int32
+	Swtime       int32
+	Cow          int32
+	Runtime      int64
+	Start        [8]byte
+	Childtime    [8]byte
+	Flag         int32
+	Kflag        int32
+	Traceflag    int32
+	Stat         int8
+	Nice         [1]byte
+	Lock         [1]byte
+	Rqindex      [1]byte
+	Oncpu        [1]byte
+	Lastcpu      [1]byte
+	Ocomm        [17]byte
+	Wmesg        [9]byte
+	Login        [18]byte
+	Lockname     [9]byte
+	Comm         [20]int8
+	Emul         [17]byte
+	Sparestrings [68]byte
+	Spareints    [36]byte
+	CrFlags      int32
+	Jid          int32
+	Numthreads   int32
+	Tid          int32
+	Pri          int32
+	Rusage       Rusage
+	RusageCh     [72]byte
+	Pcb          int32
+	Kstack       int32
+	Udata        int32
+	Tdaddr       int32
+	Spareptrs    [24]byte
+	Spareint64s  [48]byte
+	Sflag        int32
+	Tdflags      int32
 }
