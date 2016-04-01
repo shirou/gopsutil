@@ -327,11 +327,6 @@ func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 	return &ret, common.NotImplementedError
 }
 
-func copyParams(k *KinfoProc, p *Process) error {
-
-	return nil
-}
-
 func processes() ([]Process, error) {
 	results := make([]Process, 0, 50)
 
@@ -364,8 +359,6 @@ func processes() ([]Process, error) {
 		if err != nil {
 			continue
 		}
-		copyParams(&k, p)
-
 		results = append(results, *p)
 	}
 
