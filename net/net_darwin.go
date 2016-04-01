@@ -17,7 +17,7 @@ import (
 // lo0   16384 ::1/128     ::1                 869107     -  169411755   869107     -  169411755     -   -
 // lo0   16384 127           127.0.0.1         869107     -  169411755   869107     -  169411755     -   -
 func IOCounters(pernic bool) ([]IOCountersStat, error) {
-	netstat, err := exec.LookPath("/usr/bin/netstat")
+	netstat, err := exec.LookPath("/usr/sbin/netstat")
 	if err != nil {
 		return nil, err
 	}
