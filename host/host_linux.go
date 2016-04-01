@@ -163,7 +163,11 @@ func getLSB() (*LSB, error) {
 			}
 		}
 	} else if common.PathExists("/usr/bin/lsb_release") {
-		out, err := exec.Command("/usr/bin/lsb_release").Output()
+		lsb_release, err := exec.LookPath("/usr/bin/lsb_release")
+		if err != nil {
+			return ret, error
+		}
+		out, err := exec.Command(lsb_release).Output()
 		if err != nil {
 			return ret, err
 		}

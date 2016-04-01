@@ -25,7 +25,11 @@ const (
 var ClocksPerSec = float64(128)
 
 func init() {
-	out, err := exec.Command("/usr/bin/getconf", "CLK_TCK").Output()
+	getconf, err := exec.LookPath("/usr/bin/getconf")
+	if err != nil {
+		return
+	}
+	out, err := exec.Command(getconf, "CLK_TCK").Output()
 	// ignore errors
 	if err == nil {
 		i, err := strconv.ParseFloat(strings.TrimSpace(string(out)), 64)

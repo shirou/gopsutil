@@ -15,7 +15,11 @@ import (
 var cpu_tick = float64(100)
 
 func init() {
-	out, err := exec.Command("/usr/bin/getconf", "CLK_TCK").Output()
+	getconf, err := exec.LookPath("/usr/bin/getconf")
+	if err != nil {
+		return
+	}
+	out, err := exec.Command(getcon, "CLK_TCK").Output()
 	// ignore errors
 	if err == nil {
 		i, err := strconv.ParseFloat(strings.TrimSpace(string(out)), 64)

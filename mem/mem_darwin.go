@@ -4,6 +4,7 @@ package mem
 
 import (
 	"encoding/binary"
+	"fmt"
 	"strconv"
 	"strings"
 	"syscall"
@@ -34,6 +35,8 @@ func SwapMemory() (*SwapMemoryStat, error) {
 	if err != nil {
 		return ret, err
 	}
+
+	fmt.Println(swapUsage)
 
 	total := strings.Replace(swapUsage[2], "M", "", 1)
 	used := strings.Replace(swapUsage[5], "M", "", 1)

@@ -298,7 +298,12 @@ func IOCounters() (map[string]IOCountersStat, error) {
 
 func GetDiskSerialNumber(name string) string {
 	n := fmt.Sprintf("--name=%s", name)
-	out, err := exec.Command("/sbin/udevadm", "info", "--query=property", n).Output()
+	udevadm, err := exec.LookPath("/sbin/udevadm")
+	if err != nil {
+		return ""
+	}
+
+	out, err := exec.Command(udevadm, "info", "--query=property", n).Output()
 
 	// does not return error, just an empty string
 	if err != nil {

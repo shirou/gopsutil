@@ -15,7 +15,12 @@ func DoSysctrl(mib string) ([]string, error) {
 	if err != nil {
 		return []string{}, err
 	}
-	out, err := exec.Command("/usr/sbin/sysctl", "-n", mib).Output()
+
+	sysctl, err := exec.LookPath("/usr/bin/getconf")
+	if err != nil {
+		return
+	}
+	out, err := exec.Command(sysctl, "-n", mib).Output()
 	if err != nil {
 		return []string{}, err
 	}

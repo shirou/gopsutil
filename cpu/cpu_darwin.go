@@ -32,8 +32,11 @@ func Times(percpu bool) ([]TimesStat, error) {
 // Returns only one CPUInfoStat on FreeBSD
 func Info() ([]InfoStat, error) {
 	var ret []InfoStat
-
-	out, err := exec.Command("/usr/sbin/sysctl", "machdep.cpu").Output()
+	sysctl, err := exec.LookPath("/usr/sbin/sysctl")
+	if err != nil {
+		return ret, err
+	}
+	out, err := exec.Command(sysctl, "machdep.cpu").Output()
 	if err != nil {
 		return ret, err
 	}
@@ -87,7 +90,7 @@ func Info() ([]InfoStat, error) {
 
 	// Use the rated frequency of the CPU. This is a static value and does not
 	// account for low power or Turbo Boost modes.
-	out, err = exec.Command("/usr/sbin/sysctl", "hw.cpufrequency").Output()
+	out, err = exec.Command(sysctl, "hw.cpufrequency").Output()
 	if err != nil {
 		return ret, err
 	}

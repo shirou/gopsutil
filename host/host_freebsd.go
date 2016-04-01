@@ -133,13 +133,17 @@ func PlatformInformation() (string, string, string, error) {
 	platform := ""
 	family := ""
 	version := ""
+	uname, err := exec.LookPath("uname")
+	if err != nil {
+		return "", "", "", err
+	}
 
-	out, err := exec.Command("uname", "-s").Output()
+	out, err := exec.Command(uname, "-s").Output()
 	if err == nil {
 		platform = strings.ToLower(strings.TrimSpace(string(out)))
 	}
 
-	out, err = exec.Command("uname", "-r").Output()
+	out, err = exec.Command(uname, "-r").Output()
 	if err == nil {
 		version = strings.ToLower(strings.TrimSpace(string(out)))
 	}
