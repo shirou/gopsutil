@@ -56,10 +56,10 @@ func Misc() (*MiscStat, error) {
 	ret := MiscStat{}
 	for _, l := range lines {
 		if strings.Contains(l, "R") {
-			ret.ProcsRunning += 1
+			ret.ProcsRunning++
 		} else if strings.Contains(l, "U") {
 			// uninterruptible sleep == blocked
-			ret.ProcsBlocked += 1
+			ret.ProcsBlocked++
 		}
 	}
 

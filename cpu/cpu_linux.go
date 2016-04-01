@@ -37,7 +37,7 @@ func Times(percpu bool) ([]TimesStat, error) {
 				break
 			}
 			lines = append(lines, line)
-			startIdx += 1
+			startIdx++
 		}
 	} else {
 		lines, _ = common.ReadLinesOffsetN(filename, 0, 1)
@@ -56,13 +56,13 @@ func Times(percpu bool) ([]TimesStat, error) {
 	return ret, nil
 }
 
-func sysCpuPath(cpu int32, relPath string) string {
+func sysCPUPath(cpu int32, relPath string) string {
 	return common.HostSys(fmt.Sprintf("devices/system/cpu/cpu%d", cpu), relPath)
 }
 
 func finishCPUInfo(c *InfoStat) error {
 	if c.Mhz == 0 {
-		lines, err := common.ReadLines(sysCpuPath(c.CPU, "cpufreq/cpuinfo_max_freq"))
+		lines, err := common.ReadLines(sysCPUPath(c.CPU, "cpufreq/cpuinfo_max_freq"))
 		if err == nil {
 			value, err := strconv.ParseFloat(lines[0], 64)
 			if err != nil {
@@ -72,7 +72,7 @@ func finishCPUInfo(c *InfoStat) error {
 		}
 	}
 	if len(c.CoreID) == 0 {
-		lines, err := common.ReadLines(sysCpuPath(c.CPU, "topology/coreId"))
+		lines, err := common.ReadLines(sysCPUPath(c.CPU, "topology/coreId"))
 		if err == nil {
 			c.CoreID = lines[0]
 		}

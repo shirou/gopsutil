@@ -9,11 +9,11 @@ import (
 func Avg() (*AvgStat, error) {
 	ret := AvgStat{}
 
-	return &ret, common.NotImplementedError
+	return &ret, common.ErrNotImplementedError
 }
 
 func Misc() (*MiscStat, error) {
 	ret := MiscStat{}
 
-	return &ret, common.NotImplementedError
+	return &ret, common.ErrNotImplementedError
 }

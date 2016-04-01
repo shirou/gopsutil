@@ -44,7 +44,7 @@ func ConnectionsPid(kind string, pid int32) ([]ConnectionStat, error) {
 	case "udp6":
 		args = append(args, "6udp")
 	case "unix":
-		return ret, common.NotImplementedError
+		return ret, common.ErrNotImplementedError
 	}
 
 	r, err := common.CallLsof(invoke, pid, args...)

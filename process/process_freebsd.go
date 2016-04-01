@@ -51,7 +51,7 @@ func (p *Process) Name() (string, error) {
 	return common.IntToString(k.Comm[:]), nil
 }
 func (p *Process) Exe() (string, error) {
-	return "", common.NotImplementedError
+	return "", common.ErrNotImplementedError
 }
 
 func (p *Process) Cmdline() (string, error) {
@@ -91,13 +91,13 @@ func (p *Process) CmdlineSlice() ([]string, error) {
 	return strParts, nil
 }
 func (p *Process) CreateTime() (int64, error) {
-	return 0, common.NotImplementedError
+	return 0, common.ErrNotImplementedError
 }
 func (p *Process) Cwd() (string, error) {
-	return "", common.NotImplementedError
+	return "", common.ErrNotImplementedError
 }
 func (p *Process) Parent() (*Process, error) {
-	return p, common.NotImplementedError
+	return p, common.ErrNotImplementedError
 }
 func (p *Process) Status() (string, error) {
 	k, err := p.getKProc()
@@ -170,11 +170,11 @@ func (p *Process) Nice() (int32, error) {
 	return int32(k.Nice), nil
 }
 func (p *Process) IOnice() (int32, error) {
-	return 0, common.NotImplementedError
+	return 0, common.ErrNotImplementedError
 }
 func (p *Process) Rlimit() ([]RlimitStat, error) {
 	var rlimit []RlimitStat
-	return rlimit, common.NotImplementedError
+	return rlimit, common.ErrNotImplementedError
 }
 func (p *Process) IOCounters() (*IOCountersStat, error) {
 	k, err := p.getKProc()
@@ -187,10 +187,10 @@ func (p *Process) IOCounters() (*IOCountersStat, error) {
 	}, nil
 }
 func (p *Process) NumCtxSwitches() (*NumCtxSwitchesStat, error) {
-	return nil, common.NotImplementedError
+	return nil, common.ErrNotImplementedError
 }
 func (p *Process) NumFDs() (int32, error) {
-	return 0, common.NotImplementedError
+	return 0, common.ErrNotImplementedError
 }
 func (p *Process) NumThreads() (int32, error) {
 	k, err := p.getKProc()
@@ -202,7 +202,7 @@ func (p *Process) NumThreads() (int32, error) {
 }
 func (p *Process) Threads() (map[string]string, error) {
 	ret := make(map[string]string, 0)
-	return ret, common.NotImplementedError
+	return ret, common.ErrNotImplementedError
 }
 func (p *Process) Times() (*cpu.TimesStat, error) {
 	k, err := p.getKProc()
@@ -216,7 +216,7 @@ func (p *Process) Times() (*cpu.TimesStat, error) {
 	}, nil
 }
 func (p *Process) CPUAffinity() ([]int32, error) {
-	return nil, common.NotImplementedError
+	return nil, common.ErrNotImplementedError
 }
 func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
 	k, err := p.getKProc()
@@ -235,7 +235,7 @@ func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
 	}, nil
 }
 func (p *Process) MemoryInfoEx() (*MemoryInfoExStat, error) {
-	return nil, common.NotImplementedError
+	return nil, common.ErrNotImplementedError
 }
 
 func (p *Process) Children() ([]*Process, error) {
@@ -255,23 +255,23 @@ func (p *Process) Children() ([]*Process, error) {
 }
 
 func (p *Process) OpenFiles() ([]OpenFilesStat, error) {
-	return nil, common.NotImplementedError
+	return nil, common.ErrNotImplementedError
 }
 
 func (p *Process) Connections() ([]net.ConnectionStat, error) {
-	return nil, common.NotImplementedError
+	return nil, common.ErrNotImplementedError
 }
 
 func (p *Process) NetIOCounters(pernic bool) ([]net.IOCountersStat, error) {
-	return nil, common.NotImplementedError
+	return nil, common.ErrNotImplementedError
 }
 
 func (p *Process) IsRunning() (bool, error) {
-	return true, common.NotImplementedError
+	return true, common.ErrNotImplementedError
 }
 func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 	var ret []MemoryMapsStat
-	return &ret, common.NotImplementedError
+	return &ret, common.ErrNotImplementedError
 }
 
 func processes() ([]Process, error) {

@@ -167,10 +167,10 @@ func (p *Process) Nice() (int32, error) {
 	return nice, nil
 }
 func (p *Process) IOnice() (int32, error) {
-	return 0, common.NotImplementedError
+	return 0, common.ErrNotImplementedError
 }
 func (p *Process) Rlimit() ([]RlimitStat, error) {
-	return nil, common.NotImplementedError
+	return nil, common.ErrNotImplementedError
 }
 func (p *Process) IOCounters() (*IOCountersStat, error) {
 	return p.fillFromIO()
@@ -205,7 +205,7 @@ func (p *Process) Times() (*cpu.TimesStat, error) {
 	return cpuTimes, nil
 }
 func (p *Process) CPUAffinity() ([]int32, error) {
-	return nil, common.NotImplementedError
+	return nil, common.ErrNotImplementedError
 }
 func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
 	meminfo, _, err := p.fillFromStatm()
@@ -264,7 +264,7 @@ func (p *Process) NetIOCounters(pernic bool) ([]net.IOCountersStat, error) {
 }
 
 func (p *Process) IsRunning() (bool, error) {
-	return true, common.NotImplementedError
+	return true, common.ErrNotImplementedError
 }
 
 // MemoryMaps get memory maps from /proc/(pid)/smaps
@@ -361,7 +361,7 @@ func (p *Process) fillFromfd() (int32, []*OpenFilesStat, error) {
 	fnames, err := d.Readdirnames(-1)
 	numFDs := int32(len(fnames))
 
-	openfiles := make([]*OpenFilesStat, 0)
+	var openfiles []*OpenFilesStat
 	for _, fd := range fnames {
 		fpath := filepath.Join(statPath, fd)
 		filepath, err := os.Readlink(fpath)

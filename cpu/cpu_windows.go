@@ -19,7 +19,7 @@ type Win32_Processor struct {
 	Manufacturer              string
 	Name                      string
 	NumberOfLogicalProcessors uint32
-	ProcessorId               *string
+	ProcessorID               *string
 	Stepping                  *string
 	MaxClockSpeed             uint32
 }
@@ -66,8 +66,8 @@ func Info() ([]InfoStat, error) {
 	var procID string
 	for i, l := range dst {
 		procID = ""
-		if l.ProcessorId != nil {
-			procID = *l.ProcessorId
+		if l.ProcessorID != nil {
+			procID = *l.ProcessorID
 		}
 
 		cpu := InfoStat{

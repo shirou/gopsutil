@@ -12,7 +12,11 @@ import (
 )
 
 func IOCounters(pernic bool) ([]IOCountersStat, error) {
-	out, err := exec.Command("/usr/bin/netstat", "-ibdnW").Output()
+	netstat, err := exec.LookPath("/usr/bin/netstat")
+	if err != nil {
+		return nil, err
+	}
+	out, err := exec.Command(netstat, "-ibdnW").Output()
 	if err != nil {
 		return nil, err
 	}

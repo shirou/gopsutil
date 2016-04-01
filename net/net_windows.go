@@ -14,8 +14,8 @@ import (
 
 var (
 	modiphlpapi             = syscall.NewLazyDLL("iphlpapi.dll")
-	procGetExtendedTcpTable = modiphlpapi.NewProc("GetExtendedTcpTable")
-	procGetExtendedUdpTable = modiphlpapi.NewProc("GetExtendedUdpTable")
+	procGetExtendedTCPTable = modiphlpapi.NewProc("GetExtendedTcpTable")
+	procGetExtendedUDPTable = modiphlpapi.NewProc("GetExtendedUdpTable")
 )
 
 const (
@@ -83,7 +83,7 @@ func IOCountersByFile(pernic bool, filename string) ([]IOCountersStat, error) {
 func Connections(kind string) ([]ConnectionStat, error) {
 	var ret []ConnectionStat
 
-	return ret, common.NotImplementedError
+	return ret, common.ErrNotImplementedError
 }
 
 // borrowed from src/pkg/net/interface_windows.go

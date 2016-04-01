@@ -1,11 +1,11 @@
+package common
+
 //
 // gopsutil is a port of psutil(http://pythonhosted.org/psutil/).
 // This covers these architectures.
 //  - linux (amd64, arm)
 //  - freebsd (amd64)
 //  - windows (amd64)
-package common
-
 import (
 	"bufio"
 	"errors"
@@ -59,12 +59,11 @@ func (i FakeInvoke) Command(name string, arg ...string) ([]byte, error) {
 	}
 	if PathExists(fpath) {
 		return ioutil.ReadFile(fpath)
-	} else {
-		return exec.Command(name, arg...).Output()
 	}
+	return exec.Command(name, arg...).Output()
 }
 
-var NotImplementedError = errors.New("not implemented yet")
+var ErrNotImplementedError = errors.New("not implemented yet")
 
 // ReadLines reads contents from a file and splits them by new lines.
 // A convenience wrapper to ReadLinesOffsetN(filename, 0, -1).
