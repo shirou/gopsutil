@@ -16,7 +16,7 @@ func DoSysctrl(mib string) ([]string, error) {
 		return []string{}, err
 	}
 
-	sysctl, err := exec.LookPath("/usr/bin/getconf")
+	sysctl, err := exec.LookPath("/usr/sbin/sysctl")
 	if err != nil {
 		return []string{}, err
 	}

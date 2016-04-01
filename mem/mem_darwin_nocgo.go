@@ -14,7 +14,7 @@ import (
 func getVMStat(vms *VirtualMemoryStat) error {
 	vm_stat, err := exec.LookPath("vm_stat")
 	if err != nil {
-		return
+		return err
 	}
 	out, err := exec.Command(vm_stat).Output()
 	if err != nil {
