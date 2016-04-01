@@ -114,12 +114,11 @@ func Users() ([]UserStat, error) {
 		if err != nil || u.Type != 4 {
 			continue
 		}
-		sec := (binary.LittleEndian.Uint32(u.Tv.Sec[:])) / 2 // TODO:
 		user := UserStat{
 			User:     common.IntToString(u.User[:]),
 			Terminal: common.IntToString(u.Line[:]),
 			Host:     common.IntToString(u.Host[:]),
-			Started:  int(sec),
+			Started:  int(u.Tv.Sec),
 		}
 
 		ret = append(ret, user)
