@@ -152,7 +152,7 @@ func Test_Process_Status(t *testing.T) {
 	if err != nil {
 		t.Errorf("geting status error %v", err)
 	}
-	if !strings.HasPrefix(v, "S") && v != "running" && v != "sleeping" {
+	if v != "R" && v != "S" {
 		t.Errorf("could not get state %v", v)
 	}
 }
@@ -244,13 +244,13 @@ func Test_Process_Exe(t *testing.T) {
 
 func Test_Process_CpuPercent(t *testing.T) {
 	p := testGetProcess()
-	percent, err := p.CPUPercent(0)
+	percent, err := p.Percent(0)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
 	duration := time.Duration(1000) * time.Microsecond
 	time.Sleep(duration)
-	percent, err = p.CPUPercent(0)
+	percent, err = p.Percent(0)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -268,7 +268,7 @@ func Test_Process_CpuPercentLoop(t *testing.T) {
 
 	for i := 0; i < 2; i++ {
 		duration := time.Duration(100) * time.Microsecond
-		percent, err := p.CPUPercent(duration)
+		percent, err := p.Percent(duration)
 		if err != nil {
 			t.Errorf("error %v", err)
 		}
@@ -360,7 +360,7 @@ func Test_CPUTimes(t *testing.T) {
 	assert.Nil(t, err)
 
 	spinSeconds := 0.2
-	cpuTimes0, err := process.CPUTimes()
+	cpuTimes0, err := process.Times()
 	assert.Nil(t, err)
 
 	// Spin for a duration of spinSeconds
@@ -371,7 +371,7 @@ func Test_CPUTimes(t *testing.T) {
 		// This block intentionally left blank
 	}
 
-	cpuTimes1, err := process.CPUTimes()
+	cpuTimes1, err := process.Times()
 	assert.Nil(t, err)
 
 	if cpuTimes0 == nil || cpuTimes1 == nil {

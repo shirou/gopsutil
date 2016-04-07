@@ -21,12 +21,12 @@ import (
 // return only sum of all information (which name is 'all'). If true,
 // every network interface installed on the system is returned
 // separately.
-func NetIOCounters(pernic bool) ([]NetIOCountersStat, error) {
+func IOCounters(pernic bool) ([]IOCountersStat, error) {
 	filename := common.HostProc("net/dev")
-	return NetIOCountersByFile(pernic, filename)
+	return IOCountersByFile(pernic, filename)
 }
 
-func NetIOCountersByFile(pernic bool, filename string) ([]NetIOCountersStat, error) {
+func IOCountersByFile(pernic bool, filename string) ([]IOCountersStat, error) {
 	lines, err := common.ReadLines(filename)
 	if err != nil {
 		return nil, err
@@ -34,7 +34,7 @@ func NetIOCountersByFile(pernic bool, filename string) ([]NetIOCountersStat, err
 
 	statlen := len(lines) - 1
 
-	ret := make([]NetIOCountersStat, 0, statlen)
+	ret := make([]IOCountersStat, 0, statlen)
 
 	for _, line := range lines[2:] {
 		parts := strings.SplitN(line, ":", 2)
@@ -80,7 +80,7 @@ func NetIOCountersByFile(pernic bool, filename string) ([]NetIOCountersStat, err
 			return ret, err
 		}
 
-		nic := NetIOCountersStat{
+		nic := IOCountersStat{
 			Name:        interfaceName,
 			BytesRecv:   bytesRecv,
 			PacketsRecv: packetsRecv,
@@ -95,7 +95,7 @@ func NetIOCountersByFile(pernic bool, filename string) ([]NetIOCountersStat, err
 	}
 
 	if pernic == false {
-		return getNetIOCountersAll(ret)
+		return getIOCountersAll(ret)
 	}
 
 	return ret, nil
@@ -115,12 +115,12 @@ var netProtocols = []string{
 // just the protocols in the list are returned.
 // Available protocols:
 //   ip,icmp,icmpmsg,tcp,udp,udplite
-func NetProtoCounters(protocols []string) ([]NetProtoCountersStat, error) {
+func ProtoCounters(protocols []string) ([]ProtoCountersStat, error) {
 	if len(protocols) == 0 {
 		protocols = netProtocols
 	}
 
-	stats := make([]NetProtoCountersStat, 0, len(protocols))
+	stats := make([]ProtoCountersStat, 0, len(protocols))
 	protos := make(map[string]bool, len(protocols))
 	for _, p := range protocols {
 		protos[p] = true
@@ -155,7 +155,7 @@ func NetProtoCounters(protocols []string) ([]NetProtoCountersStat, error) {
 		if len(statNames) != len(statValues) {
 			return nil, errors.New(filename + " is not fomatted correctly, expected same number of columns.")
 		}
-		stat := NetProtoCountersStat{
+		stat := ProtoCountersStat{
 			Protocol: proto,
 			Stats:    make(map[string]int64, len(statNames)),
 		}
@@ -174,23 +174,23 @@ func NetProtoCounters(protocols []string) ([]NetProtoCountersStat, error) {
 // NetFilterCounters returns iptables conntrack statistics
 // the currently in use conntrack count and the max.
 // If the file does not exist or is invalid it will return nil.
-func NetFilterCounters() ([]NetFilterStat, error) {
-	countfile := common.HostProc("sys/net/netfilter/nf_conntrack_count")
-	maxfile := common.HostProc("sys/net/netfilter/nf_conntrack_max")
+func FilterCounters() ([]FilterStat, error) {
+	countfile := common.HostProc("sys/net/netfilter/nf_conntrackCount")
+	maxfile := common.HostProc("sys/net/netfilter/nf_conntrackMax")
 
 	count, err := common.ReadInts(countfile)
 
 	if err != nil {
 		return nil, err
 	}
-	stats := make([]NetFilterStat, 0, 1)
+	stats := make([]FilterStat, 0, 1)
 
 	max, err := common.ReadInts(maxfile)
 	if err != nil {
 		return nil, err
 	}
 
-	payload := NetFilterStat{
+	payload := FilterStat{
 		ConnTrackCount: count[0],
 		ConnTrackMax:   max[0],
 	}
@@ -277,12 +277,12 @@ type connTmp struct {
 }
 
 // Return a list of network connections opened.
-func NetConnections(kind string) ([]NetConnectionStat, error) {
-	return NetConnectionsPid(kind, 0)
+func Connections(kind string) ([]ConnectionStat, error) {
+	return ConnectionsPid(kind, 0)
 }
 
 // Return a list of network connections opened by a process.
-func NetConnectionsPid(kind string, pid int32) ([]NetConnectionStat, error) {
+func ConnectionsPid(kind string, pid int32) ([]ConnectionStat, error) {
 	tmap, ok := netConnectionKindMap[kind]
 	if !ok {
 		return nil, fmt.Errorf("invalid kind, %s", kind)
@@ -296,7 +296,7 @@ func NetConnectionsPid(kind string, pid int32) ([]NetConnectionStat, error) {
 		inodes, err = getProcInodes(root, pid)
 		if len(inodes) == 0 {
 			// no connection for the pid
-			return []NetConnectionStat{}, nil
+			return []ConnectionStat{}, nil
 		}
 	}
 	if err != nil {
@@ -304,7 +304,7 @@ func NetConnectionsPid(kind string, pid int32) ([]NetConnectionStat, error) {
 	}
 
 	dupCheckMap := make(map[string]bool)
-	var ret []NetConnectionStat
+	var ret []ConnectionStat
 
 	for _, t := range tmap {
 		var path string
@@ -322,7 +322,7 @@ func NetConnectionsPid(kind string, pid int32) ([]NetConnectionStat, error) {
 			return nil, err
 		}
 		for _, c := range ls {
-			conn := NetConnectionStat{
+			conn := ConnectionStat{
 				Fd:     c.fd,
 				Family: c.family,
 				Type:   c.sockType,

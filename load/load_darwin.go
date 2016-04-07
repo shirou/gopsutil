@@ -10,7 +10,7 @@ import (
 	"github.com/shirou/gopsutil/internal/common"
 )
 
-func LoadAvg() (*LoadAvgStat, error) {
+func Avg() (*AvgStat, error) {
 	values, err := common.DoSysctrl("vm.loadavg")
 	if err != nil {
 		return nil, err
@@ -29,7 +29,7 @@ func LoadAvg() (*LoadAvgStat, error) {
 		return nil, err
 	}
 
-	ret := &LoadAvgStat{
+	ret := &AvgStat{
 		Load1:  float64(load1),
 		Load5:  float64(load5),
 		Load15: float64(load15),
@@ -37,7 +37,6 @@ func LoadAvg() (*LoadAvgStat, error) {
 
 	return ret, nil
 }
-
 
 // Misc returnes miscellaneous host-wide statistics.
 // darwin use ps command to get process running/blocked count.
@@ -57,10 +56,10 @@ func Misc() (*MiscStat, error) {
 	ret := MiscStat{}
 	for _, l := range lines {
 		if strings.Contains(l, "R") {
-			ret.ProcsRunning += 1
+			ret.ProcsRunning++
 		} else if strings.Contains(l, "U") {
 			// uninterruptible sleep == blocked
-			ret.ProcsBlocked += 1
+			ret.ProcsBlocked++
 		}
 	}
 

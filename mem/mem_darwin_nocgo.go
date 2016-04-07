@@ -12,7 +12,11 @@ import (
 
 // Runs vm_stat and returns Free and inactive pages
 func getVMStat(vms *VirtualMemoryStat) error {
-	out, err := exec.Command("vm_stat").Output()
+	vm_stat, err := exec.LookPath("vm_stat")
+	if err != nil {
+		return err
+	}
+	out, err := exec.Command(vm_stat).Output()
 	if err != nil {
 		return err
 	}

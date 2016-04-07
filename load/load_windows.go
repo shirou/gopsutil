@@ -6,14 +6,14 @@ import (
 	"github.com/shirou/gopsutil/internal/common"
 )
 
-func LoadAvg() (*LoadAvgStat, error) {
-	ret := LoadAvgStat{}
+func Avg() (*AvgStat, error) {
+	ret := AvgStat{}
 
-	return &ret, common.NotImplementedError
+	return &ret, common.ErrNotImplementedError
 }
 
 func Misc() (*MiscStat, error) {
 	ret := MiscStat{}
 
-	return &ret, common.NotImplementedError
+	return &ret, common.ErrNotImplementedError
 }

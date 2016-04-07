@@ -29,8 +29,8 @@ type LSB struct {
 // from utmp.h
 const USER_PROCESS = 7
 
-func HostInfo() (*HostInfoStat, error) {
-	ret := &HostInfoStat{
+func Info() (*InfoStat, error) {
+	ret := &InfoStat{
 		OS: runtime.GOOS,
 	}
 
@@ -39,13 +39,13 @@ func HostInfo() (*HostInfoStat, error) {
 		ret.Hostname = hostname
 	}
 
-	platform, family, version, err := GetPlatformInformation()
+	platform, family, version, err := PlatformInformation()
 	if err == nil {
 		ret.Platform = platform
 		ret.PlatformFamily = family
 		ret.PlatformVersion = version
 	}
-	system, role, err := GetVirtualization()
+	system, role, err := Virtualization()
 	if err == nil {
 		ret.VirtualizationSystem = system
 		ret.VirtualizationRole = role
@@ -163,7 +163,11 @@ func getLSB() (*LSB, error) {
 			}
 		}
 	} else if common.PathExists("/usr/bin/lsb_release") {
-		out, err := exec.Command("/usr/bin/lsb_release").Output()
+		lsb_release, err := exec.LookPath("/usr/bin/lsb_release")
+		if err != nil {
+			return ret, err
+		}
+		out, err := exec.Command(lsb_release).Output()
 		if err != nil {
 			return ret, err
 		}
@@ -189,7 +193,7 @@ func getLSB() (*LSB, error) {
 	return ret, nil
 }
 
-func GetPlatformInformation() (platform string, family string, version string, err error) {
+func PlatformInformation() (platform string, family string, version string, err error) {
 
 	lsb, err := getLSB()
 	if err != nil {
@@ -338,7 +342,7 @@ func getSusePlatform(contents []string) string {
 	return "suse"
 }
 
-func GetVirtualization() (string, string, error) {
+func Virtualization() (string, string, error) {
 	var system string
 	var role string
 

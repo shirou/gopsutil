@@ -20,8 +20,8 @@ import (
 // from utmpx.h
 const USER_PROCESS = 7
 
-func HostInfo() (*HostInfoStat, error) {
-	ret := &HostInfoStat{
+func Info() (*InfoStat, error) {
+	ret := &InfoStat{
 		OS:             runtime.GOOS,
 		PlatformFamily: "darwin",
 	}
@@ -31,13 +31,13 @@ func HostInfo() (*HostInfoStat, error) {
 		ret.Hostname = hostname
 	}
 
-	platform, family, version, err := GetPlatformInformation()
+	platform, family, version, err := PlatformInformation()
 	if err == nil {
 		ret.Platform = platform
 		ret.PlatformFamily = family
 		ret.PlatformVersion = version
 	}
-	system, role, err := GetVirtualization()
+	system, role, err := Virtualization()
 	if err == nil {
 		ret.VirtualizationSystem = system
 		ret.VirtualizationRole = role
@@ -122,17 +122,21 @@ func Users() ([]UserStat, error) {
 
 }
 
-func GetPlatformInformation() (string, string, string, error) {
+func PlatformInformation() (string, string, string, error) {
 	platform := ""
 	family := ""
 	version := ""
 
-	out, err := exec.Command("uname", "-s").Output()
+	uname, err := exec.LookPath("uname")
+	if err != nil {
+		return "", "", "", err
+	}
+	out, err := exec.Command(uname, "-s").Output()
 	if err == nil {
 		platform = strings.ToLower(strings.TrimSpace(string(out)))
 	}
 
-	out, err = exec.Command("uname", "-r").Output()
+	out, err = exec.Command(uname, "-r").Output()
 	if err == nil {
 		version = strings.ToLower(strings.TrimSpace(string(out)))
 	}
@@ -140,7 +144,7 @@ func GetPlatformInformation() (string, string, string, error) {
 	return platform, family, version, nil
 }
 
-func GetVirtualization() (string, string, error) {
+func Virtualization() (string, string, error) {
 	system := ""
 	role := ""
 

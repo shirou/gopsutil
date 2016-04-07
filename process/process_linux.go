@@ -48,10 +48,10 @@ type MemoryMapsStat struct {
 	Rss          uint64 `json:"rss"`
 	Size         uint64 `json:"size"`
 	Pss          uint64 `json:"pss"`
-	SharedClean  uint64 `json:"shared_clean"`
-	SharedDirty  uint64 `json:"shared_dirty"`
-	PrivateClean uint64 `json:"private_clean"`
-	PrivateDirty uint64 `json:"private_dirty"`
+	SharedClean  uint64 `json:"sharedClean"`
+	SharedDirty  uint64 `json:"sharedDirty"`
+	PrivateClean uint64 `json:"privateClean"`
+	PrivateDirty uint64 `json:"privateDirty"`
 	Referenced   uint64 `json:"referenced"`
 	Anonymous    uint64 `json:"anonymous"`
 	Swap         uint64 `json:"swap"`
@@ -167,10 +167,10 @@ func (p *Process) Nice() (int32, error) {
 	return nice, nil
 }
 func (p *Process) IOnice() (int32, error) {
-	return 0, common.NotImplementedError
+	return 0, common.ErrNotImplementedError
 }
 func (p *Process) Rlimit() ([]RlimitStat, error) {
-	return nil, common.NotImplementedError
+	return nil, common.ErrNotImplementedError
 }
 func (p *Process) IOCounters() (*IOCountersStat, error) {
 	return p.fillFromIO()
@@ -197,7 +197,7 @@ func (p *Process) Threads() (map[string]string, error) {
 	ret := make(map[string]string, 0)
 	return ret, nil
 }
-func (p *Process) CPUTimes() (*cpu.CPUTimesStat, error) {
+func (p *Process) Times() (*cpu.TimesStat, error) {
 	_, _, cpuTimes, _, _, err := p.fillFromStat()
 	if err != nil {
 		return nil, err
@@ -205,7 +205,7 @@ func (p *Process) CPUTimes() (*cpu.CPUTimesStat, error) {
 	return cpuTimes, nil
 }
 func (p *Process) CPUAffinity() ([]int32, error) {
-	return nil, common.NotImplementedError
+	return nil, common.ErrNotImplementedError
 }
 func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
 	meminfo, _, err := p.fillFromStatm()
@@ -254,17 +254,17 @@ func (p *Process) OpenFiles() ([]OpenFilesStat, error) {
 	return ret, nil
 }
 
-func (p *Process) Connections() ([]net.NetConnectionStat, error) {
-	return net.NetConnectionsPid("all", p.Pid)
+func (p *Process) Connections() ([]net.ConnectionStat, error) {
+	return net.ConnectionsPid("all", p.Pid)
 }
 
-func (p *Process) NetIOCounters(pernic bool) ([]net.NetIOCountersStat, error) {
+func (p *Process) NetIOCounters(pernic bool) ([]net.IOCountersStat, error) {
 	filename := common.HostProc(strconv.Itoa(int(p.Pid)), "net/dev")
-	return net.NetIOCountersByFile(pernic, filename)
+	return net.IOCountersByFile(pernic, filename)
 }
 
 func (p *Process) IsRunning() (bool, error) {
-	return true, common.NotImplementedError
+	return true, common.ErrNotImplementedError
 }
 
 // MemoryMaps get memory maps from /proc/(pid)/smaps
@@ -361,7 +361,7 @@ func (p *Process) fillFromfd() (int32, []*OpenFilesStat, error) {
 	fnames, err := d.Readdirnames(-1)
 	numFDs := int32(len(fnames))
 
-	openfiles := make([]*OpenFilesStat, 0)
+	var openfiles []*OpenFilesStat
 	for _, fd := range fnames {
 		fpath := filepath.Join(statPath, fd)
 		filepath, err := os.Readlink(fpath)
@@ -473,9 +473,9 @@ func (p *Process) fillFromIO() (*IOCountersStat, error) {
 			ret.ReadCount = t
 		case "syscw":
 			ret.WriteCount = t
-		case "read_bytes":
+		case "readBytes":
 			ret.ReadBytes = t
-		case "write_bytes":
+		case "writeBytes":
 			ret.WriteBytes = t
 		}
 	}
@@ -556,10 +556,7 @@ func (p *Process) fillFromStatus() error {
 		case "Name":
 			p.name = strings.Trim(value, " \t")
 		case "State":
-			// get between "(" and ")"
-			s := strings.Index(value, "(") + 1
-			e := strings.Index(value, ")")
-			p.status = value[s:e]
+			p.status = value[0:1]
 		case "Uid":
 			p.uids = make([]int32, 0, 4)
 			for _, i := range strings.Split(value, "\t") {
@@ -623,7 +620,7 @@ func (p *Process) fillFromStatus() error {
 	return nil
 }
 
-func (p *Process) fillFromStat() (string, int32, *cpu.CPUTimesStat, int64, int32, error) {
+func (p *Process) fillFromStat() (string, int32, *cpu.TimesStat, int64, int32, error) {
 	pid := p.Pid
 	statPath := common.HostProc(strconv.Itoa(int(pid)), "stat")
 	contents, err := ioutil.ReadFile(statPath)
@@ -661,7 +658,7 @@ func (p *Process) fillFromStat() (string, int32, *cpu.CPUTimesStat, int64, int32
 		return "", 0, nil, 0, 0, err
 	}
 
-	cpuTimes := &cpu.CPUTimesStat{
+	cpuTimes := &cpu.TimesStat{
 		CPU:    "cpu",
 		User:   float64(utime / ClockTicks),
 		System: float64(stime / ClockTicks),

@@ -11,8 +11,15 @@ import (
 )
 
 func DoSysctrl(mib string) ([]string, error) {
-	os.Setenv("LC_ALL", "C")
-	out, err := exec.Command("/sbin/sysctl", "-n", mib).Output()
+	err := os.Setenv("LC_ALL", "C")
+	if err != nil {
+		return []string{}, err
+	}
+	sysctl, err := exec.LookPath("/sbin/sysctl")
+	if err != nil {
+		return []string{}, err
+	}
+	out, err := exec.Command(sysctl, "-n", mib).Output()
 	if err != nil {
 		return []string{}, err
 	}

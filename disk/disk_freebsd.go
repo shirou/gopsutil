@@ -12,8 +12,8 @@ import (
 	"github.com/shirou/gopsutil/internal/common"
 )
 
-func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
-	var ret []DiskPartitionStat
+func Partitions(all bool) ([]PartitionStat, error) {
+	var ret []PartitionStat
 
 	// get length
 	count, err := syscall.Getfsstat(nil, MNT_WAIT)
@@ -75,7 +75,7 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 			opts += ",nfs4acls"
 		}
 
-		d := DiskPartitionStat{
+		d := PartitionStat{
 			Device:     common.IntToString(stat.Mntfromname[:]),
 			Mountpoint: common.IntToString(stat.Mntonname[:]),
 			Fstype:     common.IntToString(stat.Fstypename[:]),
@@ -87,10 +87,10 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 	return ret, nil
 }
 
-func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
+func IOCounters() (map[string]IOCountersStat, error) {
 	// statinfo->devinfo->devstat
 	// /usr/include/devinfo.h
-	ret := make(map[string]DiskIOCountersStat)
+	ret := make(map[string]IOCountersStat)
 
 	r, err := syscall.Sysctl("kern.devstat.all")
 	if err != nil {
@@ -112,7 +112,7 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 		un := strconv.Itoa(int(d.Unit_number))
 		name := common.IntToString(d.Device_name[:]) + un
 
-		ds := DiskIOCountersStat{
+		ds := IOCountersStat{
 			ReadCount:  d.Operations[DEVSTAT_READ],
 			WriteCount: d.Operations[DEVSTAT_WRITE],
 			ReadBytes:  d.Bytes[DEVSTAT_READ],

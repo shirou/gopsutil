@@ -88,7 +88,12 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 // Return swapinfo
 // FreeBSD can have multiple swap devices. but use only first device
 func SwapMemory() (*SwapMemoryStat, error) {
-	out, err := exec.Command("swapinfo").Output()
+	swapinfo, err := exec.LookPath("swapinfo")
+	if err != nil {
+		return nil, err
+	}
+
+	out, err := exec.Command(swapinfo).Output()
 	if err != nil {
 		return nil, err
 	}

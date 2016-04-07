@@ -101,7 +101,7 @@ type Devstat struct {
 	Device_type   uint32
 	Priority      uint32
 	Pad_cgo_1     [4]byte
-	Id            *byte
+	ID            *byte
 	Sequence1     uint32
 	Pad_cgo_2     [4]byte
 }

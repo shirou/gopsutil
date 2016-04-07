@@ -19,11 +19,11 @@ func GetDockerIDList() ([]string, error) {
 // containerid is same as docker id if you use docker.
 // If you use container via systemd.slice, you could use
 // containerid = docker-<container id>.scope and base=/sys/fs/cgroup/cpuacct/system.slice/
-func CgroupCPU(containerid string, base string) (*cpu.CPUTimesStat, error) {
+func CgroupCPU(containerid string, base string) (*cpu.TimesStat, error) {
 	return nil, ErrCgroupNotAvailable
 }
 
-func CgroupCPUDocker(containerid string) (*cpu.CPUTimesStat, error) {
+func CgroupCPUDocker(containerid string) (*cpu.TimesStat, error) {
 	return CgroupCPU(containerid, common.HostSys("fs/cgroup/cpuacct/docker"))
 }
 

@@ -19,18 +19,18 @@ func TestAddrString(t *testing.T) {
 }
 
 func TestNetIOCountersStatString(t *testing.T) {
-	v := NetIOCountersStat{
+	v := IOCountersStat{
 		Name:      "test",
 		BytesSent: 100,
 	}
-	e := `{"name":"test","bytes_sent":100,"bytes_recv":0,"packets_sent":0,"packets_recv":0,"errin":0,"errout":0,"dropin":0,"dropout":0}`
+	e := `{"name":"test","bytesSent":100,"bytesRecv":0,"packetsSent":0,"packetsRecv":0,"errin":0,"errout":0,"dropin":0,"dropout":0}`
 	if e != fmt.Sprintf("%v", v) {
 		t.Errorf("NetIOCountersStat string is invalid: %v", v)
 	}
 }
 
 func TestNetProtoCountersStatString(t *testing.T) {
-	v := NetProtoCountersStat{
+	v := ProtoCountersStat{
 		Protocol: "tcp",
 		Stats: map[string]int64{
 			"MaxConn":      -1,
@@ -46,7 +46,7 @@ func TestNetProtoCountersStatString(t *testing.T) {
 }
 
 func TestNetConnectionStatString(t *testing.T) {
-	v := NetConnectionStat{
+	v := ConnectionStat{
 		Fd:     10,
 		Family: 10,
 		Type:   10,
@@ -59,8 +59,8 @@ func TestNetConnectionStatString(t *testing.T) {
 }
 
 func TestNetIOCountersAll(t *testing.T) {
-	v, err := NetIOCounters(false)
-	per, err := NetIOCounters(true)
+	v, err := IOCounters(false)
+	per, err := IOCounters(true)
 	if err != nil {
 		t.Errorf("Could not get NetIOCounters: %v", err)
 	}
@@ -80,7 +80,7 @@ func TestNetIOCountersAll(t *testing.T) {
 }
 
 func TestNetIOCountersPerNic(t *testing.T) {
-	v, err := NetIOCounters(true)
+	v, err := IOCounters(true)
 	if err != nil {
 		t.Errorf("Could not get NetIOCounters: %v", err)
 	}
@@ -95,20 +95,20 @@ func TestNetIOCountersPerNic(t *testing.T) {
 }
 
 func TestGetNetIOCountersAll(t *testing.T) {
-	n := []NetIOCountersStat{
-		NetIOCountersStat{
+	n := []IOCountersStat{
+		IOCountersStat{
 			Name:        "a",
 			BytesRecv:   10,
 			PacketsRecv: 10,
 		},
-		NetIOCountersStat{
+		IOCountersStat{
 			Name:        "b",
 			BytesRecv:   10,
 			PacketsRecv: 10,
 			Errin:       10,
 		},
 	}
-	ret, err := getNetIOCountersAll(n)
+	ret, err := getIOCountersAll(n)
 	if err != nil {
 		t.Error(err)
 	}
@@ -127,7 +127,7 @@ func TestGetNetIOCountersAll(t *testing.T) {
 }
 
 func TestNetInterfaces(t *testing.T) {
-	v, err := NetInterfaces()
+	v, err := Interfaces()
 	if err != nil {
 		t.Errorf("Could not get NetInterfaceStat: %v", err)
 	}
@@ -142,7 +142,7 @@ func TestNetInterfaces(t *testing.T) {
 }
 
 func TestNetProtoCountersStatsAll(t *testing.T) {
-	v, err := NetProtoCounters(nil)
+	v, err := ProtoCounters(nil)
 	if err != nil {
 		t.Fatalf("Could not get NetProtoCounters: %v", err)
 	}
@@ -160,7 +160,7 @@ func TestNetProtoCountersStatsAll(t *testing.T) {
 }
 
 func TestNetProtoCountersStats(t *testing.T) {
-	v, err := NetProtoCounters([]string{"tcp", "ip"})
+	v, err := ProtoCounters([]string{"tcp", "ip"})
 	if err != nil {
 		t.Fatalf("Could not get NetProtoCounters: %v", err)
 	}
@@ -185,7 +185,7 @@ func TestNetConnections(t *testing.T) {
 		return
 	}
 
-	v, err := NetConnections("inet")
+	v, err := Connections("inet")
 	if err != nil {
 		t.Errorf("could not get NetConnections: %v", err)
 	}
@@ -207,12 +207,12 @@ func TestNetFilterCounters(t *testing.T) {
 
 	if runtime.GOOS == "linux" {
 		// some test environment has not the path.
-		if !common.PathExists("/proc/sys/net/netfilter/nf_conntrack_count") {
+		if !common.PathExists("/proc/sys/net/netfilter/nf_conntrackCount") {
 			t.SkipNow()
 		}
 	}
 
-	v, err := NetFilterCounters()
+	v, err := FilterCounters()
 	if err != nil {
 		t.Errorf("could not get NetConnections: %v", err)
 	}
@@ -221,7 +221,7 @@ func TestNetFilterCounters(t *testing.T) {
 	}
 	for _, vv := range v {
 		if vv.ConnTrackMax == 0 {
-			t.Errorf("nf_conntrack_max needs to be greater than zero: %v", vv)
+			t.Errorf("nf_conntrackMax needs to be greater than zero: %v", vv)
 		}
 	}
 

@@ -64,9 +64,13 @@ func (p *Process) SendSignal(sig syscall.Signal) error {
 		sigAsStr = "KILL"
 	}
 
-	cmd := exec.Command("kill", "-s", sigAsStr, strconv.Itoa(int(p.Pid)))
+	kill, err := exec.LookPath("kill")
+	if err != nil {
+		return err
+	}
+	cmd := exec.Command(kill, "-s", sigAsStr, strconv.Itoa(int(p.Pid)))
 	cmd.Stderr = os.Stderr
-	err := cmd.Run()
+	err = cmd.Run()
 	if err != nil {
 		return err
 	}

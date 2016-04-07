@@ -213,18 +213,18 @@ var fsTypeMap = map[int64]string{
 
 // Get disk partitions.
 // should use setmntent(3) but this implement use /etc/mtab file
-func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
+func Partitions(all bool) ([]PartitionStat, error) {
 	filename := common.HostEtc("mtab")
 	lines, err := common.ReadLines(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	ret := make([]DiskPartitionStat, 0, len(lines))
+	ret := make([]PartitionStat, 0, len(lines))
 
 	for _, line := range lines {
 		fields := strings.Fields(line)
-		d := DiskPartitionStat{
+		d := PartitionStat{
 			Device:     fields[0],
 			Mountpoint: fields[1],
 			Fstype:     fields[2],
@@ -236,14 +236,14 @@ func DiskPartitions(all bool) ([]DiskPartitionStat, error) {
 	return ret, nil
 }
 
-func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
+func IOCounters() (map[string]IOCountersStat, error) {
 	filename := common.HostProc("diskstats")
 	lines, err := common.ReadLines(filename)
 	if err != nil {
 		return nil, err
 	}
-	ret := make(map[string]DiskIOCountersStat, 0)
-	empty := DiskIOCountersStat{}
+	ret := make(map[string]IOCountersStat, 0)
+	empty := IOCountersStat{}
 
 	for _, line := range lines {
 		fields := strings.Fields(line)
@@ -276,7 +276,7 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 		if err != nil {
 			return ret, err
 		}
-		d := DiskIOCountersStat{
+		d := IOCountersStat{
 			ReadBytes:  rbytes * SectorSize,
 			WriteBytes: wbytes * SectorSize,
 			ReadCount:  reads,
@@ -298,7 +298,12 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 
 func GetDiskSerialNumber(name string) string {
 	n := fmt.Sprintf("--name=%s", name)
-	out, err := exec.Command("/sbin/udevadm", "info", "--query=property", n).Output()
+	udevadm, err := exec.LookPath("/sbin/udevadm")
+	if err != nil {
+		return ""
+	}
+
+	out, err := exec.Command(udevadm, "info", "--query=property", n).Output()
 
 	// does not return error, just an empty string
 	if err != nil {
