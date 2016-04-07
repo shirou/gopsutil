@@ -11,9 +11,9 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/internal/common"
-	"github.com/shirou/gopsutil/net"
+	"github.com/okmeter/gopsutil/cpu"
+	"github.com/okmeter/gopsutil/internal/common"
+	"github.com/okmeter/gopsutil/net"
 )
 
 // copied from sys/sysctl.h

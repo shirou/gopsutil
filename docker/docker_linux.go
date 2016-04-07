@@ -11,8 +11,8 @@ import (
 	"strconv"
 	"strings"
 
-	cpu "github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/internal/common"
+	cpu "github.com/okmeter/gopsutil/cpu"
+	"github.com/okmeter/gopsutil/internal/common"
 )
 
 // GetDockerIDList returnes a list of DockerID.

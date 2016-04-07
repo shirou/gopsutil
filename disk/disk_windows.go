@@ -9,7 +9,7 @@ import (
 
 	"github.com/StackExchange/wmi"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/okmeter/gopsutil/internal/common"
 )
 
 var (

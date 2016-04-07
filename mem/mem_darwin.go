@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/okmeter/gopsutil/internal/common"
 )
 
 func getPageSize() (uint64, error) {
