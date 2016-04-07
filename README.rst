@@ -14,9 +14,9 @@ This is a port of psutil (http://pythonhosted.org/psutil/). The challenge is por
 psutil functions on some architectures...
 
 
-.. highlights:: Breaking Changes will comes!
+.. highlights:: Breaking Changes!
 
-   We introduced versioning by using gopkgin. And breaking changes will be introduced at v2. See `issue 174 <https://github.com/shirou/gopsutil/issues/174>`_ .
+   Breaking changes is introduced at v2. See `issue 174 <https://github.com/shirou/gopsutil/issues/174>`_ .
 
 
 Migrating to v2
@@ -39,24 +39,26 @@ All works are implemented without cgo by porting c struct to golang struct.
 Usage
 ---------
 
-Note: gopsutil.v2 breaks compatibility. If you want to stay with compatibility, please use `gopkg.in/shirou/gopsutil.v1`.
+Note: gopsutil v2 breaks compatibility. If you want to stay with compatibility, please use v1 branch and vendoring.
 
 .. code:: go
 
-   import (
-   	"fmt"
+   package main
 
-    mem "gopkg.in/shirou/gopsutil.v2/mem"
+   import (
+       "fmt"
+
+       "github.com/shirou/gopsutil/mem"
    )
 
    func main() {
-   	v, _ := mem.VirtualMemory()
+       v, _ := mem.VirtualMemory()
 
-   	// almost every return value is a struct
-   	fmt.Printf("Total: %v, Free:%v, UsedPercent:%f%%\n", v.Total, v.Free, v.UsedPercent)
+       // almost every return value is a struct
+       fmt.Printf("Total: %v, Free:%v, UsedPercent:%f%%\n", v.Total, v.Free, v.UsedPercent)
 
-   	// convert to JSON. String() is also implemented
-   	fmt.Println(v)
+       // convert to JSON. String() is also implemented
+       fmt.Println(v)
    }
 
 The output is below.
@@ -64,7 +66,7 @@ The output is below.
 ::
 
   Total: 3179569152, Free:284233728, UsedPercent:84.508194%
-  {"total":3179569152,"available":492572672,"used":2895335424,"usedPercent":84.50819439828305, (snip)}
+  {"total":3179569152,"available":492572672,"used":2895335424,"usedPercent":84.50819439828305, (snip...)}
 
 You can set an alternative location to /proc by setting the HOST_PROC environment variable.
 You can set an alternative location to /sys by setting the HOST_SYS environment variable.
