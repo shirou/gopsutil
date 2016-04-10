@@ -14,7 +14,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"unsafe"
 
 	"github.com/shirou/gopsutil/internal/common"
 )
@@ -108,14 +107,12 @@ func Users() ([]UserStat, error) {
 		return nil, err
 	}
 
-	u := utmp{}
-	entrySize := int(unsafe.Sizeof(u))
-	count := len(buf) / entrySize
+	count := len(buf) / sizeOfUtmp
 
 	ret := make([]UserStat, 0, count)
 
 	for i := 0; i < count; i++ {
-		b := buf[i*entrySize : i*entrySize+entrySize]
+		b := buf[i*sizeOfUtmp : (i+1)*sizeOfUtmp]
 
 		var u utmp
 		br := bytes.NewReader(b)
@@ -127,10 +124,10 @@ func Users() ([]UserStat, error) {
 			continue
 		}
 		user := UserStat{
-			User:     common.IntToString(u.User[:]),
-			Terminal: common.IntToString(u.Line[:]),
-			Host:     common.IntToString(u.Host[:]),
-			Started:  int(u.Tv.TvSec),
+			User:     common.UintToString(u.User[:]),
+			Terminal: common.UintToString(u.Line[:]),
+			Host:     common.UintToString(u.Host[:]),
+			Started:  int(u.Tv.Sec),
 		}
 		ret = append(ret, user)
 	}

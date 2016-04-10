@@ -117,6 +117,23 @@ func IntToString(orig []int8) string {
 	return string(ret[0:size])
 }
 
+func UintToString(orig []uint8) string {
+        ret := make([]byte, len(orig))
+        size := -1
+        for i, o := range orig {
+                if o == 0 {
+                        size = i
+                        break
+                }
+                ret[i] = byte(o)
+        }
+        if size == -1 {
+                size = len(orig)
+        }
+
+        return string(ret[0:size])
+}
+
 func ByteToString(orig []byte) string {
 	n := -1
 	l := -1
