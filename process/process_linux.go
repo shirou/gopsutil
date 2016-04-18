@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -551,7 +552,7 @@ func (p *Process) fillFromStatus() error {
 			p.name = strings.Trim(value, " \t")
 		case "State":
 			p.status = value[0:1]
-		case "Ppid":
+		case "PPid", "Ppid":
 			pval, err := strconv.ParseInt(value, 10, 32)
 			if err != nil {
 				return err
