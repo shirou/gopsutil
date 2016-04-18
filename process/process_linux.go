@@ -120,6 +120,9 @@ func (p *Process) Parent() (*Process, error) {
 	if err != nil {
 		return nil, err
 	}
+	if p.parent == 0 {
+		return nil, fmt.Errorf("wrong number of parents")
+	}
 	return NewProcess(p.parent)
 }
 func (p *Process) Status() (string, error) {
