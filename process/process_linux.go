@@ -6,10 +6,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -118,18 +116,11 @@ func (p *Process) Cwd() (string, error) {
 	return p.fillFromCwd()
 }
 func (p *Process) Parent() (*Process, error) {
-	r, err := callLsof("R", p.Pid)
+	err := p.fillFromStatus()
 	if err != nil {
 		return nil, err
 	}
-	if len(r) != 1 { // TODO: pid 1
-		return nil, fmt.Errorf("wrong number of parents")
-	}
-	v, err := strconv.Atoi(r[0])
-	if err != nil {
-		return nil, err
-	}
-	return NewProcess(int32(v))
+	return NewProcess(p.parent)
 }
 func (p *Process) Status() (string, error) {
 	err := p.fillFromStatus()
@@ -557,6 +548,12 @@ func (p *Process) fillFromStatus() error {
 			p.name = strings.Trim(value, " \t")
 		case "State":
 			p.status = value[0:1]
+		case "Ppid":
+			pval, err := strconv.ParseInt(value, 10, 32)
+			if err != nil {
+				return err
+			}
+			p.parent = int32(pval)
 		case "Uid":
 			p.uids = make([]int32, 0, 4)
 			for _, i := range strings.Split(value, "\t") {
@@ -700,33 +697,6 @@ func Pids() ([]int32, error) {
 			continue
 		}
 		ret = append(ret, int32(pid))
-	}
-
-	return ret, nil
-}
-
-func callLsof(arg string, pid int32) ([]string, error) {
-	var cmd []string
-	if pid == 0 { // will get from all processes.
-		cmd = []string{"-F" + arg}
-	} else {
-		cmd = []string{"-a", "-F" + arg, "-p", strconv.Itoa(int(pid))}
-	}
-	lsof, err := exec.LookPath("lsof")
-	if err != nil {
-		return []string{}, err
-	}
-	out, err := invoke.Command(lsof, cmd...)
-	if err != nil {
-		return []string{}, err
-	}
-	lines := strings.Split(string(out), "\n")
-
-	var ret []string
-	for _, l := range lines[1:] {
-		if strings.HasPrefix(l, arg) {
-			ret = append(ret, l[1:]) // delete first char
-		}
 	}
 
 	return ret, nil
