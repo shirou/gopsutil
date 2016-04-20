@@ -126,6 +126,12 @@ func (p *Process) Parent() (*Process, error) {
 	}
 	return NewProcess(p.parent)
 }
+
+// Status returnes the process status.
+// Return value could be one of these.
+// R: Running S: Sleep T: Stop I: Idle
+// Z: Zombie W: Wait L: Lock
+// The charactor is same within all supported platforms.
 func (p *Process) Status() (string, error) {
 	err := p.fillFromStatus()
 	if err != nil {
