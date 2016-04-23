@@ -39,6 +39,6 @@ type exit_status struct {
 	Exit        int16
 }
 type UtTv struct {
-	TvSec  int32
-	TvUsec int32
+	Sec  int32
+	Usec int32
 }
