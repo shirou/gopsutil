@@ -11,6 +11,7 @@ const (
 	sizeofInt      = 0x4
 	sizeofLong     = 0x4
 	sizeofLongLong = 0x8
+	sizeOfUtmp     = 0x180
 )
 
 type (
