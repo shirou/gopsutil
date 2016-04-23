@@ -24,7 +24,6 @@ func GetDockerStat() ([]CgroupDockerStat, error) {
 	}
 
 	out, err := exec.Command(path, "ps", "-a", "--no-trunc", "--format", "{{.ID}}|{{.Image}}|{{.Names}}|{{.Status}}").Output()
-	fmt.Println(string(out))
 	if err != nil {
 		return []CgroupDockerStat{}, err
 	}
