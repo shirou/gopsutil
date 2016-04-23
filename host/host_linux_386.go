@@ -11,6 +11,7 @@ const (
 	sizeofInt      = 0x4
 	sizeofLong     = 0x4
 	sizeofLongLong = 0x8
+	sizeOfUtmp     = 0x180
 )
 
 type (
@@ -39,6 +40,6 @@ type exit_status struct {
 	Exit        int16
 }
 type UtTv struct {
-	TvSec  int32
-	TvUsec int32
+	Sec  int32
+	Usec int32
 }
