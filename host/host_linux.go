@@ -124,9 +124,9 @@ func Users() ([]UserStat, error) {
 			continue
 		}
 		user := UserStat{
-			User:     common.UintToString(u.User[:]),
-			Terminal: common.UintToString(u.Line[:]),
-			Host:     common.UintToString(u.Host[:]),
+			User:     common.IntToString(u.User[:]),
+			Terminal: common.IntToString(u.Line[:]),
+			Host:     common.IntToString(u.Host[:]),
 			Started:  int(u.Tv.Sec),
 		}
 		ret = append(ret, user)
