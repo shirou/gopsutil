@@ -26,6 +26,9 @@ func TestDisk_partitions(t *testing.T) {
 		t.Errorf("error %v", err)
 	}
 	empty := PartitionStat{}
+	if len(ret) == 0 {
+		t.Errorf("ret is empty")
+	}
 	for _, disk := range ret {
 		if disk == empty {
 			t.Errorf("Could not get device info %v", disk)
@@ -39,7 +42,7 @@ func TestDisk_io_counters(t *testing.T) {
 		t.Errorf("error %v", err)
 	}
 	if len(ret) == 0 {
-		t.Errorf("ret is empty, %v", ret)
+		t.Errorf("ret is empty")
 	}
 	empty := IOCountersStat{}
 	for part, io := range ret {
