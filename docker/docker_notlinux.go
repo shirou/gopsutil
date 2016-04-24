@@ -9,6 +9,12 @@ import (
 	"github.com/shirou/gopsutil/internal/common"
 )
 
+// GetDockerStat returns a list of Docker basic stats.
+// This requires certain permission.
+func GetDockerStat() ([]CgroupDockerStat, error) {
+	return nil, ErrDockerNotAvailable
+}
+
 // GetDockerIDList returnes a list of DockerID.
 // This requires certain permission.
 func GetDockerIDList() ([]string, error) {
