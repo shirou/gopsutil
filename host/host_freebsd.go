@@ -101,13 +101,11 @@ func Users() ([]UserStat, error) {
 		return ret, err
 	}
 
-	u := Utmpx{}
-	entrySize := int(unsafe.Sizeof(u)) - 3
-	entrySize = 197 // TODO: why should 197
+	entrySize := sizeOfUtmpx
 	count := len(buf) / entrySize
 
 	for i := 0; i < count; i++ {
-		b := buf[i*entrySize : i*entrySize+entrySize]
+		b := buf[i*sizeOfUtmpx : (i+1)*sizeOfUtmpx]
 		var u Utmpx
 		br := bytes.NewReader(b)
 		err := binary.Read(br, binary.LittleEndian, &u)
