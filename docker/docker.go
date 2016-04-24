@@ -39,3 +39,11 @@ type CgroupMemStat struct {
 	MemLimitInBytes         uint64 `json:"memoryLimitInBbytes"`
 	MemFailCnt              uint64 `json:"memoryFailcnt"`
 }
+
+type CgroupDockerStat struct {
+	ContainerID string `json:"containerID"`
+	Name        string `json:"name"`
+	Image       string `json:"image"`
+	Status      string `json:"status"`
+	Running     bool   `json:"running"`
+}

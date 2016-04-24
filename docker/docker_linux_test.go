@@ -15,6 +15,30 @@ func TestGetDockerIDList(t *testing.T) {
 	*/
 }
 
+func TestGetDockerStat(t *testing.T) {
+	// If there is not docker environment, this test always fail.
+	// not tested here
+
+	/*
+		ret, err := GetDockerStat()
+		if err != nil {
+			t.Errorf("error %v", err)
+		}
+		if len(ret) == 0 {
+			t.Errorf("ret is empty")
+		}
+		empty := CgroupDockerStat{}
+		for _, v := range ret {
+			if empty == v {
+				t.Errorf("empty CgroupDockerStat")
+			}
+			if v.ContainerID == "" {
+				t.Errorf("Could not get container id")
+			}
+		}
+	*/
+}
+
 func TestCgroupCPU(t *testing.T) {
 	v, _ := GetDockerIDList()
 	for _, id := range v {

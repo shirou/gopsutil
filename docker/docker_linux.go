@@ -15,6 +15,48 @@ import (
 	"github.com/shirou/gopsutil/internal/common"
 )
 
+// GetDockerStat returns a list of Docker basic stats.
+// This requires certain permission.
+func GetDockerStat() ([]CgroupDockerStat, error) {
+	path, err := exec.LookPath("docker")
+	if err != nil {
+		return nil, ErrDockerNotAvailable
+	}
+
+	out, err := exec.Command(path, "ps", "-a", "--no-trunc", "--format", "{{.ID}}|{{.Image}}|{{.Names}}|{{.Status}}").Output()
+	if err != nil {
+		return []CgroupDockerStat{}, err
+	}
+	lines := strings.Split(string(out), "\n")
+	ret := make([]CgroupDockerStat, 0, len(lines))
+
+	for _, l := range lines {
+		if l == "" {
+			continue
+		}
+		cols := strings.Split(l, "|")
+		if len(cols) != 4 {
+			continue
+		}
+		names := strings.Split(cols[2], ",")
+		stat := CgroupDockerStat{
+			ContainerID: cols[0],
+			Name:        names[0],
+			Image:       cols[1],
+			Status:      cols[3],
+			Running:     strings.Contains(cols[3], "Up"),
+		}
+		ret = append(ret, stat)
+	}
+
+	return ret, nil
+}
+
+func (c CgroupDockerStat) String() string {
+	s, _ := json.Marshal(c)
+	return string(s)
+}
+
 // GetDockerIDList returnes a list of DockerID.
 // This requires certain permission.
 func GetDockerIDList() ([]string, error) {
