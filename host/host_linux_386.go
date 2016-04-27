@@ -1,6 +1,4 @@
-// ATTENTION - FILE MANUAL FIXED AFTER CGO.
-// Fixed line: Tv		_Ctype_struct_timeval -> Tv		UtTv
-// Created by cgo -godefs, MANUAL FIXED
+// Created by cgo -godefs - DO NOT EDIT
 // cgo -godefs types_linux.go
 
 package host
@@ -31,7 +29,7 @@ type utmp struct {
 	Host      [256]int8
 	Exit      exit_status
 	Session   int32
-	Tv        UtTv
+	Tv        _Ctype_struct_timeval
 	Addr_v6   [4]int32
 	X__unused [20]int8
 }
@@ -39,7 +37,7 @@ type exit_status struct {
 	Termination int16
 	Exit        int16
 }
-type UtTv struct {
+type _Ctype_struct_timeval struct {
 	Sec  int32
 	Usec int32
 }
