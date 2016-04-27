@@ -39,4 +39,4 @@ type (
 
 type utmp C.struct_utmp
 type exit_status C.struct_exit_status
-type timeval C.struct_timeval
+type _Ctype_struct___0 C.struct_timeval
