@@ -11,7 +11,7 @@ gopsutil: psutil for golang
         :target: http://godoc.org/github.com/shirou/gopsutil
 
 This is a port of psutil (http://pythonhosted.org/psutil/). The challenge is porting all
-psutil functions on some architectures...
+psutil functions on some architectures.
 
 
 .. highlights:: Breaking Changes!
@@ -76,6 +76,11 @@ Documentation
 ------------------------
 
 see http://godoc.org/github.com/shirou/gopsutil
+
+Requrement
+-----------------
+
+- go1.5 or above is required.
 
 
 More Info
