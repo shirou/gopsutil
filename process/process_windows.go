@@ -23,6 +23,11 @@ const (
 	MaxPathLength = 260
 )
 
+var (
+	modpsapi                 = syscall.NewLazyDLL("psapi.dll")
+	procGetProcessMemoryInfo = modpsapi.NewProc("GetProcessMemoryInfo")
+)
+
 type SystemProcessInformation struct {
 	NextEntryOffset   uint64
 	NumberOfThreads   uint64
@@ -75,7 +80,7 @@ type Win32_Process struct {
 		PeakPageFileUsage     uint32
 		PeakVirtualSize       uint64
 		PeakWorkingSetSize    uint32
-		PrivatePageCount      uint64
+			PrivatePageCount      uint64
 		ReadOperationCount    uint64
 		ReadTransferCount     uint64
 		Status                *string
@@ -234,7 +239,17 @@ func (p *Process) CPUAffinity() ([]int32, error) {
 	return nil, common.ErrNotImplementedError
 }
 func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
-	return nil, common.ErrNotImplementedError
+	mem, err := getMemoryInfo(p.Pid)
+	if err != nil {
+		return nil, err
+	}
+
+	ret := &MemoryInfoStat{
+		RSS: mem.WorkingSetSize,
+		VMS: mem.PagefileUsage,
+	}
+
+	return ret, nil
 }
 func (p *Process) MemoryInfoEx() (*MemoryInfoExStat, error) {
 	return nil, common.ErrNotImplementedError
@@ -354,4 +369,30 @@ func getProcInfo(pid int32) (*SystemProcessInformation, error) {
 	}
 
 	return &sysProcInfo, nil
+}
+
+func getMemoryInfo(pid int32) (PROCESS_MEMORY_COUNTERS, error) {
+	var mem PROCESS_MEMORY_COUNTERS
+	c, err := syscall.OpenProcess(syscall.PROCESS_QUERY_INFORMATION, false, uint32(pid))
+	if err != nil {
+		return mem, err
+	}
+	defer syscall.CloseHandle(c)
+	if err := getProcessMemoryInfo(c, &mem); err != nil {
+		return mem, err
+	}
+
+	return mem, err
+}
+
+func getProcessMemoryInfo(h syscall.Handle, mem *PROCESS_MEMORY_COUNTERS) (err error) {
+	r1, _, e1 := syscall.Syscall(procGetProcessMemoryInfo.Addr(), 3, uintptr(h), uintptr(unsafe.Pointer(mem)), uintptr(unsafe.Sizeof(*mem)))
+	if r1 == 0 {
+		if e1 != 0 {
+			err = error(e1)
+		} else {
+			err = syscall.EINVAL
+		}
+	}
+	return
 }
