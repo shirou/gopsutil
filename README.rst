@@ -68,9 +68,11 @@ The output is below.
   Total: 3179569152, Free:284233728, UsedPercent:84.508194%
   {"total":3179569152,"available":492572672,"used":2895335424,"usedPercent":84.50819439828305, (snip...)}
 
-You can set an alternative location to /proc by setting the HOST_PROC environment variable.
-You can set an alternative location to /sys by setting the HOST_SYS environment variable.
-You can set an alternative location to /etc by setting the HOST_ETC environment variable.
+You can set an alternative location to :code:`/proc` by setting the :code:`HOST_PROC` environment variable.
+
+You can set an alternative location to :code:`/sys` by setting the :code:`HOST_SYS` environment variable.
+
+You can set an alternative location to :code:`/etc` by setting the :code:`HOST_ETC` environment variable.
 
 Documentation
 ------------------------
