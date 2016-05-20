@@ -5,6 +5,8 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+
+	"github.com/shirou/gopsutil/internal/common"
 )
 
 type TimesStat struct {
@@ -35,6 +37,12 @@ type InfoStat struct {
 	Mhz        float64  `json:"mhz"`
 	CacheSize  int32    `json:"cacheSize"`
 	Flags      []string `json:"flags"`
+}
+
+var invoke common.Invoker
+
+func init() {
+	invoke = common.Invoke{}
 }
 
 var lastCPUTimes []TimesStat

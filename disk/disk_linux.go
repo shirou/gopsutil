@@ -339,7 +339,7 @@ func GetDiskSerialNumber(name string) string {
 		return ""
 	}
 
-	out, err := exec.Command(udevadm, "info", "--query=property", n).Output()
+	out, err := invoke.Command(udevadm, "info", "--query=property", n)
 
 	// does not return error, just an empty string
 	if err != nil {
