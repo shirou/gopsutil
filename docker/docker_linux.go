@@ -23,7 +23,7 @@ func GetDockerStat() ([]CgroupDockerStat, error) {
 		return nil, ErrDockerNotAvailable
 	}
 
-	out, err := exec.Command(path, "ps", "-a", "--no-trunc", "--format", "{{.ID}}|{{.Image}}|{{.Names}}|{{.Status}}").Output()
+	out, err := invoke.Command(path, "ps", "-a", "--no-trunc", "--format", "{{.ID}}|{{.Image}}|{{.Names}}|{{.Status}}")
 	if err != nil {
 		return []CgroupDockerStat{}, err
 	}
@@ -65,7 +65,7 @@ func GetDockerIDList() ([]string, error) {
 		return nil, ErrDockerNotAvailable
 	}
 
-	out, err := exec.Command(path, "ps", "-q", "--no-trunc").Output()
+	out, err := invoke.Command(path, "ps", "-q", "--no-trunc")
 	if err != nil {
 		return []string{}, err
 	}

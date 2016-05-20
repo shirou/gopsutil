@@ -3,7 +3,6 @@
 package mem
 
 import (
-	"os/exec"
 	"strconv"
 	"strings"
 	"testing"
@@ -15,7 +14,7 @@ func TestVirtualMemoryDarwin(t *testing.T) {
 	v, err := VirtualMemory()
 	assert.Nil(t, err)
 
-	outBytes, err := exec.Command("/usr/sbin/sysctl", "hw.memsize").Output()
+	outBytes, err := invoke.Command("/usr/sbin/sysctl", "hw.memsize")
 	assert.Nil(t, err)
 	outString := string(outBytes)
 	outString = strings.TrimSpace(outString)
