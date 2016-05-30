@@ -194,13 +194,13 @@ exe                 x     x              x
 uids                x     x      x
 gids                x     x      x
 terminal            x     x      x
-io_counters         x     x
+io_counters         x     x              x
 nice                x     x      x       x
 num_fds             x
 num_ctx_switches    x
 num_threads         x     x      x       x
 cpu_times           x
-memory_info         x     x      x
+memory_info         x     x      x       x
 memory_info_ex      x
 memory_maps         x
 open_files          x
