@@ -1,9 +1,19 @@
 package docker
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/shirou/gopsutil/internal/common"
+)
 
 var ErrDockerNotAvailable = errors.New("docker not available")
 var ErrCgroupNotAvailable = errors.New("cgroup not available")
+
+var invoke common.Invoker
+
+func init() {
+	invoke = common.Invoke{}
+}
 
 type CgroupMemStat struct {
 	ContainerID             string `json:"containerID"`

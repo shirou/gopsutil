@@ -2,6 +2,7 @@ package cpu
 
 import (
 	"encoding/json"
+	"github.com/shirou/gopsutil/internal/common"
 	"runtime"
 	"strconv"
 	"strings"
@@ -46,8 +47,10 @@ type cpuPercent struct {
 }
 
 var lastCPUPercent cpuPercent
+var invoke common.Invoker
 
 func init() {
+	invoke = common.Invoke{}
 	lastCPUPercent.Lock()
 	lastCPUPercent.lastCPUTimes, _ = Times(false)
 	lastCPUPercent.lastPerCPUTimes, _ = Times(true)
