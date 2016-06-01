@@ -39,14 +39,13 @@ type InfoStat struct {
 	Flags      []string `json:"flags"`
 }
 
-//CPUPercent
-type cpuPercent struct {
+type lastPercent struct {
 	sync.Mutex
 	lastCPUTimes    []TimesStat
 	lastPerCPUTimes []TimesStat
 }
 
-var lastCPUPercent cpuPercent
+var lastCPUPercent lastPercent
 var invoke common.Invoker
 
 func init() {
