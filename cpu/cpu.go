@@ -2,11 +2,12 @@ package cpu
 
 import (
 	"encoding/json"
-	"github.com/shirou/gopsutil/internal/common"
 	"runtime"
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/shirou/gopsutil/internal/common"
 )
 
 type TimesStat struct {
