@@ -5,6 +5,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 type TimesStat struct {
@@ -37,8 +38,21 @@ type InfoStat struct {
 	Flags      []string `json:"flags"`
 }
 
-var lastCPUTimes []TimesStat
-var lastPerCPUTimes []TimesStat
+//CPUPercent
+type cpuPercent struct {
+	sync.Mutex
+	lastCPUTimes    []TimesStat
+	lastPerCPUTimes []TimesStat
+}
+
+var lastCPUPercent cpuPercent
+
+func init() {
+	lastCPUPercent.Lock()
+	lastCPUPercent.lastCPUTimes, _ = Times(false)
+	lastCPUPercent.lastPerCPUTimes, _ = Times(true)
+	lastCPUPercent.Unlock()
+}
 
 func Counts(logical bool) (int, error) {
 	return runtime.NumCPU(), nil
