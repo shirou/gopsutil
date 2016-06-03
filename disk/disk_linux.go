@@ -283,6 +283,10 @@ func IOCounters() (map[string]IOCountersStat, error) {
 
 	for _, line := range lines {
 		fields := strings.Fields(line)
+		if len(fields) < 14 {
+			// malformed line in /proc/diskstats, avoid panic by ignoring.
+			continue
+		}
 		name := fields[2]
 		reads, err := strconv.ParseUint((fields[3]), 10, 64)
 		if err != nil {
