@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/shirou/gopsutil/internal/common"
+	common "github.com/shirou/gopsutil/internal/common"
 )
 
 type LSB struct {
@@ -256,6 +256,12 @@ func PlatformInformation() (platform string, family string, version string, err 
 	} else if common.PathExists(common.HostEtc("arch-release")) {
 		platform = "arch"
 		version = lsb.Release
+	} else if common.PathExists(common.HostEtc("alpine-release")) {
+		platform = "alpine"
+		contents, err := common.ReadLines(common.HostEtc("alpine-release"))
+		if err == nil && len(contents) > 0 {
+			version = contents[0]
+		}
 	} else if lsb.ID == "RedHat" {
 		platform = "redhat"
 		version = lsb.Release
@@ -290,6 +296,8 @@ func PlatformInformation() (platform string, family string, version string, err 
 		family = "arch"
 	case "exherbo":
 		family = "exherbo"
+	case "alpine":
+		family = "alpine"
 	}
 
 	return platform, family, version, nil
