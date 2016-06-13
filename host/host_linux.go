@@ -136,6 +136,26 @@ func Users() ([]UserStat, error) {
 
 }
 
+func getOSRelease() (platform string, version string, err error) {
+	contents, err := common.ReadLines(common.HostEtc("os-release"))
+	if err != nil {
+		return "", "", nil // return empty
+	}
+	for _, line := range contents {
+		field := strings.Split(line, "=")
+		if len(field) < 2 {
+			continue
+		}
+		switch field[0] {
+		case "ID": // use ID for lowercase
+			platform = field[1]
+		case "VERSION":
+			version = field[1]
+		}
+	}
+	return platform, version, nil
+}
+
 func getLSB() (*LSB, error) {
 	ret := &LSB{}
 	if common.PathExists(common.HostEtc("lsb-release")) {
@@ -262,6 +282,12 @@ func PlatformInformation() (platform string, family string, version string, err 
 		if err == nil && len(contents) > 0 {
 			version = contents[0]
 		}
+	} else if common.PathExists(common.HostEtc("os-release")) {
+		p, v, err := getOSRelease()
+		if err == nil {
+			platform = p
+			version = v
+		}
 	} else if lsb.ID == "RedHat" {
 		platform = "redhat"
 		version = lsb.Release
@@ -298,6 +324,8 @@ func PlatformInformation() (platform string, family string, version string, err 
 		family = "exherbo"
 	case "alpine":
 		family = "alpine"
+	case "coreos":
+		family = "coreos"
 	}
 
 	return platform, family, version, nil
@@ -437,5 +465,12 @@ func Virtualization() (string, string, error) {
 		}
 	}
 
+	if common.PathExists(common.HostEtc("os-release")) {
+		p, _, err := getOSRelease()
+		if err == nil && p == "coreos" {
+			system = "rkt" // Is it true?
+			role = "host"
+		}
+	}
 	return system, role, nil
 }
