@@ -336,6 +336,8 @@ func IOCounters() (map[string]IOCountersStat, error) {
 	return ret, nil
 }
 
+// GetDiskSerialNumber returns Serial Number of given device or empty string
+// on error. Name of device is expected, eg. /dev/sda
 func GetDiskSerialNumber(name string) string {
 	n := fmt.Sprintf("--name=%s", name)
 	udevadm, err := exec.LookPath("/sbin/udevadm")
