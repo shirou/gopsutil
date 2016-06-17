@@ -127,7 +127,7 @@ func Info() ([]InfoStat, error) {
 	if vals, err = common.DoSysctrl("hw.model"); err != nil {
 		return nil, err
 	}
-	c.ModelName = vals[0]
+	c.ModelName = strings.Join(vals, " ")
 
 	for _, line := range lines {
 		if matches := regexp.MustCompile(`Origin\s*=\s*"(.+)"\s+Id\s*=\s*(.+)\s+Family\s*=\s*(.+)\s+Model\s*=\s*(.+)\s+Stepping\s*=\s*(.+)`).FindStringSubmatch(line); matches != nil {
