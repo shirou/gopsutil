@@ -54,18 +54,25 @@ type ProtoCountersStat struct {
 	Stats    map[string]int64 `json:"stats"`
 }
 
-// NetInterfaceAddr is designed for represent interface addresses
+// InterfaceAddr is designed for represent interface addresses
 type InterfaceAddr struct {
 	Addr string `json:"addr"`
 }
 
+// InterfaceAddrList is a list of InterfaceAddr
+type InterfaceAddrList []InterfaceAddr
+
+// InterfaceStat represents the basic information of an interface
 type InterfaceStat struct {
-	MTU          int             `json:"mtu"`          // maximum transmission unit
-	Name         string          `json:"name"`         // e.g., "en0", "lo0", "eth0.100"
-	HardwareAddr string          `json:"hardwareaddr"` // IEEE MAC-48, EUI-48 and EUI-64 form
-	Flags        []string        `json:"flags"`        // e.g., FlagUp, FlagLoopback, FlagMulticast
-	Addrs        []InterfaceAddr `json:"addrs"`
+	MTU          int               `json:"mtu"`          // maximum transmission unit
+	Name         string            `json:"name"`         // e.g., "en0", "lo0", "eth0.100"
+	HardwareAddr string            `json:"hardwareaddr"` // IEEE MAC-48, EUI-48 and EUI-64 form
+	Flags        []string          `json:"flags"`        // e.g., FlagUp, FlagLoopback, FlagMulticast
+	Addrs        InterfaceAddrList `json:"addrs"`
 }
+
+// InterfaceStatList is a list of InterfaceStat
+type InterfaceStatList []InterfaceStat
 
 type FilterStat struct {
 	ConnTrackCount int64 `json:"conntrackCount"`
@@ -104,17 +111,22 @@ func (n InterfaceStat) String() string {
 	return string(s)
 }
 
+func (l InterfaceStatList) String() string {
+	s, _ := json.Marshal(l)
+	return string(s)
+}
+
 func (n InterfaceAddr) String() string {
 	s, _ := json.Marshal(n)
 	return string(s)
 }
 
-func Interfaces() ([]InterfaceStat, error) {
+func Interfaces() (InterfaceStatList, error) {
 	is, err := net.Interfaces()
 	if err != nil {
 		return nil, err
 	}
-	ret := make([]InterfaceStat, 0, len(is))
+	ret := make(InterfaceStatList, 0, len(is))
 	for _, ifi := range is {
 
 		var flags []string
@@ -142,7 +154,7 @@ func Interfaces() ([]InterfaceStat, error) {
 		}
 		addrs, err := ifi.Addrs()
 		if err == nil {
-			r.Addrs = make([]InterfaceAddr, 0, len(addrs))
+			r.Addrs = make(InterfaceAddrList, 0, len(addrs))
 			for _, addr := range addrs {
 				r.Addrs = append(r.Addrs, InterfaceAddr{
 					Addr: addr.String(),

@@ -18,6 +18,21 @@ func TestAddrString(t *testing.T) {
 	}
 }
 
+func TestInterfaceStatString(t *testing.T) {
+	v := InterfaceStat{MTU: 1500, Name: "eth0", HardwareAddr: "01:23:45:67:89:ab", Flags: []string{"up", "down"}, Addrs: []InterfaceAddr{{Addr: "1.2.3.4"}, {Addr: "5.6.7.8"}}}
+
+	s := fmt.Sprintf("%v", v)
+	if s != "{\"mtu\":1500,\"name\":\"eth0\",\"hardwareaddr\":\"01:23:45:67:89:ab\",\"flags\":[\"up\",\"down\"],\"addrs\":[{\"addr\":\"1.2.3.4\"},{\"addr\":\"5.6.7.8\"}]}" {
+		t.Errorf("InterfaceStat string is invalid: %v", v)
+	}
+
+	list := InterfaceStatList{v, v}
+	s = fmt.Sprintf("%v", list)
+	if s != "[{\"mtu\":1500,\"name\":\"eth0\",\"hardwareaddr\":\"01:23:45:67:89:ab\",\"flags\":[\"up\",\"down\"],\"addrs\":[{\"addr\":\"1.2.3.4\"},{\"addr\":\"5.6.7.8\"}]},{\"mtu\":1500,\"name\":\"eth0\",\"hardwareaddr\":\"01:23:45:67:89:ab\",\"flags\":[\"up\",\"down\"],\"addrs\":[{\"addr\":\"1.2.3.4\"},{\"addr\":\"5.6.7.8\"}]}]" {
+		t.Errorf("InterfaceStatList string is invalid: %v", v)
+	}
+}
+
 func TestNetIOCountersStatString(t *testing.T) {
 	v := IOCountersStat{
 		Name:      "test",
