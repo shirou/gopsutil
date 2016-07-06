@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/DataDog/gopsutil/internal/common"
 )
 
 func Partitions(all bool) ([]PartitionStat, error) {

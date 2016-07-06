@@ -5,8 +5,8 @@ package docker
 import (
 	"encoding/json"
 
-	"github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/DataDog/gopsutil/cpu"
+	"github.com/DataDog/gopsutil/internal/common"
 )
 
 // GetDockerStat returns a list of Docker basic stats.

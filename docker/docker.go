@@ -3,7 +3,7 @@ package docker
 import (
 	"errors"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/DataDog/gopsutil/internal/common"
 )
 
 var ErrDockerNotAvailable = errors.New("docker not available")

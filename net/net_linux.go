@@ -13,7 +13,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/DataDog/gopsutil/internal/common"
 )
 
 // NetIOCounters returnes network I/O statistics for every network
