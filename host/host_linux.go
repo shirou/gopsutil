@@ -17,7 +17,6 @@ import (
 
 	"github.com/shirou/gopsutil/internal/common"
 	common "github.com/shirou/gopsutil/internal/common"
-	"github.com/shirou/gopsutil/process"
 )
 
 type LSB struct {
@@ -59,9 +58,8 @@ func Info() (*InfoStat, error) {
 		ret.Uptime = uptime(boot)
 	}
 
-	procs, err := process.Pids()
-	if err == nil {
-		ret.Procs = uint64(len(procs))
+	if numProcs, err := common.NumProcs(); err == nil {
+		ret.Procs = numProcs
 	}
 
 	return ret, nil
