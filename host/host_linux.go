@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/shirou/gopsutil/internal/common"
-	common "github.com/shirou/gopsutil/internal/common"
 )
 
 type LSB struct {
