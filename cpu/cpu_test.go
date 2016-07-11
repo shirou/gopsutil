@@ -94,10 +94,52 @@ func testCPUPercent(t *testing.T, percpu bool) {
 	}
 }
 
+func testCPUPercentLastUsed(t *testing.T, percpu bool) {
+
+	numcpu := runtime.NumCPU()
+	testCount := 10
+
+	if runtime.GOOS != "windows" {
+		testCount = 2
+		v, err := Percent(time.Millisecond, percpu)
+		if err != nil {
+			t.Errorf("error %v", err)
+		}
+		// Skip CircleCI which CPU num is different
+		if os.Getenv("CIRCLECI") != "true" {
+			if (percpu && len(v) != numcpu) || (!percpu && len(v) != 1) {
+				t.Fatalf("wrong number of entries from CPUPercent: %v", v)
+			}
+		}
+	}
+	for i := 0; i < testCount; i++ {
+		v, err := Percent(0, percpu)
+		if err != nil {
+			t.Errorf("error %v", err)
+		}
+		time.Sleep(1 * time.Millisecond)
+		for _, percent := range v {
+			// Check for slightly greater then 100% to account for any rounding issues.
+			if percent < 0.0 || percent > 100.0001*float64(numcpu) {
+				t.Fatalf("CPUPercent value is invalid: %f", percent)
+			}
+		}
+	}
+
+}
+
 func TestCPUPercent(t *testing.T) {
 	testCPUPercent(t, false)
 }
 
 func TestCPUPercentPerCpu(t *testing.T) {
 	testCPUPercent(t, true)
+}
+
+func TestCPUPercentIntervalZero(t *testing.T) {
+	testCPUPercentLastUsed(t, false)
+}
+
+func TestCPUPercentIntervalZeroPerCPU(t *testing.T) {
+	testCPUPercentLastUsed(t, true)
 }

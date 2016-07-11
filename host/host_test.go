@@ -19,6 +19,16 @@ func TestHostInfo(t *testing.T) {
 	}
 }
 
+func TestUptime(t *testing.T) {
+	v, err := Uptime()
+	if err != nil {
+		t.Errorf("error %v", err)
+	}
+	if v == 0 {
+		t.Errorf("Could not get up time %v", v)
+	}
+}
+
 func TestBoot_time(t *testing.T) {
 	v, err := BootTime()
 	if err != nil {
@@ -26,6 +36,9 @@ func TestBoot_time(t *testing.T) {
 	}
 	if v == 0 {
 		t.Errorf("Could not get boot time %v", v)
+	}
+	if v < 946652400 {
+		t.Errorf("Invalid Boottime, older than 2000-01-01")
 	}
 }
 

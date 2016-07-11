@@ -22,7 +22,7 @@ psutil functions on some architectures.
 Migrating to v2
 -------------------------
 
-On gopsutil itself, `v2migration.sh <https://github.com/shirou/gopsutil/blob/v2/v2migration.sh>`_ is used for migration. It can not be commly used, but it may help to your migration.
+On gopsutil itself, `v2migration.sh <https://github.com/shirou/gopsutil/blob/v2/v2migration.sh>`_ is used for migration. It can not be commonly used, but it may help you with migration.
 
 
 Available Architectures
@@ -79,7 +79,7 @@ Documentation
 
 see http://godoc.org/github.com/shirou/gopsutil
 
-Requrement
+Requirements
 -----------------
 
 - go1.5 or above is required.
@@ -153,7 +153,7 @@ Current Status
 ------------------
 
 - x: work
-- b: almost work but something broken
+- b: almost works, but something is broken
 
 ================= ====== ======= ====== =======
 name              Linux  FreeBSD MacOSX Windows
@@ -194,13 +194,13 @@ exe                 x     x              x
 uids                x     x      x
 gids                x     x      x
 terminal            x     x      x
-io_counters         x     x
+io_counters         x     x              x
 nice                x     x      x       x
 num_fds             x
 num_ctx_switches    x
 num_threads         x     x      x       x
 cpu_times           x
-memory_info         x     x      x
+memory_info         x     x      x       x
 memory_info_ex      x
 memory_maps         x
 open_files          x
