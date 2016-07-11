@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	common "github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/internal/common"
 )
 
 type LSB struct {
@@ -44,15 +44,21 @@ func Info() (*InfoStat, error) {
 		ret.PlatformFamily = family
 		ret.PlatformVersion = version
 	}
+
 	system, role, err := Virtualization()
 	if err == nil {
 		ret.VirtualizationSystem = system
 		ret.VirtualizationRole = role
 	}
+
 	boot, err := BootTime()
 	if err == nil {
 		ret.BootTime = boot
 		ret.Uptime = uptime(boot)
+	}
+
+	if numProcs, err := common.NumProcs(); err == nil {
+		ret.Procs = numProcs
 	}
 
 	return ret, nil
