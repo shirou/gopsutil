@@ -15,6 +15,7 @@ import (
 	"unsafe"
 
 	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/process"
 )
 
 const (
@@ -40,6 +41,7 @@ func Info() (*InfoStat, error) {
 		ret.PlatformFamily = family
 		ret.PlatformVersion = version
 	}
+
 	system, role, err := Virtualization()
 	if err == nil {
 		ret.VirtualizationSystem = system
@@ -50,6 +52,11 @@ func Info() (*InfoStat, error) {
 	if err == nil {
 		ret.BootTime = boot
 		ret.Uptime = uptime(boot)
+	}
+
+	procs, err := process.Pids()
+	if err == nil {
+		ret.Procs = uint64(len(procs))
 	}
 
 	return ret, nil

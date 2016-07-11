@@ -14,6 +14,9 @@ func TestHostInfo(t *testing.T) {
 	if v == empty {
 		t.Errorf("Could not get hostinfo %v", v)
 	}
+	if v.Procs == 0 {
+		t.Errorf("Could not determine the number of host processes")
+	}
 }
 
 func TestBoot_time(t *testing.T) {
