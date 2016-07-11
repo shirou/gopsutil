@@ -15,5 +15,5 @@ func NumProcs() (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	return uint64(len(list)), error
+	return uint64(len(list)), err
 }
