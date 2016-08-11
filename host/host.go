@@ -25,7 +25,7 @@ type InfoStat struct {
 	PlatformVersion      string `json:"platformVersion"`
 	VirtualizationSystem string `json:"virtualizationSystem"`
 	VirtualizationRole   string `json:"virtualizationRole"` // guest or host
-
+	HostID               string `json:"hostid"`             // ex: uuid
 }
 
 type UserStat struct {
