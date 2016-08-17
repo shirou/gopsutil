@@ -8,7 +8,7 @@ help:  ## Show help
 
 check:  ## Check
 	errcheck -ignore="Close|Run|Write" ./...
-	golint ./... | egrep -v 'underscores|HttpOnly|should have comment|comment on exported|CamelCase|VM|UID'
+	golint ./... | egrep -v 'underscores|HttpOnly|should have comment|comment on exported|CamelCase|VM|UID' && exit 1 || exit 0
 
 build_test:  ## test only buildable
 	GOOS=linux go test ./... | grep -v "exec format error"
