@@ -79,7 +79,7 @@ func (p *Process) Name() (string, error) {
 	return common.IntToString(k.Proc.P_comm[:]), nil
 }
 func (p *Process) Exe() (string, error) {
-	return "", common.ErrNotImplementedError
+	return internal_GetProcessExe(int(p.Pid))
 }
 
 // Cmdline returns the command line arguments of the process as a string with
