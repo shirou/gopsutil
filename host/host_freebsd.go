@@ -40,6 +40,7 @@ func Info() (*InfoStat, error) {
 		ret.Platform = platform
 		ret.PlatformFamily = family
 		ret.PlatformVersion = version
+		ret.KernelVersion = version
 	}
 
 	system, role, err := Virtualization()
