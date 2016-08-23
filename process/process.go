@@ -8,6 +8,7 @@ import (
 	"github.com/DataDog/gopsutil/cpu"
 	"github.com/DataDog/gopsutil/internal/common"
 	"github.com/DataDog/gopsutil/mem"
+	"github.com/DataDog/gopsutil/net"
 )
 
 var invoke common.Invoker
@@ -29,6 +30,28 @@ type Process struct {
 
 	lastCPUTimes *cpu.TimesStat
 	lastCPUTime  time.Time
+}
+
+type FilledProcess struct {
+	Pid     int32
+	Ppid    int32
+	Cmdline []string
+	// stat
+	CpuTime1   *cpu.TimesStat
+	CpuTime2   *cpu.TimesStat
+	Nice       int32
+	CreateTime int64
+	// status
+	Name       string
+	Status     string
+	Uids       []int32
+	Gids       []int32
+	NumThreads int32
+	// statm
+	MemInfo   *MemoryInfoStat
+	MemInfoEx *MemoryInfoExStat
+	// net
+	Connections []net.ConnectionStat
 }
 
 type OpenFilesStat struct {
@@ -131,7 +154,6 @@ func (p *Process) Percent(interval time.Duration) (float64, error) {
 			return 0, nil
 		}
 	}
-
 	numcpu := runtime.NumCPU()
 	delta := (now.Sub(p.lastCPUTime).Seconds()) * float64(numcpu)
 	ret := calculatePercent(p.lastCPUTimes, cpuTimes, delta, numcpu)
