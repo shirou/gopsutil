@@ -81,7 +81,7 @@ func NewProcess(pid int32) (*Process, error) {
 
 // Ppid returns Parent Process ID of the process.
 func (p *Process) Ppid() (int32, error) {
-	_, ppid, _, _, _, err := p.fillFromStat()
+	ppid, _, _, _, err := p.fillFromStat()
 	if err != nil {
 		return -1, err
 	}
@@ -117,7 +117,7 @@ func (p *Process) CmdlineSlice() ([]string, error) {
 
 // CreateTime returns created time of the process in seconds since the epoch, in UTC.
 func (p *Process) CreateTime() (int64, error) {
-	_, _, _, createTime, _, err := p.fillFromStat()
+	_, _, createTime, _, err := p.fillFromStat()
 	if err != nil {
 		return 0, err
 	}
@@ -174,7 +174,7 @@ func (p *Process) Gids() ([]int32, error) {
 
 // Terminal returns a terminal which is associated with the process.
 func (p *Process) Terminal() (string, error) {
-	terminal, _, _, _, _, err := p.fillFromStat()
+	terminal, err := p.fillTermFromStat()
 	if err != nil {
 		return "", err
 	}
@@ -184,7 +184,7 @@ func (p *Process) Terminal() (string, error) {
 // Nice returns a nice value (priority).
 // Notice: gopsutil can not set nice value.
 func (p *Process) Nice() (int32, error) {
-	_, _, _, _, nice, err := p.fillFromStat()
+	_, _, _, nice, err := p.fillFromStat()
 	if err != nil {
 		return 0, err
 	}
@@ -240,7 +240,7 @@ func (p *Process) Threads() (map[string]string, error) {
 
 // Times returns CPU times of the process.
 func (p *Process) Times() (*cpu.TimesStat, error) {
-	_, _, cpuTimes, _, _, err := p.fillFromStat()
+	_, cpuTimes, _, _, err := p.fillFromStat()
 	if err != nil {
 		return nil, err
 	}
@@ -684,12 +684,12 @@ func (p *Process) fillFromStatus() error {
 	return nil
 }
 
-func (p *Process) fillFromStat() (string, int32, *cpu.TimesStat, int64, int32, error) {
+func (p *Process) fillTermFromStat() (string, error) {
 	pid := p.Pid
 	statPath := common.HostProc(strconv.Itoa(int(pid)), "stat")
 	contents, err := ioutil.ReadFile(statPath)
 	if err != nil {
-		return "", 0, nil, 0, 0, err
+		return "", err
 	}
 	fields := strings.Fields(string(contents))
 
@@ -703,23 +703,39 @@ func (p *Process) fillFromStat() (string, int32, *cpu.TimesStat, int64, int32, e
 	if err == nil {
 		t, err := strconv.ParseUint(fields[i+5], 10, 64)
 		if err != nil {
-			return "", 0, nil, 0, 0, err
+			return "", err
 		}
 		terminal = termmap[t]
+	}
+	return terminal, err
+}
+
+func (p *Process) fillFromStat() (int32, *cpu.TimesStat, int64, int32, error) {
+	pid := p.Pid
+	statPath := common.HostProc(strconv.Itoa(int(pid)), "stat")
+	contents, err := ioutil.ReadFile(statPath)
+	if err != nil {
+		return 0, nil, 0, 0, err
+	}
+	fields := strings.Fields(string(contents))
+
+	i := 1
+	for !strings.HasSuffix(fields[i], ")") {
+		i++
 	}
 
 	ppid, err := strconv.ParseInt(fields[i+2], 10, 32)
 	if err != nil {
-		return "", 0, nil, 0, 0, err
+		return 0, nil, 0, 0, err
 	}
 	utime, err := strconv.ParseFloat(fields[i+12], 64)
 	if err != nil {
-		return "", 0, nil, 0, 0, err
+		return 0, nil, 0, 0, err
 	}
 
 	stime, err := strconv.ParseFloat(fields[i+13], 64)
 	if err != nil {
-		return "", 0, nil, 0, 0, err
+		return 0, nil, 0, 0, err
 	}
 
 	cpuTimes := &cpu.TimesStat{
@@ -731,7 +747,7 @@ func (p *Process) fillFromStat() (string, int32, *cpu.TimesStat, int64, int32, e
 	bootTime, _ := host.BootTime()
 	t, err := strconv.ParseUint(fields[i+20], 10, 64)
 	if err != nil {
-		return "", 0, nil, 0, 0, err
+		return 0, nil, 0, 0, err
 	}
 	ctime := (t / uint64(ClockTicks)) + uint64(bootTime)
 	createTime := int64(ctime * 1000)
@@ -741,7 +757,7 @@ func (p *Process) fillFromStat() (string, int32, *cpu.TimesStat, int64, int32, e
 	snice, _ := syscall.Getpriority(PrioProcess, int(pid))
 	nice := int32(snice) // FIXME: is this true?
 
-	return terminal, int32(ppid), cpuTimes, createTime, nice, nil
+	return int32(ppid), cpuTimes, createTime, nice, nil
 }
 
 // Pids returns a slice of process ID list which are running now.
