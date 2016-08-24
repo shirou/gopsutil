@@ -720,6 +720,7 @@ func (p *Process) fillFromStat() (int32, *cpu.TimesStat, int64, int32, error) {
 		return 0, nil, 0, 0, err
 	}
 	fields := strings.Fields(string(contents))
+	timestamp := time.Now().Unix()
 
 	i := 1
 	for !strings.HasSuffix(fields[i], ")") {
@@ -741,9 +742,10 @@ func (p *Process) fillFromStat() (int32, *cpu.TimesStat, int64, int32, error) {
 	}
 
 	cpuTimes := &cpu.TimesStat{
-		CPU:    "cpu",
-		User:   float64(utime / ClockTicks),
-		System: float64(stime / ClockTicks),
+		CPU:       "cpu",
+		User:      float64(utime / ClockTicks),
+		System:    float64(stime / ClockTicks),
+		Timestamp: timestamp,
 	}
 
 	if CachedBootTime == 0 {
@@ -841,7 +843,6 @@ func AllProcesses(cpuWait time.Duration) ([]*FilledProcess, error) {
 				connections = []net.ConnectionStat{}
 			}
 
-			// Second CPU time check so we can get percentages.
 			time.Sleep(cpuWait)
 			_, t2, _, _, err := p.fillFromStat()
 			if err != nil {

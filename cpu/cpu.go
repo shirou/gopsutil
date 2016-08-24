@@ -25,6 +25,7 @@ type TimesStat struct {
 	Guest     float64 `json:"guest"`
 	GuestNice float64 `json:"guestNice"`
 	Stolen    float64 `json:"stolen"`
+	Timestamp int64   `json:"timestamp"`
 }
 
 type InfoStat struct {
