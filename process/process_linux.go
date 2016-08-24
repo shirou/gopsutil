@@ -22,6 +22,7 @@ import (
 )
 
 var (
+	CachedBootTime  = uint64(0)
 	ErrorNoChildren = errors.New("process does not have children")
 	PageSize        = uint64(os.Getpagesize())
 )
@@ -745,7 +746,11 @@ func (p *Process) fillFromStat() (int32, *cpu.TimesStat, int64, int32, error) {
 		System: float64(stime / ClockTicks),
 	}
 
-	bootTime, _ := host.BootTime()
+	if CachedBootTime == 0 {
+		btime, _ := host.BootTime()
+		CachedBootTime = btime
+	}
+	bootTime := CachedBootTime
 	t, err := strconv.ParseUint(fields[i+20], 10, 64)
 	if err != nil {
 		return 0, nil, 0, 0, err
