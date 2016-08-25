@@ -72,7 +72,7 @@ func finishCPUInfo(c *InfoStat) error {
 			if err != nil {
 				return err
 			}
-			c.Mhz = value
+			c.Mhz = value/1000.0  // value is in kHz
 		}
 	}
 	if len(c.CoreID) == 0 {
