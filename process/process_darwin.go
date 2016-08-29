@@ -111,7 +111,7 @@ func (p *Process) CreateTime() (int64, error) {
 		return 0, err
 	}
 
-	elapsedSegments := strings.Split(r[0][0], ":")
+	elapsedSegments := strings.Split(strings.Replace(r[0][0], "-", ":", 1), ":")
 	var elapsedDurations []time.Duration
 	for i := len(elapsedSegments) - 1; i >= 0; i-- {
 		p, err := strconv.ParseInt(elapsedSegments[i], 10, 0)
