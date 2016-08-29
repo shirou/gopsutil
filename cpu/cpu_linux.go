@@ -80,12 +80,22 @@ func finishCPUInfo(c *InfoStat) error {
 	// of the value from /proc/cpuinfo because we want to report the maximum
 	// clock-speed of the CPU for c.Mhz, matching the behaviour of Windows
 	lines, err = common.ReadLines(sysCPUPath(c.CPU, "cpufreq/cpuinfo_max_freq"))
+	// if we encounter errors below but has a value from parsing /proc/cpuinfo
+	// then we ignore the error
 	if err != nil {
-		return err
+		if c.Mhz == 0 {
+			return err
+		} else {
+			return nil
+		}
 	}
 	value, err = strconv.ParseFloat(lines[0], 64)
 	if err != nil {
-		return err
+		if c.Mhz == 0 {
+			return err
+		} else {
+			return nil
+		}
 	}
 	c.Mhz = value/1000.0  // value is in kHz
 	return nil
