@@ -7,40 +7,53 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
-
-	"github.com/shirou/gopsutil/internal/common"
 )
 
-// example of netstat -idbn output on yosemite
+// example of `netstat -ibdnWI lo0` output on yosemite
 // Name  Mtu   Network       Address            Ipkts Ierrs     Ibytes    Opkts Oerrs     Obytes  Coll Drop
 // lo0   16384 <Link#1>                        869107     0  169411755   869107     0  169411755     0   0
 // lo0   16384 ::1/128     ::1                 869107     -  169411755   869107     -  169411755     -   -
 // lo0   16384 127           127.0.0.1         869107     -  169411755   869107     -  169411755     -   -
 func IOCounters(pernic bool) ([]IOCountersStat, error) {
+	const endOfLine = "\n"
+	// example of `ifconfig -l` output on yosemite:
+	// lo0 gif0 stf0 en0 p2p0 awdl0
+	ifconfig, err := exec.LookPath("/sbin/ifconfig")
+	if err != nil {
+		return nil, err
+	}
+
 	netstat, err := exec.LookPath("/usr/sbin/netstat")
 	if err != nil {
 		return nil, err
 	}
-	out, err := invoke.Command(netstat, "-ibdnW")
+
+	// list all interfaces
+	out, err := invoke.Command(ifconfig, "-l")
 	if err != nil {
 		return nil, err
 	}
+	interfaces := strings.Fields(strings.TrimRight(string(out), endOfLine))
+	ret := make([]IOCountersStat, 0)
 
-	lines := strings.Split(string(out), "\n")
-	ret := make([]IOCountersStat, 0, len(lines)-1)
-	exists := make([]string, 0, len(ret))
-
-	for _, line := range lines {
-		values := strings.Fields(line)
-		if len(values) < 1 || values[0] == "Name" {
-			// skip first line
+	// extract metrics for all interfaces
+	for _, interfaceName := range interfaces {
+		if out, err = invoke.Command(netstat, "-ibdnWI" + interfaceName); err != nil {
+			return nil, err
+		}
+		lines := strings.Split(string(out), endOfLine)
+		if len(lines) <= 1 {
+			// invalid output
 			continue
 		}
-		if common.StringsHas(exists, values[0]) {
-			// skip if already get
+
+		if len(lines[1]) == 0 {
+			// interface had been removed since `ifconfig -l` had been executed
 			continue
 		}
-		exists = append(exists, values[0])
+
+		// only the first output is fine
+		values := strings.Fields(lines[1])
 
 		base := 1
 		// sometimes Address is ommitted
@@ -75,7 +88,7 @@ func IOCounters(pernic bool) ([]IOCountersStat, error) {
 		}
 
 		n := IOCountersStat{
-			Name:        values[0],
+			Name:        interfaceName,
 			PacketsRecv: parsed[0],
 			Errin:       parsed[1],
 			BytesRecv:   parsed[2],
