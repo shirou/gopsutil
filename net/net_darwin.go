@@ -57,7 +57,7 @@ func IOCounters(pernic bool) ([]IOCountersStat, error) {
 
 		base := 1
 		// sometimes Address is ommitted
-		if len(values) < 11 {
+		if len(values) < 12 {
 			base = 0
 		}
 
