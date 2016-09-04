@@ -4,108 +4,248 @@ package net
 
 import (
 	"errors"
+	"fmt"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 )
 
-// example of `netstat -ibdnWI lo0` output on yosemite
+var (
+	errNetstatHeader  = errors.New("Can't parse header of netstat output")
+	netstatLinkRegexp = regexp.MustCompile(`^<Link#(\d+)>$`)
+)
+
+const endOfLine = "\n"
+
+func parseNetstatLine(line string) (stat *IOCountersStat, linkId *uint, err error) {
+	var (
+		numericValue uint64
+		columns      = strings.Fields(line)
+	)
+
+	if columns[0] == "Name" {
+		err = errNetstatHeader
+		return
+	}
+
+	// try to extract the numeric value from <Link#123>
+	if subMatch := netstatLinkRegexp.FindStringSubmatch(columns[2]); len(subMatch) == 2 {
+		numericValue, err = strconv.ParseUint(subMatch[1], 10, 64)
+		if err != nil {
+			return
+		}
+		linkIdUint := uint(numericValue)
+		linkId = &linkIdUint
+	}
+
+	base := 1
+	numberColumns := len(columns)
+	// sometimes Address is ommitted
+	if numberColumns < 12 {
+		base = 0
+	}
+	if numberColumns < 11 || numberColumns > 13 {
+		err = fmt.Errorf("Line %q do have an invalid number of columns %d", line, numberColumns)
+		return
+	}
+
+	parsed := make([]uint64, 0, 7)
+	vv := []string{
+		columns[base+3], // Ipkts == PacketsRecv
+		columns[base+4], // Ierrs == Errin
+		columns[base+5], // Ibytes == BytesRecv
+		columns[base+6], // Opkts == PacketsSent
+		columns[base+7], // Oerrs == Errout
+		columns[base+8], // Obytes == BytesSent
+	}
+	if len(columns) == 12 {
+		vv = append(vv, columns[base+10])
+	}
+
+	for _, target := range vv {
+		if target == "-" {
+			parsed = append(parsed, 0)
+			continue
+		}
+
+		if numericValue, err = strconv.ParseUint(target, 10, 64); err != nil {
+			return
+		}
+		parsed = append(parsed, numericValue)
+	}
+
+	stat = &IOCountersStat{
+		Name:        strings.Trim(columns[0], "*"), // remove the * that sometimes is on right on interface
+		PacketsRecv: parsed[0],
+		Errin:       parsed[1],
+		BytesRecv:   parsed[2],
+		PacketsSent: parsed[3],
+		Errout:      parsed[4],
+		BytesSent:   parsed[5],
+	}
+	if len(parsed) == 7 {
+		stat.Dropout = parsed[6]
+	}
+	return
+}
+
+type netstatInterface struct {
+	linkId *uint
+	stat   *IOCountersStat
+}
+
+func parseNetstatOutput(output string) ([]netstatInterface, error) {
+	var (
+		err   error
+		lines = strings.Split(strings.Trim(output, endOfLine), endOfLine)
+	)
+
+	// number of interfaces is number of lines less one for the header
+	numberInterfaces := len(lines) - 1
+
+	interfaces := make([]netstatInterface, numberInterfaces)
+	// no output beside header
+	if numberInterfaces == 0 {
+		return interfaces, nil
+	}
+
+	for index := 0; index < numberInterfaces; index++ {
+		nsIface := netstatInterface{}
+		if nsIface.stat, nsIface.linkId, err = parseNetstatLine(lines[index+1]); err != nil {
+			return nil, err
+		}
+		interfaces[index] = nsIface
+	}
+	return interfaces, nil
+}
+
+// map that hold the name of a network interface and the number of usage
+type mapInterfaceNameUsage map[string]uint
+
+func newMapInterfaceNameUsage(ifaces []netstatInterface) mapInterfaceNameUsage {
+	output := make(mapInterfaceNameUsage)
+	for index := range ifaces {
+		if ifaces[index].linkId != nil {
+			ifaceName := ifaces[index].stat.Name
+			usage, ok := output[ifaceName]
+			if ok {
+				output[ifaceName] = usage + 1
+			} else {
+				output[ifaceName] = 1
+			}
+		}
+	}
+	return output
+}
+
+func (min mapInterfaceNameUsage) isTruncated() bool {
+	for _, usage := range min {
+		if usage > 1 {
+			return true
+		}
+	}
+	return false
+}
+
+func (min mapInterfaceNameUsage) notTruncated() []string {
+	output := make([]string, 0)
+	for ifaceName, usage := range min {
+		if usage == 1 {
+			output = append(output, ifaceName)
+		}
+	}
+	return output
+}
+
+// example of `netstat -ibdnW` output on yosemite
 // Name  Mtu   Network       Address            Ipkts Ierrs     Ibytes    Opkts Oerrs     Obytes  Coll Drop
 // lo0   16384 <Link#1>                        869107     0  169411755   869107     0  169411755     0   0
 // lo0   16384 ::1/128     ::1                 869107     -  169411755   869107     -  169411755     -   -
 // lo0   16384 127           127.0.0.1         869107     -  169411755   869107     -  169411755     -   -
 func IOCounters(pernic bool) ([]IOCountersStat, error) {
-	const endOfLine = "\n"
-	// example of `ifconfig -l` output on yosemite:
-	// lo0 gif0 stf0 en0 p2p0 awdl0
-	ifconfig, err := exec.LookPath("/sbin/ifconfig")
-	if err != nil {
-		return nil, err
-	}
+	var (
+		ret      []IOCountersStat
+		retIndex int
+	)
 
 	netstat, err := exec.LookPath("/usr/sbin/netstat")
 	if err != nil {
 		return nil, err
 	}
 
-	// list all interfaces
-	out, err := invoke.Command(ifconfig, "-l")
+	// try to get all interface metrics, and hope there won't be any truncated
+	out, err := invoke.Command(netstat, "-ibdnW")
 	if err != nil {
 		return nil, err
 	}
-	interfaces := strings.Fields(strings.TrimRight(string(out), endOfLine))
-	ret := make([]IOCountersStat, 0)
 
-	// extract metrics for all interfaces
-	for _, interfaceName := range interfaces {
-		if out, err = invoke.Command(netstat, "-ibdnWI" + interfaceName); err != nil {
+	nsInterfaces, err := parseNetstatOutput(string(out))
+	if err != nil {
+		return nil, err
+	}
+
+	ifaceUsage := newMapInterfaceNameUsage(nsInterfaces)
+	notTruncated := ifaceUsage.notTruncated()
+	ret = make([]IOCountersStat, len(notTruncated))
+
+	if !ifaceUsage.isTruncated() {
+		// no truncated interface name, return stats of all interface with <Link#...>
+		for index := range nsInterfaces {
+			if nsInterfaces[index].linkId != nil {
+				ret[retIndex] = *nsInterfaces[index].stat
+				retIndex++
+			}
+		}
+	} else {
+		// duplicated interface, list all interfaces
+		ifconfig, err := exec.LookPath("/sbin/ifconfig")
+		if err != nil {
 			return nil, err
 		}
-		lines := strings.Split(string(out), endOfLine)
-		if len(lines) <= 1 {
-			// invalid output
-			continue
+		if out, err = invoke.Command(ifconfig, "-l"); err != nil {
+			return nil, err
 		}
+		interfaceNames := strings.Fields(strings.TrimRight(string(out), endOfLine))
 
-		if len(lines[1]) == 0 {
-			// interface had been removed since `ifconfig -l` had been executed
-			continue
-		}
-
-		// only the first output is fine
-		values := strings.Fields(lines[1])
-
-		base := 1
-		// sometimes Address is ommitted
-		if len(values) < 12 {
-			base = 0
-		}
-
-		parsed := make([]uint64, 0, 7)
-		vv := []string{
-			values[base+3], // Ipkts == PacketsRecv
-			values[base+4], // Ierrs == Errin
-			values[base+5], // Ibytes == BytesRecv
-			values[base+6], // Opkts == PacketsSent
-			values[base+7], // Oerrs == Errout
-			values[base+8], // Obytes == BytesSent
-		}
-		if len(values) == 12 {
-			vv = append(vv, values[base+10])
-		}
-
-		for _, target := range vv {
-			if target == "-" {
-				parsed = append(parsed, 0)
-				continue
+		// for each of the interface name, run netstat if we don't have any stats yet
+		for _, interfaceName := range interfaceNames {
+			truncated := true
+			for index := range nsInterfaces {
+				if nsInterfaces[index].linkId != nil && nsInterfaces[index].stat.Name == interfaceName {
+					// handle the non truncated name to avoid execute netstat for them again
+					ret[retIndex] = *nsInterfaces[index].stat
+					retIndex++
+					truncated = false
+					break
+				}
 			}
-
-			t, err := strconv.ParseUint(target, 10, 64)
-			if err != nil {
-				return nil, err
+			if truncated {
+				// run netstat with -I$ifacename
+				if out, err = invoke.Command(netstat, "-ibdnWI" + interfaceName);err != nil {
+					return nil, err
+				}
+				parsedIfaces, err := parseNetstatOutput(string(out))
+				if err != nil {
+					return nil, err
+				}
+				if len(parsedIfaces) == 0 {
+					// interface had been removed since `ifconfig -l` had been executed
+					continue
+				}
+				for index := range parsedIfaces {
+					if parsedIfaces[index].linkId != nil {
+						ret = append(ret, *parsedIfaces[index].stat)
+						break
+					}
+				}
 			}
-			parsed = append(parsed, t)
 		}
-
-		n := IOCountersStat{
-			Name:        interfaceName,
-			PacketsRecv: parsed[0],
-			Errin:       parsed[1],
-			BytesRecv:   parsed[2],
-			PacketsSent: parsed[3],
-			Errout:      parsed[4],
-			BytesSent:   parsed[5],
-		}
-		if len(parsed) == 7 {
-			n.Dropout = parsed[6]
-		}
-		ret = append(ret, n)
 	}
 
 	if pernic == false {
 		return getIOCountersAll(ret)
 	}
-
 	return ret, nil
 }
 
