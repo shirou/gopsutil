@@ -155,28 +155,28 @@ Current Status
 - x: work
 - b: almost works, but something is broken
 
-================= ====== ======= ====== =======
-name              Linux  FreeBSD MacOSX Windows
-cpu_times            x      x      x       x
-cpu_count            x      x      x       x
-cpu_percent          x      x      x       x
-cpu_times_percent    x      x      x       x
-virtual_memory       x      x      x       x
-swap_memory          x      x      x
-disk_partitions      x      x      x       x
-disk_io_counters     x      x
-disk_usage           x      x      x       x
-net_io_counters      x      x      b       x
-boot_time            x      x      x       x
-users                x      x      x       x
-pids                 x      x      x       x
-pid_exists           x      x      x       x
-net_connections      x             x
-net_protocols        x
+=================== ====== ======= ====== =======
+name                Linux  FreeBSD MacOSX Windows
+cpu_times             x      x      x       x
+cpu_count             x      x      x       x
+cpu_percent           x      x      x       x
+cpu_times_percent     x      x      x       x
+virtual_memory        x      x      x       x
+swap_memory           x      x      x
+disk_partitions       x      x      x       x
+disk_io_counters      x      x
+disk_usage            x      x      x       x
+net_io_counters       x      x      b       x
+boot_time             x      x      x       x
+users                 x      x      x       x
+pids                  x      x      x       x
+pid_exists            x      x      x       x
+net_connections       x             x
+net_protocols         x
 net_if_addrs
 net_if_stats
-netfilter_conntrack  x
-================= ====== ======= ====== =======
+netfilter_conntrack   x
+=================== ====== ======= ====== =======
 
 Process class
 ^^^^^^^^^^^^^^^
