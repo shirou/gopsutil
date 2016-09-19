@@ -26,7 +26,8 @@ var (
 )
 
 const (
-	PrioProcess = 0 // linux/resource.h
+	PrioProcess = 0   // linux/resource.h
+	ClockTicks  = 100 // C.sysconf(C._SC_CLK_TCK)
 )
 
 // MemoryInfoExStat is different between OSes
