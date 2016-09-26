@@ -805,12 +805,6 @@ func AllProcesses(cpuWait time.Duration) ([]*FilledProcess, error) {
 		return nil, fmt.Errorf("could not collect pids: %s", err)
 	}
 
-	connections, err := net.Connections("tcp")
-	cxByPid := make(map[int32][]net.ConnectionStat)
-	for _, c := range connections {
-		cxByPid[c.Pid] = append(cxByPid[c.Pid], c)
-	}
-
 	filled := make(chan evaluated, len(pids))
 	for _, pid := range pids {
 		go func(pid int32) {
@@ -838,10 +832,6 @@ func AllProcesses(cpuWait time.Duration) ([]*FilledProcess, error) {
 				filled <- evaluated{nil, fmt.Errorf("stat: %s", err)}
 				return
 			}
-			connections, ok := cxByPid[pid]
-			if !ok {
-				connections = []net.ConnectionStat{}
-			}
 
 			time.Sleep(cpuWait)
 			_, t2, _, _, err := p.fillFromStat()
@@ -851,10 +841,9 @@ func AllProcesses(cpuWait time.Duration) ([]*FilledProcess, error) {
 			}
 
 			filled <- evaluated{&FilledProcess{
-				Pid:         pid,
-				Ppid:        ppid,
-				Cmdline:     cmdline,
-				Connections: connections,
+				Pid:     pid,
+				Ppid:    ppid,
+				Cmdline: cmdline,
 				// stat
 				CpuTime1:   t1,
 				CpuTime2:   t2,

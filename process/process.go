@@ -8,7 +8,6 @@ import (
 	"github.com/DataDog/gopsutil/cpu"
 	"github.com/DataDog/gopsutil/internal/common"
 	"github.com/DataDog/gopsutil/mem"
-	"github.com/DataDog/gopsutil/net"
 )
 
 var invoke common.Invoker
@@ -50,8 +49,6 @@ type FilledProcess struct {
 	// statm
 	MemInfo   *MemoryInfoStat
 	MemInfoEx *MemoryInfoExStat
-	// net
-	Connections []net.ConnectionStat
 }
 
 type OpenFilesStat struct {
