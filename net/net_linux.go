@@ -14,6 +14,7 @@ import (
 	"syscall"
 
 	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/process"
 )
 
 // NetIOCounters returnes network I/O statistics for every network
@@ -281,6 +282,7 @@ type connTmp struct {
 	laddr    Addr
 	raddr    Addr
 	status   string
+	uids     []int32
 	pid      int32
 	boundPid int32
 	path     string
@@ -338,6 +340,7 @@ func ConnectionsPid(kind string, pid int32) ([]ConnectionStat, error) {
 				Type:   c.sockType,
 				Laddr:  c.laddr,
 				Raddr:  c.raddr,
+				Uids:   c.uids,
 				Status: c.status,
 				Pid:    c.pid,
 			}
@@ -346,6 +349,11 @@ func ConnectionsPid(kind string, pid int32) ([]ConnectionStat, error) {
 			} else {
 				conn.Pid = c.pid
 			}
+
+			// fetch process owner Real, effective, saved set, and filesystem UIDs
+			proc := process.Process{Pid: conn.Pid}
+			conn.Uids, _ = proc.Uids()
+
 			// check duplicate using JSON format
 			json := conn.String()
 			_, exists := dupCheckMap[json]
