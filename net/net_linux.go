@@ -281,6 +281,7 @@ type connTmp struct {
 	laddr    Addr
 	raddr    Addr
 	status   string
+	uids     []int32
 	pid      int32
 	boundPid int32
 	path     string
@@ -338,6 +339,7 @@ func ConnectionsPid(kind string, pid int32) ([]ConnectionStat, error) {
 				Type:   c.sockType,
 				Laddr:  c.laddr,
 				Raddr:  c.raddr,
+				Uids:   c.uids,
 				Status: c.status,
 				Pid:    c.pid,
 			}
@@ -346,6 +348,11 @@ func ConnectionsPid(kind string, pid int32) ([]ConnectionStat, error) {
 			} else {
 				conn.Pid = c.pid
 			}
+
+			// fetch process owner Real, effective, saved set, and filesystem UIDs
+			proc := process{Pid: conn.Pid}
+			conn.Uids, _ = proc.getUids()
+
 			// check duplicate using JSON format
 			json := conn.String()
 			_, exists := dupCheckMap[json]
@@ -427,6 +434,54 @@ func Pids() ([]int32, error) {
 	}
 
 	return ret, nil
+}
+
+// Note: the following is based off process_linux structs and methods
+// we need these to fetch the owner of a process ID
+// FIXME: Import process occures import cycle.
+// see remarks on pids()
+type process struct {
+	Pid  int32 `json:"pid"`
+	uids []int32
+}
+
+// Uids returns user ids of the process as a slice of the int
+func (p *process) getUids() ([]int32, error) {
+	err := p.fillFromStatus()
+	if err != nil {
+		return []int32{}, err
+	}
+	return p.uids, nil
+}
+
+// Get status from /proc/(pid)/status
+func (p *process) fillFromStatus() error {
+	pid := p.Pid
+	statPath := common.HostProc(strconv.Itoa(int(pid)), "status")
+	contents, err := ioutil.ReadFile(statPath)
+	if err != nil {
+		return err
+	}
+	lines := strings.Split(string(contents), "\n")
+	for _, line := range lines {
+		tabParts := strings.SplitN(line, "\t", 2)
+		if len(tabParts) < 2 {
+			continue
+		}
+		value := tabParts[1]
+		switch strings.TrimRight(tabParts[0], ":") {
+		case "Uid":
+			p.uids = make([]int32, 0, 4)
+			for _, i := range strings.Split(value, "\t") {
+				v, err := strconv.ParseInt(i, 10, 32)
+				if err != nil {
+					return err
+				}
+				p.uids = append(p.uids, int32(v))
+			}
+		}
+	}
+	return nil
 }
 
 func getProcInodesAll(root string) (map[string][]inodeMap, error) {
