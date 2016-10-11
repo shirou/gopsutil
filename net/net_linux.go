@@ -12,7 +12,6 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/shirou/gopsutil/internal/common"
 )
@@ -351,8 +350,8 @@ func ConnectionsPid(kind string, pid int32) ([]ConnectionStat, error) {
 			}
 
 			// fetch process owner Real, effective, saved set, and filesystem UIDs
-			proc := Process{Pid: conn.Pid}
-			conn.Uids, _ = proc.Uids()
+			proc := process{Pid: conn.Pid}
+			conn.Uids, _ = proc.getUids()
 
 			// check duplicate using JSON format
 			json := conn.String()
@@ -437,53 +436,17 @@ func Pids() ([]int32, error) {
 	return ret, nil
 }
 
-// Note: the following are copys of cpu_linux / process_linux structs and methods
+// Note: the following is based off process_linux structs and methods
 // we need these to fetch the owner of a process ID
 // FIXME: Import process occures import cycle.
 // see remarks on pids()
-type TimesStat struct {
-	CPU       string  `json:"cpu"`
-	User      float64 `json:"user"`
-	System    float64 `json:"system"`
-	Idle      float64 `json:"idle"`
-	Nice      float64 `json:"nice"`
-	Iowait    float64 `json:"iowait"`
-	Irq       float64 `json:"irq"`
-	Softirq   float64 `json:"softirq"`
-	Steal     float64 `json:"steal"`
-	Guest     float64 `json:"guest"`
-	GuestNice float64 `json:"guestNice"`
-	Stolen    float64 `json:"stolen"`
-}
-
-type Process struct {
-	Pid            int32 `json:"pid"`
-	name           string
-	status         string
-	parent         int32
-	numCtxSwitches *NumCtxSwitchesStat
-	uids           []int32
-	gids           []int32
-	numThreads     int32
-	memInfo        *MemoryInfoStat
-
-	lastCPUTimes *TimesStat
-	lastCPUTime  time.Time
-}
-
-type MemoryInfoStat struct {
-	RSS  uint64 `json:"rss"`  // bytes
-	VMS  uint64 `json:"vms"`  // bytes
-	Swap uint64 `json:"swap"` // bytes
-}
-
-type NumCtxSwitchesStat struct {
-	Voluntary   int64 `json:"voluntary"`
-	Involuntary int64 `json:"involuntary"`
+type process struct {
+	Pid  int32 `json:"pid"`
+	uids []int32
 }
 
 // Uids returns user ids of the process as a slice of the int
-func (p *Process) Uids() ([]int32, error) {
+func (p *process) getUids() ([]int32, error) {
 	err := p.fillFromStatus()
 	if err != nil {
 		return []int32{}, err
@@ -491,8 +454,8 @@ func (p *Process) Uids() ([]int32, error) {
 	return p.uids, nil
 }
 
-// Get various status from /proc/(pid)/status
-func (p *Process) fillFromStatus() error {
+// Get status from /proc/(pid)/status
+func (p *process) fillFromStatus() error {
 	pid := p.Pid
 	statPath := common.HostProc(strconv.Itoa(int(pid)), "status")
 	contents, err := ioutil.ReadFile(statPath)
@@ -500,8 +463,6 @@ func (p *Process) fillFromStatus() error {
 		return err
 	}
 	lines := strings.Split(string(contents), "\n")
-	p.numCtxSwitches = &NumCtxSwitchesStat{}
-	p.memInfo = &MemoryInfoStat{}
 	for _, line := range lines {
 		tabParts := strings.SplitN(line, "\t", 2)
 		if len(tabParts) < 2 {
@@ -509,16 +470,6 @@ func (p *Process) fillFromStatus() error {
 		}
 		value := tabParts[1]
 		switch strings.TrimRight(tabParts[0], ":") {
-		case "Name":
-			p.name = strings.Trim(value, " \t")
-		case "State":
-			p.status = value[0:1]
-		case "PPid", "Ppid":
-			pval, err := strconv.ParseInt(value, 10, 32)
-			if err != nil {
-				return err
-			}
-			p.parent = int32(pval)
 		case "Uid":
 			p.uids = make([]int32, 0, 4)
 			for _, i := range strings.Split(value, "\t") {
@@ -528,56 +479,7 @@ func (p *Process) fillFromStatus() error {
 				}
 				p.uids = append(p.uids, int32(v))
 			}
-		case "Gid":
-			p.gids = make([]int32, 0, 4)
-			for _, i := range strings.Split(value, "\t") {
-				v, err := strconv.ParseInt(i, 10, 32)
-				if err != nil {
-					return err
-				}
-				p.gids = append(p.gids, int32(v))
-			}
-		case "Threads":
-			v, err := strconv.ParseInt(value, 10, 32)
-			if err != nil {
-				return err
-			}
-			p.numThreads = int32(v)
-		case "voluntary_ctxt_switches":
-			v, err := strconv.ParseInt(value, 10, 64)
-			if err != nil {
-				return err
-			}
-			p.numCtxSwitches.Voluntary = v
-		case "nonvoluntary_ctxt_switches":
-			v, err := strconv.ParseInt(value, 10, 64)
-			if err != nil {
-				return err
-			}
-			p.numCtxSwitches.Involuntary = v
-		case "VmRSS":
-			value := strings.Trim(value, " kB") // remove last "kB"
-			v, err := strconv.ParseUint(value, 10, 64)
-			if err != nil {
-				return err
-			}
-			p.memInfo.RSS = v * 1024
-		case "VmSize":
-			value := strings.Trim(value, " kB") // remove last "kB"
-			v, err := strconv.ParseUint(value, 10, 64)
-			if err != nil {
-				return err
-			}
-			p.memInfo.VMS = v * 1024
-		case "VmSwap":
-			value := strings.Trim(value, " kB") // remove last "kB"
-			v, err := strconv.ParseUint(value, 10, 64)
-			if err != nil {
-				return err
-			}
-			p.memInfo.Swap = v * 1024
 		}
-
 	}
 	return nil
 }
