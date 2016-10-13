@@ -281,7 +281,6 @@ type connTmp struct {
 	laddr    Addr
 	raddr    Addr
 	status   string
-	uids     []int32
 	pid      int32
 	boundPid int32
 	path     string
@@ -347,7 +346,7 @@ func ConnectionsPidMax(kind string, pid int32, max int) ([]ConnectionStat, error
 }
 
 func statsFromInodes(root string, pid int32, tmap []netConnectionKindType, inodes map[string][]inodeMap) ([]ConnectionStat, error) {
-	dupCheckMap := make(map[string]bool)
+	dupCheckMap := make(map[connTmp]struct{})
 	var ret []ConnectionStat
 
 	var err error
@@ -367,13 +366,16 @@ func statsFromInodes(root string, pid int32, tmap []netConnectionKindType, inode
 			return nil, err
 		}
 		for _, c := range ls {
+			if _, ok := dupCheckMap[c]; ok {
+				continue
+			}
+
 			conn := ConnectionStat{
 				Fd:     c.fd,
 				Family: c.family,
 				Type:   c.sockType,
 				Laddr:  c.laddr,
 				Raddr:  c.raddr,
-				Uids:   c.uids,
 				Status: c.status,
 				Pid:    c.pid,
 			}
@@ -387,13 +389,8 @@ func statsFromInodes(root string, pid int32, tmap []netConnectionKindType, inode
 			proc := process{Pid: conn.Pid}
 			conn.Uids, _ = proc.getUids()
 
-			// check duplicate using JSON format
-			json := conn.String()
-			_, exists := dupCheckMap[json]
-			if !exists {
-				ret = append(ret, conn)
-				dupCheckMap[json] = true
-			}
+			ret = append(ret, conn)
+			dupCheckMap[c] = struct{}{}
 		}
 
 	}
