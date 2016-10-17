@@ -36,6 +36,7 @@ type FilledProcess struct {
 	Ppid    int32
 	Cmdline []string
 	// stat
+	Pgrp       int32
 	CpuTime1   *cpu.TimesStat
 	CpuTime2   *cpu.TimesStat
 	Nice       int32
@@ -49,6 +50,10 @@ type FilledProcess struct {
 	// statm
 	MemInfo   *MemoryInfoStat
 	MemInfoEx *MemoryInfoExStat
+	// cwd
+	Cwd string
+	// exe
+	Exe string
 }
 
 type OpenFilesStat struct {
