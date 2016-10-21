@@ -86,7 +86,9 @@ func (p *Process) Exe() (string, error) {
 	}
 
 	cmd := []string{"-p", string(p.Pid), "-Fn", "|", "awk", "'NR==3{print}'", "|", "sed",  "'s/n\\//\\//'"}
-	
+
+	fmt.Println(strings.Join(cmd, " "))
+
 	out, err := invoke.Command(bin, cmd...)
 	if err != nil {
 		return "", err
