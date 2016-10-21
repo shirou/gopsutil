@@ -85,15 +85,14 @@ func (p *Process) Exe() (string, error) {
 		return "", err
 	}
 
-	var cmd []string
-	cmd := []string{"-p", p.Pid, "-Fn", "|", "awk", "'NR==3{print}'", "|", "sed",  "'s/n\\//\\//'"}
+	cmd := []string{"-p", string(p.Pid), "-Fn", "|", "awk", "'NR==3{print}'", "|", "sed",  "'s/n\\//\\//'"}
 	
 	out, err := invoke.Command(bin, cmd...)
 	if err != nil {
 		return "", err
 	}
 
-	ret := strings.TrimSpace(out)
+	ret := strings.TrimSpace(string(out))
 
 	return ret, nil
 }
