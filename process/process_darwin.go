@@ -97,9 +97,9 @@ func (p *Process) Exe() (string, error) {
 
 	lsof := exec.Command(lsof_bin, "-p", strconv.Itoa(int(p.Pid)), "-Fn")
 	awk := exec.Command(awk_bin, "NR==3{print}")
-	sed := exec.Command("s/n\\//\\//")
+	sed := exec.Command(sed_bin, "s/n\\//\\//")
 
-	output, stderr, err := common.Pipeline(lsof, awk, sed)
+	output, _, err := common.Pipeline(lsof, awk, sed)
 
 	if err != nil {
 		return "", err
