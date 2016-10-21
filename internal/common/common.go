@@ -343,7 +343,7 @@ func WaitTimeout(c *exec.Cmd, timeout time.Duration) error {
 }
 
 // https://gist.github.com/kylelemons/1525278
-func Pipeline(cmds ...*exec.Cmd) (pipeLineOutput, collectedStandardError []byte, pipeLineError os.Error) {
+func Pipeline(cmds ...*exec.Cmd) ([]byte, []byte, error) {
         // Require at least one command
         if len(cmds) < 1 { 
                 return nil, nil, nil
@@ -355,7 +355,7 @@ func Pipeline(cmds ...*exec.Cmd) (pipeLineOutput, collectedStandardError []byte,
 
         last := len(cmds) - 1
         for i, cmd := range cmds[:last] {
-                var err os.Error
+                var err error
                 // Connect each command's stdin to the previous command's stdout
                 if cmds[i+1].Stdin, err = cmd.StdoutPipe(); err != nil {
                         return nil, nil, err
