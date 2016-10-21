@@ -80,21 +80,25 @@ func (p *Process) Name() (string, error) {
 	return common.IntToString(k.Proc.P_comm[:]), nil
 }
 func (p *Process) Exe() (string, error) {
-	bin, err := exec.LookPath("lsof")
+	lsof_bin, err := exec.LookPath("lsof")
 	if err != nil {
 		return "", err
 	}
 
-	cmd := []string{"-p", strconv.Itoa(int(p.Pid)), "-Fn", "|", "awk", "NR==3{print}", "|", "sed",  "s/n\\//\\//"}
+	awk_bin, _ := exec.Lookpath("awk")
+	sed_bin, _ := exec.LookPath("sed")
 
-	fmt.Println(strings.Join(cmd, " "))
+	lsof := exec.Command(lsof_bin, "-p", strconv.Itoa(int(p.Pid)), "-Fn")
+	awk := exec.Command(awk_bin, "NR==3{print}")
+	sed := exec.Command("s/n\\//\\//")
 
-	out, err := invoke.Command(bin, cmd...)
+	output, stderr, err := common.Pipeline(lsof, awk, sed)
+
 	if err != nil {
 		return "", err
 	}
 
-	ret := strings.TrimSpace(string(out))
+	ret := strings.TrimSpace(string(output))
 
 	return ret, nil
 }
