@@ -85,7 +85,7 @@ func (p *Process) Exe() (string, error) {
 		return "", err
 	}
 
-	cmd := []string{"-p", strconv.Itoa(int(pid)), "-Fn", "|", "awk", "'NR==3{print}'", "|", "sed",  "'s/n\\//\\//'"}
+	cmd := []string{"-p", strconv.Itoa(int(p.Pid)), "-Fn", "|", "awk", "'NR==3{print}'", "|", "sed",  "'s/n\\//\\//'"}
 
 	fmt.Println(strings.Join(cmd, " "))
 
