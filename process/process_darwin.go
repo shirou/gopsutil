@@ -80,7 +80,22 @@ func (p *Process) Name() (string, error) {
 	return common.IntToString(k.Proc.P_comm[:]), nil
 }
 func (p *Process) Exe() (string, error) {
-	return "", common.ErrNotImplementedError
+	bin, err := exec.LookPath("lsof")
+	if err != nil {
+		return "", err
+	}
+
+	var cmd []string
+	cmd := []string{"-p", p.Pid, "-Fn", "|", "awk", "'NR==3{print}'", "|", "sed",  "'s/n\\//\\//'"}
+	
+	out, err = invoke.Command(bin, cmd...)
+	if err != nil {
+		return "", err
+	}
+
+	ret = strings.TrimSpace(out)
+
+	return ret, nil
 }
 
 // Cmdline returns the command line arguments of the process as a string with
