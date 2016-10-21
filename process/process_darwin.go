@@ -85,8 +85,15 @@ func (p *Process) Exe() (string, error) {
 		return "", err
 	}
 
-	awk_bin, _ := exec.Lookpath("awk")
-	sed_bin, _ := exec.LookPath("sed")
+	awk_bin, err := exec.LookPath("awk")
+	if err != nil {
+		return "", err
+	}
+
+	sed_bin, err := exec.LookPath("sed")
+	if err != nil {
+		return "", err
+	}
 
 	lsof := exec.Command(lsof_bin, "-p", strconv.Itoa(int(p.Pid)), "-Fn")
 	awk := exec.Command(awk_bin, "NR==3{print}")
