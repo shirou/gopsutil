@@ -25,6 +25,22 @@ Migrating to v2
 On gopsutil itself, `v2migration.sh <https://github.com/shirou/gopsutil/blob/v2/v2migration.sh>`_ is used for migration. It can not be commonly used, but it may help you with migration.
 
 
+Tag semantics
+^^^^^^^^^^^^^^^
+
+gopsutil tag policy is almost same as Semantic Versioning, but automatically increase like Ubuntu versioning.
+
+for example, `v2.16.10` means
+
+- v2: major version
+- 16: release year, 2016
+- 10: release month
+
+gopsutil aims to keep backwards-compatiblity until major version change.
+
+Taged at every end of month, but there are only a few commits, it can be skipped.
+
+
 Available Architectures
 ------------------------------------
 
