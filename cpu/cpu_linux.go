@@ -166,6 +166,10 @@ func CPUInfo() ([]CPUInfoStat, error) {
 func parseStatLine(line string) (*CPUTimesStat, error) {
 	fields := strings.Fields(line)
 
+	if len(fields) < 8 {
+		return nil, errors.New("not enough data provided to calculate cpu")
+	}
+
 	if strings.HasPrefix(fields[0], "cpu") == false {
 		//		return CPUTimesStat{}, e
 		return nil, errors.New("not contain cpu")
