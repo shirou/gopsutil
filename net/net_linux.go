@@ -79,11 +79,11 @@ func IOCountersByFile(pernic bool, filename string) ([]IOCountersStat, error) {
 		if err != nil {
 			return ret, err
 		}
-		dropOut, err := strconv.ParseUint(fields[13], 10, 64)
+		dropOut, err := strconv.ParseUint(fields[11], 10, 64)
 		if err != nil {
 			return ret, err
 		}
-		fifoOut, err := strconv.ParseUint(fields[14], 10, 64)
+		fifoOut, err := strconv.ParseUint(fields[12], 10, 64)
 		if err != nil {
 			return ret, err
 		}
