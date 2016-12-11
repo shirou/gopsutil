@@ -76,6 +76,12 @@ func Connections(kind string) ([]ConnectionStat, error) {
 	return ret, common.ErrNotImplementedError
 }
 
+// Return a list of network connections opened returning at most `max`
+// connections for each running process.
+func ConnectionsMax(kind string, max int) ([]ConnectionStat, error) {
+	return []ConnectionStat{}, common.ErrNotImplementedError
+}
+
 func FilterCounters() ([]FilterStat, error) {
 	return nil, errors.New("NetFilterCounters not implemented for windows")
 }
