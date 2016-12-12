@@ -15,9 +15,30 @@ func TestGetProcInodesAll(t *testing.T) {
 	}
 
 	root := common.HostProc("")
-	v, err := getProcInodesAll(root)
+	v, err := getProcInodesAll(root, 0)
 	assert.Nil(t, err)
 	assert.NotEmpty(t, v)
+}
+
+func TestConnectionsMax(t *testing.T) {
+	if os.Getenv("CIRCLECI") == "true" {
+		t.Skip("Skip CI")
+	}
+
+	max := 10
+	v, err := ConnectionsMax("tcp", max)
+	assert.Nil(t, err)
+	assert.NotEmpty(t, v)
+
+	cxByPid := map[int32]int{}
+	for _, cx := range v {
+		if cx.Pid > 0 {
+			cxByPid[cx.Pid]++
+		}
+	}
+	for _, c := range cxByPid {
+		assert.True(t, c <= max)
+	}
 }
 
 type AddrTest struct {
