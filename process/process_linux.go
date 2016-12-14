@@ -25,6 +25,12 @@ const (
 	PrioProcess = 0 // linux/resource.h
 )
 
+var hostBootTime uint64
+
+func init() {
+	hostBootTime, _ = host.BootTime()
+}
+
 // MemoryInfoExStat is different between OSes
 type MemoryInfoExStat struct {
 	RSS    uint64 `json:"rss"`    // bytes
@@ -628,12 +634,11 @@ func (p *Process) fillFromStat() (string, int32, *cpu.CPUTimesStat, int64, int32
 		System: float64(stime / ClockTicks),
 	}
 
-	bootTime, _ := host.BootTime()
 	t, err := strconv.ParseUint(fields[i+20], 10, 64)
 	if err != nil {
 		return "", 0, nil, 0, 0, err
 	}
-	ctime := (t / uint64(ClockTicks)) + uint64(bootTime)
+	ctime := (t / uint64(ClockTicks)) + uint64(hostBootTime)
 	createTime := int64(ctime * 1000)
 
 	//	p.Nice = mustParseInt32(fields[18])
