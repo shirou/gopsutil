@@ -52,6 +52,12 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 			ret.WritebackTmp = t * 1024
 		case "Dirty":
 			ret.Dirty = t * 1024
+		case "Shmem":
+			ret.Shared = t * 1024
+		case "Slab":
+			ret.Slab = t * 1024
+		case "PageTables":
+			ret.PageTables = t * 1024
 		}
 	}
 	if !memavail {
