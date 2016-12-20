@@ -10,10 +10,10 @@ import (
 	"syscall"
 	"unsafe"
 
-	cpu "github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/internal/common"
-	net "github.com/shirou/gopsutil/net"
-	mem "github.com/shirou/gopsutil/mem"
+	cpu "github.com/DataDog/gopsutil/cpu"
+	"github.com/DataDog/gopsutil/internal/common"
+	net "github.com/DataDog/gopsutil/net"
+	mem "github.com/DataDog/gopsutil/mem"
 )
 
 // MemoryInfoExStat is different between OSes
