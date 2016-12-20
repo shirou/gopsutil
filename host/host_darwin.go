@@ -66,6 +66,9 @@ func Info() (*InfoStat, error) {
 }
 
 func BootTime() (uint64, error) {
+	if cachedBootTime != 0 {
+		return cachedBootTime, nil
+	}
 	values, err := common.DoSysctrl("kern.boottime")
 	if err != nil {
 		return 0, err
@@ -76,8 +79,9 @@ func BootTime() (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
+	cachedBootTime = uint64(boottime)
 
-	return uint64(boottime), nil
+	return cachedBootTime, nil
 }
 
 func uptime(boot uint64) uint64 {
