@@ -57,6 +57,7 @@ type VirtualMemoryStat struct {
 	Shared       uint64 `json:"shared"`
 	Slab         uint64 `json:"slab"`
 	PageTables   uint64 `json:"pagetables"`
+	SwapCached   uint64 `json:"swapcached"`
 }
 
 type SwapMemoryStat struct {

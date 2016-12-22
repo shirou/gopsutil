@@ -58,6 +58,8 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 			ret.Slab = t * 1024
 		case "PageTables":
 			ret.PageTables = t * 1024
+		case "SwapCached":
+			ret.SwapCached = t * 1024
 		}
 	}
 	if !memavail {
