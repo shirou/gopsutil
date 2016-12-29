@@ -57,3 +57,10 @@ type CgroupDockerStat struct {
 	Status      string `json:"status"`
 	Running     bool   `json:"running"`
 }
+
+type ContainerStat struct {
+	Type  string `json:"type"`
+	Name  string `json:"name"`
+	ID    string `json:"id"`
+	Image string `json:"image"`
+}

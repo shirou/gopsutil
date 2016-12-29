@@ -52,6 +52,48 @@ func GetDockerStat() ([]CgroupDockerStat, error) {
 	return ret, nil
 }
 
+// Generates a mapping of PIDs to container metadata.
+func GetContainerStatsByPID() (map[int32]ContainerStat, error) {
+	containerMap := make(map[int32]ContainerStat)
+	path := common.HostSys("fs/cgroup/cpuacct")
+	if common.PathExists(path) {
+		contents, err := common.ListDirectory(path)
+		if err != nil {
+			return nil, err
+		}
+
+		// If docker containers exist, collect their stats.
+		if common.StringsContains(contents, "docker") {
+			dockerStats, err := GetDockerStat()
+			if err == nil {
+				for _, dockerStat := range dockerStats {
+					if !dockerStat.Running {
+						continue
+					}
+
+					dockerPids, err := CgroupPIDsDocker(dockerStat.ContainerID)
+					if err != nil {
+						continue
+					}
+
+					containerStat := ContainerStat{
+						Type:  "Docker",
+						Name:  dockerStat.Name,
+						ID:    dockerStat.ContainerID,
+						Image: dockerStat.Image,
+					}
+
+					for _, pid := range dockerPids {
+						containerMap[pid] = containerStat
+					}
+				}
+			}
+		}
+	}
+
+	return containerMap, nil
+}
+
 func (c CgroupDockerStat) String() string {
 	s, _ := json.Marshal(c)
 	return string(s)
@@ -118,6 +160,29 @@ func CgroupCPU(containerID string, base string) (*cpu.TimesStat, error) {
 
 func CgroupCPUDocker(containerid string) (*cpu.TimesStat, error) {
 	return CgroupCPU(containerid, common.HostSys("fs/cgroup/cpuacct/docker"))
+}
+
+// CgroupPIDs retrieves the PIDs running within a given container.
+func CgroupPIDs(containerID string, base string) ([]int32, error) {
+	statfile := getCgroupFilePath(containerID, base, "cpuacct", "cgroup.procs")
+	lines, err := common.ReadLines(statfile)
+	if err != nil {
+		return nil, err
+	}
+
+	pids := make([]int32, 0, len(lines))
+	for _, line := range lines {
+		pid, err := strconv.Atoi(line)
+		if err == nil {
+			pids = append(pids, int32(pid))
+		}
+	}
+
+	return pids, nil
+}
+
+func CgroupPIDsDocker(containerID string) ([]int32, error) {
+	return CgroupPIDs(containerID, common.HostSys("fs/cgroup/cpuacct/docker"))
 }
 
 func CgroupMem(containerID string, base string) (*CgroupMemStat, error) {

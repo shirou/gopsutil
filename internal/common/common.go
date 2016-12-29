@@ -109,6 +109,20 @@ func ReadLinesOffsetN(filename string, offset uint, n int) ([]string, error) {
 	return ret, nil
 }
 
+// Reads the contents of a directory
+func ListDirectory(path string) ([]string, error) {
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+
+	fileNames := make([]string, 0, len(files))
+	for _, file := range files {
+		fileNames = append(fileNames, file.Name())
+	}
+	return fileNames, nil
+}
+
 func IntToString(orig []int8) string {
 	ret := make([]byte, len(orig))
 	size := -1
