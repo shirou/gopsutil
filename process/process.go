@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/DataDog/gopsutil/cpu"
+	"github.com/DataDog/gopsutil/docker"
 	"github.com/DataDog/gopsutil/internal/common"
 	"github.com/DataDog/gopsutil/mem"
 )
@@ -41,6 +42,8 @@ type FilledProcess struct {
 	CpuTime2   *cpu.TimesStat
 	Nice       int32
 	CreateTime int64
+	Container  docker.ContainerStat
+
 	// status
 	Name       string
 	Status     string
