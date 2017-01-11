@@ -60,6 +60,8 @@ type NumCtxSwitchesStat struct {
 	Involuntary int64 `json:"involuntary"`
 }
 
+// Resource limit constants are from /usr/include/x86_64-linux-gnu/bits/resource.h
+// from libc6-dev package in Ubuntu 16.10
 const (
 	RLIMIT_CPU        int32 = 0
 	RLIMIT_FSIZE      int32 = 1
