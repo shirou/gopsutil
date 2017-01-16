@@ -15,11 +15,12 @@ import (
 	"syscall"
 
 	"bufio"
+	"math"
+
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/internal/common"
 	"github.com/shirou/gopsutil/net"
-	"math"
 )
 
 var (
@@ -720,6 +721,18 @@ func (p *Process) fillFromStatus() error {
 		switch strings.TrimRight(tabParts[0], ":") {
 		case "Name":
 			p.name = strings.Trim(value, " \t")
+			if len(p.name) >= 15 {
+				cmdlineSlice, err := p.CmdlineSlice()
+				if err != nil {
+					return err
+				}
+				if len(cmdlineSlice) > 0 {
+					extendedName := filepath.Base(cmdlineSlice[0])
+					if strings.HasPrefix(extendedName, p.name) {
+						p.name = extendedName
+					}
+				}
+			}
 		case "State":
 			p.status = value[0:1]
 		case "PPid", "Ppid":
