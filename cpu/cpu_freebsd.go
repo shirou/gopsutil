@@ -21,6 +21,11 @@ const (
 )
 
 var ClocksPerSec = float64(128)
+var cpuMatch = regexp.MustCompile(`^CPU:`)
+var originMatch = regexp.MustCompile(`Origin\s*=\s*"(.+)"\s+Id\s*=\s*(.+)\s+Family\s*=\s*(.+)\s+Model\s*=\s*(.+)\s+Stepping\s*=\s*(.+)`)
+var featuresMatch = regexp.MustCompile(`Features=.+<(.+)>`)
+var featuresMatch2 = regexp.MustCompile(`Features2=[a-f\dx]+<(.+)>`)
+var cpuEnd = regexp.MustCompile(`^Trying to mount root`)
 
 func init() {
 	getconf, err := exec.LookPath("/usr/bin/getconf")
@@ -113,7 +118,6 @@ func Info() ([]InfoStat, error) {
 	if c.Mhz, err = strconv.ParseFloat(vals[0], 64); err != nil {
 		return nil, fmt.Errorf("Unable to parse FreeBSD CPU clock rate: %v", err)
 	}
-	c.CPU = int32(c.Mhz)
 
 	if vals, err = common.DoSysctrl("hw.ncpu"); err != nil {
 		return nil, err
@@ -129,8 +133,13 @@ func Info() ([]InfoStat, error) {
 	}
 	c.ModelName = strings.Join(vals, " ")
 
+	var cpuNums int32
 	for _, line := range lines {
-		if matches := regexp.MustCompile(`Origin\s*=\s*"(.+)"\s+Id\s*=\s*(.+)\s+Family\s*=\s*(.+)\s+Model\s*=\s*(.+)\s+Stepping\s*=\s*(.+)`).FindStringSubmatch(line); matches != nil {
+		if matches := cpuEnd.FindStringSubmatch(line); matches != nil {
+			break
+		} else if matches := cpuMatch.FindStringSubmatch(line); matches != nil {
+			c.CPU = cpuNums
+		} else if matches := originMatch.FindStringSubmatch(line); matches != nil {
 			c.VendorID = matches[1]
 			c.Family = matches[3]
 			c.Model = matches[4]
@@ -139,11 +148,11 @@ func Info() ([]InfoStat, error) {
 				return nil, fmt.Errorf("Unable to parse FreeBSD CPU stepping information from %q: %v", line, err)
 			}
 			c.Stepping = int32(t)
-		} else if matches := regexp.MustCompile(`Features=.+<(.+)>`).FindStringSubmatch(line); matches != nil {
+		} else if matches := featuresMatch.FindStringSubmatch(line); matches != nil {
 			for _, v := range strings.Split(matches[1], ",") {
 				c.Flags = append(c.Flags, strings.ToLower(v))
 			}
-		} else if matches := regexp.MustCompile(`Features2=[a-f\dx]+<(.+)>`).FindStringSubmatch(line); matches != nil {
+		} else if matches := featuresMatch2.FindStringSubmatch(line); matches != nil {
 			for _, v := range strings.Split(matches[1], ",") {
 				c.Flags = append(c.Flags, strings.ToLower(v))
 			}
