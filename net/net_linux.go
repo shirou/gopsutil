@@ -476,7 +476,7 @@ func Pids() ([]int32, error) {
 // FIXME: Import process occures import cycle.
 // see remarks on pids()
 type process struct {
-	Pid  int32 `json:"pid"`
+	Pid  int32 `json:"pid" bson:"pid"`
 	uids []int32
 }
 

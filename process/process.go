@@ -17,7 +17,7 @@ func init() {
 }
 
 type Process struct {
-	Pid            int32 `json:"pid"`
+	Pid            int32 `json:"pid" bson:"pid"`
 	name           string
 	status         string
 	parent         int32
@@ -32,32 +32,32 @@ type Process struct {
 }
 
 type OpenFilesStat struct {
-	Path string `json:"path"`
-	Fd   uint64 `json:"fd"`
+	Path string `json:"path" bson:"path"`
+	Fd   uint64 `json:"fd" bson:"fd"`
 }
 
 type MemoryInfoStat struct {
-	RSS  uint64 `json:"rss"`  // bytes
-	VMS  uint64 `json:"vms"`  // bytes
-	Swap uint64 `json:"swap"` // bytes
+	RSS  uint64 `json:"rss" bson:"rss"`   // bytes
+	VMS  uint64 `json:"vms" bson:"vms"`   // bytes
+	Swap uint64 `json:"swap" bson:"swap"` // bytes
 }
 
 type RlimitStat struct {
-	Resource int32 `json:"resource"`
-	Soft     int32 `json:"soft"`
-	Hard     int32 `json:"hard"`
+	Resource int32 `json:"resource" bson:"resource"`
+	Soft     int32 `json:"soft" bson:"soft"`
+	Hard     int32 `json:"hard" bson:"hard"`
 }
 
 type IOCountersStat struct {
-	ReadCount  uint64 `json:"readCount"`
-	WriteCount uint64 `json:"writeCount"`
-	ReadBytes  uint64 `json:"readBytes"`
-	WriteBytes uint64 `json:"writeBytes"`
+	ReadCount  uint64 `json:"readCount" bson:"readCount"`
+	WriteCount uint64 `json:"writeCount" bson:"writeCount"`
+	ReadBytes  uint64 `json:"readBytes" bson:"readBytes"`
+	WriteBytes uint64 `json:"writeBytes" bson:"writeBytes"`
 }
 
 type NumCtxSwitchesStat struct {
-	Voluntary   int64 `json:"voluntary"`
-	Involuntary int64 `json:"involuntary"`
+	Voluntary   int64 `json:"voluntary" bson:"voluntary"`
+	Involuntary int64 `json:"involuntary" bson:"involuntary"`
 }
 
 // Resource limit constants are from /usr/include/x86_64-linux-gnu/bits/resource.h

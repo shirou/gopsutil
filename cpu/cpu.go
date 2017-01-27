@@ -13,33 +13,33 @@ import (
 )
 
 type TimesStat struct {
-	CPU       string  `json:"cpu"`
-	User      float64 `json:"user"`
-	System    float64 `json:"system"`
-	Idle      float64 `json:"idle"`
-	Nice      float64 `json:"nice"`
-	Iowait    float64 `json:"iowait"`
-	Irq       float64 `json:"irq"`
-	Softirq   float64 `json:"softirq"`
-	Steal     float64 `json:"steal"`
-	Guest     float64 `json:"guest"`
-	GuestNice float64 `json:"guestNice"`
-	Stolen    float64 `json:"stolen"`
+	CPU       string  `json:"cpu" bson:"cpu"`
+	User      float64 `json:"user" bson:"user"`
+	System    float64 `json:"system" bson:"system"`
+	Idle      float64 `json:"idle" bson:"idle"`
+	Nice      float64 `json:"nice" bson:"nice"`
+	Iowait    float64 `json:"iowait" bson:"iowait"`
+	Irq       float64 `json:"irq" bson:"irq"`
+	Softirq   float64 `json:"softirq" bson:"softirq"`
+	Steal     float64 `json:"steal" bson:"steal"`
+	Guest     float64 `json:"guest" bson:"guest"`
+	GuestNice float64 `json:"guestNice" bson:"guestNice"`
+	Stolen    float64 `json:"stolen" bson:"stolen"`
 }
 
 type InfoStat struct {
-	CPU        int32    `json:"cpu"`
-	VendorID   string   `json:"vendorId"`
-	Family     string   `json:"family"`
-	Model      string   `json:"model"`
-	Stepping   int32    `json:"stepping"`
-	PhysicalID string   `json:"physicalId"`
-	CoreID     string   `json:"coreId"`
-	Cores      int32    `json:"cores"`
-	ModelName  string   `json:"modelName"`
-	Mhz        float64  `json:"mhz"`
-	CacheSize  int32    `json:"cacheSize"`
-	Flags      []string `json:"flags"`
+	CPU        int32    `json:"cpu" bson:"cpu"`
+	VendorID   string   `json:"vendorId" bson:"vendorId"`
+	Family     string   `json:"family" bson:"family"`
+	Model      string   `json:"model" bson:"model"`
+	Stepping   int32    `json:"stepping" bson:"stepping"`
+	PhysicalID string   `json:"physicalId" bson:"physicalId"`
+	CoreID     string   `json:"coreId" bson:"coreId"`
+	Cores      int32    `json:"cores" bson:"cores"`
+	ModelName  string   `json:"modelName" bson:"modelName"`
+	Mhz        float64  `json:"mhz" bson:"mhz"`
+	CacheSize  int32    `json:"cacheSize" bson:"cacheSize"`
+	Flags      []string `json:"flags" bson:"flags"`
 }
 
 type lastPercent struct {
