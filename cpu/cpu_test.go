@@ -66,6 +66,10 @@ func TestCpuInfo(t *testing.T) {
 }
 
 func TestParseDmesgBoot(t *testing.T) {
+	if runtime.GOOS != "freebsd" {
+		t.SkipNow()
+	}
+
 	var cpuTests = []struct {
 		file   string
 		cpuNum int
