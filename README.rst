@@ -44,10 +44,10 @@ Taged at every end of month, but there are only a few commits, it can be skipped
 Available Architectures
 ------------------------------------
 
-- FreeBSD i386/amd64
+- FreeBSD i386/amd64/arm
 - Linux i386/amd64/arm(raspberry pi)
 - Windows/amd64
-- Darwin/amd64
+- Darwin i386/amd64
 - OpenBDS amd64 (Thank you @mpfz0r!)
 
 All works are implemented without cgo by porting c struct to golang struct.
