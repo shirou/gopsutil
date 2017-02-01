@@ -37,12 +37,13 @@ type FilledProcess struct {
 	Ppid    int32
 	Cmdline []string
 	// stat
-	Pgrp       int32
-	CpuTime1   *cpu.TimesStat
-	CpuTime2   *cpu.TimesStat
-	Nice       int32
-	CreateTime int64
-	Container  docker.ContainerStat
+	Pgrp        int32
+	CpuTime1    *cpu.TimesStat
+	CpuTime2    *cpu.TimesStat
+	Nice        int32
+	CreateTime  int64
+	Container   docker.ContainerStat
+	OpenFdCount int32
 
 	// status
 	Name       string

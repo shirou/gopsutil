@@ -220,8 +220,8 @@ func (p *Process) NumCtxSwitches() (*NumCtxSwitchesStat, error) {
 
 // NumFDs returns the number of File Descriptors used by the process.
 func (p *Process) NumFDs() (int32, error) {
-	numFds, _, err := p.fillFromfd()
-	return numFds, err
+	_, fds, err := p.fillFromfdList()
+	return int32(len(fds)), err
 }
 
 // NumThreads returns the number of threads used by the process.
@@ -410,16 +410,25 @@ func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 ** Internal functions
 **/
 
-// Get num_fds from /proc/(pid)/fd
-func (p *Process) fillFromfd() (int32, []*OpenFilesStat, error) {
+// Get list of /proc/(pid)/fd files
+func (p *Process) fillFromfdList() (string, []string, error) {
 	pid := p.Pid
 	statPath := common.HostProc(strconv.Itoa(int(pid)), "fd")
 	d, err := os.Open(statPath)
 	if err != nil {
-		return 0, nil, err
+		return statPath, []string{}, err
 	}
 	defer d.Close()
 	fnames, err := d.Readdirnames(-1)
+	return statPath, fnames, err
+}
+
+// Get num_fds from /proc/(pid)/fd
+func (p *Process) fillFromfd() (int32, []*OpenFilesStat, error) {
+	statPath, fnames, err := p.fillFromfdList()
+	if err != nil {
+		return 0, nil, err
+	}
 	numFDs := int32(len(fnames))
 
 	var openfiles []*OpenFilesStat
@@ -860,18 +869,24 @@ func AllProcesses(cpuWait time.Duration) ([]*FilledProcess, error) {
 				filled <- evaluated{nil, fmt.Errorf("stat2: %s", err)}
 				return
 			}
+			openFdCount, err := p.NumFDs()
+			if err != nil {
+				filled <- evaluated{nil, fmt.Errorf("openFdCount: %s", err)}
+				return
+			}
 
 			filled <- evaluated{&FilledProcess{
 				Pid:     pid,
 				Ppid:    ppid,
 				Cmdline: cmdline,
 				// stat
-				Pgrp:       pgrp,
-				CpuTime1:   t1,
-				CpuTime2:   t2,
-				Nice:       nice,
-				CreateTime: createTime,
-				Container:  container,
+				Pgrp:        pgrp,
+				CpuTime1:    t1,
+				CpuTime2:    t2,
+				Nice:        nice,
+				CreateTime:  createTime,
+				Container:   container,
+				OpenFdCount: openFdCount,
 
 				// status
 				Name:       p.name,
