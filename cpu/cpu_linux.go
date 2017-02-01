@@ -36,6 +36,9 @@ func Times(percpu bool) ([]TimesStat, error) {
 		var startIdx uint = 1
 		for {
 			linen, _ := common.ReadLinesOffsetN(filename, startIdx, 1)
+			if len(linen) == 0 {
+				break
+			}
 			line := linen[0]
 			if !strings.HasPrefix(line, "cpu") {
 				break
