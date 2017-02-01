@@ -42,9 +42,9 @@ const (
 	MNT_NODEV       = 0x00000010 /* don't interpret special files */
 	MNT_ASYNC       = 0x00000040 /* filesystem written asynchronously */
 
-	MNT_WAIT    = 1 /* synchronously wait for I/O to complete */
-	MNT_NOWAIT  = 2 /* start all I/O, but do not wait for it */
-	MNT_LAZY    = 3 /* push data not written by filesystem syncer */
+	MNT_WAIT   = 1 /* synchronously wait for I/O to complete */
+	MNT_NOWAIT = 2 /* start all I/O, but do not wait for it */
+	MNT_LAZY   = 3 /* push data not written by filesystem syncer */
 )
 
 const (
