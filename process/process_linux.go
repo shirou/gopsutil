@@ -869,18 +869,24 @@ func AllProcesses(cpuWait time.Duration) ([]*FilledProcess, error) {
 				filled <- evaluated{nil, fmt.Errorf("stat2: %s", err)}
 				return
 			}
+			openFdCount, err := p.NumFDs()
+			if err != nil {
+				filled <- evaluated{nil, fmt.Errorf("openFdCount: %s", err)}
+				return
+			}
 
 			filled <- evaluated{&FilledProcess{
 				Pid:     pid,
 				Ppid:    ppid,
 				Cmdline: cmdline,
 				// stat
-				Pgrp:       pgrp,
-				CpuTime1:   t1,
-				CpuTime2:   t2,
-				Nice:       nice,
-				CreateTime: createTime,
-				Container:  container,
+				Pgrp:        pgrp,
+				CpuTime1:    t1,
+				CpuTime2:    t2,
+				Nice:        nice,
+				CreateTime:  createTime,
+				Container:   container,
+				OpenFdCount: openFdCount,
 
 				// status
 				Name:       p.name,
