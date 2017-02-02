@@ -97,7 +97,7 @@ func finishCPUInfo(c *InfoStat) error {
 			return nil
 		}
 	}
-	c.Mhz = value/1000.0  // value is in kHz
+	c.Mhz = value / 1000.0 // value is in kHz
 	return nil
 }
 
@@ -147,7 +147,7 @@ func Info() ([]InfoStat, error) {
 		case "model name", "cpu":
 			c.ModelName = value
 			if strings.Contains(value, "POWER8") ||
-			   strings.Contains(value, "POWER7") {
+				strings.Contains(value, "POWER7") {
 				c.Model = strings.Split(value, " ")[0]
 				c.Family = "POWER"
 				c.VendorID = "IBM"
