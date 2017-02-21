@@ -37,7 +37,7 @@ func IOCountersByFile(pernic bool, filename string) ([]IOCountersStat, error) {
 	ret := make([]IOCountersStat, 0, statlen)
 
 	for _, line := range lines[2:] {
-		parts := strings.SplitN(line, ":", 2)
+		parts := strings.SplitN(line, ": ", 2)
 		if len(parts) != 2 {
 			continue
 		}
