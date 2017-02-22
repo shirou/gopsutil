@@ -407,6 +407,7 @@ func getProcInodes(root string, pid int32, max int) (map[string][]inodeMap, erro
 	if err != nil {
 		return ret, nil
 	}
+	defer f.Close()
 	files, err := f.Readdir(max)
 	if err != nil {
 		return ret, nil
