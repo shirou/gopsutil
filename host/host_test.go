@@ -91,3 +91,15 @@ func TestUserStat_String(t *testing.T) {
 		t.Errorf("UserStat string is invalid: %v", v)
 	}
 }
+
+func TestHostGuid(t *testing.T) {
+	hi, err := host.Info()
+	if err != nil {
+		t.Error(err)
+	}
+	if hi.HostID == "" {
+		t.Error("Host id is empty")
+	} else {
+		t.Logf("Host id value: %v", hi.HostID)
+	}
+}
