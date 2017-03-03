@@ -93,7 +93,7 @@ func TestUserStat_String(t *testing.T) {
 }
 
 func TestHostGuid(t *testing.T) {
-	hi, err := host.Info()
+	hi, err := Info()
 	if err != nil {
 		t.Error(err)
 	}
