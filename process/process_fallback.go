@@ -11,17 +11,17 @@ import (
 )
 
 type MemoryMapsStat struct {
-	Path         string `json:"path"`
-	Rss          uint64 `json:"rss"`
-	Size         uint64 `json:"size"`
-	Pss          uint64 `json:"pss"`
-	SharedClean  uint64 `json:"sharedClean"`
-	SharedDirty  uint64 `json:"sharedDirty"`
-	PrivateClean uint64 `json:"privateClean"`
-	PrivateDirty uint64 `json:"privateDirty"`
-	Referenced   uint64 `json:"referenced"`
-	Anonymous    uint64 `json:"anonymous"`
-	Swap         uint64 `json:"swap"`
+	Path         string `json:"path" bson:"path"`
+	Rss          uint64 `json:"rss" bson:"rss"`
+	Size         uint64 `json:"size" bson:"size"`
+	Pss          uint64 `json:"pss" bson:"pss"`
+	SharedClean  uint64 `json:"sharedClean" bson:"sharedClean"`
+	SharedDirty  uint64 `json:"sharedDirty" bson:"sharedDirty"`
+	PrivateClean uint64 `json:"privateClean" bson:"privateClean"`
+	PrivateDirty uint64 `json:"privateDirty" bson:"privateDirty"`
+	Referenced   uint64 `json:"referenced" bson:"referenced"`
+	Anonymous    uint64 `json:"anonymous" bson:"anonymous"`
+	Swap         uint64 `json:"swap" bson:"swap"`
 }
 
 type MemoryInfoExStat struct {

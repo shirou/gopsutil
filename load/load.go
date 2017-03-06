@@ -13,9 +13,9 @@ func init() {
 }
 
 type AvgStat struct {
-	Load1  float64 `json:"load1"`
-	Load5  float64 `json:"load5"`
-	Load15 float64 `json:"load15"`
+	Load1  float64 `json:"load1" bson:"load1"`
+	Load5  float64 `json:"load5" bson:"load5"`
+	Load15 float64 `json:"load15" bson:"load15"`
 }
 
 func (l AvgStat) String() string {
@@ -24,9 +24,9 @@ func (l AvgStat) String() string {
 }
 
 type MiscStat struct {
-	ProcsRunning int `json:"procsRunning"`
-	ProcsBlocked int `json:"procsBlocked"`
-	Ctxt         int `json:"ctxt"`
+	ProcsRunning int `json:"procsRunning" bson:"procsRunning"`
+	ProcsBlocked int `json:"procsBlocked" bson:"procsBlocked"`
+	Ctxt         int `json:"ctxt" bson:"ctxt"`
 }
 
 func (m MiscStat) String() string {
