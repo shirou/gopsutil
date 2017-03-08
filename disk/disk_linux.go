@@ -351,6 +351,8 @@ func IOCounters() (map[string]IOCountersStat, error) {
 		d.Name = name
 
 		d.SerialNumber = GetDiskSerialNumber(name)
+		d.Label = GetLabel(name)
+
 		ret[name] = d
 	}
 	return ret, nil
@@ -381,6 +383,26 @@ func GetDiskSerialNumber(name string) string {
 		return values[1]
 	}
 	return ""
+}
+
+// GetLabel returns label of given device or empty string on error.
+// Name of device is expected, eg. /dev/sda
+// Supports label based on devicemapper name
+// See https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-block-dm
+func GetLabel(name string) string {
+    // Try label based on devicemapper name
+	dmname_filename := fmt.Sprintf("/sys/block/%s/dm/name", name)
+
+    if ! common.PathExists(dmname_filename) {
+        return ""
+    }
+
+    dmname, err := ioutil.ReadFile(dmname_filename)
+    if (err) {
+        retrun ""
+    } else {
+        return dmname
+    }
 }
 
 func getFsType(stat syscall.Statfs_t) string {
