@@ -5,29 +5,13 @@ package cpu
 import (
 	"errors"
 	"fmt"
-	"os/exec"
 	"strconv"
 	"strings"
 
 	"github.com/shirou/gopsutil/internal/common"
 )
 
-var cpu_tick = float64(100)
-
-func init() {
-	getconf, err := exec.LookPath("/usr/bin/getconf")
-	if err != nil {
-		return
-	}
-	out, err := invoke.Command(getconf, "CLK_TCK")
-	// ignore errors
-	if err == nil {
-		i, err := strconv.ParseFloat(strings.TrimSpace(string(out)), 64)
-		if err == nil {
-			cpu_tick = float64(i)
-		}
-	}
-}
+var cpu_tick = float64(GetClockTick())
 
 func Times(percpu bool) ([]TimesStat, error) {
 	filename := common.HostProc("stat")
