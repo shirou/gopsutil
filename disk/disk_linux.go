@@ -3,8 +3,6 @@
 package disk
 
 import (
-	"fmt"
-	"os/exec"
 	"strconv"
 	"strings"
 	"syscall"
@@ -248,6 +246,14 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 
 	for _, line := range lines {
 		fields := strings.Fields(line)
+		major, err := strconv.ParseUint(fields[0], 10, 8)
+		if err != nil {
+			return ret, err
+		}
+		minor, err := strconv.ParseUint(fields[1], 10, 8)
+		if err != nil {
+			return ret, err
+		}
 		name := fields[2]
 		reads, err := strconv.ParseUint((fields[3]), 10, 64)
 		if err != nil {
@@ -290,31 +296,10 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 			continue
 		}
 		d.Name = name
-
-		d.SerialNumber = GetDiskSerialNumber(name)
+		d.DeviceNum = uint64(major<< 8 | minor)
 		ret[name] = d
 	}
 	return ret, nil
-}
-
-func GetDiskSerialNumber(name string) string {
-	n := fmt.Sprintf("--name=%s", name)
-	out, err := exec.Command("/sbin/udevadm", "info", "--query=property", n).Output()
-
-	// does not return error, just an empty string
-	if err != nil {
-		return ""
-	}
-	lines := strings.Split(string(out), "\n")
-	for _, line := range lines {
-		values := strings.Split(line, "=")
-		if len(values) < 2 || values[0] != "ID_SERIAL" {
-			// only get ID_SERIAL, not ID_SERIAL_SHORT
-			continue
-		}
-		return values[1]
-	}
-	return ""
 }
 
 func getFsType(stat syscall.Statfs_t) string {
