@@ -186,6 +186,8 @@ func Info() ([]InfoStat, error) {
 			c.Flags = strings.FieldsFunc(value, func(r rune) bool {
 				return r == ',' || r == ' '
 			})
+		case "microcode":
+			c.Microcode = value
 		}
 	}
 	if c.CPU >= 0 {

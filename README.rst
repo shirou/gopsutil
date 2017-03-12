@@ -133,6 +133,7 @@ Several methods have been added which are not present in psutil, but will provid
   - Mhz
   - CacheSize
   - Flags        (ex: "fpu vme de pse tsc msr pae mce cx8 ...")
+  - Microcode
 
 - load/LoadAvg()  (linux, freebsd)
 
@@ -262,6 +263,7 @@ hostname              x     x      x       x       x
   CoreID              x
   Cores               x                            x
   ModelName           x     x      x       x       x
+  Microcode           x
 **LoadAvg**
   Load1               x     x      x       x
   Load5               x     x      x       x
