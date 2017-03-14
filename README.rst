@@ -174,13 +174,13 @@ Current Status
 - x: work
 - b: almost works, but something is broken
 
-=================== ====== ======= ======= ====== =======
-name                Linux  FreeBSD OpenBSD MacOSX Windows
+=================== ====== ======= ======= ====== ======= =======
+name                Linux  FreeBSD OpenBSD MacOSX Windows Solaris
 cpu_times             x      x       x       x       x
 cpu_count             x      x       x       x       x
 cpu_percent           x      x       x       x       x
 cpu_times_percent     x      x       x       x       x
-virtual_memory        x      x       x       x       x
+virtual_memory        x      x       x       x       x       b
 swap_memory           x      x       x       x
 disk_partitions       x      x       x       x       x
 disk_io_counters      x      x       x
