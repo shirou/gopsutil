@@ -49,7 +49,7 @@ Available Architectures
 - Windows/amd64
 - Darwin i386/amd64
 - OpenBDS amd64 (Thank you @mpfz0r!)
-- Solaris amd64 (developed and tested on SmartOS/Illumos)
+- Solaris amd64 (developed and tested on SmartOS/Illumos, Thank you @jen20!)
 
 All works are implemented without cgo by porting c struct to golang struct.
 
@@ -276,7 +276,7 @@ hostname              x     x      x       x       x
   system              x     no     no      no      no
 **CgroupsMem**
   various             x     no     no      no      no
-================== ===== ======= ======= ====== =======
+================== ===== ======= ======= ====== ======= =======
 
 - future work
 
