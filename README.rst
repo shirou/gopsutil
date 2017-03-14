@@ -248,12 +248,12 @@ Original Metrics
 ================== ===== ======= ======= ====== ======= =======
 item               Linux FreeBSD OpenBSD MacOSX Windows Solaris
 **HostInfo**
-hostname              x     x      x       x       x
-  uptime              x     x      x       x
-  proces              x     x      x
-  os                  x     x      x       x       x
-  platform            x     x      x       x
-  platformfamily      x     x      x       x
+hostname              x     x      x       x       x       x
+  uptime              x     x      x       x               x
+  proces              x     x      x                       x
+  os                  x     x      x       x       x       x
+  platform            x     x      x       x               x
+  platformfamily      x     x      x       x               x
   virtualization      x
 **CPU**
   VendorID            x     x      x       x       x      x
