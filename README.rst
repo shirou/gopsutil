@@ -49,6 +49,7 @@ Available Architectures
 - Windows/amd64
 - Darwin i386/amd64
 - OpenBDS amd64 (Thank you @mpfz0r!)
+- Solaris amd64 (developed and tested on SmartOS/Illumos)
 
 All works are implemented without cgo by porting c struct to golang struct.
 
@@ -244,8 +245,8 @@ is_running
 Original Metrics
 ^^^^^^^^^^^^^^^^^^^
 
-================== ===== ======= ======= ====== =======
-item               Linux FreeBSD OpenBSD MacOSX Windows
+================== ===== ======= ======= ====== ======= =======
+item               Linux FreeBSD OpenBSD MacOSX Windows Solaris
 **HostInfo**
 hostname              x     x      x       x       x
   uptime              x     x      x       x
@@ -255,15 +256,15 @@ hostname              x     x      x       x       x
   platformfamily      x     x      x       x
   virtualization      x
 **CPU**
-  VendorID            x     x      x       x       x
-  Family              x     x      x       x       x
-  Model               x     x      x       x       x
-  Stepping            x     x      x       x       x
-  PhysicalID          x
-  CoreID              x
-  Cores               x                            x
-  ModelName           x     x      x       x       x
-  Microcode           x
+  VendorID            x     x      x       x       x      x
+  Family              x     x      x       x       x      x
+  Model               x     x      x       x       x      x
+  Stepping            x     x      x       x       x      x
+  PhysicalID          x                                   x
+  CoreID              x                                   x
+  Cores               x                            x      x
+  ModelName           x     x      x       x       x      x
+  Microcode           x                                   x
 **LoadAvg**
   Load1               x     x      x       x
   Load5               x     x      x       x
