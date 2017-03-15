@@ -16,16 +16,16 @@ func TestParseISAInfo(t *testing.T) {
 		{
 			"1cpu_1core_isainfo.txt",
 			[]string{"rdseed", "adx", "avx2", "fma", "bmi2", "bmi1", "rdrand", "f16c", "vmx",
-				 "avx", "xsave", "pclmulqdq", "aes", "movbe", "sse4.2", "sse4.1", "ssse3", "popcnt",
-				 "tscp", "cx16", "sse3", "sse2", "sse", "fxsr", "mmx", "cmov", "amd_sysc", "cx8",
-				 "tsc", "fpu"},
+				"avx", "xsave", "pclmulqdq", "aes", "movbe", "sse4.2", "sse4.1", "ssse3", "popcnt",
+				"tscp", "cx16", "sse3", "sse2", "sse", "fxsr", "mmx", "cmov", "amd_sysc", "cx8",
+				"tsc", "fpu"},
 		},
 		{
 			"2cpu_1core_isainfo.txt",
 			[]string{"rdseed", "adx", "avx2", "fma", "bmi2", "bmi1", "rdrand", "f16c", "vmx",
-				 "avx", "xsave", "pclmulqdq", "aes", "movbe", "sse4.2", "sse4.1", "ssse3", "popcnt",
-				 "tscp", "cx16", "sse3", "sse2", "sse", "fxsr", "mmx", "cmov", "amd_sysc", "cx8",
-				 "tsc", "fpu"},
+				"avx", "xsave", "pclmulqdq", "aes", "movbe", "sse4.2", "sse4.1", "ssse3", "popcnt",
+				"tscp", "cx16", "sse3", "sse2", "sse", "fxsr", "mmx", "cmov", "amd_sysc", "cx8",
+				"tsc", "fpu"},
 		},
 		{
 			"2cpu_8core_isainfo.txt",
@@ -36,7 +36,7 @@ func TestParseISAInfo(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		content, err := ioutil.ReadFile(filepath.Join("expected", "solaris", tc.filename))
+		content, err := ioutil.ReadFile(filepath.Join("testdata", "solaris", tc.filename))
 		if err != nil {
 			t.Errorf("cannot read test case: %s", err)
 		}
@@ -96,7 +96,7 @@ func TestParseProcessorInfo(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		content, err := ioutil.ReadFile(filepath.Join("expected", "solaris", tc.filename))
+		content, err := ioutil.ReadFile(filepath.Join("testdata", "solaris", tc.filename))
 		if err != nil {
 			t.Errorf("cannot read test case: %s", err)
 		}
