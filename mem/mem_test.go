@@ -2,12 +2,17 @@ package mem
 
 import (
 	"fmt"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestVirtual_memory(t *testing.T) {
+	if runtime.GOOS == "solaris" {
+		t.Skip("Only .Total is supported on Solaris")
+	}
+
 	v, err := VirtualMemory()
 	if err != nil {
 		t.Errorf("error %v", err)
