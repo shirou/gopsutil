@@ -109,7 +109,7 @@ func BootTime() (uint64, error) {
 
 	kstats := kstatMatch.FindAllStringSubmatch(string(out), -1)
 	if len(kstats) != 1 {
-		return 0, fmt.Errorf("Expected 1 kstat, found %d", len(kstats))
+		return 0, fmt.Errorf("expected 1 kstat, found %d", len(kstats))
 	}
 
 	return strconv.ParseUint(kstats[0][2], 10, 64)

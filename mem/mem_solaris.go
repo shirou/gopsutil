@@ -56,7 +56,7 @@ func zoneName() (string, error) {
 	return strings.TrimSpace(string(out)), nil
 }
 
-var globalZoneMemoryCapacityMatch = regexp.MustCompile(`Memory size: ([\d]+) Megabytes`)
+var globalZoneMemoryCapacityMatch = regexp.MustCompile(`memory size: ([\d]+) Megabytes`)
 
 func globalZoneMemoryCapacity() (uint64, error) {
 	prtconf, err := exec.LookPath("/usr/sbin/prtconf")
@@ -71,7 +71,7 @@ func globalZoneMemoryCapacity() (uint64, error) {
 
 	match := globalZoneMemoryCapacityMatch.FindAllStringSubmatch(string(out), -1)
 	if len(match) != 1 {
-		return 0, errors.New("Memory size not contained in output of /usr/sbin/prtconf")
+		return 0, errors.New("memory size not contained in output of /usr/sbin/prtconf")
 	}
 
 	totalMB, err := strconv.ParseUint(match[0][1], 10, 64)
@@ -97,7 +97,7 @@ func nonGlobalZoneMemoryCapacity() (uint64, error) {
 
 	kstats := kstatMatch.FindAllStringSubmatch(string(out), -1)
 	if len(kstats) != 1 {
-		return 0, fmt.Errorf("Expected 1 kstat, found %d", len(kstats))
+		return 0, fmt.Errorf("expected 1 kstat, found %d", len(kstats))
 	}
 
 	memSizeBytes, err := strconv.ParseUint(kstats[0][2], 10, 64)

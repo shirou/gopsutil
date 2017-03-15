@@ -23,7 +23,7 @@ func TestParseDmesgBoot(t *testing.T) {
 		{"2cpu_4core.txt", 2, 4},
 	}
 	for _, tt := range cpuTests {
-		v, num, err := parseDmesgBoot(filepath.Join("expected/freebsd/", tt.file))
+		v, num, err := parseDmesgBoot(filepath.Join("testdata", "freebsd", tt.file))
 		if err != nil {
 			t.Errorf("parseDmesgBoot failed(%s), %v", tt.file, err)
 		}
