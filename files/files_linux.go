@@ -18,11 +18,6 @@ func FindProcsByFile(file_path string) ([]int, error) {
 		return []int{}, err
 	}
 
-	grep_bin, err := exec.LookPath("grep")
-	if err != nil {
-		return []int{}, err
-	}
-
 	awk_bin, err := exec.LookPath("awk")
 	if err != nil {
 		return []int{}, err
@@ -34,11 +29,10 @@ func FindProcsByFile(file_path string) ([]int, error) {
 	}
 
 	lsof := exec.Command(lsof_bin, file_path)
-	grep := exec.Command(grep_bin, "-v", "COMMAND")
-	awk := exec.Command(awk_bin, "{print $2}")
+	awk := exec.Command(awk_bin, "NR>1 {print $2}")
 	sort := exec.Command(sort_bin, "-u")
 
-	output, _, err := common.Pipeline(lsof, grep, awk, sort)
+	output, _, err := common.Pipeline(lsof, awk, sort)
 	if err != nil {
 		return []int{}, err
 	}
