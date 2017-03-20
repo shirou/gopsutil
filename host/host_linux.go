@@ -525,14 +525,14 @@ func Virtualization() (string, string, error) {
 
 func SensorsTemperatures() ([]TemperatureStat, error) {
 	var temperatures []TemperatureStat
-	files, err := filepath.Glob("/sys/class/hwmon/hwmon*/temp*_*")
+	files, err := filepath.Glob(common.HostSys("/class/hwmon/hwmon*/temp*_*"))
 	if err != nil {
 		return temperatures, err
 	}
 	if len(files) == 0 {
 		// CentOS has an intermediate /device directory:
 		// https://github.com/giampaolo/psutil/issues/971
-		files, err = filepath.Glob("/sys/class/hwmon/hwmon*/temp*_*")
+		files, err = filepath.Glob(common.HostSys("/class/hwmon/hwmon*/temp*_*"))
 		if err != nil {
 			return temperatures, err
 		}

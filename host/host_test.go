@@ -103,3 +103,14 @@ func TestHostGuid(t *testing.T) {
 		t.Logf("Host id value: %v", hi.HostID)
 	}
 }
+
+func TestTemperatureStat_String(t *testing.T) {
+	v := TemperatureStat{
+		SensorKey:   "CPU",
+		Temperature: 1.1,
+	}
+	s := `{"sensorKey":"CPU","sensorTemperature":1.1}`
+	if s != fmt.Sprintf("%v", v) {
+		t.Errorf("TemperatureStat string is invalid")
+	}
+}
