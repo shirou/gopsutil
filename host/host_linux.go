@@ -454,6 +454,9 @@ func Virtualization() (string, string, error) {
 			} else if common.StringsContains(contents, "vboxguest") {
 				system = "vbox"
 				role = "guest"
+			} else if common.StringsContains(contents, "vmware") {
+				system = "vmware"
+				role = "guest"
 			}
 		}
 	}
