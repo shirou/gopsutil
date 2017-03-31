@@ -246,11 +246,11 @@ func DiskIOCounters() (map[string]DiskIOCountersStat, error) {
 
 	for _, line := range lines {
 		fields := strings.Fields(line)
-		major, err := strconv.ParseUint(fields[0], 10, 8)
+		major, err := strconv.ParseUint(fields[0], 10, 32)
 		if err != nil {
 			return ret, err
 		}
-		minor, err := strconv.ParseUint(fields[1], 10, 8)
+		minor, err := strconv.ParseUint(fields[1], 10, 32)
 		if err != nil {
 			return ret, err
 		}
