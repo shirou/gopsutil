@@ -854,12 +854,18 @@ func AllProcesses(cpuWait time.Duration) ([]*FilledProcess, error) {
 				return
 			}
 			cwd, err := p.fillFromCwd()
-			if err != nil {
-				filled <- evaluated{nil, fmt.Errorf("statm: %s", err)}
+			if os.IsPermission(err) {
+				// Without root permissions we can't read for other processes.
+				cwd = ""
+			} else if err != nil {
+				filled <- evaluated{nil, fmt.Errorf("cwd: %s", err)}
 				return
 			}
 			exe, err := p.fillFromExe()
-			if err != nil {
+			if os.IsPermission(err) {
+				// Without root permissions we can't read for other processes.
+				exe = ""
+			} else if err != nil {
 				filled <- evaluated{nil, fmt.Errorf("exe: %s", err)}
 				return
 			}
@@ -870,7 +876,10 @@ func AllProcesses(cpuWait time.Duration) ([]*FilledProcess, error) {
 				return
 			}
 			openFdCount, err := p.NumFDs()
-			if err != nil {
+			if os.IsPermission(err) {
+				// Without root permissions we can't read for other processes.
+				openFdCount = -1
+			} else if err != nil {
 				filled <- evaluated{nil, fmt.Errorf("openFdCount: %s", err)}
 				return
 			}
