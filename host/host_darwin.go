@@ -32,12 +32,19 @@ func Info() (*InfoStat, error) {
 		ret.Hostname = hostname
 	}
 
-	platform, family, pver, version, err := PlatformInformation()
+	uname, err := exec.LookPath("uname")
+	if err == nil {
+		out, err := invoke.Command(uname, "-r")
+		if err == nil {
+			ret.KernelVersion = strings.ToLower(strings.TrimSpace(string(out)))
+		}
+	}
+
+	platform, family, pver, err := PlatformInformation()
 	if err == nil {
 		ret.Platform = platform
 		ret.PlatformFamily = family
 		ret.PlatformVersion = pver
-		ret.KernelVersion = version
 	}
 
 	system, role, err := Virtualization()
@@ -140,19 +147,18 @@ func Users() ([]UserStat, error) {
 
 }
 
-func PlatformInformation() (string, string, string, string, error) {
+func PlatformInformation() (string, string, string, error) {
 	platform := ""
 	family := ""
-	version := ""
 	pver := ""
 
 	sw_vers, err := exec.LookPath("sw_vers")
 	if err != nil {
-		return "", "", "", "", err
+		return "", "", "", err
 	}
 	uname, err := exec.LookPath("uname")
 	if err != nil {
-		return "", "", "", "", err
+		return "", "", "", err
 	}
 
 	out, err := invoke.Command(uname, "-s")
@@ -165,12 +171,7 @@ func PlatformInformation() (string, string, string, string, error) {
 		pver = strings.ToLower(strings.TrimSpace(string(out)))
 	}
 
-	out, err = invoke.Command(uname, "-r")
-	if err == nil {
-		version = strings.ToLower(strings.TrimSpace(string(out)))
-	}
-
-	return platform, family, pver, version, nil
+	return platform, family, pver, nil
 }
 
 func Virtualization() (string, string, error) {
