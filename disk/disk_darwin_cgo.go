@@ -30,9 +30,11 @@ import (
 	"errors"
 	"strings"
 	"unsafe"
+
+	"github.com/shirou/gopsutil/internal/common"
 )
 
-func IOCounters() (map[string]IOCountersStat, error) {
+func IOCountersForNames(names []string) (map[string]IOCountersStat, error) {
 	if C.StartIOCounterFetch() == 0 {
 		return nil, errors.New("Unable to fetch disk list")
 	}
@@ -76,6 +78,10 @@ func IOCounters() (map[string]IOCountersStat, error) {
 			WriteTime:  uint64(di.WriteTime),
 			IoTime:     uint64(di.ReadTime + di.WriteTime),
 			Name:       strings.TrimFunc(C.GoStringN(&di.DiskName[0], C.MAX_DISK_NAME), isRuneNull),
+		}
+
+		if len(names) > 0 && !common.StringsHas(names, d.Name) {
+			continue
 		}
 
 		ret[d.Name] = d
