@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"runtime"
 	"strconv"
@@ -523,4 +524,37 @@ func Virtualization() (string, string, error) {
 		}
 	}
 	return system, role, nil
+}
+
+func SensorsTemperatures() ([]TemperatureStat, error) {
+	var temperatures []TemperatureStat
+	files, err := filepath.Glob(common.HostSys("/class/hwmon/hwmon*/temp*_*"))
+	if err != nil {
+		return temperatures, err
+	}
+	if len(files) == 0 {
+		// CentOS has an intermediate /device directory:
+		// https://github.com/giampaolo/psutil/issues/971
+		files, err = filepath.Glob(common.HostSys("/class/hwmon/hwmon*/temp*_*"))
+		if err != nil {
+			return temperatures, err
+		}
+	}
+
+	for _, match := range files {
+		match = strings.Split(match, "_")[0]
+		name, err := ioutil.ReadFile(filepath.Dir(match) + "name")
+		if err != nil {
+			return temperatures, err
+		}
+		current := ioutil.ReadFile(match + "_input")
+		if err != nil {
+			return temperatures, err
+		}
+		temperature, err := strconv.ParseFloat(current, 64) / 1000.0
+		temperatures = append(temperatures, TemperatureStat{
+			SensorKey:   name,
+			Temperature: temperature,
+		})
+	}
 }

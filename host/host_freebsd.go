@@ -212,3 +212,7 @@ func getUsersFromUtmp(utmpfile string) ([]UserStat, error) {
 
 	return ret, nil
 }
+
+func SensorsTemperatures() ([]TemperatureStat, error) {
+	return []TemperatureStat{}, common.NotImplementedError
+}
