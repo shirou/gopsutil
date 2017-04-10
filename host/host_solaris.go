@@ -132,5 +132,5 @@ func Users() ([]UserStat, error) {
 }
 
 func SensorsTemperatures() ([]TemperatureStat, error) {
-	return []TemperatureStat{}, common.NotImplementedError
+	return []TemperatureStat{}, common.ErrNotImplementedError
 }

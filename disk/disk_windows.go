@@ -142,7 +142,7 @@ func IOCountersForNames(names []string) (map[string]IOCountersStat, error) {
 			continue
 		}
 
-		if len(names) > 0 && !common.StringsHas(names, name) {
+		if len(names) > 0 && !common.StringsHas(names, d.Name) {
 			continue
 		}
 
