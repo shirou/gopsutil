@@ -547,14 +547,18 @@ func SensorsTemperatures() ([]TemperatureStat, error) {
 		if err != nil {
 			return temperatures, err
 		}
-		current := ioutil.ReadFile(match + "_input")
+		current, err := ioutil.ReadFile(match + "_input")
 		if err != nil {
 			return temperatures, err
 		}
-		temperature, err := strconv.ParseFloat(current, 64) / 1000.0
+		temperature, err := strconv.ParseFloat(string(current), 64)
+		if err != nil{
+			continue
+		}
 		temperatures = append(temperatures, TemperatureStat{
-			SensorKey:   name,
-			Temperature: temperature,
+			SensorKey:   string(name),
+			Temperature: temperature / 1000.0,
 		})
 	}
+	return temperatures, nil
 }
