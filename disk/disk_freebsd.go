@@ -94,7 +94,7 @@ func Partitions(all bool) ([]PartitionStat, error) {
 	return ret, nil
 }
 
-func IOCountersForNames(names []string) (map[string]IOCountersStat, error) {
+func IOCounters(names ...string) (map[string]IOCountersStat, error) {
 	// statinfo->devinfo->devstat
 	// /usr/include/devinfo.h
 	ret := make(map[string]IOCountersStat)
