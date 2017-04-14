@@ -34,7 +34,7 @@ import (
 	"github.com/shirou/gopsutil/internal/common"
 )
 
-func IOCountersForNames(names []string) (map[string]IOCountersStat, error) {
+func IOCounters(names ...string) (map[string]IOCountersStat, error) {
 	if C.StartIOCounterFetch() == 0 {
 		return nil, errors.New("Unable to fetch disk list")
 	}

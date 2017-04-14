@@ -62,7 +62,3 @@ func (d IOCountersStat) String() string {
 	s, _ := json.Marshal(d)
 	return string(s)
 }
-
-func IOCounters() (map[string]IOCountersStat, error) {
-	return IOCountersForNames([]string{})
-}

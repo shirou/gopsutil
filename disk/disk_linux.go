@@ -272,7 +272,7 @@ func getFileSystems() ([]string, error) {
 	return ret, nil
 }
 
-func IOCountersForNames(names []string) (map[string]IOCountersStat, error) {
+func IOCounters(names ...string) (map[string]IOCountersStat, error) {
 	filename := common.HostProc("diskstats")
 	lines, err := common.ReadLines(filename)
 	if err != nil {

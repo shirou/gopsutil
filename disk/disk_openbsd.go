@@ -63,7 +63,7 @@ func Partitions(all bool) ([]PartitionStat, error) {
 	return ret, nil
 }
 
-func IOCountersForNames(names []string) (map[string]IOCountersStat, error) {
+func IOCounters(names ...string) (map[string]IOCountersStat, error) {
 	ret := make(map[string]IOCountersStat)
 
 	r, err := syscall.Sysctl("hw.diskstats")
