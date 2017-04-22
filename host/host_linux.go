@@ -432,8 +432,8 @@ func Virtualization() (string, string, error) {
 		system = "xen"
 		role = "guest" // assume guest
 
-		if common.PathExists(filename + "/capabilities") {
-			contents, err := common.ReadLines(filename + "/capabilities")
+		if common.PathExists(filepath.Join(filename, "capabilities")) {
+			contents, err := common.ReadLines(filepath.Join(filename, "capabilities"))
 			if err == nil {
 				if common.StringsContains(contents, "control_d") {
 					role = "host"
@@ -476,17 +476,17 @@ func Virtualization() (string, string, error) {
 	}
 
 	filename = common.HostProc()
-	if common.PathExists(filename + "/bc/0") {
+	if common.PathExists(filepath.Join(filename, "bc", "0")) {
 		system = "openvz"
 		role = "host"
-	} else if common.PathExists(filename + "/vz") {
+	} else if common.PathExists(filepath.Join(filename, "vz")) {
 		system = "openvz"
 		role = "guest"
 	}
 
 	// not use dmidecode because it requires root
-	if common.PathExists(filename + "/self/status") {
-		contents, err := common.ReadLines(filename + "/self/status")
+	if common.PathExists(filpath.Join(filename, "self", "status")) {
+		contents, err := common.ReadLines(filepath.Join(filename, "self", "status"))
 		if err == nil {
 
 			if common.StringsContains(contents, "s_context:") ||
@@ -497,8 +497,8 @@ func Virtualization() (string, string, error) {
 		}
 	}
 
-	if common.PathExists(filename + "/self/cgroup") {
-		contents, err := common.ReadLines(filename + "/self/cgroup")
+	if common.PathExists(filepath.Join(filename, "self", "cgroup")) {
+		contents, err := common.ReadLines(filepath.Join(filename, "self", "cgroup"))
 		if err == nil {
 			if common.StringsContains(contents, "lxc") {
 				system = "lxc"
@@ -543,7 +543,7 @@ func SensorsTemperatures() ([]TemperatureStat, error) {
 
 	for _, match := range files {
 		match = strings.Split(match, "_")[0]
-		name, err := ioutil.ReadFile(filepath.Dir(match) + "name")
+		name, err := ioutil.ReadFile(filepath.Join(filepath.Dir(match), "name"))
 		if err != nil {
 			return temperatures, err
 		}
@@ -552,7 +552,7 @@ func SensorsTemperatures() ([]TemperatureStat, error) {
 			return temperatures, err
 		}
 		temperature, err := strconv.ParseFloat(string(current), 64)
-		if err != nil{
+		if err != nil {
 			continue
 		}
 		temperatures = append(temperatures, TemperatureStat{
