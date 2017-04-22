@@ -485,7 +485,7 @@ func Virtualization() (string, string, error) {
 	}
 
 	// not use dmidecode because it requires root
-	if common.PathExists(filpath.Join(filename, "self", "status")) {
+	if common.PathExists(filepath.Join(filename, "self", "status")) {
 		contents, err := common.ReadLines(filepath.Join(filename, "self", "status"))
 		if err == nil {
 
