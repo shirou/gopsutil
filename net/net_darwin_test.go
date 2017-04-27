@@ -49,28 +49,28 @@ func assertLoopbackStat(t *testing.T, err error, stat *IOCountersStat) {
 }
 
 func TestparseNetstatLineLink(t *testing.T) {
-	stat, linkId, err := parseNetstatLine(
+	stat, linkID, err := parseNetstatLine(
 		`lo0   16384 <Link#1>                        869107     0  169411755   869108     1  169411756     0   0`,
 	)
 	assertLoopbackStat(t, err, stat)
-	assert.NotNil(t, linkId)
-	assert.Equal(t, uint(1), *linkId)
+	assert.NotNil(t, linkID)
+	assert.Equal(t, uint(1), *linkID)
 }
 
 func TestparseNetstatLineIPv6(t *testing.T) {
-	stat, linkId, err := parseNetstatLine(
+	stat, linkID, err := parseNetstatLine(
 		`lo0   16384 ::1/128     ::1                 869107     -  169411755   869108     1  169411756     -   -`,
 	)
 	assertLoopbackStat(t, err, stat)
-	assert.Nil(t, linkId)
+	assert.Nil(t, linkID)
 }
 
 func TestparseNetstatLineIPv4(t *testing.T) {
-	stat, linkId, err := parseNetstatLine(
+	stat, linkID, err := parseNetstatLine(
 		`lo0   16384 127           127.0.0.1         869107     -  169411755   869108     1  169411756     -   -`,
 	)
 	assertLoopbackStat(t, err, stat)
-	assert.Nil(t, linkId)
+	assert.Nil(t, linkID)
 }
 
 func TestParseNetstatOutput(t *testing.T) {
@@ -81,23 +81,23 @@ func TestParseNetstatOutput(t *testing.T) {
 		assert.NotNil(t, nsInterfaces[index].stat, "Index %d", index)
 	}
 
-	assert.NotNil(t, nsInterfaces[0].linkId)
-	assert.Equal(t, uint(1), *nsInterfaces[0].linkId)
+	assert.NotNil(t, nsInterfaces[0].linkID)
+	assert.Equal(t, uint(1), *nsInterfaces[0].linkID)
 
-	assert.Nil(t, nsInterfaces[1].linkId)
-	assert.Nil(t, nsInterfaces[2].linkId)
-	assert.Nil(t, nsInterfaces[3].linkId)
+	assert.Nil(t, nsInterfaces[1].linkID)
+	assert.Nil(t, nsInterfaces[2].linkID)
+	assert.Nil(t, nsInterfaces[3].linkID)
 
-	assert.NotNil(t, nsInterfaces[4].linkId)
-	assert.Equal(t, uint(2), *nsInterfaces[4].linkId)
+	assert.NotNil(t, nsInterfaces[4].linkID)
+	assert.Equal(t, uint(2), *nsInterfaces[4].linkID)
 
-	assert.NotNil(t, nsInterfaces[5].linkId)
-	assert.Equal(t, uint(3), *nsInterfaces[5].linkId)
+	assert.NotNil(t, nsInterfaces[5].linkID)
+	assert.Equal(t, uint(3), *nsInterfaces[5].linkID)
 
-	assert.NotNil(t, nsInterfaces[6].linkId)
-	assert.Equal(t, uint(4), *nsInterfaces[6].linkId)
+	assert.NotNil(t, nsInterfaces[6].linkID)
+	assert.Equal(t, uint(4), *nsInterfaces[6].linkID)
 
-	assert.Nil(t, nsInterfaces[7].linkId)
+	assert.Nil(t, nsInterfaces[7].linkID)
 
 	mapUsage := newMapInterfaceNameUsage(nsInterfaces)
 	assert.False(t, mapUsage.isTruncated())
@@ -114,24 +114,24 @@ func TestParseNetstatTruncated(t *testing.T) {
 
 	const truncatedIface = "utun8"
 
-	assert.NotNil(t, nsInterfaces[6].linkId)
-	assert.Equal(t, uint(88), *nsInterfaces[6].linkId)
+	assert.NotNil(t, nsInterfaces[6].linkID)
+	assert.Equal(t, uint(88), *nsInterfaces[6].linkID)
 	assert.Equal(t, truncatedIface, nsInterfaces[6].stat.Name)
 
-	assert.NotNil(t, nsInterfaces[7].linkId)
-	assert.Equal(t, uint(90), *nsInterfaces[7].linkId)
+	assert.NotNil(t, nsInterfaces[7].linkID)
+	assert.Equal(t, uint(90), *nsInterfaces[7].linkID)
 	assert.Equal(t, truncatedIface, nsInterfaces[7].stat.Name)
 
-	assert.NotNil(t, nsInterfaces[8].linkId)
-	assert.Equal(t, uint(92), *nsInterfaces[8].linkId)
+	assert.NotNil(t, nsInterfaces[8].linkID)
+	assert.Equal(t, uint(92), *nsInterfaces[8].linkID)
 	assert.Equal(t, truncatedIface, nsInterfaces[8].stat.Name)
 
-	assert.NotNil(t, nsInterfaces[9].linkId)
-	assert.Equal(t, uint(93), *nsInterfaces[9].linkId)
+	assert.NotNil(t, nsInterfaces[9].linkID)
+	assert.Equal(t, uint(93), *nsInterfaces[9].linkID)
 	assert.Equal(t, truncatedIface, nsInterfaces[9].stat.Name)
 
-	assert.NotNil(t, nsInterfaces[10].linkId)
-	assert.Equal(t, uint(95), *nsInterfaces[10].linkId)
+	assert.NotNil(t, nsInterfaces[10].linkID)
+	assert.Equal(t, uint(95), *nsInterfaces[10].linkID)
 	assert.Equal(t, truncatedIface, nsInterfaces[10].stat.Name)
 
 	mapUsage := newMapInterfaceNameUsage(nsInterfaces)

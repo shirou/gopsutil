@@ -152,7 +152,7 @@ func (p *Process) CreateTime() (int64, error) {
 		elapsedDurations = append(elapsedDurations, time.Duration(p))
 	}
 
-	var elapsed time.Duration = time.Duration(elapsedDurations[0]) * time.Second
+	var elapsed = time.Duration(elapsedDurations[0]) * time.Second
 	if len(elapsedDurations) > 1 {
 		elapsed += time.Duration(elapsedDurations[1]) * time.Minute
 	}
