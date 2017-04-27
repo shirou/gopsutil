@@ -552,7 +552,7 @@ func SensorsTemperatures() ([]TemperatureStat, error) {
 			return temperatures, err
 		}
 		temperature, err := strconv.ParseFloat(string(current), 64)
-		if err != nil{
+		if err != nil {
 			continue
 		}
 		temperatures = append(temperatures, TemperatureStat{

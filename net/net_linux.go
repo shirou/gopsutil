@@ -256,17 +256,17 @@ var kindUNIX = netConnectionKindType{
 }
 
 var netConnectionKindMap = map[string][]netConnectionKindType{
-	"all":   []netConnectionKindType{kindTCP4, kindTCP6, kindUDP4, kindUDP6, kindUNIX},
-	"tcp":   []netConnectionKindType{kindTCP4, kindTCP6},
-	"tcp4":  []netConnectionKindType{kindTCP4},
-	"tcp6":  []netConnectionKindType{kindTCP6},
-	"udp":   []netConnectionKindType{kindUDP4, kindUDP6},
-	"udp4":  []netConnectionKindType{kindUDP4},
-	"udp6":  []netConnectionKindType{kindUDP6},
-	"unix":  []netConnectionKindType{kindUNIX},
-	"inet":  []netConnectionKindType{kindTCP4, kindTCP6, kindUDP4, kindUDP6},
-	"inet4": []netConnectionKindType{kindTCP4, kindUDP4},
-	"inet6": []netConnectionKindType{kindTCP6, kindUDP6},
+	"all":   {kindTCP4, kindTCP6, kindUDP4, kindUDP6, kindUNIX},
+	"tcp":   {kindTCP4, kindTCP6},
+	"tcp4":  {kindTCP4},
+	"tcp6":  {kindTCP6},
+	"udp":   {kindUDP4, kindUDP6},
+	"udp4":  {kindUDP4},
+	"udp6":  {kindUDP6},
+	"unix":  {kindUNIX},
+	"inet":  {kindTCP4, kindTCP6, kindUDP4, kindUDP6},
+	"inet4": {kindTCP4, kindUDP4},
+	"inet6": {kindTCP6, kindUDP6},
 }
 
 type inodeMap struct {
@@ -680,7 +680,7 @@ func processUnix(file string, kind netConnectionKindType, inodes map[string][]in
 		pairs, exists := inodes[inode]
 		if !exists {
 			pairs = []inodeMap{
-				inodeMap{},
+				{},
 			}
 		}
 		for _, pair := range pairs {
