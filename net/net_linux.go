@@ -368,9 +368,9 @@ func statsFromInodes(root string, pid int32, tmap []netConnectionKindType, inode
 		}
 		for _, c := range ls {
 			// Build TCP key to id the connection uniquely
-			// socket type, src ip, src port, dst ip dst port should be enough
+			// socket type, src ip, src port, dst ip, dst port and state should be enough
 			// to prevent duplications.
-			connKey = strconv.Itoa(int(c.sockType)) + "-" + c.laddr.IP + ":" + strconv.Itoa(int(c.laddr.Port)) + "-" + c.raddr.IP + ":" + strconv.Itoa(int(c.raddr.Port))
+			connKey = strconv.Itoa(int(c.sockType)) + "-" + c.laddr.IP + ":" + strconv.Itoa(int(c.laddr.Port)) + "-" + c.raddr.IP + ":" + strconv.Itoa(int(c.raddr.Port)) + "-" + c.status
 			if _, ok := dupCheckMap[connKey]; ok {
 				continue
 			}
