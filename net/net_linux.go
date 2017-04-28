@@ -346,12 +346,13 @@ func ConnectionsPidMax(kind string, pid int32, max int) ([]ConnectionStat, error
 }
 
 func statsFromInodes(root string, pid int32, tmap []netConnectionKindType, inodes map[string][]inodeMap) ([]ConnectionStat, error) {
-	dupCheckMap := make(map[connTmp]struct{})
+	dupCheckMap := make(map[string]struct{})
 	var ret []ConnectionStat
 
 	var err error
 	for _, t := range tmap {
 		var path string
+		var connKey string
 		var ls []connTmp
 		path = fmt.Sprintf("%s/net/%s", root, t.filename)
 		switch t.family {
@@ -366,7 +367,11 @@ func statsFromInodes(root string, pid int32, tmap []netConnectionKindType, inode
 			return nil, err
 		}
 		for _, c := range ls {
-			if _, ok := dupCheckMap[c]; ok {
+			// Build TCP key to id the connection uniquely
+			// socket type, src ip, src port, dst ip dst port should be enough
+			// to prevent duplications.
+			connKey = strconv.Itoa(int(c.sockType)) + "-" + c.laddr.IP + ":" + strconv.Itoa(int(c.laddr.Port)) + "-" + c.raddr.IP + ":" + strconv.Itoa(int(c.raddr.Port))
+			if _, ok := dupCheckMap[connKey]; ok {
 				continue
 			}
 
@@ -390,7 +395,7 @@ func statsFromInodes(root string, pid int32, tmap []netConnectionKindType, inode
 			conn.Uids, _ = proc.getUids()
 
 			ret = append(ret, conn)
-			dupCheckMap[c] = struct{}{}
+			dupCheckMap[connKey] = struct{}{}
 		}
 
 	}
