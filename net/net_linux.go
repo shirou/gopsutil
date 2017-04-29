@@ -32,15 +32,20 @@ func IOCountersByFile(pernic bool, filename string) ([]IOCountersStat, error) {
 		return nil, err
 	}
 
+	parts := make([]string, 2)
+
 	statlen := len(lines) - 1
 
 	ret := make([]IOCountersStat, 0, statlen)
 
 	for _, line := range lines[2:] {
-		parts := strings.SplitN(line, ": ", 2)
-		if len(parts) != 2 {
+		separatorPos := strings.LastIndex(line, ":")
+		if separatorPos == -1 {
 			continue
 		}
+		parts[0] = line[0:separatorPos]
+		parts[1] = line[separatorPos+1:]
+
 		interfaceName := strings.TrimSpace(parts[0])
 		if interfaceName == "" {
 			continue
