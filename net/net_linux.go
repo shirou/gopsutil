@@ -370,7 +370,7 @@ func statsFromInodes(root string, pid int32, tmap []netConnectionKindType, inode
 			// Build TCP key to id the connection uniquely
 			// socket type, src ip, src port, dst ip, dst port and state should be enough
 			// to prevent duplications.
-			connKey = strconv.Itoa(int(c.sockType)) + "-" + c.laddr.IP + ":" + strconv.Itoa(int(c.laddr.Port)) + "-" + c.raddr.IP + ":" + strconv.Itoa(int(c.raddr.Port)) + "-" + c.status
+			connKey = fmt.Sprintf("%s-%s:%d-%s:%d-%s", c.sockType, c.laddr.IP, c.laddr.Port, c.raddr.IP, c.raddr.Port, c.status)
 			if _, ok := dupCheckMap[connKey]; ok {
 				continue
 			}
