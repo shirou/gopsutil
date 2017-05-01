@@ -3,6 +3,7 @@
 package net
 
 import (
+	"bytes"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -613,14 +614,18 @@ func processInet(file string, kind netConnectionKindType, inodes map[string][]in
 		// IPv6 not supported, return empty.
 		return []connTmp{}, nil
 	}
-	lines, err := common.ReadLines(file)
+
+	contents, err := ioutil.ReadFile(file)
 	if err != nil {
 		return nil, err
 	}
+
+	lines := bytes.Split(contents, []byte("\n"))
+
 	var ret []connTmp
 	// skip first line
 	for _, line := range lines[1:] {
-		l := strings.Fields(line)
+		l := strings.Fields(string(line))
 		if len(l) < 10 {
 			continue
 		}
@@ -667,15 +672,17 @@ func processInet(file string, kind netConnectionKindType, inodes map[string][]in
 }
 
 func processUnix(file string, kind netConnectionKindType, inodes map[string][]inodeMap, filterPid int32) ([]connTmp, error) {
-	lines, err := common.ReadLines(file)
+	contents, err := ioutil.ReadFile(file)
 	if err != nil {
 		return nil, err
 	}
 
+	lines := bytes.Split(contents, []byte("\n"))
+
 	var ret []connTmp
 	// skip first line
 	for _, line := range lines[1:] {
-		tokens := strings.Fields(line)
+		tokens := strings.Fields(string(line))
 		if len(tokens) < 6 {
 			continue
 		}
