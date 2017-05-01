@@ -27,7 +27,7 @@ import (
 
 var (
 	Timeout    = 3 * time.Second
-	ErrTimeout = errors.New("Command timed out.")
+	ErrTimeout = errors.New("command timed out")
 )
 
 type Invoker interface {

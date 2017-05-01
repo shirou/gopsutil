@@ -97,12 +97,12 @@ func TestNetIOCountersPerNic(t *testing.T) {
 
 func TestGetNetIOCountersAll(t *testing.T) {
 	n := []IOCountersStat{
-		IOCountersStat{
+		{
 			Name:        "a",
 			BytesRecv:   10,
 			PacketsRecv: 10,
 		},
-		IOCountersStat{
+		{
 			Name:        "b",
 			BytesRecv:   10,
 			PacketsRecv: 10,
