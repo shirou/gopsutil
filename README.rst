@@ -14,27 +14,22 @@ This is a port of psutil (http://pythonhosted.org/psutil/). The challenge is por
 psutil functions on some architectures.
 
 
-.. highlights:: Breaking Changes!
+Breaking Changes! golang 1.8 is required
+-------------------------------------------
 
-   Breaking changes is introduced at v2. See `issue 174 <https://github.com/shirou/gopsutil/issues/174>`_ .
-
-
-Migrating to v2
--------------------------
-
-On gopsutil itself, `v2migration.sh <https://github.com/shirou/gopsutil/blob/v2/v2migration.sh>`_ is used for migration. It can not be commonly used, but it may help you with migration.
+After v2.17.04, golang 1.8 is required to build.
 
 
 Tag semantics
-^^^^^^^^^^^^^^^
+-------------------------
 
 gopsutil tag policy is almost same as Semantic Versioning, but automatically increase like Ubuntu versioning.
 
-for example, `v2.16.10` means
+for example, `v2.17.04` means
 
 - v2: major version
-- 16: release year, 2016
-- 10: release month
+- 17: release year, 2017
+- 04: release month
 
 gopsutil aims to keep backwards-compatiblity until major version change.
 
