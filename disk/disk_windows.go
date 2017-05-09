@@ -84,9 +84,9 @@ func Partitions(all bool) ([]PartitionStat, error) {
 			if typeret == 0 {
 				return ret, syscall.GetLastError()
 			}
-			// 2: DRIVE_REMOVABLE 3: DRIVE_FIXED 5: DRIVE_CDROM
+			// 2: DRIVE_REMOVABLE 3: DRIVE_FIXED 4: DRIVE_REMOTE 5: DRIVE_CDROM
 
-			if typeret == 2 || typeret == 3 || typeret == 5 {
+			if typeret == 2 || typeret == 3 || typeret == 4 || typeret == 5 {
 				lpVolumeNameBuffer := make([]byte, 256)
 				lpVolumeSerialNumber := int64(0)
 				lpMaximumComponentLength := int64(0)
