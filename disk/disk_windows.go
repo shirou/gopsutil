@@ -103,7 +103,7 @@ func Partitions(all bool) ([]PartitionStat, error) {
 					uintptr(unsafe.Pointer(&lpFileSystemNameBuffer[0])),
 					uintptr(len(lpFileSystemNameBuffer)))
 				if driveret == 0 {
-					if typeret == 5 {
+					if typeret == 5 || typeret == 2 {
 						continue //device is not ready will happen if there is no disk in the drive
 					}
 					return ret, err
