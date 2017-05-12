@@ -8,11 +8,21 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/shirou/gopsutil/internal/common"
 )
 
-var ClocksPerSec = float64(128)
+var (
+	ClocksPerSec = float64(128)
+
+	// Path to various utilities
+	isainfoPath string
+	psrinfoPath string
+
+	lookupOnce sync.Once
+	pathErr    error // Shared error from any exec.LookPath() call
+)
 
 func init() {
 	getconf, err := exec.LookPath("/usr/bin/getconf")
@@ -29,35 +39,46 @@ func init() {
 	}
 }
 
+func lookupPaths() {
+	psrinfoPath, pathErr = exec.LookPath("/usr/sbin/psrinfo")
+	if pathErr != nil {
+		return
+	}
+
+	isainfoPath, pathErr = exec.LookPath("/usr/bin/isainfo")
+	if pathErr != nil {
+		return
+	}
+}
+
 func Times(percpu bool) ([]TimesStat, error) {
 	return []TimesStat{}, common.ErrNotImplementedError
 }
 
 func Info() ([]InfoStat, error) {
-	psrInfo, err := exec.LookPath("/usr/sbin/psrinfo")
-	if err != nil {
-		return nil, fmt.Errorf("cannot find psrinfo: %s", err)
+	lookupOnce.Do(lookupPaths)
+	if len(psrinfoPath) == 0 {
+		return nil, fmt.Errorf("cannot find psrinfo: %s", pathErr)
 	}
-	psrInfoOut, err := invoke.Command(psrInfo, "-p", "-v")
+	psrinfoOut, err := invoke.Command(psrinfoPath, "-p", "-v")
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute psrinfo: %s", err)
 	}
 
-	isaInfo, err := exec.LookPath("/usr/bin/isainfo")
-	if err != nil {
-		return nil, fmt.Errorf("cannot find isainfo: %s", err)
+	if len(isainfoPath) == 0 {
+		return nil, fmt.Errorf("cannot find isainfo: %s", pathErr)
 	}
-	isaInfoOut, err := invoke.Command(isaInfo, "-b", "-v")
+	isainfoOut, err := invoke.Command(isainfoPath, "-b", "-v")
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute isainfo: %s", err)
 	}
 
-	procs, err := parseProcessorInfo(string(psrInfoOut))
+	procs, err := parseProcessorInfo(string(psrinfoOut))
 	if err != nil {
 		return nil, fmt.Errorf("error parsing psrinfo output: %s", err)
 	}
 
-	flags, err := parseISAInfo(string(isaInfoOut))
+	flags, err := parseISAInfo(string(isainfoOut))
 	if err != nil {
 		return nil, fmt.Errorf("error parsing isainfo output: %s", err)
 	}
@@ -91,7 +112,7 @@ func parseISAInfo(cmdOutput string) ([]string, error) {
 	return flags, nil
 }
 
-var psrInfoMatch = regexp.MustCompile(`The physical processor has (?:([\d]+) virtual processor \(([\d]+)\)|([\d]+) cores and ([\d]+) virtual processors[^\n]+)\n(?:\s+ The core has.+\n)*\s+.+ \((\w+) ([\S]+) family (.+) model (.+) step (.+) clock (.+) MHz\)\n[\s]*(.*)`)
+var psrinfoMatch = regexp.MustCompile(`The physical processor has (?:([\d]+) virtual processor \(([\d]+)\)|([\d]+) cores and ([\d]+) virtual processors[^\n]+)\n(?:\s+ The core has.+\n)*\s+.+ \((\w+) ([\S]+) family (.+) model (.+) step (.+) clock (.+) MHz\)\n[\s]*(.*)`)
 
 const (
 	psrNumCoresOffset   = 1
@@ -106,7 +127,7 @@ const (
 )
 
 func parseProcessorInfo(cmdOutput string) ([]InfoStat, error) {
-	matches := psrInfoMatch.FindAllStringSubmatch(cmdOutput, -1)
+	matches := psrinfoMatch.FindAllStringSubmatch(cmdOutput, -1)
 
 	var infoStatCount int32
 	result := make([]InfoStat, 0, len(matches))
