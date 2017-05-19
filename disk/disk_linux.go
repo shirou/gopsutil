@@ -215,7 +215,7 @@ var fsTypeMap = map[int64]string{
 // physical devices only (e.g. hard disks, cd-rom drives, USB keys)
 // and ignore all others (e.g. memory partitions such as /dev/shm)
 func Partitions(all bool) ([]PartitionStat, error) {
-	filename := common.HostProc("mounts")
+	filename := common.HostProc("self/mounts")
 	lines, err := common.ReadLines(filename)
 	if err != nil {
 		return nil, err
