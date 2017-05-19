@@ -217,7 +217,7 @@ var fsTypeMap = map[int64]string{
 //
 // should use setmntent(3) but this implement use /etc/mtab file
 func Partitions(all bool) ([]PartitionStat, error) {
-	filename := common.HostEtc("mtab")
+	filename := common.HostProc("mounts")
 	lines, err := common.ReadLines(filename)
 	if err != nil {
 		return nil, err
