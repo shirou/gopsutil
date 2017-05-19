@@ -214,8 +214,6 @@ var fsTypeMap = map[int64]string{
 // Partitions returns disk partitions. If all is false, returns
 // physical devices only (e.g. hard disks, cd-rom drives, USB keys)
 // and ignore all others (e.g. memory partitions such as /dev/shm)
-//
-// should use setmntent(3) but this implement use /etc/mtab file
 func Partitions(all bool) ([]PartitionStat, error) {
 	filename := common.HostProc("mounts")
 	lines, err := common.ReadLines(filename)
