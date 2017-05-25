@@ -23,6 +23,26 @@ type Win32_Processor struct {
 	MaxClockSpeed             uint32
 }
 
+// Win32_PerfFormattedData_Counters_ProcessorInformation stores instance value of the perf counters
+type Win32_PerfFormattedData_Counters_ProcessorInformation struct {
+	Name                  string
+	PercentDPCTime        uint64
+	PercentIdleTime       uint64
+	PercentUserTime       uint64
+	PercentProcessorTime  uint64
+	PercentInterruptTime  uint64
+	PercentPriorityTime   uint64
+	PercentPrivilegedTime uint64
+	InterruptsPerSec      uint32
+	ProcessorFrequency    uint32
+	DPCRate               uint32
+}
+
+type Win32_PerfFormattedData_PerfOS_System struct {
+	Processes            uint32
+	ProcessorQueueLength uint32
+}
+
 // TODO: Get percpu
 func Times(percpu bool) ([]TimesStat, error) {
 	var ret []TimesStat
@@ -83,4 +103,22 @@ func Info() ([]InfoStat, error) {
 	}
 
 	return ret, nil
+}
+
+// PerfInfo returns the performance counter's instance value for ProcessorInformation.
+// Name property is the key by which overall, per cpu and per core metric is known.
+func PerfInfo() ([]Win32_PerfFormattedData_Counters_ProcessorInformation, error) {
+	var ret []Win32_PerfFormattedData_Counters_ProcessorInformation
+	q := wmi.CreateQuery(&ret, "")
+	err := wmi.Query(q, &ret)
+	return ret, err
+}
+
+// ProcInfo returns processes count and processor queue length in the system.
+// There is a single queue for processor even on multiprocessors systems.
+func ProcInfo() ([]Win32_PerfFormattedData_PerfOS_System, error) {
+	var ret []Win32_PerfFormattedData_PerfOS_System
+	q := wmi.CreateQuery(&ret, "")
+	err := wmi.Query(q, &ret)
+	return ret, err
 }
