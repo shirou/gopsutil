@@ -56,7 +56,7 @@ func GetDockerStat() ([]CgroupDockerStat, error) {
 // Generates a mapping of PIDs to container metadata.
 func GetContainerStatsByPID() (map[int32]ContainerStat, error) {
 	containerMap := make(map[int32]ContainerStat)
-	path, err := getCgroupMountPoint("cpuacct")
+	path, err := cgroupMountPoint("cpuacct")
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +133,10 @@ func GetDockerIDList() ([]string, error) {
 // If you use container via systemd.slice, you could use
 // containerID = docker-<container id>.scope and base=/sys/fs/cgroup/cpuacct/system.slice/
 func CgroupCPU(containerID string, base string) (*cpu.TimesStat, error) {
-	statfile := getCgroupFilePath(containerID, base, "cpuacct", "cpuacct.stat")
+	statfile, err := getCgroupFilePath(containerID, base, "cpuacct", "cpuacct.stat")
+	if err != nil {
+		return nil, err
+	}
 	lines, err := common.ReadLines(statfile)
 	if err != nil {
 		return nil, err
@@ -163,7 +166,7 @@ func CgroupCPU(containerID string, base string) (*cpu.TimesStat, error) {
 }
 
 func CgroupCPUDocker(containerID string) (*cpu.TimesStat, error) {
-	p, err := getCgroupMountPoint("cpuacct")
+	p, err := cgroupMountPoint("cpuacct")
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +175,10 @@ func CgroupCPUDocker(containerID string) (*cpu.TimesStat, error) {
 
 // CgroupPIDs retrieves the PIDs running within a given container.
 func CgroupPIDs(containerID string, base string) ([]int32, error) {
-	statfile := getCgroupFilePath(containerID, base, "cpuacct", "cgroup.procs")
+	statfile, err := getCgroupFilePath(containerID, base, "cpuacct", "cgroup.procs")
+	if err != nil {
+		return nil, err
+	}
 	lines, err := common.ReadLines(statfile)
 	if err != nil {
 		return nil, err
@@ -190,7 +196,7 @@ func CgroupPIDs(containerID string, base string) ([]int32, error) {
 }
 
 func CgroupPIDsDocker(containerID string) ([]int32, error) {
-	p, err := getCgroupMountPoint("cpuacct")
+	p, err := cgroupMountPoint("cpuacct")
 	if err != nil {
 		return []int32{}, err
 	}
@@ -198,7 +204,10 @@ func CgroupPIDsDocker(containerID string) ([]int32, error) {
 }
 
 func CgroupMem(containerID string, base string) (*CgroupMemStat, error) {
-	statfile := getCgroupFilePath(containerID, base, "memory", "memory.stat")
+	statfile, err := getCgroupFilePath(containerID, base, "memory", "memory.stat")
+	if err != nil {
+		return nil, err
+	}
 
 	// empty containerID means all cgroup
 	if len(containerID) == 0 {
@@ -294,7 +303,7 @@ func CgroupMem(containerID string, base string) (*CgroupMemStat, error) {
 }
 
 func CgroupMemDocker(containerID string) (*CgroupMemStat, error) {
-	p, err := getCgroupMountPoint("memory")
+	p, err := cgroupMountPoint("memory")
 	if err != nil {
 		return nil, err
 	}
@@ -307,24 +316,30 @@ func (m CgroupMemStat) String() string {
 }
 
 // getCgroupFilePath constructs file path to get targetted stats file.
-func getCgroupFilePath(containerID, base, target, file string) string {
+func getCgroupFilePath(containerID, base, target, file string) (string, error) {
 	if len(base) == 0 {
-		base, _ = getCgroupMountPoint(target)
+		base, _ = cgroupMountPoint(target)
 		base = filepath.Join(base, "docker")
 	}
 	statfile := filepath.Join(base, containerID, file)
 
 	if _, err := os.Stat(statfile); os.IsNotExist(err) {
-		base, _ = getCgroupMountPoint(target)
+		base, err = cgroupMountPoint(target)
+		if err != nil {
+			return "", err
+		}
 		statfile = filepath.Join(base, "system.slice", fmt.Sprintf("docker-%s.scope", containerID), file)
 	}
 
-	return statfile
+	return statfile, nil
 }
 
 // getCgroupMemFile reads a cgroup file and return the contents as uint64.
 func getCgroupMemFile(containerID, base, file string) (uint64, error) {
-	statfile := getCgroupFilePath(containerID, base, "memory", file)
+	statfile, err := getCgroupFilePath(containerID, base, "memory", file)
+	if err != nil {
+		return 0, err
+	}
 	lines, err := common.ReadLines(statfile)
 	if err != nil {
 		return 0, err
@@ -348,7 +363,7 @@ func getCgroupMemFile(containerID, base, file string) (uint64, error) {
 //	 cgroup /sys/fs/cgroup/hugetlb cgroup rw,relatime,hugetlb 0 0
 // examples of target would be:
 // blkio  cpu  cpuacct  cpuset  devices  freezer  hugetlb  memory  net_cls  net_prio  perf_event  pids  systemd
-func getCgroupMountPoint(target string) (string, error) {
+func cgroupMountPoint(target string) (string, error) {
 	file, err := os.Open("/proc/mounts")
 	if err != nil {
 		return "", err
