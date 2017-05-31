@@ -8,8 +8,24 @@ import (
 	"time"
 )
 
-func TestCpu_times(t *testing.T) {
+func TestCpu_times_false(t *testing.T) {
 	v, err := Times(false)
+	if err != nil {
+		t.Errorf("error %v", err)
+	}
+	if len(v) == 0 {
+		t.Error("could not get CPUs ", err)
+	}
+	empty := TimesStat{}
+	for _, vv := range v {
+		if vv == empty {
+			t.Errorf("could not get CPU User: %v", vv)
+		}
+	}
+}
+
+func TestCpu_times_true(t *testing.T) {
+	v, err := Times(true)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}

@@ -108,3 +108,57 @@ func TestParseProcessorInfo(t *testing.T) {
 		}
 	}
 }
+
+func TestTimesPerCPU(t *testing.T) {
+	perCPUStats, err := TimesPerCPU()
+	if err != nil {
+		t.Fatalf("Unable to get per CPU stats: %v", err)
+	}
+
+	for _, perCPU := range perCPUStats {
+		if perCPU.CPUID != perCPU.TimesCPUStatVM.CPUID ||
+			perCPU.TimesCPUStatVM.CPUID != perCPU.TimesCPUStatSys.CPUID ||
+			perCPU.TimesCPUStatSys.CPUID != perCPU.TimesCPUStatInterrupt.CPUID {
+			t.Errorf("CPU IDs should be identical: %d %d %d %d", perCPU.CPUID, perCPU.TimesCPUStatSys.CPUID, perCPU.TimesCPUStatSys.CPUID, perCPU.TimesCPUStatInterrupt.CPUID)
+		}
+	}
+}
+
+func TestTimesPerCPUSys(t *testing.T) {
+	cpuSysStats, err := TimesPerCPUSys()
+	if err != nil {
+		t.Fatalf("Unable to get CPU sys stats: %v", err)
+	}
+
+	for _, cpuSys := range cpuSysStats {
+		if cpuSys.CPUTimeIdle == 0 {
+			t.Errorf("CPU Idle should be non-zero")
+		}
+	}
+}
+
+func TestTimesPerCPUVM(t *testing.T) {
+	cpuVMStats, err := TimesPerCPUVM()
+	if err != nil {
+		t.Fatalf("Unable to get CPU VM stats: %v", err)
+	}
+
+	for _, cpuVM := range cpuVMStats {
+		if cpuVM.PagesZeroFilledOnDemand == 0 {
+			t.Errorf("zfod should be non-zero")
+		}
+	}
+}
+
+func TestTimesZone(t *testing.T) {
+	zoneStats, err := TimesZone()
+	if err != nil {
+		t.Fatalf("Unable to get zone stats: %v", err)
+	}
+
+	for _, zoneMetrics := range zoneStats {
+		if zoneMetrics.Name == "" {
+			t.Errorf("zone name can't be empty")
+		}
+	}
+}
