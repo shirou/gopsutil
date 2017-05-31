@@ -3,11 +3,12 @@
 package docker
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
-	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -55,7 +56,10 @@ func GetDockerStat() ([]CgroupDockerStat, error) {
 // Generates a mapping of PIDs to container metadata.
 func GetContainerStatsByPID() (map[int32]ContainerStat, error) {
 	containerMap := make(map[int32]ContainerStat)
-	path := common.HostSys("fs/cgroup/cpuacct")
+	path, err := getCgroupMountPoint("cpuacct")
+	if err != nil {
+		return nil, err
+	}
 	if common.PathExists(path) {
 		contents, err := common.ListDirectory(path)
 		if err != nil {
@@ -158,8 +162,12 @@ func CgroupCPU(containerID string, base string) (*cpu.TimesStat, error) {
 	return ret, nil
 }
 
-func CgroupCPUDocker(containerid string) (*cpu.TimesStat, error) {
-	return CgroupCPU(containerid, common.HostSys("fs/cgroup/cpuacct/docker"))
+func CgroupCPUDocker(containerID string) (*cpu.TimesStat, error) {
+	p, err := getCgroupMountPoint("cpuacct")
+	if err != nil {
+		return nil, err
+	}
+	return CgroupCPU(containerID, filepath.Join(p, "docker"))
 }
 
 // CgroupPIDs retrieves the PIDs running within a given container.
@@ -182,7 +190,11 @@ func CgroupPIDs(containerID string, base string) ([]int32, error) {
 }
 
 func CgroupPIDsDocker(containerID string) ([]int32, error) {
-	return CgroupPIDs(containerID, common.HostSys("fs/cgroup/cpuacct/docker"))
+	p, err := getCgroupMountPoint("cpuacct")
+	if err != nil {
+		return []int32{}, err
+	}
+	return CgroupPIDs(containerID, filepath.Join(p, "docker"))
 }
 
 func CgroupMem(containerID string, base string) (*CgroupMemStat, error) {
@@ -282,7 +294,11 @@ func CgroupMem(containerID string, base string) (*CgroupMemStat, error) {
 }
 
 func CgroupMemDocker(containerID string) (*CgroupMemStat, error) {
-	return CgroupMem(containerID, common.HostSys("fs/cgroup/memory/docker"))
+	p, err := getCgroupMountPoint("memory")
+	if err != nil {
+		return nil, err
+	}
+	return CgroupMem(containerID, filepath.Join(p, "docker"))
 }
 
 func (m CgroupMemStat) String() string {
@@ -293,13 +309,14 @@ func (m CgroupMemStat) String() string {
 // getCgroupFilePath constructs file path to get targetted stats file.
 func getCgroupFilePath(containerID, base, target, file string) string {
 	if len(base) == 0 {
-		base = common.HostSys(fmt.Sprintf("fs/cgroup/%s/docker", target))
+		base, _ = getCgroupMountPoint(target)
+		base = filepath.Join(base, "docker")
 	}
-	statfile := path.Join(base, containerID, file)
+	statfile := filepath.Join(base, containerID, file)
 
 	if _, err := os.Stat(statfile); os.IsNotExist(err) {
-		statfile = path.Join(
-			common.HostSys(fmt.Sprintf("fs/cgroup/%s/system.slice", target)), "docker-"+containerID+".scope", file)
+		base, _ = getCgroupMountPoint(target)
+		statfile = filepath.Join(base, "system.slice", fmt.Sprintf("docker-%s.scope", containerID), file)
 	}
 
 	return statfile
@@ -316,4 +333,56 @@ func getCgroupMemFile(containerID, base, file string) (uint64, error) {
 		return 0, fmt.Errorf("wrong format file: %s", statfile)
 	}
 	return strconv.ParseUint(lines[0], 10, 64)
+}
+
+// function to get the mount point of cgroup. by default it should be under /sys/fs/cgroup but
+// it could be mounted anywhere else if manually defined. Example cgroup entries in /proc/mounts would be
+//	 cgroup /sys/fs/cgroup/cpuset cgroup rw,relatime,cpuset 0 0
+//	 cgroup /sys/fs/cgroup/cpu cgroup rw,relatime,cpu 0 0
+//	 cgroup /sys/fs/cgroup/cpuacct cgroup rw,relatime,cpuacct 0 0
+//	 cgroup /sys/fs/cgroup/memory cgroup rw,relatime,memory 0 0
+//	 cgroup /sys/fs/cgroup/devices cgroup rw,relatime,devices 0 0
+//	 cgroup /sys/fs/cgroup/freezer cgroup rw,relatime,freezer 0 0
+//	 cgroup /sys/fs/cgroup/blkio cgroup rw,relatime,blkio 0 0
+//	 cgroup /sys/fs/cgroup/perf_event cgroup rw,relatime,perf_event 0 0
+//	 cgroup /sys/fs/cgroup/hugetlb cgroup rw,relatime,hugetlb 0 0
+// examples of target would be:
+// blkio  cpu  cpuacct  cpuset  devices  freezer  hugetlb  memory  net_cls  net_prio  perf_event  pids  systemd
+func getCgroupMountPoint(target string) (string, error) {
+	file, err := os.Open("/proc/mounts")
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	cgroups := []string{}
+	// get all cgroup entries
+	for scanner.Scan() {
+		text := scanner.Text()
+		if strings.HasPrefix(text, "cgroup ") {
+			cgroups = append(cgroups, text)
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return "", err
+	}
+	// old cgroup style
+	if len(cgroups) == 1 {
+		tokens := strings.Split(cgroups[0], " ")
+		return tokens[1], nil
+	}
+
+	var candidate string
+	for _, cgroup := range cgroups {
+		tokens := strings.Split(cgroup, " ")
+		// see if the target is the suffix of the mount directory
+		if strings.Contains(tokens[1], target) {
+			candidate = tokens[1]
+		}
+	}
+	if candidate == "" {
+		return candidate, fmt.Errorf("Mount point for cgroup %s is not found!", target)
+	}
+	return candidate, nil
 }
