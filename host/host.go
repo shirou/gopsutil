@@ -6,10 +6,7 @@ import (
 	"github.com/shirou/gopsutil/internal/common"
 )
 
-var (
-	invoke         common.Invoker
-	cachedBootTime = uint64(0)
-)
+var invoke common.Invoker
 
 func init() {
 	invoke = common.Invoke{}
