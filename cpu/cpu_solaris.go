@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os/exec"
 	"regexp"
 	"sort"
 	"strconv"
-	"sync"
 	"time"
+
+	"github.com/shirou/gopsutil/internal/common"
 )
 
 type TimesZoneStat struct {
@@ -194,63 +194,13 @@ type TimesCPUStat struct {
 	TimesCPUStatVM
 }
 
-var (
-	// Path to various utilities
-	isainfoPath string
-	kstatPath   string
-	psrinfoPath string
-
-	// inZone is true when it has been detected that a process is running inside
-	// of an Illumos zone (see zones(5)).
-	inZone bool
-
-	// Only stat(2) the locations of binaries once.  All exported interfaces that
-	// shell out to a binary must call through and check that that paths have been
-	// resolved.
-	lookupOnce sync.Once
-	pathErr    error // Shared error from any exec.LookPath() call
-)
-
-func init() {
-	// ignore errors
-	switch true {
-	default:
-		zonenamePath, err := exec.LookPath("/usr/bin/zonename")
-		if err != nil {
-			break
-		}
-
-		out, err := invoke.Command(zonenamePath)
-		if err != nil {
-			break
-		}
-
-		if string(out) != "global" {
-			inZone = true
-		}
-	}
-}
-
-func lookupPaths() {
-	psrinfoPath, pathErr = exec.LookPath("/usr/sbin/psrinfo")
-	if pathErr != nil {
-		return
-	}
-
-	isainfoPath, pathErr = exec.LookPath("/usr/bin/isainfo")
-	if pathErr != nil {
-		return
-	}
-
-	kstatPath, pathErr = exec.LookPath("/usr/bin/kstat")
-	if pathErr != nil {
-		return
-	}
-}
-
 func Times(perCPU bool) ([]TimesStat, error) {
 	var ret []TimesStat
-	var err error
+
+	inZone, err := common.InZone()
+	if err != nil {
+		return nil, err
+	}
 
 	switch {
 	case perCPU:
@@ -318,12 +268,6 @@ func Times(perCPU bool) ([]TimesStat, error) {
 // TimesPerCPU returns the CPU time spent for each processor.  This information
 // is extremely granular (and useful!).
 func TimesPerCPU() ([]TimesCPUStat, error) {
-	lookupOnce.Do(lookupPaths)
-	if len(kstatPath) == 0 {
-		return nil, fmt.Errorf("cannot find kstat: %v", pathErr)
-	}
-
-	// Make three kstat(1) calls: intrstat, sys, vm
 	interruptStats, err := TimesPerCPUInterrupt()
 	if err != nil {
 		return nil, fmt.Errorf("cannot get CPU interrupt stats: %v", err)
@@ -357,9 +301,9 @@ func TimesPerCPU() ([]TimesCPUStat, error) {
 }
 
 func TimesPerCPUInterrupt() ([]TimesCPUStatInterrupt, error) {
-	lookupOnce.Do(lookupPaths)
-	if len(kstatPath) == 0 {
-		return nil, fmt.Errorf("cannot find kstat: %s", pathErr)
+	kstatPath, err := common.KStatPath()
+	if err != nil {
+		return nil, fmt.Errorf("cannot find kstat(1M): %v", err)
 	}
 
 	kstatJSON, err := invoke.Command(kstatPath, "-jm", "cpu", "-n", "intrstat")
@@ -425,9 +369,9 @@ func TimesPerCPUInterrupt() ([]TimesCPUStatInterrupt, error) {
 }
 
 func TimesPerCPUSys() ([]TimesCPUStatSys, error) {
-	lookupOnce.Do(lookupPaths)
-	if len(kstatPath) == 0 {
-		return nil, fmt.Errorf("cannot find kstat: %s", pathErr)
+	kstatPath, err := common.KStatPath()
+	if err != nil {
+		return nil, fmt.Errorf("cannot find kstat(1M): %v", err)
 	}
 
 	kstatJSON, err := invoke.Command(kstatPath, "-jm", "cpu", "-n", "sys")
@@ -458,9 +402,9 @@ func TimesPerCPUSys() ([]TimesCPUStatSys, error) {
 }
 
 func TimesPerCPUVM() ([]TimesCPUStatVM, error) {
-	lookupOnce.Do(lookupPaths)
-	if len(kstatPath) == 0 {
-		return nil, fmt.Errorf("cannot find kstat: %s", pathErr)
+	kstatPath, err := common.KStatPath()
+	if err != nil {
+		return nil, fmt.Errorf("cannot find kstat(1M): %v", err)
 	}
 
 	kstatJSON, err := invoke.Command(kstatPath, "-jm", "cpu", "-n", "vm")
@@ -493,7 +437,6 @@ func TimesPerCPUVM() ([]TimesCPUStatVM, error) {
 // TimesCPU returns the CPU time spent on all processors.  This information is
 // extremely granular (and useful!).
 func TimesCPU() ([]TimesCPUStat, error) {
-	lookupOnce.Do(lookupPaths)
 	allTimes, err := TimesPerCPU()
 	if err != nil {
 		return nil, err
@@ -506,14 +449,14 @@ func TimesCPU() ([]TimesCPUStat, error) {
 // can't get per-CPU accounting.  Instead, report back an accurate use of CPU
 // time for the given zone(s) but only report one CPU, the "zoneN" CPU.
 func TimesZone() ([]TimesZoneStat, error) {
-	lookupOnce.Do(lookupPaths)
-	if len(kstatPath) == 0 {
-		return nil, fmt.Errorf("cannot find kstat: %s", pathErr)
+	kstatPath, err := common.KStatPath()
+	if err != nil {
+		return nil, fmt.Errorf("cannot find kstat(1M): %v", err)
 	}
 
 	kstatJSON, err := invoke.Command(kstatPath, "-jm", "zones")
 	if err != nil {
-		return nil, fmt.Errorf("cannot execute kstat: %v", err)
+		return nil, fmt.Errorf("cannot execute kstat(1M): %v", err)
 	}
 
 	type _timesZoneStat struct {
@@ -541,21 +484,14 @@ func TimesZone() ([]TimesZoneStat, error) {
 }
 
 func Info() ([]InfoStat, error) {
-	lookupOnce.Do(lookupPaths)
-	if len(psrinfoPath) == 0 {
-		return nil, fmt.Errorf("cannot find psrinfo: %s", pathErr)
-	}
-	psrinfoOut, err := invoke.Command(psrinfoPath, "-p", "-v")
+	psrinfoPath, err := common.ProcessorInfoPath()
 	if err != nil {
-		return nil, fmt.Errorf("cannot execute psrinfo: %s", err)
+		return nil, fmt.Errorf("cannot find psrinfo(1M): %v", err)
 	}
 
-	if len(isainfoPath) == 0 {
-		return nil, fmt.Errorf("cannot find isainfo: %s", pathErr)
-	}
-	isainfoOut, err := invoke.Command(isainfoPath, "-b", "-v")
+	psrinfoOut, err := invoke.Command(psrinfoPath, "-p", "-v")
 	if err != nil {
-		return nil, fmt.Errorf("cannot execute isainfo: %s", err)
+		return nil, fmt.Errorf("cannot execute psrinfo(1M): %s", err)
 	}
 
 	procs, err := parseProcessorInfo(string(psrinfoOut))
@@ -563,9 +499,19 @@ func Info() ([]InfoStat, error) {
 		return nil, fmt.Errorf("error parsing psrinfo output: %s", err)
 	}
 
+	isainfoPath, err := common.ISAInfoPath()
+	if err != nil {
+		return nil, fmt.Errorf("cannot find isainfo(1): %v", err)
+	}
+
+	isainfoOut, err := invoke.Command(isainfoPath, "-b", "-v")
+	if err != nil {
+		return nil, fmt.Errorf("cannot execute isainfo(1): %s", err)
+	}
+
 	flags, err := parseISAInfo(string(isainfoOut))
 	if err != nil {
-		return nil, fmt.Errorf("error parsing isainfo output: %s", err)
+		return nil, fmt.Errorf("error parsing isainfo(1) output: %s", err)
 	}
 
 	result := make([]InfoStat, 0, len(flags))
