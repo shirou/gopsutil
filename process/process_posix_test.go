@@ -4,15 +4,16 @@ package process
 
 import (
 	"os"
-	"syscall"
 	"testing"
+
+	"golang.org/x/sys/unix"
 )
 
 func Test_SendSignal(t *testing.T) {
 	checkPid := os.Getpid()
 
 	p, _ := NewProcess(int32(checkPid))
-	err := p.SendSignal(syscall.SIGCONT)
+	err := p.SendSignal(unix.SIGCONT)
 	if err != nil {
 		t.Errorf("send signal %v", err)
 	}

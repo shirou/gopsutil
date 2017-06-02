@@ -14,12 +14,12 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"syscall"
 
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/internal/common"
 	"github.com/shirou/gopsutil/net"
+	"golang.org/x/sys/unix"
 )
 
 var (
@@ -857,7 +857,7 @@ func (p *Process) fillFromStat() (string, int32, *cpu.TimesStat, int64, int32, e
 
 	//	p.Nice = mustParseInt32(fields[18])
 	// use syscall instead of parse Stat file
-	snice, _ := syscall.Getpriority(PrioProcess, int(pid))
+	snice, _ := unix.Getpriority(PrioProcess, int(pid))
 	nice := int32(snice) // FIXME: is this true?
 
 	return terminal, int32(ppid), cpuTimes, createTime, nice, nil

@@ -4,12 +4,11 @@ package disk
 
 import (
 	"bytes"
-	"syscall"
 	"unsafe"
 
 	"github.com/StackExchange/wmi"
-
 	"github.com/shirou/gopsutil/internal/common"
+	"golang.org/x/sys/windows"
 )
 
 var (
@@ -43,7 +42,7 @@ func Usage(path string) (*UsageStat, error) {
 	lpTotalNumberOfBytes := int64(0)
 	lpTotalNumberOfFreeBytes := int64(0)
 	diskret, _, err := procGetDiskFreeSpaceExW.Call(
-		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(path))),
+		uintptr(unsafe.Pointer(windows.StringToUTF16Ptr(path))),
 		uintptr(unsafe.Pointer(&lpFreeBytesAvailable)),
 		uintptr(unsafe.Pointer(&lpTotalNumberOfBytes)),
 		uintptr(unsafe.Pointer(&lpTotalNumberOfFreeBytes)))
@@ -79,10 +78,10 @@ func Partitions(all bool) ([]PartitionStat, error) {
 			if path == "A:" || path == "B:" { // skip floppy drives
 				continue
 			}
-			typepath, _ := syscall.UTF16PtrFromString(path)
+			typepath, _ := windows.UTF16PtrFromString(path)
 			typeret, _, _ := procGetDriveType.Call(uintptr(unsafe.Pointer(typepath)))
 			if typeret == 0 {
-				return ret, syscall.GetLastError()
+				return ret, windows.GetLastError()
 			}
 			// 2: DRIVE_REMOVABLE 3: DRIVE_FIXED 4: DRIVE_REMOTE 5: DRIVE_CDROM
 
@@ -92,7 +91,7 @@ func Partitions(all bool) ([]PartitionStat, error) {
 				lpMaximumComponentLength := int64(0)
 				lpFileSystemFlags := int64(0)
 				lpFileSystemNameBuffer := make([]byte, 256)
-				volpath, _ := syscall.UTF16PtrFromString(string(v) + ":/")
+				volpath, _ := windows.UTF16PtrFromString(string(v) + ":/")
 				driveret, _, err := provGetVolumeInformation.Call(
 					uintptr(unsafe.Pointer(volpath)),
 					uintptr(unsafe.Pointer(&lpVolumeNameBuffer[0])),

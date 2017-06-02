@@ -7,7 +7,8 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
-	"syscall"
+
+	"golang.org/x/sys/unix"
 
 	"github.com/shirou/gopsutil/internal/common"
 )
@@ -386,7 +387,7 @@ func GetDiskSerialNumber(name string) string {
 	return ""
 }
 
-func getFsType(stat syscall.Statfs_t) string {
+func getFsType(stat unix.Statfs_t) string {
 	t := int64(stat.Type)
 	ret, ok := fsTypeMap[t]
 	if !ok {

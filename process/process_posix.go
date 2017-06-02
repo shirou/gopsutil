@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+
+	"golang.org/x/sys/unix"
 )
 
 // POSIX
@@ -50,8 +52,8 @@ func getTerminalMap() (map[uint64]string, error) {
 	}
 
 	for _, name := range termfiles {
-		stat := syscall.Stat_t{}
-		if err = syscall.Stat(name, &stat); err != nil {
+		stat := unix.Stat_t{}
+		if err = unix.Stat(name, &stat); err != nil {
 			return nil, err
 		}
 		rdev := uint64(stat.Rdev)
@@ -60,7 +62,7 @@ func getTerminalMap() (map[uint64]string, error) {
 	return ret, nil
 }
 
-// SendSignal sends a syscall.Signal to the process.
+// SendSignal sends a unix.Signal to the process.
 // Currently, SIGSTOP, SIGCONT, SIGTERM and SIGKILL are supported.
 func (p *Process) SendSignal(sig syscall.Signal) error {
 	process, err := os.FindProcess(int(p.Pid))
@@ -78,22 +80,22 @@ func (p *Process) SendSignal(sig syscall.Signal) error {
 
 // Suspend sends SIGSTOP to the process.
 func (p *Process) Suspend() error {
-	return p.SendSignal(syscall.SIGSTOP)
+	return p.SendSignal(unix.SIGSTOP)
 }
 
 // Resume sends SIGCONT to the process.
 func (p *Process) Resume() error {
-	return p.SendSignal(syscall.SIGCONT)
+	return p.SendSignal(unix.SIGCONT)
 }
 
 // Terminate sends SIGTERM to the process.
 func (p *Process) Terminate() error {
-	return p.SendSignal(syscall.SIGTERM)
+	return p.SendSignal(unix.SIGTERM)
 }
 
 // Kill sends SIGKILL to the process.
 func (p *Process) Kill() error {
-	return p.SendSignal(syscall.SIGKILL)
+	return p.SendSignal(unix.SIGKILL)
 }
 
 // Username returns a username of the process.
