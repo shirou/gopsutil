@@ -7,6 +7,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"sync/atomic"
 	"syscall"
 	"time"
 	"unsafe"
@@ -135,16 +136,21 @@ func bootTime(up uint64) uint64 {
 	return uint64(time.Now().Unix()) - up
 }
 
+// cachedBootTime must be accessed via atomic.Load/StoreUint64
+var cachedBootTime uint64
+
 func BootTime() (uint64, error) {
-	if cachedBootTime != 0 {
-		return cachedBootTime, nil
+	t := atomic.LoadUint64(&cachedBootTime)
+	if t != 0 {
+		return t, nil
 	}
 	up, err := Uptime()
 	if err != nil {
 		return 0, err
 	}
-	cachedBootTime = bootTime(up)
-	return cachedBootTime, nil
+	t = bootTime(up)
+	atomic.StoreUint64(&cachedBootTime, t)
+	return t, nil
 }
 
 func PlatformInformation() (platform string, family string, version string, err error) {
