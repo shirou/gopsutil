@@ -6,15 +6,15 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"syscall"
 	"time"
 	"unsafe"
 
 	"github.com/StackExchange/wmi"
-	"github.com/shirou/w32"
-
 	cpu "github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/internal/common"
 	net "github.com/shirou/gopsutil/net"
+	"github.com/shirou/w32"
 	"golang.org/x/sys/windows"
 )
 
@@ -430,7 +430,7 @@ func getProcessMemoryInfo(h windows.Handle, mem *PROCESS_MEMORY_COUNTERS) (err e
 		if e1 != 0 {
 			err = error(e1)
 		} else {
-			err = windows.EINVAL
+			err = syscall.EINVAL
 		}
 	}
 	return
