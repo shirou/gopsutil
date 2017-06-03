@@ -30,6 +30,8 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 		if err != nil {
 			return ret, err
 		}
+
+		// https://github.com/torvalds/linux/blob/master/Documentation/filesystems/proc.txt#L874
 		switch key {
 		case "MemTotal":
 			ret.Total = t * 1024
