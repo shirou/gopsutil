@@ -20,7 +20,7 @@ type TimesZoneStat struct {
 	BootTime         time.Time     `json:"boot_time"`       // Boot time in seconds since 1970
 	CreateTime       float64       `json:"crtime"`          // creation time (from gethrtime())
 	ForkFailCap      int64         `json:"forkfail_cap"`    // hit an rctl cap
-	ForkFailMisc     int64         `josn:"forkfail_misc"`   // misc. other error
+	ForkFailMisc     int64         `json:"forkfail_misc"`   // misc. other error
 	ForkFailNoMem    int64         `json:"forkfail_nomem"`  // as_dup/memory error
 	ForkFailNoProc   int64         `json:"forkfail_noproc"` // get proc/lwp error
 	InitPID          int           `json:"init_pid"`        // PID of "one true" init for current zone
@@ -127,7 +127,7 @@ type TimesCPUStatSys struct {
 	PathnameLookups           uint64        `json:"namei"`            // pathname lookups
 	PhysicalReads             uint64        `json:"phread"`           // raw I/O reads
 	PhysicalWrites            uint64        `json:"phwrite"`          // raw I/O writes
-	ProcTableOverflows        uint64        `josn:"procovf"`          // proc table overflows
+	ProcTableOverflows        uint64        `json:"procovf"`          // proc table overflows
 	RDRWBytes                 uint64        `json:"writech"`          // bytes written by rdwr()
 	RWLockReadFails           uint64        `json:"rw_rdfails"`       // rw reader failures
 	RWLockWriteFails          uint64        `json:"rw_wrfails"`       // rw writer failures
