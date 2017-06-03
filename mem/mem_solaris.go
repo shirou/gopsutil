@@ -91,6 +91,7 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 		} else {
 			usedPct = usedPct * 100.0
 		}
+
 		ret := &VirtualMemoryStat{
 			Total:        uint64(vmStat.PhysicalCap),
 			Available:    uint64(vmStat.PhysicalCap - vmStat.RSS),
@@ -126,6 +127,37 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 }
 
 func SwapMemory() (*SwapMemoryStat, error) {
+	inZone, err := common.InZone()
+	if err != nil {
+		return nil, err
+	}
+
+	if inZone {
+		vmStat, err := VirtualMemoryZone()
+		if err != nil {
+			return nil, err
+		}
+
+		usedPct := float64(vmStat.Swap) / float64(vmStat.SwapCap)
+		if math.IsNaN(usedPct) {
+			usedPct = 0.0
+		} else {
+			usedPct = usedPct * 100.0
+		}
+
+		ret := &SwapMemoryStat{
+			Total:       uint64(vmStat.SwapCap),
+			Used:        uint64(vmStat.Swap),
+			Free:        uint64(vmStat.SwapCap - vmStat.Swap),
+			UsedPercent: usedPct,
+			// FIXME(seanc@): Number of pages swapped in/out since the last
+			// measurement.
+			Sin:  0.0,
+			Sout: 0.0,
+		}
+		return ret, nil
+	}
+
 	return nil, common.ErrNotImplementedError
 }
 
