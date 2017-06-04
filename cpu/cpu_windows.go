@@ -4,12 +4,11 @@ package cpu
 
 import (
 	"fmt"
-	"syscall"
 	"unsafe"
 
 	"github.com/StackExchange/wmi"
-
 	"github.com/shirou/gopsutil/internal/common"
+	"golang.org/x/sys/windows"
 )
 
 type Win32_Processor struct {
@@ -35,7 +34,7 @@ func Times(percpu bool) ([]TimesStat, error) {
 		uintptr(unsafe.Pointer(&lpKernelTime)),
 		uintptr(unsafe.Pointer(&lpUserTime)))
 	if r == 0 {
-		return ret, syscall.GetLastError()
+		return ret, windows.GetLastError()
 	}
 
 	LOT := float64(0.0000001)

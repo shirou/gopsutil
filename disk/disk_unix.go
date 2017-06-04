@@ -2,11 +2,11 @@
 
 package disk
 
-import "syscall"
+import "golang.org/x/sys/unix"
 
 func Usage(path string) (*UsageStat, error) {
-	stat := syscall.Statfs_t{}
-	err := syscall.Statfs(path, &stat)
+	stat := unix.Statfs_t{}
+	err := unix.Statfs(path, &stat)
 	if err != nil {
 		return nil, err
 	}

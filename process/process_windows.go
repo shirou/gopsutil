@@ -11,11 +11,11 @@ import (
 	"unsafe"
 
 	"github.com/StackExchange/wmi"
-	"github.com/shirou/w32"
-
 	cpu "github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/internal/common"
 	net "github.com/shirou/gopsutil/net"
+	"github.com/shirou/w32"
+	"golang.org/x/sys/windows"
 )
 
 const (
@@ -24,7 +24,7 @@ const (
 )
 
 var (
-	modpsapi                 = syscall.NewLazyDLL("psapi.dll")
+	modpsapi                 = windows.NewLazyDLL("psapi.dll")
 	procGetProcessMemoryInfo = modpsapi.NewProc("GetProcessMemoryInfo")
 )
 
@@ -298,7 +298,7 @@ func NewProcess(pid int32) (*Process, error) {
 	return p, nil
 }
 
-func (p *Process) SendSignal(sig syscall.Signal) error {
+func (p *Process) SendSignal(sig windows.Signal) error {
 	return common.ErrNotImplementedError
 }
 
@@ -316,7 +316,7 @@ func (p *Process) Terminate() error {
 	w32.CloseHandle(proc)
 
 	if ret == false {
-		return syscall.GetLastError()
+		return windows.GetLastError()
 	} else {
 		return nil
 	}
@@ -329,23 +329,23 @@ func (p *Process) Kill() error {
 func (p *Process) getFromSnapProcess(pid int32) (int32, int32, string, error) {
 	snap := w32.CreateToolhelp32Snapshot(w32.TH32CS_SNAPPROCESS, uint32(pid))
 	if snap == 0 {
-		return 0, 0, "", syscall.GetLastError()
+		return 0, 0, "", windows.GetLastError()
 	}
 	defer w32.CloseHandle(snap)
 	var pe32 w32.PROCESSENTRY32
 	pe32.DwSize = uint32(unsafe.Sizeof(pe32))
 	if w32.Process32First(snap, &pe32) == false {
-		return 0, 0, "", syscall.GetLastError()
+		return 0, 0, "", windows.GetLastError()
 	}
 
 	if pe32.Th32ProcessID == uint32(pid) {
-		szexe := syscall.UTF16ToString(pe32.SzExeFile[:])
+		szexe := windows.UTF16ToString(pe32.SzExeFile[:])
 		return int32(pe32.Th32ParentProcessID), int32(pe32.CntThreads), szexe, nil
 	}
 
 	for w32.Process32Next(snap, &pe32) {
 		if pe32.Th32ProcessID == uint32(pid) {
-			szexe := syscall.UTF16ToString(pe32.SzExeFile[:])
+			szexe := windows.UTF16ToString(pe32.SzExeFile[:])
 			return int32(pe32.Th32ParentProcessID), int32(pe32.CntThreads), szexe, nil
 		}
 	}
@@ -388,22 +388,22 @@ func getProcInfo(pid int32) (*SystemProcessInformation, error) {
 		uintptr(unsafe.Pointer(&bufferSize)),
 		uintptr(unsafe.Pointer(&bufferSize)))
 	if ret != 0 {
-		return nil, syscall.GetLastError()
+		return nil, windows.GetLastError()
 	}
 
 	return &sysProcInfo, nil
 }
 
-func getRusage(pid int32) (*syscall.Rusage, error) {
-	var CPU syscall.Rusage
+func getRusage(pid int32) (*windows.Rusage, error) {
+	var CPU windows.Rusage
 
-	c, err := syscall.OpenProcess(syscall.PROCESS_QUERY_INFORMATION, false, uint32(pid))
+	c, err := windows.OpenProcess(windows.PROCESS_QUERY_INFORMATION, false, uint32(pid))
 	if err != nil {
 		return nil, err
 	}
-	defer syscall.CloseHandle(c)
+	defer windows.CloseHandle(c)
 
-	if err := syscall.GetProcessTimes(c, &CPU.CreationTime, &CPU.ExitTime, &CPU.KernelTime, &CPU.UserTime); err != nil {
+	if err := windows.GetProcessTimes(c, &CPU.CreationTime, &CPU.ExitTime, &CPU.KernelTime, &CPU.UserTime); err != nil {
 		return nil, err
 	}
 
@@ -412,11 +412,11 @@ func getRusage(pid int32) (*syscall.Rusage, error) {
 
 func getMemoryInfo(pid int32) (PROCESS_MEMORY_COUNTERS, error) {
 	var mem PROCESS_MEMORY_COUNTERS
-	c, err := syscall.OpenProcess(syscall.PROCESS_QUERY_INFORMATION, false, uint32(pid))
+	c, err := windows.OpenProcess(windows.PROCESS_QUERY_INFORMATION, false, uint32(pid))
 	if err != nil {
 		return mem, err
 	}
-	defer syscall.CloseHandle(c)
+	defer windows.CloseHandle(c)
 	if err := getProcessMemoryInfo(c, &mem); err != nil {
 		return mem, err
 	}
@@ -424,7 +424,7 @@ func getMemoryInfo(pid int32) (PROCESS_MEMORY_COUNTERS, error) {
 	return mem, err
 }
 
-func getProcessMemoryInfo(h syscall.Handle, mem *PROCESS_MEMORY_COUNTERS) (err error) {
+func getProcessMemoryInfo(h windows.Handle, mem *PROCESS_MEMORY_COUNTERS) (err error) {
 	r1, _, e1 := syscall.Syscall(procGetProcessMemoryInfo.Addr(), 3, uintptr(h), uintptr(unsafe.Pointer(mem)), uintptr(unsafe.Sizeof(*mem)))
 	if r1 == 0 {
 		if e1 != 0 {
