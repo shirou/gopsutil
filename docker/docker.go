@@ -59,10 +59,10 @@ type CgroupDockerStat struct {
 }
 
 type ContainerStat struct {
-	Type     string         `json:"type"`
-	Name     string         `json:"name"`
-	ID       string         `json:"id"`
-	Image    string         `json:"image"`
-	CPULimit float64        `json:"cpuLimit"`
-	MemStat  *CgroupMemStat `json:"memStat"`
+	Type     string  `json:"type"`
+	Name     string  `json:"name"`
+	ID       string  `json:"id"`
+	Image    string  `json:"image"`
+	CPULimit float64 `json:"cpuLimit"`
+	MemLimit uint64  `json:"memStat"`
 }

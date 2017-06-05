@@ -94,7 +94,7 @@ func GetContainerStatsByPID() (map[int32]ContainerStat, error) {
 						Name:     dockerStat.Name,
 						ID:       dockerStat.ContainerID,
 						Image:    dockerStat.Image,
-						MemStat:  memstat,
+						MemLimit: memstat.MemLimitInBytes,
 						CPULimit: cpuLimit,
 					}
 
@@ -410,7 +410,7 @@ func getCgroupMemFile(containerID, base, file string) (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	// limit_in_bytes is a special case here, it's possible that it shows a rediculous number,
+	// limit_in_bytes is a special case here, it's possible that it shows a ridiculous number,
 	// in which case it represents unlimited, so return 0 here
 	if (file == "memory.limit_in_bytes") && (v > uint64(math.Pow(2, 60))) {
 		v = 0
