@@ -45,8 +45,11 @@ type Win32_PerfFormattedData_PerfOS_System struct {
 
 // TODO: Get percpu
 func Times(percpu bool) ([]TimesStat, error) {
-	var ret []TimesStat
+	if percpu {
+		return perCPUTimes()
+	}
 
+	var ret []TimesStat
 	var lpIdleTime common.FILETIME
 	var lpKernelTime common.FILETIME
 	var lpUserTime common.FILETIME
@@ -121,4 +124,23 @@ func ProcInfo() ([]Win32_PerfFormattedData_PerfOS_System, error) {
 	q := wmi.CreateQuery(&ret, "")
 	err := wmi.Query(q, &ret)
 	return ret, err
+}
+
+func perCPUTimes() ([]TimesStat, error) {
+	var ret []TimesStat
+	stats, err := PerfInfo()
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range stats {
+		c := TimesStat{
+			CPU:    v.Name,
+			User:   float64(v.PercentUserTime),
+			System: float64(v.PercentPrivilegedTime),
+			Idle:   float64(v.PercentIdleTime),
+			Irq:    float64(v.PercentInterruptTime),
+		}
+		ret = append(ret, c)
+	}
+	return ret, nil
 }
