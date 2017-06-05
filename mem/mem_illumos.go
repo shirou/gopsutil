@@ -33,7 +33,7 @@ func VirtualMemoryZone() (*VirtualMemoryZoneStat, error) {
 	for _, zoneStat := range kstatFrames {
 		ret = &zoneStat.Data
 		// Fixup NPFThrottleTime: kstat(1M) reports this value in µs but the value
-		// was Unmarshaled as ns
+		// is Unmarshaled as ns
 		ret.NPFThrottleTime = ret.NPFThrottleTime * time.Microsecond
 
 		// XXX Only one object for now: zones can't be nested
@@ -69,13 +69,13 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 		}
 
 		ret := &VirtualMemoryStat{
-			Total:        uint64(vmStat.PhysicalCap),
-			Available:    uint64(vmStat.PhysicalCap - vmStat.RSS),
-			Used:         uint64(vmStat.RSS),
+			Total:        vmStat.PhysicalCap,
+			Available:    vmStat.PhysicalCap - vmStat.RSS,
+			Used:         vmStat.RSS,
 			UsedPercent:  usedPct,
-			Free:         uint64(vmStat.PhysicalCap - vmStat.RSS - 1),
-			Active:       uint64(vmStat.RSS),
-			Inactive:     uint64(vmStat.PhysicalCap - vmStat.RSS),
+			Free:         vmStat.PhysicalCap - vmStat.RSS - 1, // XXX Free must be less than Available (??!!??)
+			Active:       vmStat.RSS,
+			Inactive:     vmStat.PhysicalCap - vmStat.RSS,
 			Wired:        0,
 			Buffers:      0,
 			Cached:       0,
