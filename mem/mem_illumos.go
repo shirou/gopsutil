@@ -1,34 +1,17 @@
+// +build solaris
+
 package mem
 
 import (
-	"encoding/json"
 	"fmt"
 	"math"
 	"regexp"
 	"strconv"
 	"time"
 
+	"github.com/mailru/easyjson"
 	"github.com/shirou/gopsutil/internal/common"
 )
-
-type VirtualMemoryZoneStat struct {
-	Name             string        `json:"zonename"`
-	AnonAllocFail    int64         `json:"anon_alloc_fail"`    // cnt of anon alloc fails
-	AnonPageIn       int64         `json:"anonpgin"`           // anon pages paged in
-	Class            string        `json:"class"`              //
-	CreateTime       float64       `json:"crtime"`             // creation time (from gethrtime())
-	ExecPageIn       int64         `json:"execpgin"`           // exec pages paged in
-	FilesystemPageIn int64         `json:"fspgin"`             // fs pages paged in
-	NPFThrottle      int64         `json:"n_pf_throttle"`      // cnt of page flt throttles
-	NPFThrottleTime  time.Duration `json:"n_pf_throttle_usec"` // time of page flt throttles
-	NumOver          int64         `json:"nover"`              // # of times over phys. cap
-	PagedOut         int64         `json:"pagedout"`           // bytes of mem. paged out
-	PagesPagedIn     int64         `json:"pgpgin"`             // pages paged in
-	PhysicalCap      int64         `json:"physcap"`            // current phys. memory limit
-	RSS              int64         `json:"rss"`                // current bytes of phys. mem. (RSS)
-	Swap             int64         `json:"swap"`               // bytes of swap reserved by zone
-	SwapCap          int64         `json:"swapcap"`            // current swap limit
-}
 
 // VirtualMemoryZone returns the memory used inside of the visible zone(s).
 func VirtualMemoryZone() (*VirtualMemoryZoneStat, error) {
@@ -41,24 +24,17 @@ func VirtualMemoryZone() (*VirtualMemoryZoneStat, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute kstat(1M): %v", err)
 	}
-	type _vmZoneStat struct {
-		VirtualMemoryZoneStat
-		NPFThrottleTime int64 `json:"n_pf_throttle_usec"`
-	}
-	type _kstatFrame struct {
-		Instance int         `json:"instance"`
-		Data     _vmZoneStat `json:"data"`
-	}
-	kstatFrames := make([]_kstatFrame, 0, 1)
-	err = json.Unmarshal(kstatJSON, &kstatFrames)
-	if err != nil {
-		return nil, err
+	kstatFrames := _memoryCapKStatFrames{}
+	if err := easyjson.Unmarshal(kstatJSON, &kstatFrames); err != nil {
+		return nil, fmt.Errorf("cannot decode kstat(1M) memory_cap JSON: %v", err)
 	}
 
-	ret := &VirtualMemoryZoneStat{}
+	var ret *VirtualMemoryZoneStat
 	for _, zoneStat := range kstatFrames {
-		ret = &zoneStat.Data.VirtualMemoryZoneStat
-		ret.NPFThrottleTime = time.Duration(zoneStat.Data.NPFThrottleTime) * time.Microsecond
+		ret = &zoneStat.Data
+		// Fixup NPFThrottleTime: kstat(1M) reports this value in µs but the value
+		// was Unmarshaled as ns
+		ret.NPFThrottleTime = ret.NPFThrottleTime * time.Microsecond
 
 		// XXX Only one object for now: zones can't be nested
 		break
