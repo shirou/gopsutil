@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -79,12 +80,22 @@ func GetContainerStatsByPID() (map[int32]ContainerStat, error) {
 					if err != nil {
 						continue
 					}
+					memstat, err := CgroupMemDocker(dockerStat.ContainerID)
+					if err != nil {
+						continue
+					}
+					cpuLimit, err := CgroupCPULimitDocker(dockerStat.ContainerID)
+					if err != nil {
+						continue
+					}
 
 					containerStat := ContainerStat{
-						Type:  "Docker",
-						Name:  dockerStat.Name,
-						ID:    dockerStat.ContainerID,
-						Image: dockerStat.Image,
+						Type:     "Docker",
+						Name:     dockerStat.Name,
+						ID:       dockerStat.ContainerID,
+						Image:    dockerStat.Image,
+						MemLimit: memstat.MemLimitInBytes,
+						CPULimit: cpuLimit,
 					}
 
 					for _, pid := range dockerPids {
@@ -163,6 +174,54 @@ func CgroupCPU(containerID string, base string) (*cpu.TimesStat, error) {
 	}
 
 	return ret, nil
+}
+
+// CgroupCPULimit would show CPU limit for each container
+// it does so by checking the cpu period and cpu quota config
+// if a user does this:
+//
+//	docker run --cpus='0.5' ubuntu:latest
+//
+// we should return 50% for that container
+func CgroupCPULimit(containerID string, base string) (float64, error) {
+	periodFile, err := getCgroupFilePath(containerID, base, "cpu", "cpu.cfs_period_us")
+	if err != nil {
+		return 0.0, err
+	}
+	quotaFile, err := getCgroupFilePath(containerID, base, "cpu", "cpu.cfs_quota_us")
+	if err != nil {
+		return 0.0, err
+	}
+	plines, err := common.ReadLines(periodFile)
+	if err != nil {
+		return 0.0, err
+	}
+	qlines, err := common.ReadLines(quotaFile)
+	if err != nil {
+		return 0.0, err
+	}
+	period, err := strconv.ParseFloat(plines[0], 64)
+	if err != nil {
+		return 0.0, err
+	}
+	quota, err := strconv.ParseFloat(qlines[0], 64)
+	if err != nil {
+		return 0.0, err
+	}
+	// default cpu limit is 100%
+	limit := 100.0
+	if (period > 0) && (quota > 0) {
+		limit = (quota / period) * 100.0
+	}
+	return limit, nil
+}
+
+func CgroupCPULimitDocker(containerID string) (float64, error) {
+	p, err := cgroupMountPoint("cpu")
+	if err != nil {
+		return 0.0, err
+	}
+	return CgroupCPULimit(containerID, filepath.Join(p, "docker"))
 }
 
 func CgroupCPUDocker(containerID string) (*cpu.TimesStat, error) {
@@ -290,7 +349,7 @@ func CgroupMem(containerID string, base string) (*CgroupMemStat, error) {
 	if err == nil {
 		ret.MemMaxUsageInBytes = r
 	}
-	r, err = getCgroupMemFile(containerID, base, "memoryLimitInBbytes")
+	r, err = getCgroupMemFile(containerID, base, "memory.limit_in_bytes")
 	if err == nil {
 		ret.MemLimitInBytes = r
 	}
@@ -347,7 +406,16 @@ func getCgroupMemFile(containerID, base, file string) (uint64, error) {
 	if len(lines) != 1 {
 		return 0, fmt.Errorf("wrong format file: %s", statfile)
 	}
-	return strconv.ParseUint(lines[0], 10, 64)
+	v, err := strconv.ParseUint(lines[0], 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	// limit_in_bytes is a special case here, it's possible that it shows a ridiculous number,
+	// in which case it represents unlimited, so return 0 here
+	if (file == "memory.limit_in_bytes") && (v > uint64(math.Pow(2, 60))) {
+		v = 0
+	}
+	return v, nil
 }
 
 // function to get the mount point of cgroup. by default it should be under /sys/fs/cgroup but
@@ -392,7 +460,7 @@ func cgroupMountPoint(target string) (string, error) {
 	for _, cgroup := range cgroups {
 		tokens := strings.Split(cgroup, " ")
 		// see if the target is the suffix of the mount directory
-		if strings.Contains(tokens[1], target) {
+		if strings.HasSuffix(tokens[1], target) {
 			candidate = tokens[1]
 		}
 	}
