@@ -32,6 +32,8 @@ type PartitionStat struct {
 	Opts       string `json:"opts"`
 }
 
+// IOCounterStats attributes are defined in iostats.txt:
+// https://github.com/torvalds/linux/blob/master/Documentation/iostats.txt#L60-L91
 type IOCountersStat struct {
 	ReadCount        uint64 `json:"readCount"`
 	MergedReadCount  uint64 `json:"mergedReadCount"`
