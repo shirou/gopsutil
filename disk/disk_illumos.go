@@ -126,7 +126,8 @@ func IOCountersZone() (*IOCountersZoneStat, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute kstat(1M): %v", err)
 	}
-	kstatFrames := _zoneVFSKStatFrames{}
+
+	var kstatFrames _zoneVFSKStatFrames
 	if err := easyjson.Unmarshal(kstatJSON, &kstatFrames); err != nil {
 		return nil, fmt.Errorf("cannot decode kstat(1M) zone_vfs JSON: %v", err)
 	}

@@ -24,7 +24,8 @@ func VirtualMemoryZone() (*VirtualMemoryZoneStat, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute kstat(1M): %v", err)
 	}
-	kstatFrames := _memoryCapKStatFrames{}
+
+	var kstatFrames _memoryCapKStatFrames
 	if err := easyjson.Unmarshal(kstatJSON, &kstatFrames); err != nil {
 		return nil, fmt.Errorf("cannot decode kstat(1M) memory_cap JSON: %v", err)
 	}
