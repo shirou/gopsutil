@@ -8,7 +8,6 @@ import (
 	"unsafe"
 
 	"github.com/StackExchange/wmi"
-
 	"github.com/shirou/gopsutil/internal/common"
 )
 
@@ -38,12 +37,13 @@ type Win32_PerfFormattedData_Counters_ProcessorInformation struct {
 	DPCRate               uint32
 }
 
+// Win32_PerfFormattedData_PerfOS_System struct to have count of processes and processor queue length
 type Win32_PerfFormattedData_PerfOS_System struct {
 	Processes            uint32
 	ProcessorQueueLength uint32
 }
 
-// TODO: Get percpu
+// Times returns times stat per cpu and combined for all CPUs
 func Times(percpu bool) ([]TimesStat, error) {
 	if percpu {
 		return perCPUTimes()
@@ -126,6 +126,7 @@ func ProcInfo() ([]Win32_PerfFormattedData_PerfOS_System, error) {
 	return ret, err
 }
 
+// perCPUTimes returns times stat per cpu, per core and overall for all CPUs
 func perCPUTimes() ([]TimesStat, error) {
 	var ret []TimesStat
 	stats, err := PerfInfo()
