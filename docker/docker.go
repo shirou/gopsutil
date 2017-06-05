@@ -64,5 +64,5 @@ type ContainerStat struct {
 	ID       string  `json:"id"`
 	Image    string  `json:"image"`
 	CPULimit float64 `json:"cpuLimit"`
-	MemLimit uint64  `json:"memStat"`
+	MemLimit uint64  `json:"memLimit"`
 }
