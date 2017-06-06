@@ -1,3 +1,5 @@
+PACKAGES = $(shell go list ./... | grep -v '/vendor/')
+
 .PHONY: help check
 .DEFAULT_GOAL := help
 
@@ -9,6 +11,15 @@ help:  ## Show help
 check:  ## Check
 	errcheck -ignore="Close|Run|Write" ./...
 	golint ./... | egrep -v 'underscores|HttpOnly|should have comment|comment on exported|CamelCase|VM|UID' && exit 1 || exit 0
+
+tools:: ## Install the necessary tools
+	go get -u github.com/mailru/easyjson/...
+	go get -u github.com/ncw/gotemplate/...
+
+generate:
+	@echo "--> Running go generate"
+	@go generate -n $(PACKAGES)
+	@go generate $(PACKAGES)
 
 BUILD_FAIL_PATTERN=grep -v "exec format error" | grep "build failed" && exit 1 || exit 0
 build_test:  ## test only buildable
