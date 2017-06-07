@@ -38,6 +38,7 @@ type InfoStat struct {
 	Cores      int32    `json:"cores"`
 	ModelName  string   `json:"modelName"`
 	Mhz        float64  `json:"mhz"`
+	BogoMIPS   float64  `json:"bogoMIPS"`
 	CacheSize  int32    `json:"cacheSize"`
 	Flags      []string `json:"flags"`
 	Microcode  string   `json:"microcode"`

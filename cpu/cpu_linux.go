@@ -170,6 +170,10 @@ func Info() ([]InfoStat, error) {
 			if t, err := strconv.ParseFloat(strings.Replace(value, "MHz", "", 1), 64); err == nil {
 				c.Mhz = t
 			}
+		case "BogoMIPS":
+			if t, err := strconv.ParseFloat(value, 64); err == nil {
+				c.BogoMIPS = t
+			}
 		case "cache size":
 			t, err := strconv.ParseInt(strings.Replace(value, " KB", "", 1), 10, 64)
 			if err != nil {
