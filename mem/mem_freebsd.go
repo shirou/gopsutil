@@ -76,7 +76,7 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 		Cached:   parsed[4] * p,
 		Buffers:  parsed[5],
 		Wired:    parsed[6] * p,
-	}
+	}, nil
 
 	ret.Available = ret.Inactive + ret.Cached + ret.Free
 	ret.Used = ret.Total - ret.Available
