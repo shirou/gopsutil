@@ -2,13 +2,7 @@
 
 package docker
 
-import (
-	"fmt"
-	"io/ioutil"
-	"os/exec"
-	"strings"
-	"testing"
-)
+import "testing"
 
 func TestGetDockerIDList(t *testing.T) {
 	// If there is not docker environment, this test always fail.
@@ -43,35 +37,6 @@ func TestGetDockerStat(t *testing.T) {
 			}
 		}
 	*/
-}
-
-func TestCgroupMountPoint(t *testing.T) {
-	// see if docker executable is available
-	_, err := exec.LookPath("docker")
-	if err != nil {
-		t.Skip("Docker is not available on this test machine")
-	}
-	b, err := ioutil.ReadFile("/proc/mounts")
-	if err != nil {
-		t.Skip("Current test machine does not have /proc/mounts directory")
-	}
-	content := string(b)
-	found := false
-	targets := []string{"blkio", "cpu", "cpuacct", "cpuset", "devices", "freezer", "hugetlb", "memory", "net_cls", "net_prio", "perf_event", "pids", "systemd"}
-	// if we find any targets that's good
-	for _, target := range targets {
-		mountPoint, err := cgroupMountPoint(target)
-		if err != nil {
-			continue
-		}
-		// test if cgroupMountPoint gets the mount point correctly
-		if strings.Contains(content, fmt.Sprintf("cgroup %s cgroup", mountPoint)) {
-			found = true
-		}
-	}
-	if found == false {
-		t.Errorf("Could not get any cgroup information!")
-	}
 }
 
 func TestCgroupCPU(t *testing.T) {
