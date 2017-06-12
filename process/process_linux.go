@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/DataDog/gopsutil/cpu"
-	"github.com/DataDog/gopsutil/docker"
 	"github.com/DataDog/gopsutil/host"
 	"github.com/DataDog/gopsutil/internal/common"
 	"github.com/DataDog/gopsutil/net"
@@ -819,16 +818,9 @@ func AllProcesses(cpuWait time.Duration) ([]*FilledProcess, error) {
 		return nil, fmt.Errorf("could not collect pids: %s", err)
 	}
 
-	containers, err := docker.GetContainerStatsByPID()
-	if err != nil {
-		// FIXME - add logging
-		containers = make(map[int32]docker.ContainerStat)
-	}
-
 	filled := make(chan evaluated, len(pids))
 	for _, pid := range pids {
-		container, _ := containers[pid]
-		go func(pid int32, container docker.ContainerStat) {
+		go func(pid int32) {
 			p, err := NewProcess(pid)
 			if err != nil {
 				filled <- evaluated{nil, fmt.Errorf("pid: %s", err)}
@@ -894,7 +886,6 @@ func AllProcesses(cpuWait time.Duration) ([]*FilledProcess, error) {
 				CpuTime2:    t2,
 				Nice:        nice,
 				CreateTime:  createTime,
-				Container:   container,
 				OpenFdCount: openFdCount,
 
 				// status
@@ -912,7 +903,7 @@ func AllProcesses(cpuWait time.Duration) ([]*FilledProcess, error) {
 				Exe: exe,
 			}, nil}
 
-		}(pid, container)
+		}(pid)
 	}
 
 	procs := make([]*FilledProcess, 0, len(pids))

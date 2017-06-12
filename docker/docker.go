@@ -46,7 +46,7 @@ type CgroupMemStat struct {
 	TotalUnevictable        uint64 `json:"totalUnevictable"`
 	MemUsageInBytes         uint64 `json:"memUsageInBytes"`
 	MemMaxUsageInBytes      uint64 `json:"memMaxUsageInBytes"`
-	MemLimitInBytes         uint64 `json:"memoryLimitInBytes"`
+	MemLimitInBytes         uint64 `json:"memoryLimitInBbytes"`
 	MemFailCnt              uint64 `json:"memoryFailcnt"`
 }
 
@@ -56,13 +56,4 @@ type CgroupDockerStat struct {
 	Image       string `json:"image"`
 	Status      string `json:"status"`
 	Running     bool   `json:"running"`
-}
-
-type ContainerStat struct {
-	Type     string  `json:"type"`
-	Name     string  `json:"name"`
-	ID       string  `json:"id"`
-	Image    string  `json:"image"`
-	CPULimit float64 `json:"cpuLimit"`
-	MemLimit uint64  `json:"memLimit"`
 }
