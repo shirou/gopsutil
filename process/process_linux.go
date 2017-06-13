@@ -812,15 +812,19 @@ type evaluated struct {
 	err error
 }
 
-func AllProcesses(cpuWait time.Duration) ([]*FilledProcess, error) {
-	pids, err := Pids()
-	if err != nil {
-		return nil, fmt.Errorf("could not collect pids: %s", err)
-	}
+type cpuAfter struct {
+	pid int32
+	t   *cpu.TimesStat
+	err error
+}
 
+func collectFilled(pids []int32, concurrency int) map[int32]*FilledProcess {
+	sem := make(chan bool, concurrency)
 	filled := make(chan evaluated, len(pids))
 	for _, pid := range pids {
+		sem <- true
 		go func(pid int32) {
+			defer func() { <-sem }()
 			p, err := NewProcess(pid)
 			if err != nil {
 				filled <- evaluated{nil, fmt.Errorf("pid: %s", err)}
@@ -861,12 +865,6 @@ func AllProcesses(cpuWait time.Duration) ([]*FilledProcess, error) {
 				filled <- evaluated{nil, fmt.Errorf("exe: %s", err)}
 				return
 			}
-			time.Sleep(cpuWait)
-			_, _, t2, _, _, err := p.fillFromStat()
-			if err != nil {
-				filled <- evaluated{nil, fmt.Errorf("stat2: %s", err)}
-				return
-			}
 			openFdCount, err := p.NumFDs()
 			if os.IsPermission(err) {
 				// Without root permissions we can't read for other processes.
@@ -883,7 +881,6 @@ func AllProcesses(cpuWait time.Duration) ([]*FilledProcess, error) {
 				// stat
 				Pgrp:        pgrp,
 				CpuTime1:    t1,
-				CpuTime2:    t2,
 				Nice:        nice,
 				CreateTime:  createTime,
 				OpenFdCount: openFdCount,
@@ -902,19 +899,75 @@ func AllProcesses(cpuWait time.Duration) ([]*FilledProcess, error) {
 				// exe
 				Exe: exe,
 			}, nil}
-
 		}(pid)
 	}
 
-	procs := make([]*FilledProcess, 0, len(pids))
+	for i := 0; i < cap(sem); i++ {
+		sem <- true
+	}
+	procs := make(map[int32]*FilledProcess)
 	for i := 0; i < len(pids); i++ {
 		f := <-filled
 		if f.err != nil {
 			// log the error?
 			continue
 		}
-		procs = append(procs, f.p)
+		procs[f.p.Pid] = f.p
+	}
+	return procs
+}
+
+func collectTimes(pids []int32, concurrency int) map[int32]*cpu.TimesStat {
+	sem := make(chan bool, concurrency)
+	timesAfter := make(chan cpuAfter, len(pids))
+	for _, pid := range pids {
+		sem <- true
+		go func(pid int32) {
+			defer func() { <-sem }()
+			p, err := NewProcess(pid)
+			if err != nil {
+				timesAfter <- cpuAfter{pid, nil, fmt.Errorf("pid: %s", err)}
+				return
+			}
+			_, _, t2, _, _, err := p.fillFromStat()
+			if err != nil {
+				timesAfter <- cpuAfter{pid, nil, fmt.Errorf("stat2: %s", err)}
+				return
+			}
+			timesAfter <- cpuAfter{pid, t2, nil}
+		}(pid)
 	}
 
+	for i := 0; i < cap(sem); i++ {
+		sem <- true
+	}
+	times := make(map[int32]*cpu.TimesStat)
+	for i := 0; i < len(pids); i++ {
+		t := <-timesAfter
+		if t.err != nil {
+			// log the error?
+			continue
+		}
+		times[t.pid] = t.t
+	}
+	return times
+}
+
+func AllProcesses(cpuWait time.Duration, concurrency int) ([]*FilledProcess, error) {
+	pids, err := Pids()
+	if err != nil {
+		return nil, fmt.Errorf("could not collect pids: %s", err)
+	}
+	procsByPid := collectFilled(pids, concurrency)
+	time.Sleep(cpuWait)
+	timesByPid := collectTimes(pids, concurrency)
+
+	procs := make([]*FilledProcess, 0, len(procsByPid))
+	for pid, p := range procsByPid {
+		if t, ok := timesByPid[pid]; ok {
+			p.CpuTime2 = t
+			procs = append(procs, p)
+		}
+	}
 	return procs, nil
 }
