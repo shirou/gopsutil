@@ -3,7 +3,6 @@
 package process
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"syscall"
@@ -51,45 +50,46 @@ type MemoryMapsStat struct {
 }
 
 type Win32_Process struct {
-	Name                string
-	ExecutablePath      *string
-	CommandLine         *string
-	Priority            uint32
-	CreationDate        *time.Time
-	ProcessID           uint32
-	ThreadCount         uint32
-	Status              *string
-	ReadOperationCount  uint64
-	ReadTransferCount   uint64
-	WriteOperationCount uint64
-	WriteTransferCount  uint64
+	Name                  string
+	ExecutablePath        *string
+	CommandLine           *string
+	Priority              uint32
+	CreationDate          *time.Time
+	ProcessID             uint32
+	ThreadCount           uint32
+	Status                *string
+	ReadOperationCount    uint64
+	ReadTransferCount     uint64
+	WriteOperationCount   uint64
+	WriteTransferCount    uint64
+	CSCreationClassName   string
+	CSName                string
+	Caption               *string
+	CreationClassName     string
+	Description           *string
+	ExecutionState        *uint16
+	HandleCount           uint32
+	KernelModeTime        uint64
+	MaximumWorkingSetSize *uint32
+	MinimumWorkingSetSize *uint32
+	OSCreationClassName   string
+	OSName                string
+	OtherOperationCount   uint64
+	OtherTransferCount    uint64
+	PageFaults            uint32
+	PageFileUsage         uint32
+	ParentProcessID       uint32
+	PeakPageFileUsage     uint32
+	PeakVirtualSize       uint64
+	PeakWorkingSetSize    uint32
+	PrivatePageCount      uint64
+	TerminationDate       *time.Time
+	UserModeTime          uint64
+	WorkingSetSize        uint64
+}
 
-	/*
-		CSCreationClassName   string
-		CSName                string
-		Caption               *string
-		CreationClassName     string
-		Description           *string
-		ExecutionState        *uint16
-		HandleCount           uint32
-		KernelModeTime        uint64
-		MaximumWorkingSetSize *uint32
-		MinimumWorkingSetSize *uint32
-		OSCreationClassName   string
-		OSName                string
-		OtherOperationCount   uint64
-		OtherTransferCount    uint64
-		PageFaults            uint32
-		PageFileUsage         uint32
-		ParentProcessID       uint32
-		PeakPageFileUsage     uint32
-		PeakVirtualSize       uint64
-		PeakWorkingSetSize    uint32
-		PrivatePageCount      uint64
-		TerminationDate       *time.Time
-		UserModeTime          uint64
-		WorkingSetSize        uint64
-	*/
+func init() {
+	wmi.DefaultClient.AllowMissingFields = true
 }
 
 func Pids() ([]int32, error) {
@@ -108,24 +108,27 @@ func Pids() ([]int32, error) {
 }
 
 func (p *Process) Ppid() (int32, error) {
-	ret, _, _, err := p.getFromSnapProcess(p.Pid)
+	dst, err := GetWin32Proc(p.Pid)
 	if err != nil {
 		return 0, err
 	}
-	return ret, nil
+
+	return int32(dst[0].ParentProcessID), nil
 }
 
 func GetWin32Proc(pid int32) ([]Win32_Process, error) {
 	var dst []Win32_Process
 	query := fmt.Sprintf("WHERE ProcessId = %d", pid)
 	q := wmi.CreateQuery(&dst, query)
-	err := wmi.Query(q, &dst)
-	if err != nil {
+
+	if err := wmi.Query(q, &dst); err != nil {
 		return []Win32_Process{}, fmt.Errorf("could not get win32Proc: %s", err)
 	}
-	if len(dst) != 1 {
+
+	if len(dst) == 0 {
 		return []Win32_Process{}, fmt.Errorf("could not get win32Proc: empty")
 	}
+
 	return dst, nil
 }
 
@@ -136,6 +139,7 @@ func (p *Process) Name() (string, error) {
 	}
 	return dst[0].Name, nil
 }
+
 func (p *Process) Exe() (string, error) {
 	dst, err := GetWin32Proc(p.Pid)
 	if err != nil {
@@ -143,6 +147,7 @@ func (p *Process) Exe() (string, error) {
 	}
 	return *dst[0].ExecutablePath, nil
 }
+
 func (p *Process) Cmdline() (string, error) {
 	dst, err := GetWin32Proc(p.Pid)
 	if err != nil {
@@ -175,7 +180,12 @@ func (p *Process) Cwd() (string, error) {
 	return "", common.ErrNotImplementedError
 }
 func (p *Process) Parent() (*Process, error) {
-	return p, common.ErrNotImplementedError
+	dst, err := GetWin32Proc(p.Pid)
+	if err != nil {
+		return nil, fmt.Errorf("could not get ParentProcessID: %s", err)
+	}
+
+	return NewProcess(int32(dst[0].ParentProcessID))
 }
 func (p *Process) Status() (string, error) {
 	return "", common.ErrNotImplementedError
@@ -268,7 +278,23 @@ func (p *Process) MemoryInfoEx() (*MemoryInfoExStat, error) {
 }
 
 func (p *Process) Children() ([]*Process, error) {
-	return nil, common.ErrNotImplementedError
+	procs, err := processes()
+	if err != nil {
+		return nil, err
+	}
+	out := []*Process{}
+
+	for _, proc := range procs {
+		parent, err := proc.Parent()
+		if err != nil {
+			continue
+		}
+
+		if parent.Pid == p.Pid {
+			out = append(out, proc)
+		}
+	}
+	return out, nil
 }
 
 func (p *Process) OpenFiles() ([]OpenFilesStat, error) {
@@ -349,12 +375,11 @@ func (p *Process) getFromSnapProcess(pid int32) (int32, int32, string, error) {
 			return int32(pe32.Th32ParentProcessID), int32(pe32.CntThreads), szexe, nil
 		}
 	}
-	return 0, 0, "", errors.New("Couldn't find pid:" + string(pid))
+	return 0, 0, "", fmt.Errorf("Couldn't find pid: %d", pid)
 }
 
 // Get processes
 func processes() ([]*Process, error) {
-
 	var dst []Win32_Process
 	q := wmi.CreateQuery(&dst, "")
 	err := wmi.Query(q, &dst)
@@ -364,7 +389,8 @@ func processes() ([]*Process, error) {
 	if len(dst) == 0 {
 		return []*Process{}, fmt.Errorf("could not get Process")
 	}
-	results := make([]*Process, 0, len(dst))
+
+	results := []*Process{}
 	for _, proc := range dst {
 		p, err := NewProcess(int32(proc.ProcessID))
 		if err != nil {
