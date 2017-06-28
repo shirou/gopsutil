@@ -181,8 +181,26 @@ func (p *Process) Status() (string, error) {
 	return "", common.ErrNotImplementedError
 }
 func (p *Process) Username() (string, error) {
-	return "", common.ErrNotImplementedError
+	pid := p.Pid
+	// 0x1000 is PROCESS_QUERY_LIMITED_INFORMATION
+	c, err := syscall.OpenProcess(0x1000, false, uint32(pid))
+	if err != nil {
+		return "", err
+	}
+	defer syscall.CloseHandle(c)
+
+	var token syscall.Token
+	err = syscall.OpenProcessToken(c, syscall.TOKEN_QUERY, &token)
+	if err != nil {
+		return "", err
+	}
+	defer token.Close()
+	tokenUser, err := token.GetTokenUser()
+
+	user, _, _, err := tokenUser.User.Sid.LookupAccount("")
+	return user, err
 }
+
 func (p *Process) Uids() ([]int32, error) {
 	var uids []int32
 
@@ -412,7 +430,8 @@ func getRusage(pid int32) (*windows.Rusage, error) {
 
 func getMemoryInfo(pid int32) (PROCESS_MEMORY_COUNTERS, error) {
 	var mem PROCESS_MEMORY_COUNTERS
-	c, err := windows.OpenProcess(windows.PROCESS_QUERY_INFORMATION, false, uint32(pid))
+	// PROCESS_QUERY_LIMITED_INFORMATION is 0x1000
+	c, err := windows.OpenProcess(0x1000, false, uint32(pid))
 	if err != nil {
 		return mem, err
 	}
