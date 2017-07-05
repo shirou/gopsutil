@@ -37,8 +37,7 @@ type FilledProcess struct {
 	Cmdline []string
 	// stat
 	Pgrp        int32
-	CpuTime1    *cpu.TimesStat
-	CpuTime2    *cpu.TimesStat
+	CpuTime     cpu.TimesStat
 	Nice        int32
 	CreateTime  int64
 	OpenFdCount int32
