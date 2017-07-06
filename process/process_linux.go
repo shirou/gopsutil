@@ -807,120 +807,82 @@ func Pids() ([]int32, error) {
 	return ret, nil
 }
 
-type evaluated struct {
-	p   *FilledProcess
-	err error
-}
-
-type cpuAfter struct {
-	pid int32
-	t   *cpu.TimesStat
-	err error
-}
-
-func collectFilled(pids []int32, concurrency int) map[int32]*FilledProcess {
-	sem := make(chan bool, concurrency)
-	filled := make(chan evaluated, len(pids))
-	for _, pid := range pids {
-		sem <- true
-		go func(pid int32) {
-			defer func() { <-sem }()
-			p, err := NewProcess(pid)
-			if err != nil {
-				filled <- evaluated{nil, fmt.Errorf("pid: %s", err)}
-				return
-			}
-			cmdline, err := p.fillSliceFromCmdline()
-			if err != nil {
-				filled <- evaluated{nil, fmt.Errorf("cmdline: %s", err)}
-				return
-			}
-			if err := p.fillFromStatus(); err != nil {
-				filled <- evaluated{nil, fmt.Errorf("status: %s", err)}
-				return
-			}
-			memInfo, memInfoEx, err := p.fillFromStatm()
-			if err != nil {
-				filled <- evaluated{nil, fmt.Errorf("statm: %s", err)}
-				return
-			}
-			ppid, pgrp, t1, createTime, nice, err := p.fillFromStat()
-			if err != nil {
-				filled <- evaluated{nil, fmt.Errorf("stat: %s", err)}
-				return
-			}
-			cwd, err := p.fillFromCwd()
-			if os.IsPermission(err) {
-				// Without root permissions we can't read for other processes.
-				cwd = ""
-			} else if err != nil {
-				filled <- evaluated{nil, fmt.Errorf("cwd: %s", err)}
-				return
-			}
-			exe, err := p.fillFromExe()
-			if os.IsPermission(err) {
-				// Without root permissions we can't read for other processes.
-				exe = ""
-			} else if err != nil {
-				filled <- evaluated{nil, fmt.Errorf("exe: %s", err)}
-				return
-			}
-			openFdCount, err := p.NumFDs()
-			if os.IsPermission(err) {
-				// Without root permissions we can't read for other processes.
-				openFdCount = -1
-			} else if err != nil {
-				filled <- evaluated{nil, fmt.Errorf("openFdCount: %s", err)}
-				return
-			}
-
-			filled <- evaluated{&FilledProcess{
-				Pid:     pid,
-				Ppid:    ppid,
-				Cmdline: cmdline,
-				// stat
-				Pgrp:        pgrp,
-				CpuTime:     *t1,
-				Nice:        nice,
-				CreateTime:  createTime,
-				OpenFdCount: openFdCount,
-
-				// status
-				Name:       p.name,
-				Status:     p.status,
-				Uids:       p.uids,
-				Gids:       p.gids,
-				NumThreads: p.numThreads,
-				// statm
-				MemInfo:   memInfo,
-				MemInfoEx: memInfoEx,
-				// cwd
-				Cwd: cwd,
-				// exe
-				Exe: exe,
-			}, nil}
-		}(pid)
-	}
-
-	for i := 0; i < cap(sem); i++ {
-		sem <- true
-	}
-	procs := make(map[int32]*FilledProcess)
-	for i := 0; i < len(pids); i++ {
-		f := <-filled
-		if f.err != nil {
-			// log the error?
-			continue
-		}
-		procs[f.p.Pid] = f.p
-	}
-	return procs
-}
-
-func AllProcesses(cpuWait time.Duration, concurrency int) (map[int32]*FilledProcess, error) {
+func AllProcesses() (map[int32]*FilledProcess, error) {
 	pids, err := Pids()
 	if err != nil {
 		return nil, fmt.Errorf("could not collect pids: %s", err)
 	}
-	return collectFilled(pids, concurrency), nil
+
+	// Collect stats on all processes limiting the number of required syscalls.
+	// All errors are swallowed for now.
+	procs := make(map[int32]*FilledProcess)
+	for _, pid := range pids {
+		p, err := NewProcess(pid)
+		if err != nil {
+			continue
+		}
+		cmdline, err := p.fillSliceFromCmdline()
+		if err != nil {
+			continue
+		}
+		if err := p.fillFromStatus(); err != nil {
+			continue
+		}
+		memInfo, memInfoEx, err := p.fillFromStatm()
+		if err != nil {
+			continue
+		}
+		ppid, pgrp, t1, createTime, nice, err := p.fillFromStat()
+		if err != nil {
+			continue
+		}
+		cwd, err := p.fillFromCwd()
+		if os.IsPermission(err) {
+			cwd = ""
+		} else if err != nil {
+			//filled <- evaluated{nil, fmt.Errorf("cwd: %s", err)}
+			continue
+		}
+		exe, err := p.fillFromExe()
+		if os.IsPermission(err) {
+			// Without root permissions we can't read for other processes.
+			exe = ""
+		} else if err != nil {
+			continue
+		}
+		openFdCount, err := p.NumFDs()
+		if os.IsPermission(err) {
+			// Without root permissions we can't read for other processes.
+			openFdCount = -1
+		} else if err != nil {
+			continue
+		}
+
+		procs[p.Pid] = &FilledProcess{
+			Pid:     pid,
+			Ppid:    ppid,
+			Cmdline: cmdline,
+			// stat
+			Pgrp:        pgrp,
+			CpuTime:     *t1,
+			Nice:        nice,
+			CreateTime:  createTime,
+			OpenFdCount: openFdCount,
+
+			// status
+			Name:       p.name,
+			Status:     p.status,
+			Uids:       p.uids,
+			Gids:       p.gids,
+			NumThreads: p.numThreads,
+			// statm
+			MemInfo:   memInfo,
+			MemInfoEx: memInfoEx,
+			// cwd
+			Cwd: cwd,
+			// exe
+			Exe: exe,
+		}
+	}
+	return procs, nil
 }
