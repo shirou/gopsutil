@@ -197,8 +197,8 @@ func (p *Process) Username() (string, error) {
 	defer token.Close()
 	tokenUser, err := token.GetTokenUser()
 
-	user, _, _, err := tokenUser.User.Sid.LookupAccount("")
-	return user, err
+	user, domain, _, err := tokenUser.User.Sid.LookupAccount("")
+	return domain + "\\" + user, err
 }
 
 func (p *Process) Uids() ([]int32, error) {
