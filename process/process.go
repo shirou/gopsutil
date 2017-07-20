@@ -58,6 +58,10 @@ type FilledProcess struct {
 	Cwd string
 	// exe
 	Exe string
+	// IO
+	IOStat *IOCountersStat
+	
+
 }
 
 type OpenFilesStat struct {
@@ -90,6 +94,11 @@ type NumCtxSwitchesStat struct {
 }
 
 func (p Process) String() string {
+	s, _ := json.Marshal(p)
+	return string(s)
+}
+
+func (p FilledProcess) String() string {
 	s, _ := json.Marshal(p)
 	return string(s)
 }
@@ -135,7 +144,7 @@ func PidExists(pid int32) (bool, error) {
 }
 
 // If interval is 0, return difference from last call(non-blocking).
-// If interval > 0, wait interval sec and return diffrence between start and end.
+// If interval > 0, wait interval sec and return difference between start and end.
 func (p *Process) Percent(interval time.Duration) (float64, error) {
 	cpuTimes, err := p.Times()
 	if err != nil {

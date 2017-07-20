@@ -295,7 +295,7 @@ func (p *Process) Children() ([]*Process, error) {
 	return ret, nil
 }
 
-// OpenFiles returns a slice of OpenFilesStat opend by the process.
+// OpenFiles returns a slice of OpenFilesStat opened by the process.
 // OpenFilesStat includes a file path and file descriptor.
 func (p *Process) OpenFiles() ([]OpenFilesStat, error) {
 	_, ofs, err := p.fillFromfd()
@@ -311,7 +311,7 @@ func (p *Process) OpenFiles() ([]OpenFilesStat, error) {
 }
 
 // Connections returns a slice of net.ConnectionStat used by the process.
-// This returns all kind of the connection. This measn TCP, UDP or UNIX.
+// This returns all kind of the connection. This means TCP, UDP or UNIX.
 func (p *Process) Connections() ([]net.ConnectionStat, error) {
 	return net.ConnectionsPid("all", p.Pid)
 }
@@ -549,6 +549,8 @@ func (p *Process) fillFromIO() (*IOCountersStat, error) {
 			ret.WriteBytes = t
 		}
 	}
+
+	fmt.Println(ret)
 
 	return ret, nil
 }
@@ -869,12 +871,22 @@ func AllProcesses(cpuWait time.Duration) ([]*FilledProcess, error) {
 				filled <- evaluated{nil, fmt.Errorf("exe: %s", err)}
 				return
 			}
+
+			// IO
+			ioStat, err := p.fillFromIO()
+			if err != nil {
+				filled <- evaluated{nil, fmt.Errorf("IO: %s", err)}
+				return
+			}
+
 			time.Sleep(cpuWait)
 			_, _, t2, _, _, err := p.fillFromStat()
 			if err != nil {
 				filled <- evaluated{nil, fmt.Errorf("stat2: %s", err)}
 				return
 			}
+
+
 			openFdCount, err := p.NumFDs()
 			if os.IsPermission(err) {
 				// Without root permissions we can't read for other processes.
@@ -910,6 +922,9 @@ func AllProcesses(cpuWait time.Duration) ([]*FilledProcess, error) {
 				Cwd: cwd,
 				// exe
 				Exe: exe,
+				// IO
+				IOStat: ioStat,
+
 			}, nil}
 
 		}(pid, container)
