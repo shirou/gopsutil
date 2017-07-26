@@ -99,8 +99,8 @@ func (p *Process) Exe() (string, error) {
 		return "", err
 	}
 
-	lsof := exec.Command(lsof_bin, "-p", strconv.Itoa(int(p.Pid)), "-Fn")
-	awk := exec.Command(awk_bin, "NR==3{print}")
+	lsof := exec.Command(lsof_bin, "-p", strconv.Itoa(int(p.Pid)), "-Fpfn")
+	awk := exec.Command(awk_bin, "NR==5{print}")
 	sed := exec.Command(sed_bin, "s/n\\//\\//")
 
 	output, _, err := common.Pipeline(lsof, awk, sed)
