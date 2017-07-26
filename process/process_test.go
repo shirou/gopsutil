@@ -352,6 +352,8 @@ func Test_Username(t *testing.T) {
 	process, _ := NewProcess(int32(myPid))
 	pidUsername, _ := process.Username()
 	assert.Equal(t, myUsername, pidUsername)
+
+	t.Log(pidUsername)
 }
 
 func Test_CPUTimes(t *testing.T) {
