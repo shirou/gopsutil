@@ -117,7 +117,7 @@ func (p *Process) CmdlineSlice() ([]string, error) {
 	return p.fillSliceFromCmdline()
 }
 
-// CreateTime returns created time of the process in seconds since the epoch, in UTC.
+// CreateTime returns created time of the process in milliseconds since the epoch, in UTC.
 func (p *Process) CreateTime() (int64, error) {
 	_, _, _, createTime, _, err := p.fillFromStat()
 	if err != nil {
