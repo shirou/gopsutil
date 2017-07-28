@@ -2,7 +2,7 @@
 
 package mem
 
-//go:generate easyjson -output_filename mem_json_illumos.generated.go mem_json_illumos.go
+//go:generate easyjson -build_tags solaris -output_filename mem_json_illumos.generated.go mem_json_illumos.go
 
 import "time"
 

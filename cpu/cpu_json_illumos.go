@@ -2,7 +2,7 @@ package cpu
 
 import "time"
 
-//go:generate easyjson -output_filename cpu_json_illumos.generated.go cpu_json_illumos.go
+//go:generate easyjson -build_tags solaris -output_filename cpu_json_illumos.generated.go cpu_json_illumos.go
 
 // TimeZoneStat is the output from the "zones" kstat(1M) module
 //easyjson:json

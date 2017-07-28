@@ -4,7 +4,7 @@ package disk
 
 import "time"
 
-//go:generate easyjson -output_filename disk_json_illumos.generated.go disk_json_illumos.go
+//go:generate easyjson -build_tags solaris -output_filename disk_json_illumos.generated.go disk_json_illumos.go
 
 // IOCountersZoneStat measurements are defined in
 // https://github.com/joyent/illumos-joyent/blob/master/usr/src/uts/common/sys/zone.h#L404-L422
