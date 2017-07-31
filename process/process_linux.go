@@ -832,6 +832,10 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 		if err != nil {
 			continue
 		}
+		ioStat, err := p.fillFromIO()
+		if err != nil {
+			continue
+		}
 		ppid, pgrp, t1, createTime, nice, err := p.fillFromStat()
 		if err != nil {
 			continue
@@ -882,6 +886,8 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 			Cwd: cwd,
 			// exe
 			Exe: exe,
+			// IO
+			IOStat: ioStat,
 		}
 	}
 	return procs, nil

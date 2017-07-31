@@ -55,6 +55,8 @@ type FilledProcess struct {
 	Cwd string
 	// exe
 	Exe string
+	// IO
+	IOStat *IOCountersStat
 }
 
 type OpenFilesStat struct {
