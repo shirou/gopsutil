@@ -2,6 +2,7 @@ package host
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -73,6 +74,50 @@ func Info() (*InfoStat, error) {
 			result.Platform = "Solaris"
 		default:
 			result.Platform = strings.Fields(line)[0]
+		}
+	}
+
+	switch result.Platform {
+	case "SmartOS":
+		// If everything works, use the current zone ID as the HostID if present.
+		zonename, err := exec.LookPath("/usr/bin/zonename")
+		if err == nil {
+			out, err := invoke.Command(zonename)
+			if err == nil {
+				sc := bufio.NewScanner(bytes.NewReader(out))
+				for sc.Scan() {
+					line := sc.Text()
+
+					// If we're in the global zone, rely on the hostname.
+					if line == "global" {
+						hostname, err := os.Hostname()
+						if err == nil {
+							result.HostID = hostname
+						}
+					} else {
+						result.HostID = strings.TrimSpace(line)
+						break
+					}
+				}
+			}
+		}
+	}
+
+	// If HostID is still empty, use hostid(1), which can lie to callers but at
+	// this point there are no hardware facilities available.  This behavior
+	// matches that of other supported OSes.
+	if result.HostID == "" {
+		hostID, err := exec.LookPath("/usr/bin/hostid")
+		if err == nil {
+			out, err := invoke.Command(hostID)
+			if err == nil {
+				sc := bufio.NewScanner(bytes.NewReader(out))
+				for sc.Scan() {
+					line := sc.Text()
+					result.HostID = strings.TrimSpace(line)
+					break
+				}
+			}
 		}
 	}
 
