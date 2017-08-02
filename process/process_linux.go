@@ -817,7 +817,10 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 			continue
 		}
 		ioStat, err := p.fillFromIO()
-		if err != nil {
+		if os.IsPermission(err) {
+			// Without root permissions we can't read for other processes.
+			ioStat = &IOCountersStat{}
+		} else {
 			continue
 		}
 		ppid, _, t1, createTime, nice, err := p.fillFromStat()
@@ -828,7 +831,6 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 		if os.IsPermission(err) {
 			cwd = ""
 		} else if err != nil {
-			//filled <- evaluated{nil, fmt.Errorf("cwd: %s", err)}
 			continue
 		}
 		exe, err := p.fillFromExe()
