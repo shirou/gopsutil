@@ -36,10 +36,6 @@ type _Ctype_struct___0 struct {
 	Pad uint64
 }
 
-// MemoryInfoExStat is different between OSes
-type MemoryInfoExStat struct {
-}
-
 type MemoryMapsStat struct {
 }
 
@@ -105,13 +101,17 @@ func (p *Process) CmdlineSlice() ([]string, error) {
 	}
 	return r[0], err
 }
+
 func (p *Process) CreateTime() (int64, error) {
 	r, err := callPs("etime", p.Pid, false)
 	if err != nil {
 		return 0, err
 	}
+	return formatElapsedTime(r[0][0])
+}
 
-	elapsedSegments := strings.Split(strings.Replace(r[0][0], "-", ":", 1), ":")
+func formatElapsedTime(etime string) (int64, error) {
+	elapsedSegments := strings.Split(strings.Replace(etime, "-", ":", 1), ":")
 	var elapsedDurations []time.Duration
 	for i := len(elapsedSegments) - 1; i >= 0; i-- {
 		p, err := strconv.ParseInt(elapsedSegments[i], 10, 0)
@@ -135,9 +135,11 @@ func (p *Process) CreateTime() (int64, error) {
 	start := time.Now().Add(-elapsed)
 	return start.Unix() * 1000, nil
 }
+
 func (p *Process) Cwd() (string, error) {
 	return "", common.ErrNotImplementedError
 }
+
 func (p *Process) Parent() (*Process, error) {
 	rr, err := common.CallLsof(invoke, p.Pid, "-FR")
 	if err != nil {
@@ -156,6 +158,7 @@ func (p *Process) Parent() (*Process, error) {
 	}
 	return nil, fmt.Errorf("could not find parent line")
 }
+
 func (p *Process) Status() (string, error) {
 	r, err := callPs("state", p.Pid, false)
 	if err != nil {
@@ -164,6 +167,7 @@ func (p *Process) Status() (string, error) {
 
 	return r[0][0], err
 }
+
 func (p *Process) Uids() ([]int32, error) {
 	k, err := p.getKProc()
 	if err != nil {
@@ -175,6 +179,7 @@ func (p *Process) Uids() ([]int32, error) {
 
 	return []int32{userEffectiveUID}, nil
 }
+
 func (p *Process) Gids() ([]int32, error) {
 	k, err := p.getKProc()
 	if err != nil {
@@ -186,6 +191,7 @@ func (p *Process) Gids() ([]int32, error) {
 
 	return gids, nil
 }
+
 func (p *Process) Terminal() (string, error) {
 	return "", common.ErrNotImplementedError
 	/*
@@ -203,6 +209,7 @@ func (p *Process) Terminal() (string, error) {
 		return termmap[ttyNr], nil
 	*/
 }
+
 func (p *Process) Nice() (int32, error) {
 	k, err := p.getKProc()
 	if err != nil {
@@ -210,22 +217,28 @@ func (p *Process) Nice() (int32, error) {
 	}
 	return int32(k.Proc.P_nice), nil
 }
+
 func (p *Process) IOnice() (int32, error) {
 	return 0, common.ErrNotImplementedError
 }
+
 func (p *Process) Rlimit() ([]RlimitStat, error) {
 	var rlimit []RlimitStat
 	return rlimit, common.ErrNotImplementedError
 }
+
 func (p *Process) IOCounters() (*IOCountersStat, error) {
 	return nil, common.ErrNotImplementedError
 }
+
 func (p *Process) NumCtxSwitches() (*NumCtxSwitchesStat, error) {
 	return nil, common.ErrNotImplementedError
 }
+
 func (p *Process) NumFDs() (int32, error) {
 	return 0, common.ErrNotImplementedError
 }
+
 func (p *Process) NumThreads() (int32, error) {
 	r, err := callPs("utime,stime", p.Pid, true)
 	if err != nil {
@@ -233,6 +246,7 @@ func (p *Process) NumThreads() (int32, error) {
 	}
 	return int32(len(r)), nil
 }
+
 func (p *Process) Threads() (map[string]string, error) {
 	ret := make(map[string]string, 0)
 	return ret, common.ErrNotImplementedError
@@ -263,18 +277,22 @@ func convertCPUTimes(s string) (ret float64, err error) {
 	t += h
 	return float64(t) / ClockTicks, nil
 }
+
 func (p *Process) Times() (*cpu.TimesStat, error) {
 	r, err := callPs("utime,stime", p.Pid, false)
 
 	if err != nil {
 		return nil, err
 	}
+	return makeTimeStat(r[0][0], r[0][1])
+}
 
-	utime, err := convertCPUTimes(r[0][0])
+func makeTimeStat(strUtime, strStime string) (*cpu.TimesStat, error) {
+	utime, err := convertCPUTimes(strUtime)
 	if err != nil {
 		return nil, err
 	}
-	stime, err := convertCPUTimes(r[0][1])
+	stime, err := convertCPUTimes(strStime)
 	if err != nil {
 		return nil, err
 	}
@@ -286,9 +304,11 @@ func (p *Process) Times() (*cpu.TimesStat, error) {
 	}
 	return ret, nil
 }
+
 func (p *Process) CPUAffinity() ([]int32, error) {
 	return nil, common.ErrNotImplementedError
 }
+
 func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
 	r, err := callPs("rss,vsize,pagein", p.Pid, false)
 	if err != nil {
@@ -315,6 +335,7 @@ func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
 
 	return ret, nil
 }
+
 func (p *Process) MemoryInfoEx() (*MemoryInfoExStat, error) {
 	return nil, common.ErrNotImplementedError
 }
@@ -350,6 +371,7 @@ func (p *Process) NetIOCounters(pernic bool) ([]net.IOCountersStat, error) {
 func (p *Process) IsRunning() (bool, error) {
 	return true, common.ErrNotImplementedError
 }
+
 func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 	var ret []MemoryMapsStat
 	return &ret, common.ErrNotImplementedError
@@ -449,7 +471,7 @@ func callPs(arg string, pid int32, threadOption bool) ([][]string, error) {
 
 	var cmd []string
 	if pid == 0 { // will get from all processes.
-		cmd = []string{"-ax", "-o", arg}
+		cmd = []string{"axwww", "-o", arg}
 	} else if threadOption {
 		cmd = []string{"-x", "-o", arg, "-M", "-p", strconv.Itoa(int(pid))}
 	} else {
@@ -476,4 +498,94 @@ func callPs(arg string, pid int32, threadOption bool) ([][]string, error) {
 	}
 
 	return ret, nil
+}
+
+var (
+	allProcessFields = "pid,ppid,utime,stime,etime,state,rss,vsize,pagein,command"
+	timesFields      = "pid,utime,stime"
+)
+
+func AllProcesses() (map[int32]*FilledProcess, error) {
+	result, err := callPs(allProcessFields, 0, false)
+	if err != nil {
+		return nil, err
+	}
+
+	kprocByPid := make(map[int32]*KinfoProc)
+	for _, r := range result {
+		ipid, err := strconv.Atoi(r[0])
+		if err != nil {
+			return nil, fmt.Errorf("pid: %s", err)
+		}
+		pid := int32(ipid)
+		p, _ := NewProcess(pid)
+		kp, err := p.getKProc()
+		if err != nil {
+			return nil, fmt.Errorf("kproc: %s", err)
+		}
+		kprocByPid[pid] = kp
+	}
+
+	procs := make(map[int32]*FilledProcess)
+	for _, r := range result {
+		ipid, err := strconv.Atoi(r[0])
+		if err != nil {
+			return nil, fmt.Errorf("pid: %s", err)
+		}
+		pid := int32(ipid)
+		k, ok := kprocByPid[pid]
+		if !ok {
+			// Skip processes where we don't have a kproc
+			// These would only happen forvery short-lived processes
+			continue
+		}
+		ppid, err := strconv.Atoi(r[1])
+		if err != nil {
+			return nil, fmt.Errorf("ppid: %s", err)
+		}
+		t1, err := makeTimeStat(r[2], r[3])
+		if err != nil {
+			return nil, fmt.Errorf("times: %s", err)
+		}
+		createTime, err := formatElapsedTime(r[4])
+		if err != nil {
+			return nil, fmt.Errorf("etime: %s", err)
+		}
+		rss, err := strconv.Atoi(r[6])
+		if err != nil {
+			return nil, err
+		}
+		vms, err := strconv.Atoi(r[7])
+		if err != nil {
+			return nil, err
+		}
+		pagein, err := strconv.Atoi(r[8])
+		if err != nil {
+			return nil, err
+		}
+
+		procs[int32(pid)] = &FilledProcess{
+			Pid:        int32(pid),
+			Ppid:       int32(ppid),
+			Cmdline:    r[9:],
+			CpuTime:    *t1,
+			Nice:       int32(k.Proc.P_nice),
+			CreateTime: createTime,
+			Name:       common.IntToString(k.Proc.P_comm[:]),
+			Status:     r[5],
+			Uids:       []int32{int32(k.Eproc.Ucred.UID)},
+			Gids: []int32{
+				int32(k.Eproc.Pcred.P_rgid),
+				int32(k.Eproc.Ucred.Ngroups),
+				int32(k.Eproc.Pcred.P_svgid),
+			},
+			MemInfo: &MemoryInfoStat{
+				RSS:  uint64(rss) * 1024,
+				VMS:  uint64(vms) * 1024,
+				Swap: uint64(pagein),
+			},
+		}
+	}
+
+	return procs, nil
 }

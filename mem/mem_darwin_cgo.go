@@ -4,7 +4,10 @@
 package mem
 
 /*
+#ifndef TEST_H_
+#define TEST_H_
 #include <mach/mach_host.h>
+#endif
 */
 import "C"
 

@@ -8,7 +8,10 @@ package cpu
 #include <sys/sysctl.h>
 #include <sys/mount.h>
 #include <mach/mach_init.h>
+#ifndef TEST_H_
+#define TEST_H_
 #include <mach/mach_host.h>
+#endif
 #include <mach/host_info.h>
 #if TARGET_OS_MAC
 #include <libproc.h>

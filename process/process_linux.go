@@ -32,22 +32,6 @@ const (
 	ClockTicks  = 100 // C.sysconf(C._SC_CLK_TCK)
 )
 
-// MemoryInfoExStat is different between OSes
-type MemoryInfoExStat struct {
-	RSS    uint64 `json:"rss"`    // bytes
-	VMS    uint64 `json:"vms"`    // bytes
-	Shared uint64 `json:"shared"` // bytes
-	Text   uint64 `json:"text"`   // bytes
-	Lib    uint64 `json:"lib"`    // bytes
-	Data   uint64 `json:"data"`   // bytes
-	Dirty  uint64 `json:"dirty"`  // bytes
-}
-
-func (m MemoryInfoExStat) String() string {
-	s, _ := json.Marshal(m)
-	return string(s)
-}
-
 type MemoryMapsStat struct {
 	Path         string `json:"path"`
 	Rss          uint64 `json:"rss"`
@@ -836,7 +820,7 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 		if err != nil {
 			continue
 		}
-		ppid, pgrp, t1, createTime, nice, err := p.fillFromStat()
+		ppid, _, t1, createTime, nice, err := p.fillFromStat()
 		if err != nil {
 			continue
 		}
@@ -867,7 +851,6 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 			Ppid:    ppid,
 			Cmdline: cmdline,
 			// stat
-			Pgrp:        pgrp,
 			CpuTime:     *t1,
 			Nice:        nice,
 			CreateTime:  createTime,

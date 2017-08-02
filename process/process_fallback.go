@@ -24,9 +24,6 @@ type MemoryMapsStat struct {
 	Swap         uint64 `json:"swap"`
 }
 
-type MemoryInfoExStat struct {
-}
-
 func Pids() ([]int32, error) {
 	return []int32{}, common.ErrNotImplementedError
 }
