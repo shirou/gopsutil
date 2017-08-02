@@ -3,8 +3,8 @@
 package process
 
 import (
-	"bytes"
 	"C"
+	"bytes"
 	"encoding/binary"
 	"strings"
 	"syscall"
@@ -12,13 +12,9 @@ import (
 
 	cpu "github.com/DataDog/gopsutil/cpu"
 	"github.com/DataDog/gopsutil/internal/common"
-	net "github.com/DataDog/gopsutil/net"
 	mem "github.com/DataDog/gopsutil/mem"
+	net "github.com/DataDog/gopsutil/net"
 )
-
-// MemoryInfoExStat is different between OSes
-type MemoryInfoExStat struct {
-}
 
 type MemoryMapsStat struct {
 }
@@ -58,7 +54,7 @@ func (p *Process) Exe() (string, error) {
 }
 
 func (p *Process) CmdlineSlice() ([]string, error) {
-	mib := []int32{CTLKern, KernProcArgs, p.Pid, KernProcArgv }
+	mib := []int32{CTLKern, KernProcArgs, p.Pid, KernProcArgv}
 	buf, _, err := common.CallSyscall(mib)
 
 	if err != nil {
@@ -75,7 +71,7 @@ func (p *Process) CmdlineSlice() ([]string, error) {
 		strParts = append(strParts, C.GoString(argv))
 
 		argc++
-		argv = *(**C.char)(unsafe.Pointer(uintptr(argvp) + uintptr(argc) * size))
+		argv = *(**C.char)(unsafe.Pointer(uintptr(argvp) + uintptr(argc)*size))
 	}
 	return strParts, nil
 }

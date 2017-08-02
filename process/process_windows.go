@@ -43,10 +43,6 @@ type SystemProcessInformation struct {
 	Reserved6         [6]uint64
 }
 
-// Memory_info_ex is different between OSes
-type MemoryInfoExStat struct {
-}
-
 type MemoryMapsStat struct {
 }
 

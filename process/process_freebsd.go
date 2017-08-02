@@ -13,10 +13,6 @@ import (
 	net "github.com/DataDog/gopsutil/net"
 )
 
-// MemoryInfoExStat is different between OSes
-type MemoryInfoExStat struct {
-}
-
 type MemoryMapsStat struct {
 }
 

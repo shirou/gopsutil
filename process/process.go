@@ -36,7 +36,6 @@ type FilledProcess struct {
 	Ppid    int32
 	Cmdline []string
 	// stat
-	Pgrp        int32
 	CpuTime     cpu.TimesStat
 	Nice        int32
 	CreateTime  int64
@@ -68,6 +67,17 @@ type MemoryInfoStat struct {
 	RSS  uint64 `json:"rss"`  // bytes
 	VMS  uint64 `json:"vms"`  // bytes
 	Swap uint64 `json:"swap"` // bytes
+}
+
+// MemoryInfoExStat is different between OSes
+type MemoryInfoExStat struct {
+	RSS    uint64 `json:"rss"`    // bytes
+	VMS    uint64 `json:"vms"`    // bytes
+	Shared uint64 `json:"shared"` // bytes
+	Text   uint64 `json:"text"`   // bytes
+	Lib    uint64 `json:"lib"`    // bytes
+	Data   uint64 `json:"data"`   // bytes
+	Dirty  uint64 `json:"dirty"`  // bytes
 }
 
 type RlimitStat struct {
