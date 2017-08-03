@@ -114,3 +114,15 @@ func TestTemperatureStat_String(t *testing.T) {
 		t.Errorf("TemperatureStat string is invalid")
 	}
 }
+
+func TestVirtualization(t *testing.T) {
+	system, role, err := Virtualization()
+	if err != nil {
+		t.Errorf("Virtualization() failed, %v", err)
+	}
+	if system == "" || role == "" {
+		t.Errorf("Virtualization() retuns empty system or role:  %s, %s", system, role)
+	}
+
+	t.Logf("Virtualization(): %s, %s", system, role)
+}

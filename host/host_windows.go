@@ -188,3 +188,7 @@ func Users() ([]UserStat, error) {
 func SensorsTemperatures() ([]TemperatureStat, error) {
 	return []TemperatureStat{}, common.ErrNotImplementedError
 }
+
+func Virtualization() (string, string, error) {
+	return "", "", common.ErrNotImplementedError
+}
