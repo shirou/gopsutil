@@ -179,3 +179,26 @@ func Users() ([]UserStat, error) {
 func SensorsTemperatures() ([]TemperatureStat, error) {
 	return []TemperatureStat{}, common.ErrNotImplementedError
 }
+
+func Virtualization() (string, string, error) {
+	return "", "", common.ErrNotImplementedError
+}
+
+func KernelVersion() (string, error) {
+	// Parse versions from output of `uname(1)`
+	uname, err := exec.LookPath("/usr/bin/uname")
+	if err != nil {
+		return "", err
+	}
+
+	out, err := invoke.Command(uname, "-srv")
+	if err != nil {
+		return "", err
+	}
+
+	fields := strings.Fields(string(out))
+	if len(fields) >= 2 {
+		return fields[1], nil
+	}
+	return "", fmt.Errorf("could not get kernel version")
+}

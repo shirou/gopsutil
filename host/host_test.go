@@ -126,3 +126,15 @@ func TestVirtualization(t *testing.T) {
 
 	t.Logf("Virtualization(): %s, %s", system, role)
 }
+
+func TestKernelVersion(t *testing.T) {
+	version, err := KernelVersion()
+	if err != nil {
+		t.Errorf("KernelVersion() failed, %v", err)
+	}
+	if version == "" {
+		t.Errorf("KernelVersion() retuns empty: %s", version)
+	}
+
+	t.Logf("KernelVersion(): %s", version)
+}
