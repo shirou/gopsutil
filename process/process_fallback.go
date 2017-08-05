@@ -140,3 +140,7 @@ func (p *Process) Kill() error {
 func (p *Process) Username() (string, error) {
 	return "", common.ErrNotImplementedError
 }
+
+func AllProcesses() (map[int32]*FilledProcess, error) {
+	return nil, common.ErrNotImplementedError
+}
