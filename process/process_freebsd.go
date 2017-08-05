@@ -5,6 +5,7 @@ package process
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"strings"
 	"syscall"
 
@@ -87,7 +88,11 @@ func (p *Process) CmdlineSlice() ([]string, error) {
 	return strParts, nil
 }
 func (p *Process) CreateTime() (int64, error) {
-	return 0, common.ErrNotImplementedError
+	k, err := p.getKProc()
+	if err != nil {
+		return 0, err
+	}
+	return k.Start.Sec * 1000, nil
 }
 func (p *Process) Cwd() (string, error) {
 	return "", common.ErrNotImplementedError
@@ -100,8 +105,11 @@ func (p *Process) Status() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	return p.formatStatus(k.Stat), nil
+}
+func (p *Process) formatStatus(stat int8) string {
 	var s string
-	switch k.Stat {
+	switch stat {
 	case SIDL:
 		s = "I"
 	case SRUN:
@@ -117,8 +125,7 @@ func (p *Process) Status() (string, error) {
 	case SLOCK:
 		s = "L"
 	}
-
-	return s, nil
+	return s
 }
 func (p *Process) Uids() ([]int32, error) {
 	k, err := p.getKProc()
@@ -219,6 +226,9 @@ func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
 	if err != nil {
 		return nil, err
 	}
+	return p.formatMemoryInfo(k)
+}
+func (p *Process) formatMemoryInfo(k *KinfoProc) (*MemoryInfoStat, error) {
 	v, err := syscall.Sysctl("vm.stats.vm.v_page_size")
 	if err != nil {
 		return nil, err
@@ -329,4 +339,60 @@ func NewProcess(pid int32) (*Process, error) {
 	p := &Process{Pid: pid}
 
 	return p, nil
+}
+
+func AllProcesses() (map[int32]*FilledProcess, error) {
+	pids, err := Pids()
+	if err != nil {
+		return nil, fmt.Errorf("could not collect pids: %s", err)
+	}
+
+	// Collect stats on all processes limiting the number of required syscalls.
+	// All errors are swallowed for now.
+	procs := make(map[int32]*FilledProcess)
+	for _, pid := range pids {
+		p, err := NewProcess(pid)
+		if err != nil {
+			continue
+		}
+
+		cmdline, err := p.CmdlineSlice()
+		if err != nil {
+			continue
+		}
+		k, err := p.getKProc()
+		if err != nil {
+			continue
+		}
+		memInfo, err := p.formatMemoryInfo(k)
+		if err != nil {
+			continue
+		}
+
+		procs[p.Pid] = &FilledProcess{
+			Pid:     pid,
+			Ppid:    k.Ppid,
+			Cmdline: cmdline,
+			CpuTime: cpu.TimesStat{
+				CPU:    "cpu",
+				User:   float64(k.Rusage.Utime.Sec) + float64(k.Rusage.Utime.Usec)/1000000,
+				System: float64(k.Rusage.Stime.Sec) + float64(k.Rusage.Stime.Usec)/1000000,
+			},
+			Nice:        int32(k.Nice),
+			Status:      p.formatStatus(k.Stat),
+			CreateTime:  k.Start.Sec * 1000,
+			OpenFdCount: 0, // FIXME: Needs implementation
+			Name:        common.IntToString(k.Comm[:]),
+			Uids:        []int32{int32(k.Ruid), int32(k.Uid), int32(k.Svuid)},
+			Gids:        []int32{int32(k.Rgid), int32(k.Ngroups), int32(k.Svgid)},
+			NumThreads:  k.Numthreads,
+			MemInfo:     memInfo,
+			Cwd:         "",
+			IOStat: &IOCountersStat{
+				ReadCount:  uint64(k.Rusage.Inblock),
+				WriteCount: uint64(k.Rusage.Oublock),
+			},
+		}
+	}
+	return procs, nil
 }
