@@ -2,6 +2,8 @@ package common
 
 import (
 	"fmt"
+	"os"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -93,5 +95,35 @@ func TestHostEtc(t *testing.T) {
 	p := HostEtc("mtab")
 	if p != "/etc/mtab" {
 		t.Errorf("invalid HostEtc, %s", p)
+	}
+}
+
+func TestGetSysctrlEnv(t *testing.T) {
+	// Append case
+	env := getSysctrlEnv([]string{"FOO=bar"})
+	if !reflect.DeepEqual(env, []string{"FOO=bar", "LC_ALL=C"}) {
+		t.Errorf("unexpected append result from getSysctrlEnv: %q", env)
+	}
+
+	// Replace case
+	env = getSysctrlEnv([]string{"FOO=bar", "LC_ALL=en_US.UTF-8"})
+	if !reflect.DeepEqual(env, []string{"FOO=bar", "LC_ALL=C"}) {
+		t.Errorf("unexpected replace result from getSysctrlEnv: %q", env)
+	}
+
+	// Test against real env
+	env = getSysctrlEnv(os.Environ())
+	found := false
+	for _, v := range env {
+		if v == "LC_ALL=C" {
+			found = true
+			continue
+		}
+		if strings.HasPrefix(v, "LC_ALL") {
+			t.Fatalf("unexpected LC_ALL value: %q", v)
+		}
+	}
+	if !found {
+		t.Errorf("unexpected real result from getSysctrlEnv: %q", env)
 	}
 }
