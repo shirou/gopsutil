@@ -42,11 +42,12 @@ type FilledProcess struct {
 	OpenFdCount int32
 
 	// status
-	Name       string
-	Status     string
-	Uids       []int32
-	Gids       []int32
-	NumThreads int32
+	Name        string
+	Status      string
+	Uids        []int32
+	Gids        []int32
+	NumThreads  int32
+	CtxSwitches *NumCtxSwitchesStat
 	// statm
 	MemInfo   *MemoryInfoStat
 	MemInfoEx *MemoryInfoExStat

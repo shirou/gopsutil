@@ -859,11 +859,12 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 			OpenFdCount: openFdCount,
 
 			// status
-			Name:       p.name,
-			Status:     p.status,
-			Uids:       p.uids,
-			Gids:       p.gids,
-			NumThreads: p.numThreads,
+			Name:        p.name,
+			Status:      p.status,
+			Uids:        p.uids,
+			Gids:        p.gids,
+			NumThreads:  p.numThreads,
+			CtxSwitches: p.numCtxSwitches,
 			// statm
 			MemInfo:   memInfo,
 			MemInfoEx: memInfoEx,
