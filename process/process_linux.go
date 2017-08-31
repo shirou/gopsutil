@@ -83,7 +83,7 @@ func NewProcess(pid int32) (*Process, error) {
 
 // Ppid returns Parent Process ID of the process.
 func (p *Process) Ppid() (int32, error) {
-	_, ppid, _, _, _, err := p.fillFromStat()
+	_, ppid, _, _, _, _, err := p.fillFromStat()
 	if err != nil {
 		return -1, err
 	}
@@ -119,7 +119,7 @@ func (p *Process) CmdlineSlice() ([]string, error) {
 
 // CreateTime returns created time of the process in milliseconds since the epoch, in UTC.
 func (p *Process) CreateTime() (int64, error) {
-	_, _, _, createTime, _, err := p.fillFromStat()
+	_, _, _, createTime, _, _, err := p.fillFromStat()
 	if err != nil {
 		return 0, err
 	}
@@ -176,7 +176,7 @@ func (p *Process) Gids() ([]int32, error) {
 
 // Terminal returns a terminal which is associated with the process.
 func (p *Process) Terminal() (string, error) {
-	terminal, _, _, _, _, err := p.fillFromStat()
+	terminal, _, _, _, _, _, err := p.fillFromStat()
 	if err != nil {
 		return "", err
 	}
@@ -186,7 +186,7 @@ func (p *Process) Terminal() (string, error) {
 // Nice returns a nice value (priority).
 // Notice: gopsutil can not set nice value.
 func (p *Process) Nice() (int32, error) {
-	_, _, _, _, nice, err := p.fillFromStat()
+	_, _, _, _, _, nice, err := p.fillFromStat()
 	if err != nil {
 		return 0, err
 	}
@@ -200,7 +200,65 @@ func (p *Process) IOnice() (int32, error) {
 
 // Rlimit returns Resource Limits.
 func (p *Process) Rlimit() ([]RlimitStat, error) {
-	return p.fillFromLimits()
+	return p.RlimitUsage(false)
+}
+
+// RlimitUsage returns Resource Limits.
+// If gatherUsed is true, the currently used value will be gathered and added
+// to the resulting RlimitStat.
+func (p *Process) RlimitUsage(gatherUsed bool) ([]RlimitStat, error) {
+	rlimits, err := p.fillFromLimits()
+	if !gatherUsed || err != nil {
+		return rlimits, err
+	}
+
+	_, _, _, _, rtprio, nice, err := p.fillFromStat()
+	if err != nil {
+		return nil, err
+	}
+	if err := p.fillFromStatus(); err != nil {
+		return nil, err
+	}
+
+	for i := range rlimits {
+		rs := &rlimits[i]
+		switch rs.Resource {
+		case RLIMIT_CPU:
+			times, err := p.Times()
+			if err != nil {
+				return nil, err
+			}
+			rs.Used = uint64(times.User + times.System)
+		case RLIMIT_DATA:
+			rs.Used = uint64(p.memInfo.Data)
+		case RLIMIT_STACK:
+			rs.Used = uint64(p.memInfo.Stack)
+		case RLIMIT_RSS:
+			rs.Used = uint64(p.memInfo.RSS)
+		case RLIMIT_NOFILE:
+			n, err := p.NumFDs()
+			if err != nil {
+				return nil, err
+			}
+			rs.Used = uint64(n)
+		case RLIMIT_MEMLOCK:
+			rs.Used = uint64(p.memInfo.Locked)
+		case RLIMIT_AS:
+			rs.Used = uint64(p.memInfo.VMS)
+		case RLIMIT_LOCKS:
+			//TODO we can get the used value from /proc/$pid/locks. But linux doesn't enforce it, so not a high priority.
+		case RLIMIT_SIGPENDING:
+			rs.Used = p.sigInfo.PendingProcess
+		case RLIMIT_NICE:
+			// The rlimit for nice is a little unusual, in that 0 means the niceness cannot be decreased beyond the current value, but it can be increased.
+			// So effectively: if rs.Soft == 0 { rs.Soft = rs.Used }
+			rs.Used = uint64(nice)
+		case RLIMIT_RTPRIO:
+			rs.Used = uint64(rtprio)
+		}
+	}
+
+	return rlimits, err
 }
 
 // IOCounters returns IO Counters.
@@ -242,7 +300,7 @@ func (p *Process) Threads() (map[string]string, error) {
 
 // Times returns CPU times of the process.
 func (p *Process) Times() (*cpu.TimesStat, error) {
-	_, _, cpuTimes, _, _, err := p.fillFromStat()
+	_, _, cpuTimes, _, _, _, err := p.fillFromStat()
 	if err != nil {
 		return nil, err
 	}
@@ -720,6 +778,7 @@ func (p *Process) fillFromStatus() error {
 	lines := strings.Split(string(contents), "\n")
 	p.numCtxSwitches = &NumCtxSwitchesStat{}
 	p.memInfo = &MemoryInfoStat{}
+	p.sigInfo = &SignalInfoStat{}
 	for _, line := range lines {
 		tabParts := strings.SplitN(line, "\t", 2)
 		if len(tabParts) < 2 {
@@ -806,18 +865,69 @@ func (p *Process) fillFromStatus() error {
 				return err
 			}
 			p.memInfo.Swap = v * 1024
+		case "VmData":
+			value := strings.Trim(value, " kB") // remove last "kB"
+			v, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return err
+			}
+			p.memInfo.Data = v * 1024
+		case "VmStk":
+			value := strings.Trim(value, " kB") // remove last "kB"
+			v, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return err
+			}
+			p.memInfo.Stack = v * 1024
+		case "VmLck":
+			value := strings.Trim(value, " kB") // remove last "kB"
+			v, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return err
+			}
+			p.memInfo.Locked = v * 1024
+		case "SigPnd":
+			v, err := strconv.ParseUint(value, 16, 64)
+			if err != nil {
+				return err
+			}
+			p.sigInfo.PendingThread = v
+		case "ShdPnd":
+			v, err := strconv.ParseUint(value, 16, 64)
+			if err != nil {
+				return err
+			}
+			p.sigInfo.PendingProcess = v
+		case "SigBlk":
+			v, err := strconv.ParseUint(value, 16, 64)
+			if err != nil {
+				return err
+			}
+			p.sigInfo.Blocked = v
+		case "SigIgn":
+			v, err := strconv.ParseUint(value, 16, 64)
+			if err != nil {
+				return err
+			}
+			p.sigInfo.Ignored = v
+		case "SigCgt":
+			v, err := strconv.ParseUint(value, 16, 64)
+			if err != nil {
+				return err
+			}
+			p.sigInfo.Caught = v
 		}
 
 	}
 	return nil
 }
 
-func (p *Process) fillFromStat() (string, int32, *cpu.TimesStat, int64, int32, error) {
+func (p *Process) fillFromStat() (string, int32, *cpu.TimesStat, int64, uint32, int32, error) {
 	pid := p.Pid
 	statPath := common.HostProc(strconv.Itoa(int(pid)), "stat")
 	contents, err := ioutil.ReadFile(statPath)
 	if err != nil {
-		return "", 0, nil, 0, 0, err
+		return "", 0, nil, 0, 0, 0, err
 	}
 	fields := strings.Fields(string(contents))
 
@@ -831,23 +941,23 @@ func (p *Process) fillFromStat() (string, int32, *cpu.TimesStat, int64, int32, e
 	if err == nil {
 		t, err := strconv.ParseUint(fields[i+5], 10, 64)
 		if err != nil {
-			return "", 0, nil, 0, 0, err
+			return "", 0, nil, 0, 0, 0, err
 		}
 		terminal = termmap[t]
 	}
 
 	ppid, err := strconv.ParseInt(fields[i+2], 10, 32)
 	if err != nil {
-		return "", 0, nil, 0, 0, err
+		return "", 0, nil, 0, 0, 0, err
 	}
 	utime, err := strconv.ParseFloat(fields[i+12], 64)
 	if err != nil {
-		return "", 0, nil, 0, 0, err
+		return "", 0, nil, 0, 0, 0, err
 	}
 
 	stime, err := strconv.ParseFloat(fields[i+13], 64)
 	if err != nil {
-		return "", 0, nil, 0, 0, err
+		return "", 0, nil, 0, 0, 0, err
 	}
 
 	cpuTimes := &cpu.TimesStat{
@@ -859,17 +969,24 @@ func (p *Process) fillFromStat() (string, int32, *cpu.TimesStat, int64, int32, e
 	bootTime, _ := host.BootTime()
 	t, err := strconv.ParseUint(fields[i+20], 10, 64)
 	if err != nil {
-		return "", 0, nil, 0, 0, err
+		return "", 0, nil, 0, 0, 0, err
 	}
 	ctime := (t / uint64(ClockTicks)) + uint64(bootTime)
 	createTime := int64(ctime * 1000)
+
+	rtpriority, err := strconv.ParseInt(fields[i+16], 10, 32)
+	if rtpriority < 0 {
+		rtpriority = rtpriority*-1 - 1
+	} else {
+		rtpriority = 0
+	}
 
 	//	p.Nice = mustParseInt32(fields[18])
 	// use syscall instead of parse Stat file
 	snice, _ := unix.Getpriority(PrioProcess, int(pid))
 	nice := int32(snice) // FIXME: is this true?
 
-	return terminal, int32(ppid), cpuTimes, createTime, nice, nil
+	return terminal, int32(ppid), cpuTimes, createTime, uint32(rtpriority), nice, nil
 }
 
 // Pids returns a slice of process ID list which are running now.

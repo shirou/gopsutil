@@ -248,6 +248,10 @@ func (p *Process) Rlimit() ([]RlimitStat, error) {
 	var rlimit []RlimitStat
 	return rlimit, common.ErrNotImplementedError
 }
+func (p *Process) RlimitUsage(_ bool) ([]RlimitStat, error) {
+	var rlimit []RlimitStat
+	return rlimit, common.ErrNotImplementedError
+}
 func (p *Process) IOCounters() (*IOCountersStat, error) {
 	return nil, common.ErrNotImplementedError
 }

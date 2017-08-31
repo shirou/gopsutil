@@ -80,6 +80,9 @@ func (p *Process) IOnice() (int32, error) {
 func (p *Process) Rlimit() ([]RlimitStat, error) {
 	return nil, common.ErrNotImplementedError
 }
+func (p *Process) RlimitUsage(_ bool) ([]RlimitStat, error) {
+	return nil, common.ErrNotImplementedError
+}
 func (p *Process) IOCounters() (*IOCountersStat, error) {
 	return nil, common.ErrNotImplementedError
 }

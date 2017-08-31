@@ -240,6 +240,11 @@ func (p *Process) Rlimit() ([]RlimitStat, error) {
 
 	return rlimit, common.ErrNotImplementedError
 }
+func (p *Process) RlimitUsage(_ bool) ([]RlimitStat, error) {
+	var rlimit []RlimitStat
+
+	return rlimit, common.ErrNotImplementedError
+}
 
 func (p *Process) IOCounters() (*IOCountersStat, error) {
 	dst, err := GetWin32Proc(p.Pid)
