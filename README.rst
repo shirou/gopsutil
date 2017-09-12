@@ -95,7 +95,7 @@ see http://godoc.org/github.com/shirou/gopsutil
 Requirements
 -----------------
 
-- go1.5 or above is required.
+- go1.7 or above is required.
 
 
 More Info
