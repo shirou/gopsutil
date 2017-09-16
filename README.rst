@@ -235,6 +235,7 @@ parent              x            x       x       x
 children            x     x      x       x       x
 connections         x            x       x
 is_running
+oom_score           x
 ================ ===== ======= ======= ====== =======
 
 Original Metrics
