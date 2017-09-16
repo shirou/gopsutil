@@ -463,6 +463,11 @@ func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 	return &ret, nil
 }
 
+// OOMScore returns the current oom-killer (Out-of-Memory killer) score
+func (p *Process) OOMScore() (int32, error) {
+	return p.fillFromOOMkiller()
+}
+
 /**
 ** Internal functions
 **/
@@ -713,6 +718,21 @@ func (p *Process) fillFromIO() (*IOCountersStat, error) {
 	}
 
 	return ret, nil
+}
+
+// Get OOM-killer score(oom_score) from /proc/(pid)/oom_score
+func (p *Process) fillFromOOMkiller() (int32, error) {
+	pid := p.Pid
+	oomScorePath := common.HostProc(strconv.Itoa(int(pid)), "oom_score")
+	oomScore, err := ioutil.ReadFile(oomScorePath)
+	if err != nil {
+		return -1, err
+	}
+	score, err := strconv.ParseInt(strings.TrimSuffix(string(oomScore), "\n"), 10, 32)
+	if err != nil {
+		return -1, err
+	}
+	return int32(score), nil
 }
 
 // Get memory info from /proc/(pid)/statm
