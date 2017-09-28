@@ -215,5 +215,5 @@ func (p *Process) CPUPercent() (float64, error) {
         created := time.Unix(0, crt_time * int64(time.Millisecond))
         totalTime := time.Since(created).Seconds()
 
-        return (100 * (cput.Total() / totalTime)), nil
+        return 100 * cput.Total() / totalTime, nil
 }
