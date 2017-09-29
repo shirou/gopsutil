@@ -273,8 +273,8 @@ func (p *Process) NumThreads() (int32, error) {
 	}
 	return int32(dst[0].ThreadCount), nil
 }
-func (p *Process) Threads() (map[string]string, error) {
-	ret := make(map[string]string, 0)
+func (p *Process) Threads() ([]int32, error) {
+	ret := make([]int32, 0)
 	return ret, common.ErrNotImplementedError
 }
 func (p *Process) Times() (*cpu.TimesStat, error) {

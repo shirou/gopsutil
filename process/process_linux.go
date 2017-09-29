@@ -293,9 +293,9 @@ func (p *Process) NumThreads() (int32, error) {
 // Threads returns a map of threads
 //
 // Notice: Not implemented yet. always returns empty map.
-func (p *Process) Threads() (map[string]string, error) {
-	ret := make(map[string]string, 0)
-	return ret, nil
+func (p *Process) Threads() ([]int32, error) {
+	taskPath := common.HostProc(strconv.Itoa(int(p.Pid)), "task")
+	return readPidsFromDir(taskPath)
 }
 
 // Times returns CPU times of the process.
@@ -991,9 +991,13 @@ func (p *Process) fillFromStat() (string, int32, *cpu.TimesStat, int64, uint32, 
 
 // Pids returns a slice of process ID list which are running now.
 func Pids() ([]int32, error) {
+	return readPidsFromDir(common.HostProc())
+}
+
+func readPidsFromDir(path string) ([]int32, error) {
 	var ret []int32
 
-	d, err := os.Open(common.HostProc())
+	d, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
