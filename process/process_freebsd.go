@@ -204,8 +204,8 @@ func (p *Process) NumThreads() (int32, error) {
 
 	return k.Numthreads, nil
 }
-func (p *Process) Threads() ([]int32, error) {
-	ret := make([]int32, 0)
+func (p *Process) Threads() (map[int32]*cpu.TimesStat, error) {
+	ret := make(map[int32]*cpu.TimesStat)
 	return ret, common.ErrNotImplementedError
 }
 func (p *Process) Times() (*cpu.TimesStat, error) {
