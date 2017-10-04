@@ -4,35 +4,29 @@ package load
 
 import (
 	"os/exec"
-	"strconv"
 	"strings"
+	"unsafe"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"golang.org/x/sys/unix"
 )
 
 func Avg() (*AvgStat, error) {
-	values, err := common.DoSysctrl("vm.loadavg")
+	// This SysctlRaw method borrowed from
+	// https://github.com/prometheus/node_exporter/blob/master/collector/loadavg_freebsd.go
+	type loadavg struct {
+		load  [3]uint32
+		scale int
+	}
+	b, err := unix.SysctlRaw("vm.loadavg")
 	if err != nil {
 		return nil, err
 	}
-
-	load1, err := strconv.ParseFloat(values[0], 64)
-	if err != nil {
-		return nil, err
-	}
-	load5, err := strconv.ParseFloat(values[1], 64)
-	if err != nil {
-		return nil, err
-	}
-	load15, err := strconv.ParseFloat(values[2], 64)
-	if err != nil {
-		return nil, err
-	}
-
+	load := *(*loadavg)(unsafe.Pointer((&b[0])))
+	scale := float64(load.scale)
 	ret := &AvgStat{
-		Load1:  float64(load1),
-		Load5:  float64(load5),
-		Load15: float64(load15),
+		Load1:  float64(load.load[0]) / scale,
+		Load5:  float64(load.load[1]) / scale,
+		Load15: float64(load.load[2]) / scale,
 	}
 
 	return ret, nil
