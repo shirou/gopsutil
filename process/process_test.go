@@ -219,6 +219,26 @@ func Test_Process_NumThread(t *testing.T) {
 	}
 }
 
+func Test_Process_Threads(t *testing.T) {
+	p := testGetProcess()
+
+	n, err := p.NumThreads()
+	if err != nil {
+		t.Errorf("geting NumThread error %v", err)
+	}
+	if n < 0 {
+		t.Errorf("invalid NumThread: %d", n)
+	}
+
+	ts, err := p.Threads()
+	if err != nil {
+		t.Errorf("geting Threads error %v", err)
+	}
+	if len(ts) != int(n) {
+		t.Errorf("unexpected number of threads: %v vs %v", len(ts), n)
+	}
+}
+
 func Test_Process_Name(t *testing.T) {
 	p := testGetProcess()
 

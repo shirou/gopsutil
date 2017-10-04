@@ -95,7 +95,7 @@ func (p *Process) NumFDs() (int32, error) {
 func (p *Process) NumThreads() (int32, error) {
 	return 0, common.ErrNotImplementedError
 }
-func (p *Process) Threads() (map[string]string, error) {
+func (p *Process) Threads() (map[int32]*cpu.TimesStat, error) {
 	return nil, common.ErrNotImplementedError
 }
 func (p *Process) Times() (*cpu.TimesStat, error) {

@@ -290,11 +290,23 @@ func (p *Process) NumThreads() (int32, error) {
 	return p.numThreads, nil
 }
 
-// Threads returns a map of threads
-//
-// Notice: Not implemented yet. always returns empty map.
-func (p *Process) Threads() (map[string]string, error) {
-	ret := make(map[string]string, 0)
+func (p *Process) Threads() (map[int32]*cpu.TimesStat, error) {
+	ret := make(map[int32]*cpu.TimesStat)
+	taskPath := common.HostProc(strconv.Itoa(int(p.Pid)), "task")
+
+	tids, err := readPidsFromDir(taskPath)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, tid := range tids {
+		_, _, cpuTimes, _, _, _, err := p.fillFromTIDStat(tid)
+		if err != nil {
+			return nil, err
+		}
+		ret[tid] = cpuTimes
+	}
+
 	return ret, nil
 }
 
@@ -922,9 +934,16 @@ func (p *Process) fillFromStatus() error {
 	return nil
 }
 
-func (p *Process) fillFromStat() (string, int32, *cpu.TimesStat, int64, uint32, int32, error) {
+func (p *Process) fillFromTIDStat(tid int32) (string, int32, *cpu.TimesStat, int64, uint32, int32, error) {
 	pid := p.Pid
-	statPath := common.HostProc(strconv.Itoa(int(pid)), "stat")
+	var statPath string
+
+	if tid == -1 {
+		statPath = common.HostProc(strconv.Itoa(int(pid)), "stat")
+	} else {
+		statPath = common.HostProc(strconv.Itoa(int(pid)), "task", strconv.Itoa(int(tid)), "stat")
+	}
+
 	contents, err := ioutil.ReadFile(statPath)
 	if err != nil {
 		return "", 0, nil, 0, 0, 0, err
@@ -989,11 +1008,19 @@ func (p *Process) fillFromStat() (string, int32, *cpu.TimesStat, int64, uint32, 
 	return terminal, int32(ppid), cpuTimes, createTime, uint32(rtpriority), nice, nil
 }
 
+func (p *Process) fillFromStat() (string, int32, *cpu.TimesStat, int64, uint32, int32, error) {
+	return p.fillFromTIDStat(-1)
+}
+
 // Pids returns a slice of process ID list which are running now.
 func Pids() ([]int32, error) {
+	return readPidsFromDir(common.HostProc())
+}
+
+func readPidsFromDir(path string) ([]int32, error) {
 	var ret []int32
 
-	d, err := os.Open(common.HostProc())
+	d, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
