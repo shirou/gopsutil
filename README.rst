@@ -200,7 +200,7 @@ name             Linux FreeBSD OpenBSD MacOSX Windows
 pid                 x     x      x       x       x
 ppid                x     x      x       x       x
 name                x     x      x       x       x
-cmdline             x                    x       x
+cmdline             x     x              x       x
 create_time         x                    x
 status              x     x      x       x
 cwd                 x
@@ -227,7 +227,7 @@ username            x     x      x       x       x
 ionice
 rlimit              x
 num_handlers
-threads
+threads             x
 cpu_percent         x            x       x
 cpu_affinity
 memory_percent
