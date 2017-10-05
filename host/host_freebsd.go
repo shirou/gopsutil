@@ -9,14 +9,15 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
-	"strconv"
 	"strings"
 	"sync/atomic"
+	"syscall"
 	"time"
 	"unsafe"
 
 	"github.com/shirou/gopsutil/internal/common"
 	"github.com/shirou/gopsutil/process"
+	"golang.org/x/sys/unix"
 )
 
 const (
@@ -61,9 +62,9 @@ func Info() (*InfoStat, error) {
 		ret.Procs = uint64(len(procs))
 	}
 
-	values, err := common.DoSysctrl("kern.hostuuid")
-	if err == nil && len(values) == 1 && values[0] != "" {
-		ret.HostID = strings.ToLower(values[0])
+	hostid, err := unix.Sysctl("kern.hostuuid")
+	if err == nil && hostid != "" {
+		ret.HostID = strings.ToLower(hostid)
 	}
 
 	return ret, nil
@@ -77,19 +78,13 @@ func BootTime() (uint64, error) {
 	if t != 0 {
 		return t, nil
 	}
-	values, err := common.DoSysctrl("kern.boottime")
+	buf, err := unix.SysctlRaw("kern.boottime")
 	if err != nil {
 		return 0, err
 	}
-	// ex: { sec = 1392261637, usec = 627534 } Thu Feb 13 12:20:37 2014
-	v := strings.Replace(values[2], ",", "", 1)
 
-	boottime, err := strconv.ParseUint(v, 10, 64)
-	if err != nil {
-		return 0, err
-	}
-	t = uint64(boottime)
-	atomic.StoreUint64(&cachedBootTime, t)
+	tv := *(*syscall.Timeval)(unsafe.Pointer((&buf[0])))
+	atomic.StoreUint64(&cachedBootTime, uint64(tv.Sec))
 
 	return t, nil
 }

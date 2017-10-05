@@ -1,4 +1,4 @@
-// +build freebsd
+// +build freebsd openbsd
 
 package load
 
@@ -32,7 +32,7 @@ func Avg() (*AvgStat, error) {
 	return ret, nil
 }
 
-// Misc returnes miscellaneous host-wide statistics.
+// Misc returns miscellaneous host-wide statistics.
 // darwin use ps command to get process running/blocked count.
 // Almost same as Darwin implementation, but state is different.
 func Misc() (*MiscStat, error) {
