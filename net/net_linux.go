@@ -541,7 +541,7 @@ func getProcInodesAll(root string, max int) (map[string][]inodeMap, error) {
 	for _, pid := range pids {
 		t, err := getProcInodes(root, pid, max)
 		if err != nil {
-			return ret, err
+			continue
 		}
 		if len(t) == 0 {
 			continue
