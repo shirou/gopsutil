@@ -301,22 +301,22 @@ func (p *Process) MemoryInfoEx() (*MemoryInfoExStat, error) {
 }
 
 func (p *Process) Children() ([]*Process, error) {
-	procs, err := processes()
+	var dst []Win32_Process
+	query := wmi.CreateQuery(&dst, fmt.Sprintf("Where ParentProcessId = %d", p.Pid))
+	err := wmi.Query(query, &dst)
 	if err != nil {
 		return nil, err
 	}
-	out := []*Process{}
 
-	for _, proc := range procs {
-		parent, err := proc.Parent()
+	out := []*Process{}
+	for _, proc := range dst {
+		p, err := NewProcess(int32(proc.ProcessID))
 		if err != nil {
 			continue
 		}
-
-		if parent.Pid == p.Pid {
-			out = append(out, proc)
-		}
+		out = append(out, p)
 	}
+
 	return out, nil
 }
 
