@@ -322,7 +322,7 @@ func ConnectionsPid(kind string, pid int32) ([]ConnectionStat, error) {
 		}
 	}
 	if err != nil {
-		return nil, fmt.Errorf("cound not get pid(s), %d", pid)
+		return nil, fmt.Errorf("cound not get pid(s), %d: %s", pid, err)
 	}
 	return statsFromInodes(root, pid, tmap, inodes)
 }
@@ -541,6 +541,10 @@ func getProcInodesAll(root string, max int) (map[string][]inodeMap, error) {
 	for _, pid := range pids {
 		t, err := getProcInodes(root, pid, max)
 		if err != nil {
+			// skip if permission error
+			if os.IsPermission(err) {
+				continue
+			}
 			return ret, err
 		}
 		if len(t) == 0 {
