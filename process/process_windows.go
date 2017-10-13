@@ -278,7 +278,27 @@ func (p *Process) Threads() (map[int32]*cpu.TimesStat, error) {
 	return ret, common.ErrNotImplementedError
 }
 func (p *Process) Times() (*cpu.TimesStat, error) {
-	return nil, common.ErrNotImplementedError
+	sysTimes, err := getProcessCPUTimes(p.Pid)
+	if err != nil {
+		return nil, err
+	}
+
+	// User and kernel times are represented as a FILETIME structure
+	// wich contains a 64-bit value representing the number of
+	// 100-nanosecond intervals since January 1, 1601 (UTC):
+	// http://msdn.microsoft.com/en-us/library/ms724284(VS.85).aspx
+	// To convert it into a float representing the seconds that the
+	// process has executed in user/kernel mode I borrowed the code
+	// below from psutil's _psutil_windows.c, and in turn from Python's
+	// Modules/posixmodule.c
+
+	user := float64(sysTimes.UserTime.HighDateTime) * 429.4967296 + float64(sysTimes.UserTime.LowDateTime) * 1e-7
+	kernel := float64(sysTimes.KernelTime.HighDateTime) * 429.4967296 + float64(sysTimes.KernelTime.LowDateTime) * 1e-7
+
+	return &cpu.TimesStat{
+		User: user,
+		System: kernel,
+	}, nil
 }
 func (p *Process) CPUAffinity() ([]int32, error) {
 	return nil, common.ErrNotImplementedError
@@ -484,4 +504,32 @@ func getProcessMemoryInfo(h windows.Handle, mem *PROCESS_MEMORY_COUNTERS) (err e
 		}
 	}
 	return
+}
+
+type SYSTEM_TIMES struct {
+	CreateTime syscall.Filetime
+	ExitTime syscall.Filetime
+	KernelTime syscall.Filetime
+	UserTime syscall.Filetime
+}
+
+func getProcessCPUTimes(pid int32) (SYSTEM_TIMES, error) {
+	var times SYSTEM_TIMES
+
+	// PROCESS_QUERY_LIMITED_INFORMATION is 0x1000
+	h, err := windows.OpenProcess(0x1000, false, uint32(pid))
+	if err != nil {
+		return times, err
+	}
+	defer windows.CloseHandle(h)
+
+	err = syscall.GetProcessTimes(
+		syscall.Handle(h),
+		&times.CreateTime,
+		&times.ExitTime,
+		&times.KernelTime,
+		&times.UserTime,
+	)
+
+	return times, err
 }
