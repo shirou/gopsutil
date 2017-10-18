@@ -213,7 +213,7 @@ nice                x     x      x       x       x
 num_fds             x
 num_ctx_switches    x
 num_threads         x     x      x       x       x
-cpu_times           x
+cpu_times           x                            x
 memory_info         x     x      x       x       x
 memory_info_ex      x
 memory_maps         x
