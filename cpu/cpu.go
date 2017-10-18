@@ -95,15 +95,15 @@ func (c InfoStat) String() string {
 	return string(s)
 }
 
-func getAllBusy(t TimesStat) (float64, float64) {
+func GetAllBusy(t TimesStat) (float64, float64) {
 	busy := t.User + t.System + t.Nice + t.Iowait + t.Irq +
 		t.Softirq + t.Steal + t.Guest + t.GuestNice + t.Stolen
 	return busy + t.Idle, busy
 }
 
-func calculateBusy(t1, t2 TimesStat) float64 {
-	t1All, t1Busy := getAllBusy(t1)
-	t2All, t2Busy := getAllBusy(t2)
+func CalculateBusy(t1, t2 TimesStat) float64 {
+	t1All, t1Busy := GetAllBusy(t1)
+	t2All, t2Busy := GetAllBusy(t2)
 
 	if t2Busy <= t1Busy {
 		return 0
@@ -114,7 +114,7 @@ func calculateBusy(t1, t2 TimesStat) float64 {
 	return (t2Busy - t1Busy) / (t2All - t1All) * 100
 }
 
-func calculateAllBusy(t1, t2 []TimesStat) ([]float64, error) {
+func CalculateAllBusy(t1, t2 []TimesStat) ([]float64, error) {
 	// Make sure the CPU measurements have the same length.
 	if len(t1) != len(t2) {
 		return nil, fmt.Errorf(
@@ -125,7 +125,7 @@ func calculateAllBusy(t1, t2 []TimesStat) ([]float64, error) {
 
 	ret := make([]float64, len(t1))
 	for i, t := range t2 {
-		ret[i] = calculateBusy(t1[i], t)
+		ret[i] = CalculateBusy(t1[i], t)
 	}
 	return ret, nil
 }
@@ -152,7 +152,7 @@ func Percent(interval time.Duration, percpu bool) ([]float64, error) {
 		return nil, err
 	}
 
-	return calculateAllBusy(cpuTimes1, cpuTimes2)
+	return CalculateAllBusy(cpuTimes1, cpuTimes2)
 }
 
 func percentUsedFromLastCall(percpu bool) ([]float64, error) {
@@ -174,5 +174,5 @@ func percentUsedFromLastCall(percpu bool) ([]float64, error) {
 	if lastTimes == nil {
 		return nil, fmt.Errorf("error getting times for cpu percent. lastTimes was nil")
 	}
-	return calculateAllBusy(lastTimes, cpuTimes)
+	return CalculateAllBusy(lastTimes, cpuTimes)
 }
