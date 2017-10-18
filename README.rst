@@ -87,6 +87,8 @@ You can set an alternative location to :code:`/sys` by setting the :code:`HOST_S
 
 You can set an alternative location to :code:`/etc` by setting the :code:`HOST_ETC` environment variable.
 
+You can set an alternative location to :code:`/var` by setting the :code:`HOST_VAR` environment variable.
+
 Documentation
 ------------------------
 
