@@ -40,11 +40,13 @@ func TestBoot_time(t *testing.T) {
 	if v < 946652400 {
 		t.Errorf("Invalid Boottime, older than 2000-01-01")
 	}
+	t.Logf("first boot time: %d", v)
 
 	v2, err := BootTime()
 	if v != v2 {
 		t.Errorf("cached boot time is different")
 	}
+	t.Logf("second boot time: %d", v2)
 }
 
 func TestUsers(t *testing.T) {
