@@ -1017,6 +1017,27 @@ func Pids() ([]int32, error) {
 	return readPidsFromDir(common.HostProc())
 }
 
+// Process returns a slice of pointers to Process structs for all
+// currently running processes.
+func Processes() ([]*Process, error) {
+	out := []*Process{}
+
+	pids, err := Pids()
+	if err != nil {
+		return out, err
+	}
+
+	for _, pid := range pids {
+		p, err := NewProcess(pid)
+		if err != nil {
+			continue
+		}
+		out = append(out, p)
+	}
+
+	return out, nil
+}
+
 func readPidsFromDir(path string) ([]int32, error) {
 	var ret []int32
 
