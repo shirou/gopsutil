@@ -43,7 +43,7 @@ Available Architectures
 - Linux i386/amd64/arm(raspberry pi)
 - Windows/amd64
 - Darwin i386/amd64
-- OpenBDS amd64 (Thank you @mpfz0r!)
+- OpenBSD amd64 (Thank you @mpfz0r!)
 - Solaris amd64 (developed and tested on SmartOS/Illumos, Thank you @jen20!)
 
 All works are implemented without cgo by porting c struct to golang struct.
