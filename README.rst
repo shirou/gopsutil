@@ -187,7 +187,7 @@ boot_time             x      x       x       x       x
 users                 x      x       x       x       x
 pids                  x      x       x       x       x
 pid_exists            x      x       x       x       x
-net_connections       x                      x
+net_connections       x              x       x
 net_protocols         x
 net_if_addrs
 net_if_stats
