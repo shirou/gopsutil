@@ -391,7 +391,7 @@ func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 }
 
 func Processes() ([]*Process, error) {
-	results := make([]*Process)
+	results := []*Process{}
 
 	mib := []int32{CTLKern, KernProc, KernProcAll, 0}
 	buf, length, err := common.CallSyscall(mib)

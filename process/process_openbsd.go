@@ -269,7 +269,7 @@ func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 }
 
 func Processes() ([]*Process, error) {
-	results := make([]*Process)
+	results := []*Process{}
 
 	buf, length, err := CallKernProcSyscall(KernProcAll, 0)
 
