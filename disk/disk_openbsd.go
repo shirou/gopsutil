@@ -66,7 +66,7 @@ func Partitions(all bool) ([]PartitionStat, error) {
 func IOCounters(names ...string) (map[string]IOCountersStat, error) {
 	ret := make(map[string]IOCountersStat)
 
-	r, err := unix.Sysctl("hw.diskstats")
+	r, err := unix.SysctlRaw("hw.diskstats")
 	if err != nil {
 		return nil, err
 	}
