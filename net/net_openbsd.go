@@ -97,7 +97,7 @@ func ParseNetstat(output string, mode string,
 }
 
 func IOCounters(pernic bool) ([]IOCountersStat, error) {
-	netstat, err := exec.LookPath("/usr/bin/netstat")
+	netstat, err := exec.LookPath("netstat")
 	if err != nil {
 		return nil, err
 	}
@@ -204,10 +204,13 @@ func parseNetstatAddr(local string, remote string, family uint32) (laddr Addr, r
 		host := matches[1]
 		port := matches[2]
 		if host == "*" {
-			if family == syscall.AF_INET {
+			switch family {
+			case syscall.AF_INET:
 				host = "0.0.0.0"
-			} else {
+			case syscall.AF_INET6:
 				host = "::"
+			default:
+				return Addr{}, fmt.Errorf("unknown family, %d", family)
 			}
 		}
 		lport, err := strconv.Atoi(port)
@@ -241,7 +244,7 @@ func Connections(kind string) ([]ConnectionStat, error) {
 	case "all":
 		fallthrough
 	case "inet":
-
+		// nothing to add
 	case "inet4":
 		args = append(args, "-finet")
 	case "inet6":
@@ -262,7 +265,7 @@ func Connections(kind string) ([]ConnectionStat, error) {
 		return ret, common.ErrNotImplementedError
 	}
 
-	netstat, err := exec.LookPath("/usr/bin/netstat")
+	netstat, err := exec.LookPath("netstat")
 	if err != nil {
 		return nil, err
 	}
