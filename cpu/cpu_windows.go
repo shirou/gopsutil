@@ -3,6 +3,7 @@
 package cpu
 
 import (
+	"context"
 	"fmt"
 	"unsafe"
 
@@ -81,8 +82,9 @@ func Info() ([]InfoStat, error) {
 	var ret []InfoStat
 	var dst []Win32_Processor
 	q := wmi.CreateQuery(&dst, "")
-	err := wmi.Query(q, &dst)
-	if err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), common.Timeout)
+	defer cancel()
+	if err := common.WMIQueryWithContext(ctx, q, &dst); err != nil {
 		return ret, err
 	}
 
@@ -113,8 +115,11 @@ func Info() ([]InfoStat, error) {
 // Name property is the key by which overall, per cpu and per core metric is known.
 func PerfInfo() ([]Win32_PerfFormattedData_Counters_ProcessorInformation, error) {
 	var ret []Win32_PerfFormattedData_Counters_ProcessorInformation
+
 	q := wmi.CreateQuery(&ret, "")
-	err := wmi.Query(q, &ret)
+	ctx, cancel := context.WithTimeout(context.Background(), common.Timeout)
+	defer cancel()
+	err := common.WMIQueryWithContext(ctx, q, &ret)
 	return ret, err
 }
 
@@ -123,7 +128,9 @@ func PerfInfo() ([]Win32_PerfFormattedData_Counters_ProcessorInformation, error)
 func ProcInfo() ([]Win32_PerfFormattedData_PerfOS_System, error) {
 	var ret []Win32_PerfFormattedData_PerfOS_System
 	q := wmi.CreateQuery(&ret, "")
-	err := wmi.Query(q, &ret)
+	ctx, cancel := context.WithTimeout(context.Background(), common.Timeout)
+	defer cancel()
+	err := common.WMIQueryWithContext(ctx, q, &ret)
 	return ret, err
 }
 

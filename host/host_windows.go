@@ -3,6 +3,7 @@
 package host
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"runtime"
@@ -109,7 +110,9 @@ func getMachineGuid() (string, error) {
 func GetOSInfo() (Win32_OperatingSystem, error) {
 	var dst []Win32_OperatingSystem
 	q := wmi.CreateQuery(&dst, "")
-	err := wmi.Query(q, &dst)
+	ctx, cancel := context.WithTimeout(context.Background(), common.Timeout)
+	defer cancel()
+	err := common.WMIQueryWithContext(ctx, q, &dst)
 	if err != nil {
 		return Win32_OperatingSystem{}, err
 	}

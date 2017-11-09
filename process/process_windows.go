@@ -3,6 +3,7 @@
 package process
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"syscall"
@@ -130,8 +131,10 @@ func GetWin32Proc(pid int32) ([]Win32_Process, error) {
 	var dst []Win32_Process
 	query := fmt.Sprintf("WHERE ProcessId = %d", pid)
 	q := wmi.CreateQuery(&dst, query)
-
-	if err := wmi.Query(q, &dst); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), common.Timeout)
+	defer cancel()
+	err := common.WMIQueryWithContext(ctx, q, &dst)
+	if err != nil {
 		return []Win32_Process{}, fmt.Errorf("could not get win32Proc: %s", err)
 	}
 
@@ -333,7 +336,9 @@ func (p *Process) MemoryInfoEx() (*MemoryInfoExStat, error) {
 func (p *Process) Children() ([]*Process, error) {
 	var dst []Win32_Process
 	query := wmi.CreateQuery(&dst, fmt.Sprintf("Where ParentProcessId = %d", p.Pid))
-	err := wmi.Query(query, &dst)
+	ctx, cancel := context.WithTimeout(context.Background(), common.Timeout)
+	defer cancel()
+	err := common.WMIQueryWithContext(ctx, query, &dst)
 	if err != nil {
 		return nil, err
 	}
