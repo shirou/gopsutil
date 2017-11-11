@@ -22,7 +22,7 @@ type MemoryMapsStat struct {
 
 func Pids() ([]int32, error) {
 	var ret []int32
-	procs, err := processes()
+	procs, err := Processes()
 	if err != nil {
 		return ret, nil
 	}
@@ -278,8 +278,8 @@ func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 	return &ret, common.ErrNotImplementedError
 }
 
-func processes() ([]Process, error) {
-	results := make([]Process, 0, 50)
+func Processes() ([]*Process, error) {
+	results := []*Process{}
 
 	mib := []int32{CTLKern, KernProc, KernProcProc, 0}
 	buf, length, err := common.CallSyscall(mib)
@@ -302,7 +302,7 @@ func processes() ([]Process, error) {
 			continue
 		}
 
-		results = append(results, *p)
+		results = append(results, p)
 	}
 
 	return results, nil

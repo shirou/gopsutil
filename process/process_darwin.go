@@ -390,8 +390,8 @@ func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 	return &ret, common.ErrNotImplementedError
 }
 
-func processes() ([]Process, error) {
-	results := make([]Process, 0, 50)
+func Processes() ([]*Process, error) {
+	results := []*Process{}
 
 	mib := []int32{CTLKern, KernProc, KernProcAll, 0}
 	buf, length, err := common.CallSyscall(mib)
@@ -403,13 +403,6 @@ func processes() ([]Process, error) {
 	k := KinfoProc{}
 	procinfoLen := int(unsafe.Sizeof(k))
 	count := int(length / uint64(procinfoLen))
-	/*
-		fmt.Println(length, procinfoLen, count)
-		b := buf[0*procinfoLen : 0*procinfoLen+procinfoLen]
-		fmt.Println(b)
-		kk, err := parseKinfoProc(b)
-		fmt.Printf("%#v", kk)
-	*/
 
 	// parse buf to procs
 	for i := 0; i < count; i++ {
@@ -422,7 +415,7 @@ func processes() ([]Process, error) {
 		if err != nil {
 			continue
 		}
-		results = append(results, *p)
+		results = append(results, p)
 	}
 
 	return results, nil
