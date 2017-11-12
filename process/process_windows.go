@@ -94,18 +94,28 @@ func init() {
 
 func Pids() ([]int32, error) {
 	// inspired by https://gist.github.com/henkman/3083408
+    // and https://github.com/giampaolo/psutil/blob/1c3a15f637521ba5c0031283da39c733fda53e4c/psutil/arch/windows/process_info.c#L315-L329
 	var ret []int32
-	ps := make([]uint32, 2048)
 	var read uint32 = 0
+	var psSize uint32 = 1024
+	const dwordSize uint32 = 4
 
-	if !w32.EnumProcesses(ps, uint32(len(ps)), &read) {
-		return nil, fmt.Errorf("could not get w32.EnumProcesses")
+	for {
+		ps := make([]uint32, psSize)
+		if !w32.EnumProcesses(ps, uint32(len(ps)), &read) {
+			return nil, fmt.Errorf("could not get w32.EnumProcesses")
+		}
+		if uint32(len(ps)) == read { // ps buffer was too small to host every results, retry with a bigger one
+			psSize += 1024
+			continue
+		}
+		for _, pid := range ps[:read/dwordSize] {
+			ret = append(ret, int32(pid))
+		}
+		return ret, nil
+
 	}
 
-	for _, pid := range ps[:read/4] {
-		ret = append(ret, int32(pid))
-	}
-	return ret, nil
 }
 
 func (p *Process) Ppid() (int32, error) {
