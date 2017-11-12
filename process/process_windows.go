@@ -93,17 +93,18 @@ func init() {
 }
 
 func Pids() ([]int32, error) {
+	// inspired by https://gist.github.com/henkman/3083408
 	var ret []int32
+	ps := make([]uint32, 2048)
+	var read uint32 = 0
 
-	procs, err := Processes()
-	if err != nil {
-		return ret, nil
+	if !w32.EnumProcesses(ps, uint32(len(ps)), &read) {
+		return nil, fmt.Errorf("could not get w32.EnumProcesses")
 	}
 
-	for _, proc := range procs {
-		ret = append(ret, proc.Pid)
+	for _, pid := range ps[:read/4] {
+		ret = append(ret, int32(pid))
 	}
-
 	return ret, nil
 }
 
