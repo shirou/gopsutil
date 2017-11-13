@@ -94,7 +94,7 @@ func init() {
 
 func Pids() ([]int32, error) {
 	// inspired by https://gist.github.com/henkman/3083408
-    // and https://github.com/giampaolo/psutil/blob/1c3a15f637521ba5c0031283da39c733fda53e4c/psutil/arch/windows/process_info.c#L315-L329
+	// and https://github.com/giampaolo/psutil/blob/1c3a15f637521ba5c0031283da39c733fda53e4c/psutil/arch/windows/process_info.c#L315-L329
 	var ret []int32
 	var read uint32 = 0
 	var psSize uint32 = 1024
@@ -434,19 +434,14 @@ func (p *Process) getFromSnapProcess(pid int32) (int32, int32, string, error) {
 
 // Get processes
 func Processes() ([]*Process, error) {
-	var dst []Win32_Process
-	q := wmi.CreateQuery(&dst, "")
-	err := wmi.Query(q, &dst)
+	pids, err := Pids()
 	if err != nil {
-		return []*Process{}, err
-	}
-	if len(dst) == 0 {
-		return []*Process{}, fmt.Errorf("could not get Process")
+		return []*Process{}, fmt.Errorf("could not get Processes %s", err)
 	}
 
 	results := []*Process{}
-	for _, proc := range dst {
-		p, err := NewProcess(int32(proc.ProcessID))
+	for _, pid := range pids {
+		p, err := NewProcess(int32(pid))
 		if err != nil {
 			continue
 		}
