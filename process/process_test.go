@@ -3,6 +3,7 @@ package process
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"os/user"
 	"reflect"
 	"runtime"
@@ -418,5 +419,24 @@ func Test_OpenFiles(t *testing.T) {
 	for _, vv := range v {
 		assert.NotEqual(t, "", vv.Path)
 	}
+}
 
+func Test_Kill(t *testing.T) {
+	var cmd *exec.Cmd
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("choice", "/C", "YN", "/D", "Y", "/t", "3")
+	} else {
+		cmd = exec.Command("sleep", "3")
+	}
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		assert.NotNil(t, cmd.Run())
+		wg.Done()
+	}()
+	time.Sleep(100 * time.Millisecond)
+	p, err := NewProcess(int32(cmd.Process.Pid))
+	assert.Nil(t, err)
+	assert.Nil(t, p.Kill())
+	wg.Wait()
 }
