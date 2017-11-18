@@ -541,8 +541,8 @@ func getProcInodesAll(root string, max int) (map[string][]inodeMap, error) {
 	for _, pid := range pids {
 		t, err := getProcInodes(root, pid, max)
 		if err != nil {
-			// skip if permission error
-			if os.IsPermission(err) {
+			// skip if permission error or no longer exists
+			if os.IsPermission(err) || os.IsNotExist(err) {
 				continue
 			}
 			return ret, err
