@@ -119,12 +119,11 @@ func Pids() ([]int32, error) {
 }
 
 func (p *Process) Ppid() (int32, error) {
-	dst, err := GetWin32Proc(p.Pid)
+	ppid, _, _, err := getFromSnapProcess(p.Pid)
 	if err != nil {
 		return 0, err
 	}
-
-	return int32(dst[0].ParentProcessID), nil
+	return ppid, nil
 }
 
 func GetWin32Proc(pid int32) ([]Win32_Process, error) {
@@ -144,11 +143,11 @@ func GetWin32Proc(pid int32) ([]Win32_Process, error) {
 }
 
 func (p *Process) Name() (string, error) {
-	dst, err := GetWin32Proc(p.Pid)
+	_, _, name, err := getFromSnapProcess(p.Pid)
 	if err != nil {
 		return "", fmt.Errorf("could not get Name: %s", err)
 	}
-	return dst[0].Name, nil
+	return name, nil
 }
 
 func (p *Process) Exe() (string, error) {
@@ -406,7 +405,7 @@ func (p *Process) Kill() error {
 	return common.ErrNotImplementedError
 }
 
-func (p *Process) getFromSnapProcess(pid int32) (int32, int32, string, error) {
+func getFromSnapProcess(pid int32) (int32, int32, string, error) {
 	snap := w32.CreateToolhelp32Snapshot(w32.TH32CS_SNAPPROCESS, uint32(pid))
 	if snap == 0 {
 		return 0, 0, "", windows.GetLastError()
