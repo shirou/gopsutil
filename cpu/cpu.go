@@ -12,6 +12,9 @@ import (
 	"github.com/shirou/gopsutil/internal/common"
 )
 
+// TimesStat contains the amounts of time the CPU has spent performing different
+// kinds of work. Time units are in USER_HZ or Jiffies (typically hundredths of
+// a second). It is based on linux /proc/stat file.
 type TimesStat struct {
 	CPU       string  `json:"cpu"`
 	User      float64 `json:"user"`
