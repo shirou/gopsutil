@@ -204,11 +204,11 @@ func CgroupMem(containerID string, base string) (*CgroupMemStat, error) {
 	if err == nil {
 		ret.MemMaxUsageInBytes = r
 	}
-	r, err = getCgroupMemFile(containerID, base, "memoryLimitInBbytes")
+	r, err = getCgroupMemFile(containerID, base, "memory.limit_in_bytes")
 	if err == nil {
 		ret.MemLimitInBytes = r
 	}
-	r, err = getCgroupMemFile(containerID, base, "memoryFailcnt")
+	r, err = getCgroupMemFile(containerID, base, "memory.failcnt")
 	if err == nil {
 		ret.MemFailCnt = r
 	}
