@@ -145,6 +145,32 @@ func GetWin32Proc(pid int32) ([]Win32_Process, error) {
 	return dst, nil
 }
 
+func GetWin32ProcsByCmdLine(cmdLine string) ([]Win32_Process, error) {
+	var dst []Win32_Process
+	query := fmt.Sprint("WHERE CommandLine LIKE \"%", cmdLine, "%\"")
+	q := wmi.CreateQuery(&dst, query)
+	ctx, cancel := context.WithTimeout(context.Background(), common.Timeout)
+	defer cancel()
+	err := common.WMIQueryWithContext(ctx, q, &dst)
+	if err != nil {
+		return []Win32_Process{}, fmt.Errorf("could not get win32Proc: %s", err)
+	}
+	return dst, nil
+}
+
+func GetWin32ProcsByName(name string) ([]Win32_Process, error) {
+	var dst []Win32_Process
+	query := fmt.Sprint("WHERE Name LIKE \"%", name, "%\"")
+	q := wmi.CreateQuery(&dst, query)
+	ctx, cancel := context.WithTimeout(context.Background(), common.Timeout)
+	defer cancel()
+	err := common.WMIQueryWithContext(ctx, q, &dst)
+	if err != nil {
+		return []Win32_Process{}, fmt.Errorf("could not get win32Proc: %s", err)
+	}
+	return dst, nil
+}
+
 func (p *Process) Name() (string, error) {
 	_, _, name, err := getFromSnapProcess(p.Pid)
 	if err != nil {
