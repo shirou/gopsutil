@@ -145,9 +145,9 @@ func GetWin32Proc(pid int32) ([]Win32_Process, error) {
 	return dst, nil
 }
 
-func GetWin32ProcsByCmdLine(cmdLine string) ([]Win32_Process, error) {
+func GetWin32ProcsByCmdLine(cmdLinePattern string) ([]Win32_Process, error) {
 	var dst []Win32_Process
-	query := fmt.Sprint("WHERE CommandLine LIKE \"%", cmdLine, "%\"")
+	query := fmt.Sprint("WHERE CommandLine LIKE \"", cmdLinePattern, "\"")
 	q := wmi.CreateQuery(&dst, query)
 	ctx, cancel := context.WithTimeout(context.Background(), common.Timeout)
 	defer cancel()
@@ -158,9 +158,9 @@ func GetWin32ProcsByCmdLine(cmdLine string) ([]Win32_Process, error) {
 	return dst, nil
 }
 
-func GetWin32ProcsByName(name string) ([]Win32_Process, error) {
+func GetWin32ProcsByName(namePattern string) ([]Win32_Process, error) {
 	var dst []Win32_Process
-	query := fmt.Sprint("WHERE Name LIKE \"%", name, "%\"")
+	query := fmt.Sprint("WHERE Name LIKE \"", namePattern, "\"")
 	q := wmi.CreateQuery(&dst, query)
 	ctx, cancel := context.WithTimeout(context.Background(), common.Timeout)
 	defer cancel()
