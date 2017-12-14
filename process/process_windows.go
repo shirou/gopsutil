@@ -5,6 +5,7 @@ package process
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"syscall"
 	"time"
@@ -407,7 +408,8 @@ func (p *Process) Terminate() error {
 }
 
 func (p *Process) Kill() error {
-	return common.ErrNotImplementedError
+	process := os.Process{Pid: int(p.Pid)}
+	return process.Kill()
 }
 
 func getFromSnapProcess(pid int32) (int32, int32, string, error) {
