@@ -16,6 +16,8 @@ import (
 	cpu "github.com/DataDog/gopsutil/cpu"
 	"github.com/DataDog/gopsutil/internal/common"
 	net "github.com/DataDog/gopsutil/net"
+	log "github.com/cihub/seelog"
+	
 )
 
 const (
@@ -459,7 +461,7 @@ func getProcessIoCounters(h syscall.Handle, counters *IO_COUNTERS) (err error){
 	}
 	return nil
 }
-func AllProcesses()(map[int32]*FilledProcesses, error) {
+func AllProcesses()(map[int32]*FilledProcess, error) {
 	allProcsSnap := w32.CreateToolhelp32Snapshot(w32.TH32CS_SNAPPROCESS, 0)
 	if allProcsSnap == 0 {
 		return nil, syscall.GetLastError()
@@ -502,30 +504,34 @@ func AllProcesses()(map[int32]*FilledProcesses, error) {
 		if err = getProcessIoCounters(procHandle, &ioCounters); err != nil {
 			continue
 		}
-
-		utime := float64((int64(CPU.UserTime.HighDateTime) << 32) | int64(CPU.UserTime.LowDateTime))
+		ctime := CPU.CreationTime.Nanoseconds() / 1000000
+		
+		exename := strings.Split(convert_windows_string(pe32.SzExeFile[:]), " ")
+		utime := float64((int64(CPU.UserTime.HighDateTime) << 32) | int64(CPU.UserTime.LowDateTime)) 
 		stime := float64((int64(CPU.KernelTime.HighDateTime) << 32) | int64(CPU.KernelTime.LowDateTime))
+		username, err := get_username_for_process(procHandle)
 		procs[int32(pid)] = &FilledProcess {
 			Pid:			int32(pid),
 			Ppid:			int32(ppid),
-			// CmdLine
+			Cmdline:        exename,
 			CpuTime:		cpu.TimesStat{
 				User: utime,
 				System: stime,
-				Idle: (100 - (utime - stime)),
+				Timestamp: time.Now().UnixNano(),
 			},
-			CreateTime: (int64(CPU.CreationTime.HighDateTime) << 32) | int64(CPU.CreationTime.LowDateTime),
+			
+			CreateTime: ctime,
 			OpenFdCount: int32(handleCount),
-			// Name
+			//Name
 			// Status
 			// UIDS
 			// GIDs
 			NumThreads: int32(pe32.CntThreads),
-			// CtxSwitches
+			CtxSwitches: &NumCtxSwitchesStat{},
 			MemInfo: &MemoryInfoStat{
-				RSS:	pmemcounter.WorkingSetSize,
-				VMS:	pmemcounter.QuotaPagedPoolUsage,
-				Swap:   pmemcounter.PagefileUsage,
+				RSS:	pmemcounter.WorkingSetSize / 1024,
+				VMS:	pmemcounter.QuotaPagedPoolUsage / 1024,
+				Swap:   pmemcounter.PagefileUsage / 1024,
 			},
 			//Cwd
 			//Exe
@@ -535,7 +541,36 @@ func AllProcesses()(map[int32]*FilledProcesses, error) {
 				ReadBytes: ioCounters.ReadTransferCount,
 				WriteBytes: ioCounters.WriteTransferCount,
 			},
+			Username: username,
 		}
 	}
 	return procs, nil
+}
+
+func get_username_for_process(h syscall.Handle) (name string, err error) {
+	name = ""
+	err = nil
+	var t syscall.Token
+	err = syscall.OpenProcessToken(h, syscall.TOKEN_QUERY, &t)
+	if err != nil {
+		log.Debugf("Failed to open process token %v", err)
+		return
+	}
+	defer t.Close()
+	tokenUser, err := t.GetTokenUser()
+
+	user, domain, _, err := tokenUser.User.Sid.LookupAccount("")
+	return domain + "\\" + user, err
+
+}
+
+func convert_windows_string(winput []uint16) string {
+	var retstring string
+	for i := 0; i < len(winput); i++ {
+		if winput[i] == 0 {
+			break
+		}
+		retstring += string(rune(winput[i]))
+	}
+	return retstring
 }
