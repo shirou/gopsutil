@@ -541,7 +541,7 @@ func SensorsTemperatures() ([]TemperatureStat, error) {
 	if len(files) == 0 {
 		// CentOS has an intermediate /device directory:
 		// https://github.com/giampaolo/psutil/issues/971
-		files, err = filepath.Glob(common.HostSys("/class/hwmon/hwmon*/temp*_*"))
+		files, err = filepath.Glob(common.HostSys("/class/hwmon/hwmon*/device/temp*_*"))
 		if err != nil {
 			return temperatures, err
 		}
@@ -557,12 +557,12 @@ func SensorsTemperatures() ([]TemperatureStat, error) {
 		if err != nil {
 			return temperatures, err
 		}
-		temperature, err := strconv.ParseFloat(string(current), 64)
+		temperature, err := strconv.ParseFloat(strings.TrimSpace(string(current)), 64)
 		if err != nil {
 			continue
 		}
 		temperatures = append(temperatures, TemperatureStat{
-			SensorKey:   string(name),
+			SensorKey:   strings.TrimSpace(string(name)),
 			Temperature: temperature / 1000.0,
 		})
 	}
