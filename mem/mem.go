@@ -58,6 +58,8 @@ type VirtualMemoryStat struct {
 	Slab         uint64 `json:"slab"`
 	PageTables   uint64 `json:"pagetables"`
 	SwapCached   uint64 `json:"swapcached"`
+	CommitLimit  uint64 `json:"commitlimit"`
+	CommittedAS  uint64 `json:"committedas"`
 }
 
 type SwapMemoryStat struct {
