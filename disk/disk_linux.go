@@ -5,6 +5,7 @@ package disk
 import (
 	"fmt"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -279,6 +280,11 @@ func IOCounters(names ...string) (map[string]IOCountersStat, error) {
 	}
 	ret := make(map[string]IOCountersStat, 0)
 	empty := IOCountersStat{}
+
+	// use only basename such as "/dev/sda1" to "sda1"
+	for i, name := range names {
+		names[i] = filepath.Base(name)
+	}
 
 	for _, line := range lines {
 		fields := strings.Fields(line)
