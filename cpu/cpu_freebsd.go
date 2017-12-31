@@ -1,6 +1,7 @@
 package cpu
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 	"reflect"
@@ -50,6 +51,10 @@ func timeStat(name string, t *cpuTimes) *TimesStat {
 }
 
 func Times(percpu bool) ([]TimesStat, error) {
+	return TimesWithContext(context.Background(), percpu)
+}
+
+func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 	if percpu {
 		buf, err := unix.SysctlRaw("kern.cp_times")
 		if err != nil {
@@ -87,6 +92,10 @@ func Times(percpu bool) ([]TimesStat, error) {
 // count, however is accurate and it is assumed that all InfoStat attributes
 // are the same across CPUs.
 func Info() ([]InfoStat, error) {
+	return InfoWithContext(context.Background())
+}
+
+func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 	const dmesgBoot = "/var/run/dmesg.boot"
 
 	c, num, err := parseDmesgBoot(dmesgBoot)

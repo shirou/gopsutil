@@ -3,6 +3,7 @@
 package docker
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -18,6 +19,10 @@ import (
 // GetDockerStat returns a list of Docker basic stats.
 // This requires certain permission.
 func GetDockerStat() ([]CgroupDockerStat, error) {
+	return GetDockerStatWithContext(context.Background())
+}
+
+func GetDockerStatWithContext(ctx context.Context) ([]CgroupDockerStat, error) {
 	path, err := exec.LookPath("docker")
 	if err != nil {
 		return nil, ErrDockerNotAvailable
@@ -60,6 +65,10 @@ func (c CgroupDockerStat) String() string {
 // GetDockerIDList returnes a list of DockerID.
 // This requires certain permission.
 func GetDockerIDList() ([]string, error) {
+	return GetDockerIDListWithContext(context.Background())
+}
+
+func GetDockerIDListWithContext(ctx context.Context) ([]string, error) {
 	path, err := exec.LookPath("docker")
 	if err != nil {
 		return nil, ErrDockerNotAvailable
@@ -87,6 +96,10 @@ func GetDockerIDList() ([]string, error) {
 // If you use container via systemd.slice, you could use
 // containerID = docker-<container id>.scope and base=/sys/fs/cgroup/cpuacct/system.slice/
 func CgroupCPU(containerID string, base string) (*cpu.TimesStat, error) {
+	return CgroupCPUWithContext(context.Background(), containerID, base)
+}
+
+func CgroupCPUWithContext(ctx context.Context, containerID string, base string) (*cpu.TimesStat, error) {
 	statfile := getCgroupFilePath(containerID, base, "cpuacct", "cpuacct.stat")
 	lines, err := common.ReadLines(statfile)
 	if err != nil {
@@ -117,10 +130,18 @@ func CgroupCPU(containerID string, base string) (*cpu.TimesStat, error) {
 }
 
 func CgroupCPUDocker(containerid string) (*cpu.TimesStat, error) {
+	return CgroupCPUDockerWithContext(context.Background(), containerid)
+}
+
+func CgroupCPUDockerWithContext(ctx context.Context, containerid string) (*cpu.TimesStat, error) {
 	return CgroupCPU(containerid, common.HostSys("fs/cgroup/cpuacct/docker"))
 }
 
 func CgroupMem(containerID string, base string) (*CgroupMemStat, error) {
+	return CgroupMemWithContext(context.Background(), containerID, base)
+}
+
+func CgroupMemWithContext(ctx context.Context, containerID string, base string) (*CgroupMemStat, error) {
 	statfile := getCgroupFilePath(containerID, base, "memory", "memory.stat")
 
 	// empty containerID means all cgroup
@@ -217,6 +238,10 @@ func CgroupMem(containerID string, base string) (*CgroupMemStat, error) {
 }
 
 func CgroupMemDocker(containerID string) (*CgroupMemStat, error) {
+	return CgroupMemDockerWithContext(context.Background(), containerID)
+}
+
+func CgroupMemDockerWithContext(ctx context.Context, containerID string) (*CgroupMemStat, error) {
 	return CgroupMem(containerID, common.HostSys("fs/cgroup/memory/docker"))
 }
 
