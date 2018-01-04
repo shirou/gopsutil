@@ -30,6 +30,8 @@ type Process struct {
 
 	lastCPUTimes *cpu.TimesStat
 	lastCPUTime  time.Time
+
+	tgid int32
 }
 
 type OpenFilesStat struct {
