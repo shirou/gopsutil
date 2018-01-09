@@ -301,6 +301,10 @@ func Test_Process_CpuPercentLoop(t *testing.T) {
 }
 
 func Test_Process_CreateTime(t *testing.T) {
+	if os.Getenv("CIRCLECI") == "true" {
+		t.Skip("Skip CI")
+	}
+
 	p := testGetProcess()
 
 	c, err := p.CreateTime()
