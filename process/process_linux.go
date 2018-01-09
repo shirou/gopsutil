@@ -109,6 +109,16 @@ func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 	return p.name, nil
 }
 
+// Tgid returns tgid, a Linux-synonym for user-space Pid
+func (p *Process) Tgid() (int32, error) {
+	if p.tgid == 0 {
+		if err := p.fillFromStatus(); err != nil {
+			return 0, err
+		}
+	}
+	return p.tgid, nil
+}
+
 // Exe returns executable path of the process.
 func (p *Process) Exe() (string, error) {
 	return p.ExeWithContext(context.Background())
@@ -985,6 +995,12 @@ func (p *Process) fillFromStatusWithContext(ctx context.Context) error {
 				return err
 			}
 			p.parent = int32(pval)
+		case "Tgid":
+			pval, err := strconv.ParseInt(value, 10, 32)
+			if err != nil {
+				return err
+			}
+			p.tgid = int32(pval)
 		case "Uid":
 			p.uids = make([]int32, 0, 4)
 			for _, i := range strings.Split(value, "\t") {

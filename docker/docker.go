@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"encoding/json"
 	"errors"
 
 	"github.com/shirou/gopsutil/internal/common"
@@ -50,10 +51,20 @@ type CgroupMemStat struct {
 	MemFailCnt              uint64 `json:"memoryFailcnt"`
 }
 
+func (m CgroupMemStat) String() string {
+	s, _ := json.Marshal(m)
+	return string(s)
+}
+
 type CgroupDockerStat struct {
 	ContainerID string `json:"containerID"`
 	Name        string `json:"name"`
 	Image       string `json:"image"`
 	Status      string `json:"status"`
 	Running     bool   `json:"running"`
+}
+
+func (c CgroupDockerStat) String() string {
+	s, _ := json.Marshal(c)
+	return string(s)
 }

@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -288,6 +289,11 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 	}
 	ret := make(map[string]IOCountersStat, 0)
 	empty := IOCountersStat{}
+
+	// use only basename such as "/dev/sda1" to "sda1"
+	for i, name := range names {
+		names[i] = filepath.Base(name)
+	}
 
 	for _, line := range lines {
 		fields := strings.Fields(line)

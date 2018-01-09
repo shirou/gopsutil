@@ -104,7 +104,18 @@ func BootTimeWithContext(ctx context.Context) (uint64, error) {
 	if t != 0 {
 		return t, nil
 	}
-	filename := common.HostProc("stat")
+
+	system, role, err := Virtualization()
+	if err != nil {
+		return 0, err
+	}
+	statFile := "stat"
+	if system == "lxc" && role == "guest" {
+		// if lxc, /proc/uptime is used.
+		statFile = "uptime"
+	}
+
+	filename := common.HostProc(statFile)
 	lines, err := common.ReadLines(filename)
 	if err != nil {
 		return 0, err
