@@ -3,8 +3,6 @@
 package docker
 
 import (
-	"encoding/json"
-
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/internal/common"
 )
@@ -39,9 +37,4 @@ func CgroupMem(containerid string, base string) (*CgroupMemStat, error) {
 
 func CgroupMemDocker(containerid string) (*CgroupMemStat, error) {
 	return CgroupMem(containerid, common.HostSys("fs/cgroup/memory/docker"))
-}
-
-func (m CgroupMemStat) String() string {
-	s, _ := json.Marshal(m)
-	return string(s)
 }
