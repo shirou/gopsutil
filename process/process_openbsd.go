@@ -53,6 +53,9 @@ func (p *Process) Name() (string, error) {
 
 	return common.IntToString(k.Comm[:]), nil
 }
+func (p *Process) Tgid() (int32, error) {
+	return 0, common.ErrNotImplementedError
+}
 func (p *Process) Exe() (string, error) {
 	return "", common.ErrNotImplementedError
 }

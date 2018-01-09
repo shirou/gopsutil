@@ -83,6 +83,9 @@ func (p *Process) Name() (string, error) {
 
 	return common.IntToString(k.Proc.P_comm[:]), nil
 }
+func (p *Process) Tgid() (int32, error) {
+	return 0, common.ErrNotImplementedError
+}
 func (p *Process) Exe() (string, error) {
 	lsof_bin, err := exec.LookPath("lsof")
 	if err != nil {

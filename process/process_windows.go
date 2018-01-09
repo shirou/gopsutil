@@ -154,6 +154,10 @@ func (p *Process) Name() (string, error) {
 	return name, nil
 }
 
+func (p *Process) Tgid() (int32, error) {
+	return 0, common.ErrNotImplementedError
+}
+
 func (p *Process) Exe() (string, error) {
 	dst, err := GetWin32Proc(p.Pid)
 	if err != nil {
