@@ -2,6 +2,7 @@ package host
 
 import (
 	"fmt"
+	"os"
 	"testing"
 )
 
@@ -20,6 +21,10 @@ func TestHostInfo(t *testing.T) {
 }
 
 func TestUptime(t *testing.T) {
+	if os.Getenv("CIRCLECI") == "true" {
+		t.Skip("Skip CI")
+	}
+
 	v, err := Uptime()
 	if err != nil {
 		t.Errorf("error %v", err)
@@ -30,6 +35,9 @@ func TestUptime(t *testing.T) {
 }
 
 func TestBoot_time(t *testing.T) {
+	if os.Getenv("CIRCLECI") == "true" {
+		t.Skip("Skip CI")
+	}
 	v, err := BootTime()
 	if err != nil {
 		t.Errorf("error %v", err)
