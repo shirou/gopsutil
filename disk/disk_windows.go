@@ -36,6 +36,10 @@ type Win32_PerfFormattedData struct {
 const WaitMSec = 500
 
 func Usage(path string) (*UsageStat, error) {
+	return UsageWithContext(context.Background(), path)
+}
+
+func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 	ret := &UsageStat{}
 
 	lpFreeBytesAvailable := int64(0)
@@ -64,6 +68,10 @@ func Usage(path string) (*UsageStat, error) {
 }
 
 func Partitions(all bool) ([]PartitionStat, error) {
+	return PartitionsWithContext(context.Background(), all)
+}
+
+func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {
 	var ret []PartitionStat
 	lpBuffer := make([]byte, 254)
 	diskret, _, err := procGetLogicalDriveStringsW.Call(
@@ -129,6 +137,10 @@ func Partitions(all bool) ([]PartitionStat, error) {
 }
 
 func IOCounters(names ...string) (map[string]IOCountersStat, error) {
+	return IOCountersWithContext(context.Background(), names...)
+}
+
+func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOCountersStat, error) {
 	ret := make(map[string]IOCountersStat, 0)
 	var dst []Win32_PerfFormattedData
 

@@ -15,6 +15,7 @@ import (
 	net "github.com/shirou/gopsutil/net"
 	"golang.org/x/sys/unix"
 )
+import "context"
 
 // MemoryInfoExStat is different between OSes
 type MemoryInfoExStat struct {
@@ -24,6 +25,10 @@ type MemoryMapsStat struct {
 }
 
 func Pids() ([]int32, error) {
+	return PidsWithContext(context.Background())
+}
+
+func PidsWithContext(ctx context.Context) ([]int32, error) {
 	var ret []int32
 	procs, err := Processes()
 	if err != nil {
@@ -38,6 +43,10 @@ func Pids() ([]int32, error) {
 }
 
 func (p *Process) Ppid() (int32, error) {
+	return p.PpidWithContext(context.Background())
+}
+
+func (p *Process) PpidWithContext(ctx context.Context) (int32, error) {
 	k, err := p.getKProc()
 	if err != nil {
 		return 0, err
@@ -46,6 +55,10 @@ func (p *Process) Ppid() (int32, error) {
 	return k.Ppid, nil
 }
 func (p *Process) Name() (string, error) {
+	return p.NameWithContext(context.Background())
+}
+
+func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 	k, err := p.getKProc()
 	if err != nil {
 		return "", err
@@ -57,10 +70,18 @@ func (p *Process) Tgid() (int32, error) {
 	return 0, common.ErrNotImplementedError
 }
 func (p *Process) Exe() (string, error) {
+	return p.ExeWithContext(context.Background())
+}
+
+func (p *Process) ExeWithContext(ctx context.Context) (string, error) {
 	return "", common.ErrNotImplementedError
 }
 
 func (p *Process) CmdlineSlice() ([]string, error) {
+	return p.CmdlineSliceWithContext(context.Background())
+}
+
+func (p *Process) CmdlineSliceWithContext(ctx context.Context) ([]string, error) {
 	mib := []int32{CTLKern, KernProcArgs, p.Pid, KernProcArgv}
 	buf, _, err := common.CallSyscall(mib)
 
@@ -84,6 +105,10 @@ func (p *Process) CmdlineSlice() ([]string, error) {
 }
 
 func (p *Process) Cmdline() (string, error) {
+	return p.CmdlineWithContext(context.Background())
+}
+
+func (p *Process) CmdlineWithContext(ctx context.Context) (string, error) {
 	argv, err := p.CmdlineSlice()
 	if err != nil {
 		return "", err
@@ -92,15 +117,31 @@ func (p *Process) Cmdline() (string, error) {
 }
 
 func (p *Process) CreateTime() (int64, error) {
+	return p.CreateTimeWithContext(context.Background())
+}
+
+func (p *Process) CreateTimeWithContext(ctx context.Context) (int64, error) {
 	return 0, common.ErrNotImplementedError
 }
 func (p *Process) Cwd() (string, error) {
+	return p.CwdWithContext(context.Background())
+}
+
+func (p *Process) CwdWithContext(ctx context.Context) (string, error) {
 	return "", common.ErrNotImplementedError
 }
 func (p *Process) Parent() (*Process, error) {
+	return p.ParentWithContext(context.Background())
+}
+
+func (p *Process) ParentWithContext(ctx context.Context) (*Process, error) {
 	return p, common.ErrNotImplementedError
 }
 func (p *Process) Status() (string, error) {
+	return p.StatusWithContext(context.Background())
+}
+
+func (p *Process) StatusWithContext(ctx context.Context) (string, error) {
 	k, err := p.getKProc()
 	if err != nil {
 		return "", err
@@ -122,6 +163,10 @@ func (p *Process) Status() (string, error) {
 	return s, nil
 }
 func (p *Process) Uids() ([]int32, error) {
+	return p.UidsWithContext(context.Background())
+}
+
+func (p *Process) UidsWithContext(ctx context.Context) ([]int32, error) {
 	k, err := p.getKProc()
 	if err != nil {
 		return nil, err
@@ -134,6 +179,10 @@ func (p *Process) Uids() ([]int32, error) {
 	return uids, nil
 }
 func (p *Process) Gids() ([]int32, error) {
+	return p.GidsWithContext(context.Background())
+}
+
+func (p *Process) GidsWithContext(ctx context.Context) ([]int32, error) {
 	k, err := p.getKProc()
 	if err != nil {
 		return nil, err
@@ -145,6 +194,10 @@ func (p *Process) Gids() ([]int32, error) {
 	return gids, nil
 }
 func (p *Process) Terminal() (string, error) {
+	return p.TerminalWithContext(context.Background())
+}
+
+func (p *Process) TerminalWithContext(ctx context.Context) (string, error) {
 	k, err := p.getKProc()
 	if err != nil {
 		return "", err
@@ -160,6 +213,10 @@ func (p *Process) Terminal() (string, error) {
 	return termmap[ttyNr], nil
 }
 func (p *Process) Nice() (int32, error) {
+	return p.NiceWithContext(context.Background())
+}
+
+func (p *Process) NiceWithContext(ctx context.Context) (int32, error) {
 	k, err := p.getKProc()
 	if err != nil {
 		return 0, err
@@ -167,17 +224,33 @@ func (p *Process) Nice() (int32, error) {
 	return int32(k.Nice), nil
 }
 func (p *Process) IOnice() (int32, error) {
+	return p.IOniceWithContext(context.Background())
+}
+
+func (p *Process) IOniceWithContext(ctx context.Context) (int32, error) {
 	return 0, common.ErrNotImplementedError
 }
 func (p *Process) Rlimit() ([]RlimitStat, error) {
+	return p.RlimitWithContext(context.Background())
+}
+
+func (p *Process) RlimitWithContext(ctx context.Context) ([]RlimitStat, error) {
 	var rlimit []RlimitStat
 	return rlimit, common.ErrNotImplementedError
 }
-func (p *Process) RlimitUsage(_ bool) ([]RlimitStat, error) {
+func (p *Process) RlimitUsage(gatherUsed bool) ([]RlimitStat, error) {
+	return p.RlimitUsageWithContext(context.Background(), gatherUsed)
+}
+
+func (p *Process) RlimitUsageWithContext(ctx context.Context, gatherUsed bool) ([]RlimitStat, error) {
 	var rlimit []RlimitStat
 	return rlimit, common.ErrNotImplementedError
 }
 func (p *Process) IOCounters() (*IOCountersStat, error) {
+	return p.IOCountersWithContext(context.Background())
+}
+
+func (p *Process) IOCountersWithContext(ctx context.Context) (*IOCountersStat, error) {
 	k, err := p.getKProc()
 	if err != nil {
 		return nil, err
@@ -188,20 +261,40 @@ func (p *Process) IOCounters() (*IOCountersStat, error) {
 	}, nil
 }
 func (p *Process) NumCtxSwitches() (*NumCtxSwitchesStat, error) {
+	return p.NumCtxSwitchesWithContext(context.Background())
+}
+
+func (p *Process) NumCtxSwitchesWithContext(ctx context.Context) (*NumCtxSwitchesStat, error) {
 	return nil, common.ErrNotImplementedError
 }
 func (p *Process) NumFDs() (int32, error) {
+	return p.NumFDsWithContext(context.Background())
+}
+
+func (p *Process) NumFDsWithContext(ctx context.Context) (int32, error) {
 	return 0, common.ErrNotImplementedError
 }
 func (p *Process) NumThreads() (int32, error) {
+	return p.NumThreadsWithContext(context.Background())
+}
+
+func (p *Process) NumThreadsWithContext(ctx context.Context) (int32, error) {
 	/* not supported, just return 1 */
 	return 1, nil
 }
 func (p *Process) Threads() (map[int32]*cpu.TimesStat, error) {
+	return p.ThreadsWithContext(context.Background())
+}
+
+func (p *Process) ThreadsWithContext(ctx context.Context) (map[int32]*cpu.TimesStat, error) {
 	ret := make(map[int32]*cpu.TimesStat)
 	return ret, common.ErrNotImplementedError
 }
 func (p *Process) Times() (*cpu.TimesStat, error) {
+	return p.TimesWithContext(context.Background())
+}
+
+func (p *Process) TimesWithContext(ctx context.Context) (*cpu.TimesStat, error) {
 	k, err := p.getKProc()
 	if err != nil {
 		return nil, err
@@ -213,9 +306,17 @@ func (p *Process) Times() (*cpu.TimesStat, error) {
 	}, nil
 }
 func (p *Process) CPUAffinity() ([]int32, error) {
+	return p.CPUAffinityWithContext(context.Background())
+}
+
+func (p *Process) CPUAffinityWithContext(ctx context.Context) ([]int32, error) {
 	return nil, common.ErrNotImplementedError
 }
 func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
+	return p.MemoryInfoWithContext(context.Background())
+}
+
+func (p *Process) MemoryInfoWithContext(ctx context.Context) (*MemoryInfoStat, error) {
 	k, err := p.getKProc()
 	if err != nil {
 		return nil, err
@@ -232,10 +333,18 @@ func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
 	}, nil
 }
 func (p *Process) MemoryInfoEx() (*MemoryInfoExStat, error) {
+	return p.MemoryInfoExWithContext(context.Background())
+}
+
+func (p *Process) MemoryInfoExWithContext(ctx context.Context) (*MemoryInfoExStat, error) {
 	return nil, common.ErrNotImplementedError
 }
 
 func (p *Process) Children() ([]*Process, error) {
+	return p.ChildrenWithContext(context.Background())
+}
+
+func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
 	pids, err := common.CallPgrep(invoke, p.Pid)
 	if err != nil {
 		return nil, err
@@ -252,21 +361,41 @@ func (p *Process) Children() ([]*Process, error) {
 }
 
 func (p *Process) OpenFiles() ([]OpenFilesStat, error) {
+	return p.OpenFilesWithContext(context.Background())
+}
+
+func (p *Process) OpenFilesWithContext(ctx context.Context) ([]OpenFilesStat, error) {
 	return nil, common.ErrNotImplementedError
 }
 
 func (p *Process) Connections() ([]net.ConnectionStat, error) {
+	return p.ConnectionsWithContext(context.Background())
+}
+
+func (p *Process) ConnectionsWithContext(ctx context.Context) ([]net.ConnectionStat, error) {
 	return nil, common.ErrNotImplementedError
 }
 
 func (p *Process) NetIOCounters(pernic bool) ([]net.IOCountersStat, error) {
+	return p.NetIOCountersWithContext(context.Background(), pernic)
+}
+
+func (p *Process) NetIOCountersWithContext(ctx context.Context, pernic bool) ([]net.IOCountersStat, error) {
 	return nil, common.ErrNotImplementedError
 }
 
 func (p *Process) IsRunning() (bool, error) {
+	return p.IsRunningWithContext(context.Background())
+}
+
+func (p *Process) IsRunningWithContext(ctx context.Context) (bool, error) {
 	return true, common.ErrNotImplementedError
 }
 func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
+	return p.MemoryMapsWithContext(context.Background(), grouped)
+}
+
+func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]MemoryMapsStat, error) {
 	var ret []MemoryMapsStat
 	return &ret, common.ErrNotImplementedError
 }
@@ -309,6 +438,10 @@ func parseKinfoProc(buf []byte) (KinfoProc, error) {
 }
 
 func (p *Process) getKProc() (*KinfoProc, error) {
+	return p.getKProcWithContext(context.Background())
+}
+
+func (p *Process) getKProcWithContext(ctx context.Context) (*KinfoProc, error) {
 	buf, length, err := CallKernProcSyscall(KernProcPID, p.Pid)
 	if err != nil {
 		return nil, err
@@ -331,6 +464,10 @@ func NewProcess(pid int32) (*Process, error) {
 }
 
 func CallKernProcSyscall(op int32, arg int32) ([]byte, uint64, error) {
+	return CallKernProcSyscallWithContext(context.Background(), op, arg)
+}
+
+func CallKernProcSyscallWithContext(ctx context.Context, op int32, arg int32) ([]byte, uint64, error) {
 	mib := []int32{CTLKern, KernProc, op, arg, sizeOfKinfoProc, 0}
 	mibptr := unsafe.Pointer(&mib[0])
 	miblen := uint64(len(mib))

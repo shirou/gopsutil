@@ -1,6 +1,7 @@
 package cpu
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"runtime"
@@ -64,6 +65,10 @@ func init() {
 }
 
 func Counts(logical bool) (int, error) {
+	return CountsWithContext(context.Background(), logical)
+}
+
+func CountsWithContext(ctx context.Context, logical bool) (int, error) {
 	return runtime.NumCPU(), nil
 }
 
@@ -137,6 +142,10 @@ func calculateAllBusy(t1, t2 []TimesStat) ([]float64, error) {
 // If an interval of 0 is given it will compare the current cpu times against the last call.
 // Returns one value per cpu, or a single value if percpu is set to false.
 func Percent(interval time.Duration, percpu bool) ([]float64, error) {
+	return PercentWithContext(context.Background(), interval, percpu)
+}
+
+func PercentWithContext(ctx context.Context, interval time.Duration, percpu bool) ([]float64, error) {
 	if interval <= 0 {
 		return percentUsedFromLastCall(percpu)
 	}

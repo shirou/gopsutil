@@ -4,6 +4,7 @@ package host
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"fmt"
 	"io/ioutil"
@@ -31,6 +32,10 @@ type LSB struct {
 const USER_PROCESS = 7
 
 func Info() (*InfoStat, error) {
+	return InfoWithContext(context.Background())
+}
+
+func InfoWithContext(ctx context.Context) (*InfoStat, error) {
 	ret := &InfoStat{
 		OS: runtime.GOOS,
 	}
@@ -91,6 +96,10 @@ var cachedBootTime uint64
 
 // BootTime returns the system boot time expressed in seconds since the epoch.
 func BootTime() (uint64, error) {
+	return BootTimeWithContext(context.Background())
+}
+
+func BootTimeWithContext(ctx context.Context) (uint64, error) {
 	t := atomic.LoadUint64(&cachedBootTime)
 	if t != 0 {
 		return t, nil
@@ -135,6 +144,10 @@ func uptime(boot uint64) uint64 {
 }
 
 func Uptime() (uint64, error) {
+	return UptimeWithContext(context.Background())
+}
+
+func UptimeWithContext(ctx context.Context) (uint64, error) {
 	boot, err := BootTime()
 	if err != nil {
 		return 0, err
@@ -143,6 +156,10 @@ func Uptime() (uint64, error) {
 }
 
 func Users() ([]UserStat, error) {
+	return UsersWithContext(context.Background())
+}
+
+func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 	utmpfile := common.HostVar("run/utmp")
 
 	file, err := os.Open(utmpfile)
@@ -260,6 +277,10 @@ func getLSB() (*LSB, error) {
 }
 
 func PlatformInformation() (platform string, family string, version string, err error) {
+	return PlatformInformationWithContext(context.Background())
+}
+
+func PlatformInformationWithContext(ctx context.Context) (platform string, family string, version string, err error) {
 
 	lsb, err := getLSB()
 	if err != nil {
@@ -382,6 +403,10 @@ func PlatformInformation() (platform string, family string, version string, err 
 }
 
 func KernelVersion() (version string, err error) {
+	return KernelVersionWithContext(context.Background())
+}
+
+func KernelVersionWithContext(ctx context.Context) (version string, err error) {
 	filename := common.HostProc("sys/kernel/osrelease")
 	if common.PathExists(filename) {
 		contents, err := common.ReadLines(filename)
@@ -441,6 +466,10 @@ func getSusePlatform(contents []string) string {
 }
 
 func Virtualization() (string, string, error) {
+	return VirtualizationWithContext(context.Background())
+}
+
+func VirtualizationWithContext(ctx context.Context) (string, string, error) {
 	var system string
 	var role string
 
@@ -544,6 +573,10 @@ func Virtualization() (string, string, error) {
 }
 
 func SensorsTemperatures() ([]TemperatureStat, error) {
+	return SensorsTemperaturesWithContext(context.Background())
+}
+
+func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
 	var temperatures []TemperatureStat
 	files, err := filepath.Glob(common.HostSys("/class/hwmon/hwmon*/temp*_*"))
 	if err != nil {
