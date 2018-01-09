@@ -4,9 +4,9 @@ package disk
 
 import (
 	"bytes"
+	"context"
 	"unsafe"
 
-	"github.com/StackExchange/wmi"
 	"github.com/shirou/gopsutil/internal/common"
 	"golang.org/x/sys/windows"
 )
@@ -132,7 +132,9 @@ func IOCounters(names ...string) (map[string]IOCountersStat, error) {
 	ret := make(map[string]IOCountersStat, 0)
 	var dst []Win32_PerfFormattedData
 
-	err := wmi.Query("SELECT * FROM Win32_PerfFormattedData_PerfDisk_LogicalDisk ", &dst)
+	ctx, cancel := context.WithTimeout(context.Background(), common.Timeout)
+	defer cancel()
+	err := common.WMIQueryWithContext(ctx, "SELECT * FROM Win32_PerfFormattedData_PerfDisk_LogicalDisk", &dst)
 	if err != nil {
 		return ret, err
 	}

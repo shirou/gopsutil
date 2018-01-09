@@ -100,6 +100,16 @@ func (p *Process) Name() (string, error) {
 	return p.name, nil
 }
 
+// Tgid returns tgid, a Linux-synonym for user-space Pid
+func (p *Process) Tgid() (int32, error) {
+	if p.tgid == 0 {
+		if err := p.fillFromStatus(); err != nil {
+			return 0, err
+		}
+	}
+	return p.tgid, nil
+}
+
 // Exe returns executable path of the process.
 func (p *Process) Exe() (string, error) {
 	return p.fillFromExe()
@@ -820,6 +830,12 @@ func (p *Process) fillFromStatus() error {
 				return err
 			}
 			p.parent = int32(pval)
+		case "Tgid":
+			pval, err := strconv.ParseInt(value, 10, 32)
+			if err != nil {
+				return err
+			}
+			p.tgid = int32(pval)
 		case "Uid":
 			p.uids = make([]int32, 0, 4)
 			for _, i := range strings.Split(value, "\t") {
@@ -1015,6 +1031,27 @@ func (p *Process) fillFromStat() (string, int32, *cpu.TimesStat, int64, uint32, 
 // Pids returns a slice of process ID list which are running now.
 func Pids() ([]int32, error) {
 	return readPidsFromDir(common.HostProc())
+}
+
+// Process returns a slice of pointers to Process structs for all
+// currently running processes.
+func Processes() ([]*Process, error) {
+	out := []*Process{}
+
+	pids, err := Pids()
+	if err != nil {
+		return out, err
+	}
+
+	for _, pid := range pids {
+		p, err := NewProcess(pid)
+		if err != nil {
+			continue
+		}
+		out = append(out, p)
+	}
+
+	return out, nil
 }
 
 func readPidsFromDir(path string) ([]int32, error) {

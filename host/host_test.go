@@ -56,7 +56,7 @@ func TestUsers(t *testing.T) {
 	}
 	empty := UserStat{}
 	if len(v) == 0 {
-		t.Errorf("Users is empty")
+		t.Fatal("Users is empty")
 	}
 	for _, u := range v {
 		if u == empty {

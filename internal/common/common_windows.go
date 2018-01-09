@@ -3,8 +3,10 @@
 package common
 
 import (
+	"context"
 	"unsafe"
 
+	"github.com/StackExchange/wmi"
 	"golang.org/x/sys/windows"
 )
 
@@ -49,7 +51,7 @@ var (
 	ModNt       = windows.NewLazyDLL("ntdll.dll")
 	ModPdh      = windows.NewLazyDLL("pdh.dll")
 	ModPsapi    = windows.NewLazyDLL("psapi.dll")
-	
+
 	ProcGetSystemTimes           = Modkernel32.NewProc("GetSystemTimes")
 	ProcNtQuerySystemInformation = ModNt.NewProc("NtQuerySystemInformation")
 	PdhOpenQuery                 = ModPdh.NewProc("PdhOpenQuery")
@@ -109,4 +111,19 @@ func CreateCounter(query windows.Handle, pname, cname string) (*CounterInfo, err
 		CounterName: cname,
 		Counter:     counter,
 	}, nil
+}
+
+// WMIQueryWithContext - wraps wmi.Query with a timed-out context to avoid hanging
+func WMIQueryWithContext(ctx context.Context, query string, dst interface{}, connectServerArgs ...interface{}) error {
+	errChan := make(chan error, 1)
+	go func() {
+		errChan <- wmi.Query(query, dst, connectServerArgs...)
+	}()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case err := <-errChan:
+		return err
+	}
 }

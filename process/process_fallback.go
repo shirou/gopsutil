@@ -41,6 +41,9 @@ func (p *Process) Ppid() (int32, error) {
 func (p *Process) Name() (string, error) {
 	return "", common.ErrNotImplementedError
 }
+func (p *Process) Tgid() (int32, error) {
+	return 0, common.ErrNotImplementedError
+}
 func (p *Process) Exe() (string, error) {
 	return "", common.ErrNotImplementedError
 }

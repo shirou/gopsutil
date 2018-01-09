@@ -3,7 +3,6 @@
 package docker
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -50,11 +49,6 @@ func GetDockerStat() ([]CgroupDockerStat, error) {
 	}
 
 	return ret, nil
-}
-
-func (c CgroupDockerStat) String() string {
-	s, _ := json.Marshal(c)
-	return string(s)
 }
 
 // GetDockerIDList returnes a list of DockerID.
@@ -218,11 +212,6 @@ func CgroupMem(containerID string, base string) (*CgroupMemStat, error) {
 
 func CgroupMemDocker(containerID string) (*CgroupMemStat, error) {
 	return CgroupMem(containerID, common.HostSys("fs/cgroup/memory/docker"))
-}
-
-func (m CgroupMemStat) String() string {
-	s, _ := json.Marshal(m)
-	return string(s)
 }
 
 // getCgroupFilePath constructs file path to get targetted stats file.
