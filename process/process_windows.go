@@ -600,6 +600,10 @@ func getFromSnapProcess(pid int32) (int32, int32, string, error) {
 
 // Get processes
 func Processes() ([]*Process, error) {
+	return ProcessesWithContext(context.Background())
+}
+
+func ProcessesWithContext(ctx context.Context) ([]*Process, error) {
 	pids, err := Pids()
 	if err != nil {
 		return []*Process{}, fmt.Errorf("could not get Processes %s", err)

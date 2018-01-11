@@ -523,6 +523,10 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 }
 
 func Processes() ([]*Process, error) {
+	return ProcessesWithContext(context.Background())
+}
+
+func ProcessesWithContext(ctx context.Context) ([]*Process, error) {
 	results := []*Process{}
 
 	mib := []int32{CTLKern, KernProc, KernProcAll, 0}

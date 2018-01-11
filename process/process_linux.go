@@ -1213,6 +1213,10 @@ func PidsWithContext(ctx context.Context) ([]int32, error) {
 // Process returns a slice of pointers to Process structs for all
 // currently running processes.
 func Processes() ([]*Process, error) {
+	return ProcessesWithContext(context.Background())
+}
+
+func ProcessesWithContext(ctx context.Context) ([]*Process, error) {
 	out := []*Process{}
 
 	pids, err := Pids()
