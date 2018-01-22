@@ -16,6 +16,7 @@ import (
 	cpu "github.com/DataDog/gopsutil/cpu"
 	"github.com/DataDog/gopsutil/internal/common"
 	net "github.com/DataDog/gopsutil/net"
+	log "github.com/cihub/seelog"
 )
 
 const (
@@ -26,6 +27,10 @@ const (
 var (
 	modpsapi                 = syscall.NewLazyDLL("psapi.dll")
 	procGetProcessMemoryInfo = modpsapi.NewProc("GetProcessMemoryInfo")
+
+	modkernel                 = syscall.NewLazyDLL("kernel32.dll")
+	procGetProcessHandleCount = modkernel.NewProc("GetProcessHandleCount")
+	procGetProcessIoCounters  = modkernel.NewProc("GetProcessIoCounters")
 )
 
 type SystemProcessInformation struct {
@@ -86,6 +91,15 @@ type Win32_Process struct {
 		UserModeTime          uint64
 		WorkingSetSize        uint64
 	*/
+}
+
+type IO_COUNTERS struct {
+	ReadOperationCount  uint64
+	WriteOperationCount uint64
+	OtherOperationCount uint64
+	ReadTransferCount   uint64
+	WriteTransferCount  uint64
+	OtherTransferCount  uint64
 }
 
 func Pids() ([]int32, error) {
@@ -430,4 +444,133 @@ func getProcessMemoryInfo(h syscall.Handle, mem *PROCESS_MEMORY_COUNTERS) (err e
 		}
 	}
 	return
+}
+
+func getProcessHandleCount(h syscall.Handle, count *uint32) (err error) {
+	r1, _, e1 := procGetProcessHandleCount.Call(uintptr(h), uintptr(unsafe.Pointer(count)))
+	if r1 == 0 {
+		return e1
+	}
+	return nil
+}
+
+func getProcessIoCounters(h syscall.Handle, counters *IO_COUNTERS) (err error) {
+	r1, _, e1 := procGetProcessIoCounters.Call(uintptr(h), uintptr(unsafe.Pointer(counters)))
+	if r1 == 0 {
+		return e1
+	}
+	return nil
+}
+func AllProcesses() (map[int32]*FilledProcess, error) {
+	allProcsSnap := w32.CreateToolhelp32Snapshot(w32.TH32CS_SNAPPROCESS, 0)
+	if allProcsSnap == 0 {
+		return nil, syscall.GetLastError()
+	}
+	procs := make(map[int32]*FilledProcess)
+
+	defer w32.CloseHandle(allProcsSnap)
+	var pe32 w32.PROCESSENTRY32
+	pe32.DwSize = uint32(unsafe.Sizeof(pe32))
+
+	for success := w32.Process32First(allProcsSnap, &pe32); success; success = w32.Process32Next(allProcsSnap, &pe32) {
+		pid := pe32.Th32ProcessID
+		ppid := pe32.Th32ParentProcessID
+
+		// 0x1000 is PROCESS_QUERY_LIMITED_INFORMATION, but that constant isn't
+		// defined in syscall
+		procHandle, err := syscall.OpenProcess(0x1000, false, uint32(pid))
+		if err != nil {
+			continue
+		}
+		defer syscall.CloseHandle(procHandle)
+
+		var CPU syscall.Rusage
+		if err = syscall.GetProcessTimes(procHandle, &CPU.CreationTime, &CPU.ExitTime, &CPU.KernelTime, &CPU.UserTime); err != nil {
+			continue
+		}
+
+		var handleCount uint32
+		if err = getProcessHandleCount(procHandle, &handleCount); err != nil {
+			continue
+		}
+
+		var pmemcounter PROCESS_MEMORY_COUNTERS
+		if err = getProcessMemoryInfo(procHandle, &pmemcounter); err != nil {
+			continue
+		}
+
+		// shell out to getprocessiocounters for io stats
+		var ioCounters IO_COUNTERS
+		if err = getProcessIoCounters(procHandle, &ioCounters); err != nil {
+			continue
+		}
+		ctime := CPU.CreationTime.Nanoseconds() / 1000000
+
+		exename := strings.Split(convert_windows_string(pe32.SzExeFile[:]), " ")
+		utime := float64((int64(CPU.UserTime.HighDateTime) << 32) | int64(CPU.UserTime.LowDateTime))
+		stime := float64((int64(CPU.KernelTime.HighDateTime) << 32) | int64(CPU.KernelTime.LowDateTime))
+		username, err := get_username_for_process(procHandle)
+		procs[int32(pid)] = &FilledProcess{
+			Pid:     int32(pid),
+			Ppid:    int32(ppid),
+			Cmdline: exename,
+			CpuTime: cpu.TimesStat{
+				User:      utime,
+				System:    stime,
+				Timestamp: time.Now().UnixNano(),
+			},
+
+			CreateTime:  ctime,
+			OpenFdCount: int32(handleCount),
+			//Name
+			// Status
+			// UIDS
+			// GIDs
+			NumThreads:  int32(pe32.CntThreads),
+			CtxSwitches: &NumCtxSwitchesStat{},
+			MemInfo: &MemoryInfoStat{
+				RSS:  pmemcounter.WorkingSetSize,
+				VMS:  pmemcounter.PagefileUsage,
+				Swap: 0, // it's unclear there's a Windows measurement of swap file usage
+			},
+			//Cwd
+			//Exe
+			IOStat: &IOCountersStat{
+				ReadCount:  ioCounters.ReadOperationCount,
+				WriteCount: ioCounters.WriteOperationCount,
+				ReadBytes:  ioCounters.ReadTransferCount,
+				WriteBytes: ioCounters.WriteTransferCount,
+			},
+			Username: username,
+		}
+	}
+	return procs, nil
+}
+
+func get_username_for_process(h syscall.Handle) (name string, err error) {
+	name = ""
+	err = nil
+	var t syscall.Token
+	err = syscall.OpenProcessToken(h, syscall.TOKEN_QUERY, &t)
+	if err != nil {
+		log.Debugf("Failed to open process token %v", err)
+		return
+	}
+	defer t.Close()
+	tokenUser, err := t.GetTokenUser()
+
+	user, domain, _, err := tokenUser.User.Sid.LookupAccount("")
+	return domain + "\\" + user, err
+
+}
+
+func convert_windows_string(winput []uint16) string {
+	var retstring string
+	for i := 0; i < len(winput); i++ {
+		if winput[i] == 0 {
+			break
+		}
+		retstring += string(rune(winput[i]))
+	}
+	return retstring
 }
