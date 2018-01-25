@@ -1,3 +1,3 @@
 // +build cgo
 
-package gopsutil
+package host
