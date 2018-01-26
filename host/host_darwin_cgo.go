@@ -4,7 +4,7 @@
 package host
 
 // #cgo LDFLAGS: -framework IOKit
-// #include "include/smc.c"
+// #include "smc.h"
 import "C"
 import "context"
 
