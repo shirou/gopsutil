@@ -591,13 +591,30 @@ func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, err
 		}
 	}
 
-	for _, match := range files {
-		match = strings.Split(match, "_")[0]
-		name, err := ioutil.ReadFile(filepath.Join(filepath.Dir(match), "name"))
+	// example directory
+	// device/           temp1_crit_alarm  temp2_crit_alarm  temp3_crit_alarm  temp4_crit_alarm  temp5_crit_alarm  temp6_crit_alarm  temp7_crit_alarm
+	// name              temp1_input       temp2_input       temp3_input       temp4_input       temp5_input       temp6_input       temp7_input
+	// power/            temp1_label       temp2_label       temp3_label       temp4_label       temp5_label       temp6_label       temp7_label
+	// subsystem/        temp1_max         temp2_max         temp3_max         temp4_max         temp5_max         temp6_max         temp7_max
+	// temp1_crit        temp2_crit        temp3_crit        temp4_crit        temp5_crit        temp6_crit        temp7_crit        uevent
+	for _, file := range files {
+		if filepath.Match(file, "/class/hwmon/hwmon*/temp*_label") {
+			continue
+		}
+
+		filename := strings.Split(filepath.Base(file), "_")
+		c, _ := ioutil.ReadFile(filepath.Join(filepath.Dir(file), filename[0] + "_label"))
+
+		var corename string
+		if c != nil {
+			corename = fmt.Sprintf("%s_", strings.TrimSpace(strings.ToLower(string(c))))
+		}
+
+		name, err := ioutil.ReadFile(filepath.Join(filepath.Dir(file), "name"))
 		if err != nil {
 			return temperatures, err
 		}
-		current, err := ioutil.ReadFile(match + "_input")
+		current, err := ioutil.ReadFile(file)
 		if err != nil {
 			return temperatures, err
 		}
@@ -605,8 +622,10 @@ func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, err
 		if err != nil {
 			continue
 		}
+
+		tempName = strings.TrimSpace(strings.ToLower(string(strings.Join(filename[1:], ""))))
 		temperatures = append(temperatures, TemperatureStat{
-			SensorKey:   strings.TrimSpace(string(name)),
+			SensorKey:   fmt.Sprintf("%s_%s", strings.TrimSpace(string(name)), corename, tempName),
 			Temperature: temperature / 1000.0,
 		})
 	}
