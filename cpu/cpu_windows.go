@@ -90,8 +90,6 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 	var ret []InfoStat
 	var dst []Win32_Processor
 	q := wmi.CreateQuery(&dst, "")
-	ctx, cancel := context.WithTimeout(context.Background(), common.Timeout)
-	defer cancel()
 	if err := common.WMIQueryWithContext(ctx, q, &dst); err != nil {
 		return ret, err
 	}
@@ -129,8 +127,6 @@ func PerfInfoWithContext(ctx context.Context) ([]Win32_PerfFormattedData_Counter
 	var ret []Win32_PerfFormattedData_Counters_ProcessorInformation
 
 	q := wmi.CreateQuery(&ret, "")
-	ctx, cancel := context.WithTimeout(context.Background(), common.Timeout)
-	defer cancel()
 	err := common.WMIQueryWithContext(ctx, q, &ret)
 	return ret, err
 }
@@ -144,8 +140,6 @@ func ProcInfo() ([]Win32_PerfFormattedData_PerfOS_System, error) {
 func ProcInfoWithContext(ctx context.Context) ([]Win32_PerfFormattedData_PerfOS_System, error) {
 	var ret []Win32_PerfFormattedData_PerfOS_System
 	q := wmi.CreateQuery(&ret, "")
-	ctx, cancel := context.WithTimeout(context.Background(), common.Timeout)
-	defer cancel()
 	err := common.WMIQueryWithContext(ctx, q, &ret)
 	return ret, err
 }
