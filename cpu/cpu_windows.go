@@ -133,7 +133,7 @@ func PerfInfoWithContext(ctx context.Context) ([]Win32_PerfFormattedData_Counter
 	defer cancel()
 	err := common.WMIQueryWithContext(ctx, q, &ret)
 	if err != nil {
-		return Win32_PerfFormattedData_Counters_ProcessorInformation{}, err
+		return []Win32_PerfFormattedData_Counters_ProcessorInformation{}, err
 	}
 
 	return ret, err
@@ -152,7 +152,7 @@ func ProcInfoWithContext(ctx context.Context) ([]Win32_PerfFormattedData_PerfOS_
 	defer cancel()
 	err := common.WMIQueryWithContext(ctx, q, &ret)
 	if err != nil {
-		return Win32_PerfFormattedData_PerfOS_System{}, err
+		return []Win32_PerfFormattedData_PerfOS_System{}, err
 	}
 	return ret, err
 }
