@@ -48,7 +48,7 @@ func InfoWithContext(ctx context.Context) (*InfoStat, error) {
 	}
 
 	{
-		platform, family, version, err := PlatformInformation()
+		platform, family, version, err := PlatformInformationWithContext(ctx)
 		if err == nil {
 			ret.Platform = platform
 			ret.PlatformFamily = family
@@ -118,8 +118,6 @@ func GetOSInfo() (Win32_OperatingSystem, error) {
 func GetOSInfoWithContext(ctx context.Context) (Win32_OperatingSystem, error) {
 	var dst []Win32_OperatingSystem
 	q := wmi.CreateQuery(&dst, "")
-	ctx, cancel := context.WithTimeout(context.Background(), common.Timeout)
-	defer cancel()
 	err := common.WMIQueryWithContext(ctx, q, &dst)
 	if err != nil {
 		return Win32_OperatingSystem{}, err
@@ -136,7 +134,7 @@ func Uptime() (uint64, error) {
 
 func UptimeWithContext(ctx context.Context) (uint64, error) {
 	if osInfo == nil {
-		_, err := GetOSInfo()
+		_, err := GetOSInfoWithContext(ctx)
 		if err != nil {
 			return 0, err
 		}
@@ -177,7 +175,7 @@ func PlatformInformation() (platform string, family string, version string, err 
 
 func PlatformInformationWithContext(ctx context.Context) (platform string, family string, version string, err error) {
 	if osInfo == nil {
-		_, err = GetOSInfo()
+		_, err = GetOSInfoWithContext(ctx)
 		if err != nil {
 			return
 		}
