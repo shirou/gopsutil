@@ -15,6 +15,8 @@ import (
 	"syscall"
 	"time"
 
+	log "github.com/cihub/seelog"
+
 	"github.com/DataDog/gopsutil/cpu"
 	"github.com/DataDog/gopsutil/host"
 	"github.com/DataDog/gopsutil/internal/common"
@@ -803,49 +805,63 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 	for _, pid := range pids {
 		p, err := NewProcess(pid)
 		if err != nil {
+			log.Debugf("Unable to create new process %d, it may have gone away: %s", pid, err)
+			// Skip the rest of the processing because we have no real process.
 			continue
 		}
 		cmdline, err := p.fillSliceFromCmdline()
 		if err != nil {
-			continue
+			log.Debugf("Unable to read process command line for %d: %s", pid, err)
+			cmdline = []string{}
 		}
 		if err := p.fillFromStatus(); err != nil {
-			continue
+			log.Debugf("Unable to fill from /proc/%d/status: %s", pid, err)
 		}
 		memInfo, memInfoEx, err := p.fillFromStatm()
 		if err != nil {
-			continue
+			log.Debugf("Unable to fill from /proc/%d/statm: %s", pid, err)
+			memInfo = &MemoryInfoStat{}
+			memInfoEx = &MemoryInfoExStat{}
 		}
 		ioStat, err := p.fillFromIO()
 		if os.IsPermission(err) {
+			log.Debugf("Unable to access /proc/%d/io, permission denied", pid)
 			// Without root permissions we can't read for other processes.
 			ioStat = &IOCountersStat{}
 		} else if err != nil {
-			continue
+			log.Debugf("Unable to access /proc/%d/io: %s", pid, err)
+			ioStat = &IOCountersStat{}
 		}
 		ppid, _, t1, createTime, nice, err := p.fillFromStat()
 		if err != nil {
-			continue
+			log.Debugf("Unable to fill from /proc/%d/stat: %s", pid, err)
+			t1 = &cpu.TimesStat{}
 		}
 		cwd, err := p.fillFromCwd()
 		if os.IsPermission(err) {
+			log.Debugf("Unable to access /proc/%d/cwd, permission denied", pid)
 			cwd = ""
 		} else if err != nil {
-			continue
+			log.Debugf("Unable to access /proc/%d/cwd: %s", pid, err)
+			cwd = ""
 		}
 		exe, err := p.fillFromExe()
 		if os.IsPermission(err) {
 			// Without root permissions we can't read for other processes.
+			log.Debugf("Unable to access /proc/%d/exe, permission denied", pid)
 			exe = ""
 		} else if err != nil {
-			continue
+			log.Debugf("Unable to access /proc/%d/exe: %s", pid, err)
+			exe = ""
 		}
 		openFdCount, err := p.NumFDs()
 		if os.IsPermission(err) {
 			// Without root permissions we can't read for other processes.
+			log.Debugf("Unable to access /proc/%d/fd, permission denied", pid)
 			openFdCount = -1
 		} else if err != nil {
-			continue
+			log.Debugf("Unable to access /proc/%d/fd: %s", pid, err)
+			openFdCount = -1
 		}
 
 		procs[p.Pid] = &FilledProcess{
