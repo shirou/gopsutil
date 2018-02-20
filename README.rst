@@ -10,7 +10,7 @@ gopsutil: psutil for golang
 .. image:: https://godoc.org/github.com/shirou/gopsutil?status.svg
         :target: http://godoc.org/github.com/shirou/gopsutil
 
-This is a port of psutil (http://pythonhosted.org/psutil/). The challenge is porting all
+This is a port of psutil (https://github.com/giampaolo/psutil). The challenge is porting all
 psutil functions on some architectures.
 
 
@@ -296,7 +296,7 @@ Related Works
 
 I have been influenced by the following great works:
 
-- psutil: http://pythonhosted.org/psutil/
+- psutil: https://github.com/giampaolo/psutil
 - dstat: https://github.com/dagwieers/dstat
 - gosigar: https://github.com/cloudfoundry/gosigar/
 - goprocinfo: https://github.com/c9s/goprocinfo
