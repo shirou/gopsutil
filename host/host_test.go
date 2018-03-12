@@ -148,3 +148,15 @@ func TestKernelVersion(t *testing.T) {
 
 	t.Logf("KernelVersion(): %s", version)
 }
+
+func TestPlatformInformation(t *testing.T) {
+	platform, family, version, err := PlatformInformation()
+	if err != nil {
+		t.Errorf("PlatformInformation() failed, %v", err)
+	}
+	if platform == "" {
+		t.Errorf("PlatformInformation() retuns empty: %v", platform)
+	}
+
+	t.Logf("PlatformInformation(): %v, %v, %v", platform, family, version)
+}
