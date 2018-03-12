@@ -113,6 +113,9 @@ func BootTimeWithContext(ctx context.Context) (uint64, error) {
 	if system == "lxc" && role == "guest" {
 		// if lxc, /proc/uptime is used.
 		statFile = "uptime"
+	} else if system == "docker" && role == "guest" {
+		// also docker, guest
+		statFile = "uptime"
 	}
 
 	filename := common.HostProc(statFile)
