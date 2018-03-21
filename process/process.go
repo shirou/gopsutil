@@ -11,11 +11,7 @@ import (
 	"github.com/shirou/gopsutil/mem"
 )
 
-var invoke common.Invoker
-
-func init() {
-	invoke = common.Invoke{}
-}
+var invoke common.Invoker = common.Invoke{}
 
 type Process struct {
 	Pid            int32 `json:"pid"`

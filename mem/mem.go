@@ -6,11 +6,7 @@ import (
 	"github.com/shirou/gopsutil/internal/common"
 )
 
-var invoke common.Invoker
-
-func init() {
-	invoke = common.Invoke{}
-}
+var invoke common.Invoker = common.Invoke{}
 
 // Memory usage statistics. Total, Available and Used contain numbers of bytes
 // for human consumption.
