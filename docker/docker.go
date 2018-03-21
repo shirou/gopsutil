@@ -10,11 +10,7 @@ import (
 var ErrDockerNotAvailable = errors.New("docker not available")
 var ErrCgroupNotAvailable = errors.New("cgroup not available")
 
-var invoke common.Invoker
-
-func init() {
-	invoke = common.Invoke{}
-}
+var invoke common.Invoker = common.Invoke{}
 
 type CgroupMemStat struct {
 	ContainerID             string `json:"containerID"`
