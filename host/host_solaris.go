@@ -231,3 +231,18 @@ func KernelVersionWithContext(ctx context.Context) (string, error) {
 	}
 	return "", fmt.Errorf("could not get kernel version")
 }
+
+func PlatformInformation() (platform string, family string, version string, err error) {
+	return PlatformInformationWithContext(context.Background())
+}
+
+func PlatformInformationWithContext(ctx context.Context) (platform string, family string, version string, err error) {
+	/* This is not finished yet at all. Please contribute! */
+
+	version, err = KernelVersion()
+	if err != nil {
+		return "", "", "", err
+	}
+
+	return "solaris", "solaris", version, nil
+}
