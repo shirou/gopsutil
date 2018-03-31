@@ -22,7 +22,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 	if err != nil {
 		return ret, err
 	}
-	fs := make([]Statfs_t, count)
+	fs := make([]Statfs, count)
 	_, err = Getfsstat(fs, MntWait)
 	for _, stat := range fs {
 		opts := "rw"
@@ -92,16 +92,16 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 	return ret, nil
 }
 
-func Getfsstat(buf []Statfs_t, flags int) (n int, err error) {
+func Getfsstat(buf []Statfs, flags int) (n int, err error) {
 	return GetfsstatWithContext(context.Background(), buf, flags)
 }
 
-func GetfsstatWithContext(ctx context.Context, buf []Statfs_t, flags int) (n int, err error) {
+func GetfsstatWithContext(ctx context.Context, buf []Statfs, flags int) (n int, err error) {
 	var _p0 unsafe.Pointer
 	var bufsize uintptr
 	if len(buf) > 0 {
 		_p0 = unsafe.Pointer(&buf[0])
-		bufsize = unsafe.Sizeof(Statfs_t{}) * uintptr(len(buf))
+		bufsize = unsafe.Sizeof(Statfs{}) * uintptr(len(buf))
 	}
 	r0, _, e1 := unix.Syscall(SYS_GETFSSTAT64, uintptr(_p0), bufsize, uintptr(flags))
 	n = int(r0)
