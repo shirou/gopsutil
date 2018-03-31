@@ -16,7 +16,7 @@ func Avg() (*AvgStat, error) {
 }
 
 func AvgWithContext(ctx context.Context) (*AvgStat, error) {
-	values, err := common.DoSysctrl("vm.loadavg")
+	values, err := common.DoSysctrlWithContext(ctx, "vm.loadavg")
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func MiscWithContext(ctx context.Context) (*MiscStat, error) {
 	if err != nil {
 		return nil, err
 	}
-	out, err := invoke.Command(bin, "axo", "state")
+	out, err := invoke.CommandWithContext(ctx, bin, "axo", "state")
 	if err != nil {
 		return nil, err
 	}

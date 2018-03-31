@@ -27,7 +27,7 @@ func GetDockerStatWithContext(ctx context.Context) ([]CgroupDockerStat, error) {
 		return nil, ErrDockerNotAvailable
 	}
 
-	out, err := invoke.Command(path, "ps", "-a", "--no-trunc", "--format", "{{.ID}}|{{.Image}}|{{.Names}}|{{.Status}}")
+	out, err := invoke.CommandWithContext(ctx, path, "ps", "-a", "--no-trunc", "--format", "{{.ID}}|{{.Image}}|{{.Names}}|{{.Status}}")
 	if err != nil {
 		return []CgroupDockerStat{}, err
 	}
@@ -68,7 +68,7 @@ func GetDockerIDListWithContext(ctx context.Context) ([]string, error) {
 		return nil, ErrDockerNotAvailable
 	}
 
-	out, err := invoke.Command(path, "ps", "-q", "--no-trunc")
+	out, err := invoke.CommandWithContext(ctx, path, "ps", "-q", "--no-trunc")
 	if err != nil {
 		return []string{}, err
 	}

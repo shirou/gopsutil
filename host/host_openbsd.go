@@ -113,12 +113,12 @@ func PlatformInformationWithContext(ctx context.Context) (string, string, string
 		return "", "", "", err
 	}
 
-	out, err := invoke.Command(uname, "-s")
+	out, err := invoke.CommandWithContext(ctx, uname, "-s")
 	if err == nil {
 		platform = strings.ToLower(strings.TrimSpace(string(out)))
 	}
 
-	out, err = invoke.Command(uname, "-r")
+	out, err = invoke.CommandWithContext(ctx, uname, "-r")
 	if err == nil {
 		version = strings.ToLower(strings.TrimSpace(string(out)))
 	}
