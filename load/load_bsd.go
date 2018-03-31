@@ -49,7 +49,7 @@ func MiscWithContext(ctx context.Context) (*MiscStat, error) {
 	if err != nil {
 		return nil, err
 	}
-	out, err := invoke.Command(bin, "axo", "state")
+	out, err := invoke.CommandWithContext(ctx, bin, "axo", "state")
 	if err != nil {
 		return nil, err
 	}

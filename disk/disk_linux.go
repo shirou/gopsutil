@@ -388,7 +388,7 @@ func GetDiskSerialNumberWithContext(ctx context.Context, name string) string {
 		return ""
 	}
 
-	out, err := invoke.Command(udevadm, "info", "--query=property", n)
+	out, err := invoke.CommandWithContext(ctx, udevadm, "info", "--query=property", n)
 
 	// does not return error, just an empty string
 	if err != nil {

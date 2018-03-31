@@ -5,6 +5,7 @@ package process
 import (
 	"C"
 	"bytes"
+	"context"
 	"encoding/binary"
 	"strings"
 	"unsafe"
@@ -15,7 +16,6 @@ import (
 	net "github.com/shirou/gopsutil/net"
 	"golang.org/x/sys/unix"
 )
-import "context"
 
 // MemoryInfoExStat is different between OSes
 type MemoryInfoExStat struct {
@@ -345,7 +345,7 @@ func (p *Process) Children() ([]*Process, error) {
 }
 
 func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
-	pids, err := common.CallPgrep(invoke, p.Pid)
+	pids, err := common.CallPgrepWithContext(ctx, invoke, p.Pid)
 	if err != nil {
 		return nil, err
 	}
