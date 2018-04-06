@@ -146,7 +146,7 @@ func BootTimeWithContext(ctx context.Context) (uint64, error) {
 			return 0, fmt.Errorf("wrong uptime format")
 		}
 		f := strings.Fields(lines[0])
-		b, err := strconv.ParseInt(f[0], 10, 64)
+		b, err := strconv.ParseFloat(f[0], 64)
 		if err != nil {
 			return 0, err
 		}
