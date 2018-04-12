@@ -39,7 +39,7 @@ func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
 	if err != nil {
 		return nil, err
 	}
-	buffers, err := unix.SysctlUint32("vfs.bufspace")
+	buffers, err := unix.SysctlUint64("vfs.bufspace")
 	if err != nil {
 		return nil, err
 	}
