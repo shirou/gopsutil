@@ -1,9 +1,12 @@
 package process
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"math"
 	"runtime"
 	"time"
 
@@ -238,4 +241,38 @@ func (p *Process) CPUPercentWithContext(ctx context.Context) (float64, error) {
 	}
 
 	return 100 * cput.Total() / totalTime, nil
+}
+
+// ElapsedTime shows the elapsed time of the process indicating how long the
+// process has been running for.
+func (p *Process) ElapsedTime() (string, error) {
+	return p.ElapsedTimeWithContext(context.Background())
+}
+
+func (p *Process) ElapsedTimeWithContext(ctx context.Context) (string, error) {
+	crt_time, err := p.CreateTime()
+	if err != nil {
+		return "", err
+	}
+	etime := time.Since(time.Unix(int64(crt_time/1000), 0))
+	return fmtEtimeDuration(etime), nil
+}
+
+// fmtEtimeDuration formats etime's duration based on ps' format:
+// [[DD-]hh:]mm:ss
+func fmtEtimeDuration(d time.Duration) string {
+	days := d / (24 * time.Hour)
+	hours := d % (24 * time.Hour)
+	minutes := hours % time.Hour
+	seconds := math.Mod(minutes.Seconds(), 60)
+	var b bytes.Buffer
+	if days > 0 {
+		fmt.Fprintf(&b, "%d-", days)
+	}
+	if hours/time.Hour > 0 {
+		fmt.Fprintf(&b, "%02d:", hours/time.Hour)
+	}
+	fmt.Fprintf(&b, "%02d:", minutes/time.Minute)
+	fmt.Fprintf(&b, "%02.0f", seconds)
+	return b.String()
 }

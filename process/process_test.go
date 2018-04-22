@@ -444,3 +444,15 @@ func Test_Kill(t *testing.T) {
 	assert.Nil(t, p.Kill())
 	wg.Wait()
 }
+
+func Test_Process_ElapsedTime(t *testing.T) {
+	p := testGetProcess()
+	etime, err := p.ElapsedTime()
+	if err != nil {
+		t.Errorf("error %v", err)
+	}
+
+	if err == "" {
+		t.Error("elapsed time should not be empty")
+	}
+}
