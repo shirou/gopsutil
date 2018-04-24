@@ -235,6 +235,11 @@ func (p *Process) TerminalWithContext(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	return p.getTerminalFromMap(t)
+}
+
+// returns the terminal associated with the process
+func (p *Process) getTerminalFromMap(t uint64) (string, error) {
 	termmap, err := getTerminalMap()
 	if err != nil {
 		return "", err
@@ -287,24 +292,26 @@ func (p *Process) RlimitUsageWithContext(ctx context.Context, gatherUsed bool) (
 	if !gatherUsed || err != nil {
 		return rlimits, err
 	}
-
-	_, _, _, _, rtprio, nice, err := p.fillFromStat()
+	_, _, cpuTimes, _, rtprio, nice, err := p.fillFromStat()
 	if err != nil {
 		return nil, err
 	}
 	if err := p.fillFromStatus(); err != nil {
 		return nil, err
 	}
+	return p.getRlimitUsage(rlimits, rtprio, nice, cpuTimes)
+}
 
+func (p *Process) getRlimitUsage(rlimits []RlimitStat, rtprio uint32, nice int32, cpuTimes *cpu.TimesStat) ([]RlimitStat, error) {
+	var err error
 	for i := range rlimits {
 		rs := &rlimits[i]
 		switch rs.Resource {
 		case RLIMIT_CPU:
-			times, err := p.Times()
-			if err != nil {
-				return nil, err
+			if cpuTimes == nil {
+				return nil, fmt.Errorf("no cpu times")
 			}
-			rs.Used = uint64(times.User + times.System)
+			rs.Used = uint64(cpuTimes.User + cpuTimes.System)
 		case RLIMIT_DATA:
 			rs.Used = uint64(p.memInfo.Data)
 		case RLIMIT_STACK:

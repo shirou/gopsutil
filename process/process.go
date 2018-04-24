@@ -230,7 +230,10 @@ func (p *Process) CPUPercentWithContext(ctx context.Context) (float64, error) {
 	if err != nil {
 		return 0, err
 	}
+	return p.calculateCPUPercent(ctx, crt_time, cput)
+}
 
+func (p *Process) calculateCPUPercent(ctx context.Context, crt_time int64, cput *cpu.TimesStat) (float64, error) {
 	created := time.Unix(0, crt_time*int64(time.Millisecond))
 	totalTime := time.Since(created).Seconds()
 	if totalTime <= 0 {
