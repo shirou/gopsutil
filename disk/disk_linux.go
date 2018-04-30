@@ -415,7 +415,7 @@ func GetDiskSerialNumberWithContext(ctx context.Context, name string) string {
 // See https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-block-dm
 func GetLabel(name string) string {
 	// Try label based on devicemapper name
-	dmname_filename := fmt.Sprintf("/sys/block/%s/dm/name", name)
+	dmname_filename := common.HostSys(fmt.Sprintf("block/%s/dm/name", name))
 
 	if !common.PathExists(dmname_filename) {
 		return ""
