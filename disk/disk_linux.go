@@ -425,7 +425,7 @@ func GetLabel(name string) string {
 	if err != nil {
 		return ""
 	} else {
-		return dmname
+		return string(dmname)
 	}
 }
 
