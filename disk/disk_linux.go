@@ -424,9 +424,8 @@ func GetLabel(name string) string {
 	dmname, err := ioutil.ReadFile(dmname_filename)
 	if err != nil {
 		return ""
-	} else {
-		return dmname
 	}
+	return string(dmname)
 }
 
 func getFsType(stat unix.Statfs_t) string {
