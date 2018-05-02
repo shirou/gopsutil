@@ -5,6 +5,7 @@ package disk
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os/exec"
 	"path/filepath"
 	"strconv"
@@ -370,6 +371,8 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 		d.Name = name
 
 		d.SerialNumber = GetDiskSerialNumber(name)
+		d.Label = GetLabel(name)
+
 		ret[name] = d
 	}
 	return ret, nil
@@ -404,6 +407,26 @@ func GetDiskSerialNumberWithContext(ctx context.Context, name string) string {
 		return values[1]
 	}
 	return ""
+}
+
+// GetLabel returns label of given device or empty string on error.
+// Name of device is expected, eg. /dev/sda
+// Supports label based on devicemapper name
+// See https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-block-dm
+func GetLabel(name string) string {
+	// Try label based on devicemapper name
+	dmname_filename := common.HostSys(fmt.Sprintf("block/%s/dm/name", name))
+
+	if !common.PathExists(dmname_filename) {
+		return ""
+	}
+
+	dmname, err := ioutil.ReadFile(dmname_filename)
+	if err != nil {
+		return ""
+	} else {
+		return dmname
+	}
 }
 
 func getFsType(stat unix.Statfs_t) string {
