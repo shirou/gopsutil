@@ -235,7 +235,7 @@ func (p *Process) OpenFiles() ([]OpenFilesStat, error) {
 	if err != nil {
 		return nil, err
 	}
-	ret := make([]OpenFilesStat, 0, len(ofs))
+	ret := make([]OpenFilesStat, len(ofs))
 	for i, o := range ofs {
 		ret[i] = *o
 	}
