@@ -4,7 +4,6 @@ package mem
 
 import (
 	"context"
-	"errors"
 	"unsafe"
 
 	"github.com/shirou/gopsutil/internal/common"
@@ -80,11 +79,18 @@ func SwapMemoryWithContext(ctx context.Context) (*SwapMemoryStat, error) {
 	}
 	tot := perfInfo.commitLimit * perfInfo.pageSize
 	used := perfInfo.commitTotal * perfInfo.pageSize
+	free := tot - used
+
 	if tot == 0 || used == 0 {
-		return nil, errors.New("total or used memory is 0")
+		// return empty to avoid zero divide error
+		return &SwapMemoryStat{
+			Total:       0,
+			Used:        0,
+			Free:        0,
+			UsedPercent: 0,
+		}, nil
 	}
 
-	free := tot - used
 	ret := &SwapMemoryStat{
 		Total:       tot,
 		Used:        used,
