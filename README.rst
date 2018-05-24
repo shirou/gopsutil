@@ -119,7 +119,7 @@ Several methods have been added which are not present in psutil, but will provid
 
 - IOCounters
 
-  - Label (linux only)    The registered [device mapper name](https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-block-dm)
+  - Label (linux only)    The registered `device mapper name <https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-block-dm>`_
 
 - cpu/CPUInfo()  (linux, freebsd)
 
