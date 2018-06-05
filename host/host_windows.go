@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"strings"
 	"sync/atomic"
+	"syscall"
 	"time"
 	"unsafe"
 
@@ -20,6 +21,8 @@ import (
 
 var (
 	procGetSystemTimeAsFileTime = common.Modkernel32.NewProc("GetSystemTimeAsFileTime")
+	procGetTickCount32          = common.Modkernel32.NewProc("GetTickCount")
+	procGetTickCount64          = common.Modkernel32.NewProc("GetTickCount64")
 	osInfo                      *Win32_OperatingSystem
 )
 
@@ -28,7 +31,6 @@ type Win32_OperatingSystem struct {
 	Caption        string
 	ProductType    uint32
 	BuildNumber    string
-	LastBootUpTime time.Time
 }
 
 func Info() (*InfoStat, error) {
@@ -135,18 +137,19 @@ func Uptime() (uint64, error) {
 }
 
 func UptimeWithContext(ctx context.Context) (uint64, error) {
-	if osInfo == nil {
-		_, err := GetOSInfo()
-		if err != nil {
-			return 0, err
-		}
+	procGetTickCount := procGetTickCount64
+	err := procGetTickCount64.Find()
+	if err != nil {
+		procGetTickCount = procGetTickCount32 // handle WinXP, but keep in mind that "the time will wrap around to zero if the system is run continuously for 49.7 days." from MSDN
 	}
-	now := time.Now()
-	t := osInfo.LastBootUpTime.Local()
-	return uint64(now.Sub(t).Seconds()), nil
+	r1, _, lastErr := syscall.Syscall(procGetTickCount.Addr(), 0, 0, 0, 0)
+	if lastErr != 0 {
+		return 0, lastErr
+	}
+	return uint64((time.Duration(r1) * time.Millisecond).Seconds()), nil
 }
 
-func bootTime(up uint64) uint64 {
+func bootTimeFromUptime(up uint64) uint64 {
 	return uint64(time.Now().Unix()) - up
 }
 
@@ -166,7 +169,7 @@ func BootTimeWithContext(ctx context.Context) (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	t = bootTime(up)
+	t = bootTimeFromUptime(up)
 	atomic.StoreUint64(&cachedBootTime, t)
 	return t, nil
 }
