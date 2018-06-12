@@ -391,8 +391,8 @@ func GetDiskSerialNumberWithContext(ctx context.Context, name string) string {
 	if err != nil {
 		return ""
 	}
-	major := unix.Major(stat.Rdev)
-	minor := unix.Minor(stat.Rdev)
+	major := unix.Major(uint64(stat.Rdev))
+	minor := unix.Minor(uint64(stat.Rdev))
 
 	// Try to get the serial from udev data
 	udevDataPath := fmt.Sprintf("/run/udev/data/b%d:%d", major, minor)
