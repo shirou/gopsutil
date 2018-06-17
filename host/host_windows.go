@@ -13,24 +13,32 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/StackExchange/wmi"
 	"github.com/shirou/gopsutil/internal/common"
 	process "github.com/shirou/gopsutil/process"
 	"golang.org/x/sys/windows"
+	"golang.org/x/sys/windows/registry"
 )
 
 var (
 	procGetSystemTimeAsFileTime = common.Modkernel32.NewProc("GetSystemTimeAsFileTime")
 	procGetTickCount32          = common.Modkernel32.NewProc("GetTickCount")
 	procGetTickCount64          = common.Modkernel32.NewProc("GetTickCount64")
-	osInfo                      *Win32_OperatingSystem
+	procRtlGetVersion           = common.ModNt.NewProc("RtlGetVersion")
 )
 
-type Win32_OperatingSystem struct {
-	Version        string
-	Caption        string
-	ProductType    uint32
-	BuildNumber    string
+// https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/content/wdm/ns-wdm-_osversioninfoexw
+type osVersionInfoExW struct {
+	dwOSVersionInfoSize uint32
+	dwMajorVersion      uint32
+	dwMinorVersion      uint32
+	dwBuildNumber       uint32
+	dwPlatformId        uint32
+	szCSDVersion        [128]uint16
+	wServicePackMajor   uint16
+	wServicePackMinor   uint16
+	wSuiteMask          uint16
+	wProductType        uint8
+	wReserved           uint8
 }
 
 func Info() (*InfoStat, error) {
@@ -113,25 +121,6 @@ func getMachineGuid() (string, error) {
 	return hostID, nil
 }
 
-func GetOSInfo() (Win32_OperatingSystem, error) {
-	return GetOSInfoWithContext(context.Background())
-}
-
-func GetOSInfoWithContext(ctx context.Context) (Win32_OperatingSystem, error) {
-	var dst []Win32_OperatingSystem
-	q := wmi.CreateQuery(&dst, "")
-	ctx, cancel := context.WithTimeout(context.Background(), common.Timeout)
-	defer cancel()
-	err := common.WMIQueryWithContext(ctx, q, &dst)
-	if err != nil {
-		return Win32_OperatingSystem{}, err
-	}
-
-	osInfo = &dst[0]
-
-	return dst[0], nil
-}
-
 func Uptime() (uint64, error) {
 	return UptimeWithContext(context.Background())
 }
@@ -179,18 +168,37 @@ func PlatformInformation() (platform string, family string, version string, err 
 }
 
 func PlatformInformationWithContext(ctx context.Context) (platform string, family string, version string, err error) {
-	if osInfo == nil {
-		_, err = GetOSInfo()
-		if err != nil {
-			return
-		}
+	// GetVersionEx lies on Windows 8.1 and returns as Windows 8 if we don't declare compatibility in manifest
+	// RtlGetVersion bypasses this lying layer and returns the true Windows version
+	// https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/content/wdm/nf-wdm-rtlgetversion
+	// https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/content/wdm/ns-wdm-_osversioninfoexw
+	var osInfo osVersionInfoExW
+	osInfo.dwOSVersionInfoSize = uint32(unsafe.Sizeof(osInfo))
+	ret, _, err := procRtlGetVersion.Call(uintptr(unsafe.Pointer(&osInfo)))
+	if ret != 0 {
+		return
 	}
 
 	// Platform
-	platform = strings.Trim(osInfo.Caption, " ")
+	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Windows NT\CurrentVersion`, registry.QUERY_VALUE)
+	if err != nil {
+		return
+	}
+	defer k.Close()
+	platform, _, err = k.GetStringValue("ProductName")
+	if err != nil {
+		return
+	}
+	if !strings.HasPrefix(platform, "Microsoft") {
+		platform = "Microsoft " + platform
+	}
+	csd, _, err := k.GetStringValue("CSDVersion")
+	if err == nil {
+		platform += " " + csd
+	}
 
 	// PlatformFamily
-	switch osInfo.ProductType {
+	switch osInfo.wProductType {
 	case 1:
 		family = "Standalone Workstation"
 	case 2:
@@ -200,7 +208,7 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 	}
 
 	// Platform Version
-	version = fmt.Sprintf("%s Build %s", osInfo.Version, osInfo.BuildNumber)
+	version = fmt.Sprintf("%d.%d.%d Build %d", osInfo.dwMajorVersion, osInfo.dwMinorVersion, osInfo.dwBuildNumber, osInfo.dwBuildNumber)
 
 	return
 }
