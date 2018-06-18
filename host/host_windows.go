@@ -16,7 +16,6 @@ import (
 	"github.com/shirou/gopsutil/internal/common"
 	process "github.com/shirou/gopsutil/process"
 	"golang.org/x/sys/windows"
-	"golang.org/x/sys/windows/registry"
 )
 
 var (
@@ -94,6 +93,8 @@ func InfoWithContext(ctx context.Context) (*InfoStat, error) {
 }
 
 func getMachineGuid() (string, error) {
+	// there has been reports of issues on 32bit using golang.org/x/sys/windows/registry, see https://github.com/shirou/gopsutil/pull/312#issuecomment-277422612
+	// for rationale of using windows.RegOpenKeyEx/RegQueryValueEx instead of registry.OpenKey/GetStringValue
 	var h windows.Handle
 	err := windows.RegOpenKeyEx(windows.HKEY_LOCAL_MACHINE, windows.StringToUTF16Ptr(`SOFTWARE\Microsoft\Cryptography`), 0, windows.KEY_READ|windows.KEY_WOW64_64KEY, &h)
 	if err != nil {
@@ -180,21 +181,34 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 	}
 
 	// Platform
-	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Windows NT\CurrentVersion`, registry.QUERY_VALUE)
+	var h windows.Handle // like getMachineGuid(), we query the registry using the raw windows.RegOpenKeyEx/RegQueryValueEx
+	err = windows.RegOpenKeyEx(windows.HKEY_LOCAL_MACHINE, windows.StringToUTF16Ptr(`SOFTWARE\Microsoft\Windows NT\CurrentVersion`), 0, windows.KEY_READ|windows.KEY_WOW64_64KEY, &h)
 	if err != nil {
 		return
 	}
-	defer k.Close()
-	platform, _, err = k.GetStringValue("ProductName")
+	defer windows.RegCloseKey(h)
+	var bufLen uint32
+	var valType uint32
+	err = windows.RegQueryValueEx(h, windows.StringToUTF16Ptr(`ProductName`), nil, &valType, nil, &bufLen)
 	if err != nil {
 		return
 	}
+	regBuf := make([]uint16, bufLen/2+1)
+	err = windows.RegQueryValueEx(h, windows.StringToUTF16Ptr(`ProductName`), nil, &valType, (*byte)(unsafe.Pointer(&regBuf[0])), &bufLen)
+	if err != nil {
+		return
+	}
+	platform = windows.UTF16ToString(regBuf[:])
 	if !strings.HasPrefix(platform, "Microsoft") {
 		platform = "Microsoft " + platform
 	}
-	csd, _, err := k.GetStringValue("CSDVersion")
-	if err == nil {
-		platform += " " + csd
+	err = windows.RegQueryValueEx(h, windows.StringToUTF16Ptr(`CSDVersion`), nil, &valType, nil, &bufLen) // append Service Pack number, only on success
+	if err == nil {                                                                                       // don't return an error if only the Service Pack retrieval fails
+		regBuf = make([]uint16, bufLen/2+1)
+		err = windows.RegQueryValueEx(h, windows.StringToUTF16Ptr(`CSDVersion`), nil, &valType, (*byte)(unsafe.Pointer(&regBuf[0])), &bufLen)
+		if err == nil {
+			platform += " " + windows.UTF16ToString(regBuf[:])
+		}
 	}
 
 	// PlatformFamily
@@ -210,7 +224,7 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 	// Platform Version
 	version = fmt.Sprintf("%d.%d.%d Build %d", osInfo.dwMajorVersion, osInfo.dwMinorVersion, osInfo.dwBuildNumber, osInfo.dwBuildNumber)
 
-	return
+	return platform, family, version, nil
 }
 
 func Users() ([]UserStat, error) {
