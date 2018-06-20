@@ -67,8 +67,8 @@ type VirtualMemoryStat struct {
 	VMallocTotal   uint64 `json:"vmalloctotal"`
 	VMallocUsed    uint64 `json:"vmallocused"`
 	VMallocChunk   uint64 `json:"vmallocchunk"`
-	HugePagesTotal uint64 `json:"hugePagestotal"`
-	HugePagesFree  uint64 `json:"hugePagesfree"`
+	HugePagesTotal uint64 `json:"hugepagestotal"`
+	HugePagesFree  uint64 `json:"hugepagesfree"`
 	HugePageSize   uint64 `json:"hugepagesize"`
 }
 
