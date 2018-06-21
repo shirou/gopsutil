@@ -1175,6 +1175,9 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 	createTime := int64(ctime * 1000)
 
 	rtpriority, err := strconv.ParseInt(fields[i+16], 10, 32)
+	if err != nil {
+		return 0, 0, nil, 0, 0, 0, err
+	}
 	if rtpriority < 0 {
 		rtpriority = rtpriority*-1 - 1
 	} else {

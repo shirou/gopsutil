@@ -23,7 +23,9 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 		return ret, err
 	}
 	fs := make([]Statfs, count)
-	_, err = Getfsstat(fs, MntWait)
+	if _, err = Getfsstat(fs, MntWait); err != nil {
+		return ret, err
+	}
 	for _, stat := range fs {
 		opts := "rw"
 		if stat.Flags&MntReadOnly != 0 {

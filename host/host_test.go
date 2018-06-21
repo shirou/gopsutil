@@ -51,6 +51,9 @@ func TestBoot_time(t *testing.T) {
 	t.Logf("first boot time: %d", v)
 
 	v2, err := BootTime()
+	if err != nil {
+		t.Errorf("error %v", err)
+	}
 	if v != v2 {
 		t.Errorf("cached boot time is different")
 	}
