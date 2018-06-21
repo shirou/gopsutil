@@ -270,6 +270,9 @@ func (p *Process) UsernameWithContext(ctx context.Context) (string, error) {
 	}
 	defer token.Close()
 	tokenUser, err := token.GetTokenUser()
+	if err != nil {
+		return "", err
+	}
 
 	user, domain, _, err := tokenUser.User.Sid.LookupAccount("")
 	return domain + "\\" + user, err
