@@ -176,7 +176,7 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 			WriteTime:  d.AvgDisksecPerWrite,
 		}
 		tmpIO.SerialNumber = GetDiskSerialNumber(d.Name)
-		ret[d.Name] = d
+		ret[d.Name] = tmpIO
 	}
 	return ret, nil
 }
