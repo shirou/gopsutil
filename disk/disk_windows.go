@@ -32,13 +32,11 @@ type Win32_PerfFormattedData struct {
 	AvgDisksecPerRead       uint64
 	AvgDisksecPerWrite      uint64
 }
-type Win32_DiskDrive struct {
-	DeviceID         string
-	FirmwareRevision string
-	InterfaceType    string
-	SerialNumber     string
+type win32_DiskDrive struct {
+	DeviceID     string
+	SerialNumber string
 }
-type Win32_DiskPartition struct {
+type win32_DiskPartition struct {
 	DeviceID string
 }
 
@@ -187,8 +185,8 @@ func GetDiskSerialNumber(name string) string {
 }
 
 func GetDiskSerialNumberWithContext(ctx context.Context, name string) string {
-	var diskPart []Win32_DiskPartition
-	var diskDrive []Win32_DiskDrive
+	var diskPart []win32_DiskPartition
+	var diskDrive []win32_DiskDrive
 	err := common.WMIQueryWithContext(ctx, "Associators of {Win32_LogicalDisk.DeviceID='"+name+"'} where AssocClass=Win32_LogicalDiskToPartition", &diskPart)
 	if err != nil || len(diskPart) <= 0 {
 		return ""
