@@ -5,6 +5,7 @@ package process
 import (
 	"C"
 	"bytes"
+	"context"
 	"encoding/binary"
 	"strings"
 	"unsafe"
@@ -15,7 +16,6 @@ import (
 	net "github.com/shirou/gopsutil/net"
 	"golang.org/x/sys/unix"
 )
-import "context"
 
 // MemoryInfoExStat is different between OSes
 type MemoryInfoExStat struct {
@@ -65,6 +65,9 @@ func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 	}
 
 	return common.IntToString(k.Comm[:]), nil
+}
+func (p *Process) Tgid() (int32, error) {
+	return 0, common.ErrNotImplementedError
 }
 func (p *Process) Exe() (string, error) {
 	return p.ExeWithContext(context.Background())
@@ -342,7 +345,7 @@ func (p *Process) Children() ([]*Process, error) {
 }
 
 func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
-	pids, err := common.CallPgrep(invoke, p.Pid)
+	pids, err := common.CallPgrepWithContext(ctx, invoke, p.Pid)
 	if err != nil {
 		return nil, err
 	}
@@ -398,6 +401,10 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 }
 
 func Processes() ([]*Process, error) {
+	return ProcessesWithContext(context.Background())
+}
+
+func ProcessesWithContext(ctx context.Context) ([]*Process, error) {
 	results := []*Process{}
 
 	buf, length, err := CallKernProcSyscall(KernProcAll, 0)

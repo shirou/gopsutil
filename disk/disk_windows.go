@@ -32,6 +32,13 @@ type Win32_PerfFormattedData struct {
 	AvgDisksecPerRead       uint64
 	AvgDisksecPerWrite      uint64
 }
+type win32_DiskDrive struct {
+	DeviceID     string
+	SerialNumber string
+}
+type win32_DiskPartition struct {
+	DeviceID string
+}
 
 const WaitMSec = 500
 
@@ -144,8 +151,6 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 	ret := make(map[string]IOCountersStat, 0)
 	var dst []Win32_PerfFormattedData
 
-	ctx, cancel := context.WithTimeout(context.Background(), common.Timeout)
-	defer cancel()
 	err := common.WMIQueryWithContext(ctx, "SELECT * FROM Win32_PerfFormattedData_PerfDisk_LogicalDisk", &dst)
 	if err != nil {
 		return ret, err
@@ -159,7 +164,7 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 			continue
 		}
 
-		ret[d.Name] = IOCountersStat{
+		tmpIO := IOCountersStat{
 			Name:       d.Name,
 			ReadCount:  uint64(d.AvgDiskReadQueueLength),
 			WriteCount: d.AvgDiskWriteQueueLength,
@@ -168,6 +173,27 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 			ReadTime:   d.AvgDisksecPerRead,
 			WriteTime:  d.AvgDisksecPerWrite,
 		}
+		tmpIO.SerialNumber = GetDiskSerialNumber(d.Name)
+		ret[d.Name] = tmpIO
 	}
 	return ret, nil
+}
+
+// return disk serial number(not volume serial number) of given device or empty string on error. Name of device is drive letter, eg. C:
+func GetDiskSerialNumber(name string) string {
+	return GetDiskSerialNumberWithContext(context.Background(), name)
+}
+
+func GetDiskSerialNumberWithContext(ctx context.Context, name string) string {
+	var diskPart []win32_DiskPartition
+	var diskDrive []win32_DiskDrive
+	err := common.WMIQueryWithContext(ctx, "Associators of {Win32_LogicalDisk.DeviceID='"+name+"'} where AssocClass=Win32_LogicalDiskToPartition", &diskPart)
+	if err != nil || len(diskPart) <= 0 {
+		return ""
+	}
+	err = common.WMIQueryWithContext(ctx, "Associators of {Win32_DiskPartition.DeviceID='"+diskPart[0].DeviceID+"'} where AssocClass=Win32_DiskDriveToDiskPartition", &diskDrive)
+	if err != nil || len(diskDrive) <= 0 {
+		return ""
+	}
+	return diskDrive[0].SerialNumber
 }

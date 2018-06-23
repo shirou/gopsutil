@@ -13,14 +13,21 @@ check:  ## Check
 BUILD_FAIL_PATTERN=grep -v "exec format error" | grep "build failed" && exit 1 || exit 0
 build_test:  ## test only buildable
 	# Supported operating systems
-	GOOS=linux go test ./... | $(BUILD_FAIL_PATTERN)
+	GOOS=linux GOARCH=amd64 go test ./... | $(BUILD_FAIL_PATTERN)
+	GOOS=linux GOARCH=386 go test ./... | $(BUILD_FAIL_PATTERN)
+	GOOS=linux GOARCH=arm go test ./... | $(BUILD_FAIL_PATTERN)
+	GOOS=linux GOARCH=arm64 go test ./... | $(BUILD_FAIL_PATTERN)
 	GOOS=freebsd go test ./... | $(BUILD_FAIL_PATTERN)
-#	GOOS=openbsd go test ./... | $(BUILD_FAIL_PATTERN)
 	CGO_ENABLED=0 GOOS=darwin go test ./... | $(BUILD_FAIL_PATTERN)
 	GOOS=windows go test ./... | $(BUILD_FAIL_PATTERN)
 	# Operating systems supported for building only (not implemented error if used)
 	GOOS=solaris go test ./... | $(BUILD_FAIL_PATTERN)
-#	GOOS=dragonfly go test ./... | $(BUILD_FAIL_PATTERN)
+	GOOS=dragonfly go test ./... | $(BUILD_FAIL_PATTERN)
 	GOOS=netbsd go test ./... | $(BUILD_FAIL_PATTERN)
+	# cross build to OpenBSD not worked since process has "C"
+#	GOOS=openbsd go test ./... | $(BUILD_FAIL_PATTERN)
+
+ifeq ($(shell uname -s), Darwin)
 	CGO_ENABLED=1 GOOS=darwin go test ./... | $(BUILD_FAIL_PATTERN)
+endif
 	@echo 'Successfully built on all known operating systems'

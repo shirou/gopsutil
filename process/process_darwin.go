@@ -51,7 +51,7 @@ func Pids() ([]int32, error) {
 func PidsWithContext(ctx context.Context) ([]int32, error) {
 	var ret []int32
 
-	pids, err := callPs("pid", 0, false)
+	pids, err := callPsWithContext(ctx, "pid", 0, false)
 	if err != nil {
 		return ret, err
 	}
@@ -72,7 +72,7 @@ func (p *Process) Ppid() (int32, error) {
 }
 
 func (p *Process) PpidWithContext(ctx context.Context) (int32, error) {
-	r, err := callPs("ppid", p.Pid, false)
+	r, err := callPsWithContext(ctx, "ppid", p.Pid, false)
 	if err != nil {
 		return 0, err
 	}
@@ -96,6 +96,9 @@ func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 
 	return common.IntToString(k.Proc.P_comm[:]), nil
 }
+func (p *Process) Tgid() (int32, error) {
+	return 0, common.ErrNotImplementedError
+}
 func (p *Process) Exe() (string, error) {
 	return p.ExeWithContext(context.Background())
 }
@@ -116,9 +119,9 @@ func (p *Process) ExeWithContext(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	lsof := exec.Command(lsof_bin, "-p", strconv.Itoa(int(p.Pid)), "-Fpfn")
-	awk := exec.Command(awk_bin, "NR==5{print}")
-	sed := exec.Command(sed_bin, "s/n\\//\\//")
+	lsof := exec.CommandContext(ctx, lsof_bin, "-p", strconv.Itoa(int(p.Pid)), "-Fpfn")
+	awk := exec.CommandContext(ctx, awk_bin, "NR==5{print}")
+	sed := exec.CommandContext(ctx, sed_bin, "s/n\\//\\//")
 
 	output, _, err := common.Pipeline(lsof, awk, sed)
 
@@ -138,7 +141,7 @@ func (p *Process) Cmdline() (string, error) {
 }
 
 func (p *Process) CmdlineWithContext(ctx context.Context) (string, error) {
-	r, err := callPs("command", p.Pid, false)
+	r, err := callPsWithContext(ctx, "command", p.Pid, false)
 	if err != nil {
 		return "", err
 	}
@@ -155,7 +158,7 @@ func (p *Process) CmdlineSlice() ([]string, error) {
 }
 
 func (p *Process) CmdlineSliceWithContext(ctx context.Context) ([]string, error) {
-	r, err := callPs("command", p.Pid, false)
+	r, err := callPsWithContext(ctx, "command", p.Pid, false)
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +169,7 @@ func (p *Process) CreateTime() (int64, error) {
 }
 
 func (p *Process) CreateTimeWithContext(ctx context.Context) (int64, error) {
-	r, err := callPs("etime", p.Pid, false)
+	r, err := callPsWithContext(ctx, "etime", p.Pid, false)
 	if err != nil {
 		return 0, err
 	}
@@ -207,7 +210,7 @@ func (p *Process) Parent() (*Process, error) {
 }
 
 func (p *Process) ParentWithContext(ctx context.Context) (*Process, error) {
-	rr, err := common.CallLsof(invoke, p.Pid, "-FR")
+	rr, err := common.CallLsofWithContext(ctx, invoke, p.Pid, "-FR")
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +232,7 @@ func (p *Process) Status() (string, error) {
 }
 
 func (p *Process) StatusWithContext(ctx context.Context) (string, error) {
-	r, err := callPs("state", p.Pid, false)
+	r, err := callPsWithContext(ctx, "state", p.Pid, false)
 	if err != nil {
 		return "", err
 	}
@@ -347,7 +350,7 @@ func (p *Process) NumThreads() (int32, error) {
 }
 
 func (p *Process) NumThreadsWithContext(ctx context.Context) (int32, error) {
-	r, err := callPs("utime,stime", p.Pid, true)
+	r, err := callPsWithContext(ctx, "utime,stime", p.Pid, true)
 	if err != nil {
 		return 0, err
 	}
@@ -392,7 +395,7 @@ func (p *Process) Times() (*cpu.TimesStat, error) {
 }
 
 func (p *Process) TimesWithContext(ctx context.Context) (*cpu.TimesStat, error) {
-	r, err := callPs("utime,stime", p.Pid, false)
+	r, err := callPsWithContext(ctx, "utime,stime", p.Pid, false)
 
 	if err != nil {
 		return nil, err
@@ -426,7 +429,7 @@ func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
 }
 
 func (p *Process) MemoryInfoWithContext(ctx context.Context) (*MemoryInfoStat, error) {
-	r, err := callPs("rss,vsize,pagein", p.Pid, false)
+	r, err := callPsWithContext(ctx, "rss,vsize,pagein", p.Pid, false)
 	if err != nil {
 		return nil, err
 	}
@@ -464,7 +467,7 @@ func (p *Process) Children() ([]*Process, error) {
 }
 
 func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
-	pids, err := common.CallPgrep(invoke, p.Pid)
+	pids, err := common.CallPgrepWithContext(ctx, invoke, p.Pid)
 	if err != nil {
 		return nil, err
 	}
@@ -520,6 +523,10 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 }
 
 func Processes() ([]*Process, error) {
+	return ProcessesWithContext(context.Background())
+}
+
+func ProcessesWithContext(ctx context.Context) ([]*Process, error) {
 	results := []*Process{}
 
 	mib := []int32{CTLKern, KernProc, KernProcAll, 0}
@@ -602,7 +609,7 @@ func NewProcess(pid int32) (*Process, error) {
 // Return value deletes Header line(you must not input wrong arg).
 // And splited by Space. Caller have responsibility to manage.
 // If passed arg pid is 0, get information from all process.
-func callPs(arg string, pid int32, threadOption bool) ([][]string, error) {
+func callPsWithContext(ctx context.Context, arg string, pid int32, threadOption bool) ([][]string, error) {
 	bin, err := exec.LookPath("ps")
 	if err != nil {
 		return [][]string{}, err
@@ -616,7 +623,7 @@ func callPs(arg string, pid int32, threadOption bool) ([][]string, error) {
 	} else {
 		cmd = []string{"-x", "-o", arg, "-p", strconv.Itoa(int(pid))}
 	}
-	out, err := invoke.Command(bin, cmd...)
+	out, err := invoke.CommandWithContext(ctx, bin, cmd...)
 	if err != nil {
 		return [][]string{}, err
 	}

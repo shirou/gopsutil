@@ -85,6 +85,9 @@ func Test_Process_memory_maps(t *testing.T) {
 	checkPid := os.Getpid()
 
 	ret, err := NewProcess(int32(checkPid))
+	if err != nil {
+		t.Errorf("error %v", err)
+	}
 
 	mmaps, err := ret.MemoryMaps(false)
 	if err != nil {
@@ -301,6 +304,10 @@ func Test_Process_CpuPercentLoop(t *testing.T) {
 }
 
 func Test_Process_CreateTime(t *testing.T) {
+	if os.Getenv("CIRCLECI") == "true" {
+		t.Skip("Skip CI")
+	}
+
 	p := testGetProcess()
 
 	c, err := p.CreateTime()

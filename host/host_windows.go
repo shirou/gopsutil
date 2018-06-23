@@ -57,7 +57,7 @@ func InfoWithContext(ctx context.Context) (*InfoStat, error) {
 	}
 
 	{
-		platform, family, version, err := PlatformInformation()
+		platform, family, version, err := PlatformInformationWithContext(ctx)
 		if err == nil {
 			ret.Platform = platform
 			ret.PlatformFamily = family

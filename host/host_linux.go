@@ -104,25 +104,55 @@ func BootTimeWithContext(ctx context.Context) (uint64, error) {
 	if t != 0 {
 		return t, nil
 	}
-	filename := common.HostProc("stat")
+
+	system, role, err := Virtualization()
+	if err != nil {
+		return 0, err
+	}
+
+	statFile := "stat"
+	if system == "lxc" && role == "guest" {
+		// if lxc, /proc/uptime is used.
+		statFile = "uptime"
+	} else if system == "docker" && role == "guest" {
+		// also docker, guest
+		statFile = "uptime"
+	}
+
+	filename := common.HostProc(statFile)
 	lines, err := common.ReadLines(filename)
 	if err != nil {
 		return 0, err
 	}
-	for _, line := range lines {
-		if strings.HasPrefix(line, "btime") {
-			f := strings.Fields(line)
-			if len(f) != 2 {
-				return 0, fmt.Errorf("wrong btime format")
+
+	if statFile == "stat" {
+		for _, line := range lines {
+			if strings.HasPrefix(line, "btime") {
+				f := strings.Fields(line)
+				if len(f) != 2 {
+					return 0, fmt.Errorf("wrong btime format")
+				}
+				b, err := strconv.ParseInt(f[1], 10, 64)
+				if err != nil {
+					return 0, err
+				}
+				t = uint64(b)
+				atomic.StoreUint64(&cachedBootTime, t)
+				return t, nil
 			}
-			b, err := strconv.ParseInt(f[1], 10, 64)
-			if err != nil {
-				return 0, err
-			}
-			t = uint64(b)
-			atomic.StoreUint64(&cachedBootTime, t)
-			return t, nil
 		}
+	} else if statFile == "uptime" {
+		if len(lines) != 1 {
+			return 0, fmt.Errorf("wrong uptime format")
+		}
+		f := strings.Fields(lines[0])
+		b, err := strconv.ParseFloat(f[0], 64)
+		if err != nil {
+			return 0, err
+		}
+		t = uint64(time.Now().Unix()) - uint64(b)
+		atomic.StoreUint64(&cachedBootTime, t)
+		return t, nil
 	}
 
 	return 0, fmt.Errorf("could not find btime")
@@ -580,13 +610,35 @@ func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, err
 		}
 	}
 
-	for _, match := range files {
-		match = strings.Split(match, "_")[0]
-		name, err := ioutil.ReadFile(filepath.Join(filepath.Dir(match), "name"))
+	// example directory
+	// device/           temp1_crit_alarm  temp2_crit_alarm  temp3_crit_alarm  temp4_crit_alarm  temp5_crit_alarm  temp6_crit_alarm  temp7_crit_alarm
+	// name              temp1_input       temp2_input       temp3_input       temp4_input       temp5_input       temp6_input       temp7_input
+	// power/            temp1_label       temp2_label       temp3_label       temp4_label       temp5_label       temp6_label       temp7_label
+	// subsystem/        temp1_max         temp2_max         temp3_max         temp4_max         temp5_max         temp6_max         temp7_max
+	// temp1_crit        temp2_crit        temp3_crit        temp4_crit        temp5_crit        temp6_crit        temp7_crit        uevent
+	for _, file := range files {
+		filename := strings.Split(filepath.Base(file), "_")
+		if filename[1] == "label" {
+			// Do not try to read the temperature of the label file
+			continue
+		}
+
+		// Get the label of the temperature you are reading
+		var label string
+		c, _ := ioutil.ReadFile(filepath.Join(filepath.Dir(file), filename[0]+"_label"))
+		if c != nil {
+			//format the label from "Core 0" to "core0_"
+			label = fmt.Sprintf("%s_", strings.Join(strings.Split(strings.TrimSpace(strings.ToLower(string(c))), " "), ""))
+		}
+
+		// Get the name of the tempearture you are reading
+		name, err := ioutil.ReadFile(filepath.Join(filepath.Dir(file), "name"))
 		if err != nil {
 			return temperatures, err
 		}
-		current, err := ioutil.ReadFile(match + "_input")
+
+		// Get the temperature reading
+		current, err := ioutil.ReadFile(file)
 		if err != nil {
 			return temperatures, err
 		}
@@ -594,8 +646,10 @@ func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, err
 		if err != nil {
 			continue
 		}
+
+		tempName := strings.TrimSpace(strings.ToLower(string(strings.Join(filename[1:], ""))))
 		temperatures = append(temperatures, TemperatureStat{
-			SensorKey:   strings.TrimSpace(string(name)),
+			SensorKey:   fmt.Sprintf("%s_%s%s", strings.TrimSpace(string(name)), label, tempName),
 			Temperature: temperature / 1000.0,
 		})
 	}

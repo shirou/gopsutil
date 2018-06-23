@@ -25,6 +25,8 @@ func TestDisk_partitions(t *testing.T) {
 	if err != nil || len(ret) == 0 {
 		t.Errorf("error %v", err)
 	}
+	t.Log(ret)
+
 	empty := PartitionStat{}
 	if len(ret) == 0 {
 		t.Errorf("ret is empty")
@@ -46,6 +48,7 @@ func TestDisk_io_counters(t *testing.T) {
 	}
 	empty := IOCountersStat{}
 	for part, io := range ret {
+		t.Log(part, io)
 		if io == empty {
 			t.Errorf("io_counter error %v, %v", part, io)
 		}
@@ -93,7 +96,7 @@ func TestDiskIOCountersStat_String(t *testing.T) {
 		WriteBytes:   400,
 		SerialNumber: "SERIAL",
 	}
-	e := `{"readCount":100,"mergedReadCount":0,"writeCount":200,"mergedWriteCount":0,"readBytes":300,"writeBytes":400,"readTime":0,"writeTime":0,"iopsInProgress":0,"ioTime":0,"weightedIO":0,"name":"sd01","serialNumber":"SERIAL"}`
+	e := `{"readCount":100,"mergedReadCount":0,"writeCount":200,"mergedWriteCount":0,"readBytes":300,"writeBytes":400,"readTime":0,"writeTime":0,"iopsInProgress":0,"ioTime":0,"weightedIO":0,"name":"sd01","serialNumber":"SERIAL","label":""}`
 	if e != fmt.Sprintf("%v", v) {
 		t.Errorf("DiskUsageStat string is invalid: %v", v)
 	}

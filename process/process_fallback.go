@@ -54,6 +54,9 @@ func (p *Process) Name() (string, error) {
 func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 	return "", common.ErrNotImplementedError
 }
+func (p *Process) Tgid() (int32, error) {
+	return 0, common.ErrNotImplementedError
+}
 func (p *Process) Exe() (string, error) {
 	return p.ExeWithContext(context.Background())
 }

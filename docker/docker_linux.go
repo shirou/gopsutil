@@ -4,7 +4,6 @@ package docker
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -28,7 +27,7 @@ func GetDockerStatWithContext(ctx context.Context) ([]CgroupDockerStat, error) {
 		return nil, ErrDockerNotAvailable
 	}
 
-	out, err := invoke.Command(path, "ps", "-a", "--no-trunc", "--format", "{{.ID}}|{{.Image}}|{{.Names}}|{{.Status}}")
+	out, err := invoke.CommandWithContext(ctx, path, "ps", "-a", "--no-trunc", "--format", "{{.ID}}|{{.Image}}|{{.Names}}|{{.Status}}")
 	if err != nil {
 		return []CgroupDockerStat{}, err
 	}
@@ -57,11 +56,6 @@ func GetDockerStatWithContext(ctx context.Context) ([]CgroupDockerStat, error) {
 	return ret, nil
 }
 
-func (c CgroupDockerStat) String() string {
-	s, _ := json.Marshal(c)
-	return string(s)
-}
-
 // GetDockerIDList returnes a list of DockerID.
 // This requires certain permission.
 func GetDockerIDList() ([]string, error) {
@@ -74,7 +68,7 @@ func GetDockerIDListWithContext(ctx context.Context) ([]string, error) {
 		return nil, ErrDockerNotAvailable
 	}
 
-	out, err := invoke.Command(path, "ps", "-q", "--no-trunc")
+	out, err := invoke.CommandWithContext(ctx, path, "ps", "-q", "--no-trunc")
 	if err != nil {
 		return []string{}, err
 	}
@@ -243,11 +237,6 @@ func CgroupMemDocker(containerID string) (*CgroupMemStat, error) {
 
 func CgroupMemDockerWithContext(ctx context.Context, containerID string) (*CgroupMemStat, error) {
 	return CgroupMem(containerID, common.HostSys("fs/cgroup/memory/docker"))
-}
-
-func (m CgroupMemStat) String() string {
-	s, _ := json.Marshal(m)
-	return string(s)
 }
 
 // getCgroupFilePath constructs file path to get targetted stats file.

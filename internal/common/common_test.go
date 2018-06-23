@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -92,6 +93,9 @@ func TestPathExists(t *testing.T) {
 }
 
 func TestHostEtc(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("windows doesn't have etc")
+	}
 	p := HostEtc("mtab")
 	if p != "/etc/mtab" {
 		t.Errorf("invalid HostEtc, %s", p)
