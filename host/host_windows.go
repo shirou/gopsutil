@@ -5,6 +5,7 @@ package host
 import (
 	"context"
 	"fmt"
+	"math"
 	"os"
 	"runtime"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/StackExchange/wmi"
 	"github.com/shirou/gopsutil/internal/common"
 	process "github.com/shirou/gopsutil/process"
 	"golang.org/x/sys/windows"
@@ -242,7 +244,31 @@ func SensorsTemperatures() ([]TemperatureStat, error) {
 }
 
 func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
-	return []TemperatureStat{}, common.ErrNotImplementedError
+	var ret []TemperatureStat
+	var dst []MSAcpi_ThermalZoneTemperature
+	q := wmi.CreateQuery(&dst, "")
+	if err := common.WMIQueryWithContext(ctx, q, &dst, nil, "root/wmi"); err != nil {
+		return ret, err
+	}
+
+	for _, v := range dst {
+
+		ts := TemperatureStat{
+			SensorKey:   v.InstanceName,
+			Temperature: kelvinToCelsius(v.CurrentTemperature, 2),
+		}
+		ret = append(ret, ts)
+	}
+
+	return ret, nil
+}
+
+func kelvinToCelsius(temp uint32, n int) float64 {
+	// wmi return temperature Kelvin * 10, so need to divide the result by 10,
+	// and then minus 273.15 to get °Celsius.
+	t := float64(temp/10) - 273.15
+	n10 := math.Pow10(n)
+	return math.Trunc((t+0.5/n10)*n10) / n10
 }
 
 func Virtualization() (string, string, error) {
@@ -260,4 +286,11 @@ func KernelVersion() (string, error) {
 func KernelVersionWithContext(ctx context.Context) (string, error) {
 	_, _, version, err := PlatformInformation()
 	return version, err
+}
+
+type MSAcpi_ThermalZoneTemperature struct {
+	Active             bool
+	CriticalTripPoint  uint32
+	CurrentTemperature uint32
+	InstanceName       string
 }
