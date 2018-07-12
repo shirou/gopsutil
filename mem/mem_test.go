@@ -26,8 +26,8 @@ func TestVirtual_memory(t *testing.T) {
 	assert.True(t, v.Available > 0)
 	assert.True(t, v.Used > 0)
 
-	assert.Equal(t, v.Total, v.Available+v.Used,
-		"Total should be computable from available + used: %v", v)
+	assert.Equal(t, v.Total, v.Used + v.Free + v.Buffers, v.Cached,
+		"Total should be computable (used + free + buffers + cached): %v", v)
 
 	assert.True(t, v.Free > 0)
 	assert.True(t, v.Available > v.Free,
