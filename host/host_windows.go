@@ -42,6 +42,13 @@ type osVersionInfoExW struct {
 	wReserved           uint8
 }
 
+type msAcpi_ThermalZoneTemperature struct {
+	Active             bool
+	CriticalTripPoint  uint32
+	CurrentTemperature uint32
+	InstanceName       string
+}
+
 func Info() (*InfoStat, error) {
 	return InfoWithContext(context.Background())
 }
@@ -245,14 +252,13 @@ func SensorsTemperatures() ([]TemperatureStat, error) {
 
 func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
 	var ret []TemperatureStat
-	var dst []MSAcpi_ThermalZoneTemperature
+	var dst []msAcpi_ThermalZoneTemperature
 	q := wmi.CreateQuery(&dst, "")
 	if err := common.WMIQueryWithContext(ctx, q, &dst, nil, "root/wmi"); err != nil {
 		return ret, err
 	}
 
 	for _, v := range dst {
-
 		ts := TemperatureStat{
 			SensorKey:   v.InstanceName,
 			Temperature: kelvinToCelsius(v.CurrentTemperature, 2),
@@ -286,11 +292,4 @@ func KernelVersion() (string, error) {
 func KernelVersionWithContext(ctx context.Context) (string, error) {
 	_, _, version, err := PlatformInformation()
 	return version, err
-}
-
-type MSAcpi_ThermalZoneTemperature struct {
-	Active             bool
-	CriticalTripPoint  uint32
-	CurrentTemperature uint32
-	InstanceName       string
 }
