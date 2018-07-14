@@ -236,12 +236,12 @@ func (p *Process) Parent() (*Process, error) {
 }
 
 func (p *Process) ParentWithContext(ctx context.Context) (*Process, error) {
-	dst, err := GetWin32Proc(p.Pid)
+	ppid, err := p.PpidWithContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("could not get ParentProcessID: %s", err)
 	}
 
-	return NewProcess(int32(dst[0].ParentProcessID))
+	return NewProcess(ppid)
 }
 func (p *Process) Status() (string, error) {
 	return p.StatusWithContext(context.Background())
@@ -303,7 +303,7 @@ func (p *Process) TerminalWithContext(ctx context.Context) (string, error) {
 	return "", common.ErrNotImplementedError
 }
 
-// Nice returnes priority in Windows
+// Nice returns priority in Windows
 func (p *Process) Nice() (int32, error) {
 	return p.NiceWithContext(context.Background())
 }
