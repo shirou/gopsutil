@@ -26,14 +26,24 @@ func TestVirtual_memory(t *testing.T) {
 	assert.True(t, v.Available > 0)
 	assert.True(t, v.Used > 0)
 
-	assert.Equal(t, v.Total, v.Used+v.Free+v.Buffers+v.Cached,
-		"Total should be computable (used + free + buffers + cached): %v", v)
+	total := v.Used + v.Free + v.Buffers + v.Cached
+	totalStr := "used + free + buffers + cached"
+	if runtime.GOOS == "windows" {
+		total = v.Used + v.Available
+		totalStr = "used + available"
+	}
+	assert.Equal(t, v.Total, total,
+		"Total should be computable (%v): %v", totalStr, v)
 
-	assert.True(t, v.Free > 0)
+	assert.True(t, runtime.GOOS == "windows" || v.Free > 0)
 	assert.True(t, v.Available > v.Free,
 		"Free should be a subset of Available: %v", v)
 
-	assert.InDelta(t, v.UsedPercent,
+	inDelta := assert.InDelta
+	if runtime.GOOS == "windows" {
+		inDelta = assert.InEpsilon
+	}
+	inDelta(t, v.UsedPercent,
 		100*float64(v.Used)/float64(v.Total), 0.1,
 		"UsedPercent should be how many percent of Total is Used: %v", v)
 }
