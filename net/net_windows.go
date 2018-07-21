@@ -220,22 +220,22 @@ func ProtoCountersWithContext(ctx context.Context, protocols []string) ([]ProtoC
 
 func getTableUintptr(family uint32, buf []byte) uintptr {
 	var (
-		pmibTCPTable  PMIB_TCPTABLE_OWNER_PID_ALL
-		pmibTCP6Table PMIB_TCP6TABLE_OWNER_PID_ALL
+		pmibTCPTable  pmibTCPTableOwnerPidAll
+		pmibTCP6Table pmibTCP6TableOwnerPidAll
 
 		p uintptr
 	)
 	switch family {
 	case kindTCP4.family:
 		if len(buf) > 0 {
-			pmibTCPTable = (*MIB_TCPTABLE_OWNER_PID)(unsafe.Pointer(&buf[0]))
+			pmibTCPTable = (*mibTCPTableOwnerPid)(unsafe.Pointer(&buf[0]))
 			p = uintptr(unsafe.Pointer(pmibTCPTable))
 		} else {
 			p = uintptr(unsafe.Pointer(pmibTCPTable))
 		}
 	case kindTCP6.family:
 		if len(buf) > 0 {
-			pmibTCP6Table = (*MIB_TCP6TABLE_OWNER_PID)(unsafe.Pointer(&buf[0]))
+			pmibTCP6Table = (*mibTCP6TableOwnerPid)(unsafe.Pointer(&buf[0]))
 			p = uintptr(unsafe.Pointer(pmibTCP6Table))
 		} else {
 			p = uintptr(unsafe.Pointer(pmibTCP6Table))
@@ -247,21 +247,21 @@ func getTableUintptr(family uint32, buf []byte) uintptr {
 func getTableInfo(filename string, table interface{}) (index, step, length int) {
 	switch filename {
 	case kindTCP4.filename:
-		index = int(unsafe.Sizeof(table.(PMIB_TCPTABLE_OWNER_PID_ALL).DwNumEntries))
-		step = int(unsafe.Sizeof(table.(PMIB_TCPTABLE_OWNER_PID_ALL).Table))
-		length = int(table.(PMIB_TCPTABLE_OWNER_PID_ALL).DwNumEntries)
+		index = int(unsafe.Sizeof(table.(pmibTCPTableOwnerPidAll).DwNumEntries))
+		step = int(unsafe.Sizeof(table.(pmibTCPTableOwnerPidAll).Table))
+		length = int(table.(pmibTCPTableOwnerPidAll).DwNumEntries)
 	case kindTCP6.filename:
-		index = int(unsafe.Sizeof(table.(PMIB_TCP6TABLE_OWNER_PID_ALL).DwNumEntries))
-		step = int(unsafe.Sizeof(table.(PMIB_TCP6TABLE_OWNER_PID_ALL).Table))
-		length = int(table.(PMIB_TCP6TABLE_OWNER_PID_ALL).DwNumEntries)
+		index = int(unsafe.Sizeof(table.(pmibTCP6TableOwnerPidAll).DwNumEntries))
+		step = int(unsafe.Sizeof(table.(pmibTCP6TableOwnerPidAll).Table))
+		length = int(table.(pmibTCP6TableOwnerPidAll).DwNumEntries)
 	case kindUDP4.filename:
-		index = int(unsafe.Sizeof(table.(PMIB_UDPTABLE_OWNER_PID).DwNumEntries))
-		step = int(unsafe.Sizeof(table.(PMIB_UDPTABLE_OWNER_PID).Table))
-		length = int(table.(PMIB_UDPTABLE_OWNER_PID).DwNumEntries)
+		index = int(unsafe.Sizeof(table.(pmibUDPTableOwnerPid).DwNumEntries))
+		step = int(unsafe.Sizeof(table.(pmibUDPTableOwnerPid).Table))
+		length = int(table.(pmibUDPTableOwnerPid).DwNumEntries)
 	case kindUDP6.filename:
-		index = int(unsafe.Sizeof(table.(PMIB_UDP6TABLE_OWNER_PID).DwNumEntries))
-		step = int(unsafe.Sizeof(table.(PMIB_UDP6TABLE_OWNER_PID).Table))
-		length = int(table.(PMIB_UDP6TABLE_OWNER_PID).DwNumEntries)
+		index = int(unsafe.Sizeof(table.(pmibUDP6TableOwnerPid).DwNumEntries))
+		step = int(unsafe.Sizeof(table.(pmibUDP6TableOwnerPid).Table))
+		length = int(table.(pmibUDP6TableOwnerPid).DwNumEntries)
 	}
 
 	return
@@ -273,8 +273,8 @@ func getTCPConnections(family uint32) ([]ConnectionStat, error) {
 		buf  []byte
 		size uint32
 
-		pmibTCPTable  PMIB_TCPTABLE_OWNER_PID_ALL
-		pmibTCP6Table PMIB_TCP6TABLE_OWNER_PID_ALL
+		pmibTCPTable  pmibTCPTableOwnerPidAll
+		pmibTCP6Table pmibTCP6TableOwnerPidAll
 	)
 
 	if family == 0 {
@@ -285,14 +285,14 @@ func getTCPConnections(family uint32) ([]ConnectionStat, error) {
 		switch family {
 		case kindTCP4.family:
 			if len(buf) > 0 {
-				pmibTCPTable = (*MIB_TCPTABLE_OWNER_PID)(unsafe.Pointer(&buf[0]))
+				pmibTCPTable = (*mibTCPTableOwnerPid)(unsafe.Pointer(&buf[0]))
 				p = uintptr(unsafe.Pointer(pmibTCPTable))
 			} else {
 				p = uintptr(unsafe.Pointer(pmibTCPTable))
 			}
 		case kindTCP6.family:
 			if len(buf) > 0 {
-				pmibTCP6Table = (*MIB_TCP6TABLE_OWNER_PID)(unsafe.Pointer(&buf[0]))
+				pmibTCP6Table = (*mibTCP6TableOwnerPid)(unsafe.Pointer(&buf[0]))
 				p = uintptr(unsafe.Pointer(pmibTCP6Table))
 			} else {
 				p = uintptr(unsafe.Pointer(pmibTCP6Table))
@@ -303,7 +303,7 @@ func getTCPConnections(family uint32) ([]ConnectionStat, error) {
 			&size,
 			true,
 			family,
-			TCP_TABLE_OWNER_PID_ALL,
+			tcpTableOwnerPidAll,
 			0)
 		if err == nil {
 			break
@@ -334,11 +334,11 @@ func getTCPConnections(family uint32) ([]ConnectionStat, error) {
 	for i := 0; i < length; i++ {
 		switch family {
 		case kindTCP4.family:
-			mibs := (*MIB_TCPROW_OWNER_PID)(unsafe.Pointer(&buf[index]))
+			mibs := (*mibTCPRowOwnerPid)(unsafe.Pointer(&buf[index]))
 			ns := mibs.convertToConnectionStat()
 			stats = append(stats, ns)
 		case kindTCP6.family:
-			mibs := (*MIB_TCP6ROW_OWNER_PID)(unsafe.Pointer(&buf[index]))
+			mibs := (*mibTCP6RowOwnerPid)(unsafe.Pointer(&buf[index]))
 			ns := mibs.convertToConnectionStat()
 			stats = append(stats, ns)
 		}
@@ -354,8 +354,8 @@ func getUDPConnections(family uint32) ([]ConnectionStat, error) {
 		buf  []byte
 		size uint32
 
-		pmibUDPTable  PMIB_UDPTABLE_OWNER_PID
-		pmibUDP6Table PMIB_UDP6TABLE_OWNER_PID
+		pmibUDPTable  pmibUDPTableOwnerPid
+		pmibUDP6Table pmibUDP6TableOwnerPid
 	)
 
 	if family == 0 {
@@ -366,14 +366,14 @@ func getUDPConnections(family uint32) ([]ConnectionStat, error) {
 		switch family {
 		case kindUDP4.family:
 			if len(buf) > 0 {
-				pmibUDPTable = (*MIB_UDPTABLE_OWNER_PID)(unsafe.Pointer(&buf[0]))
+				pmibUDPTable = (*mibUDPTableOwnerPid)(unsafe.Pointer(&buf[0]))
 				p = uintptr(unsafe.Pointer(pmibUDPTable))
 			} else {
 				p = uintptr(unsafe.Pointer(pmibUDPTable))
 			}
 		case kindUDP6.family:
 			if len(buf) > 0 {
-				pmibUDP6Table = (*MIB_UDP6TABLE_OWNER_PID)(unsafe.Pointer(&buf[0]))
+				pmibUDP6Table = (*mibUDP6TableOwnerPid)(unsafe.Pointer(&buf[0]))
 				p = uintptr(unsafe.Pointer(pmibUDP6Table))
 			} else {
 				p = uintptr(unsafe.Pointer(pmibUDP6Table))
@@ -385,7 +385,7 @@ func getUDPConnections(family uint32) ([]ConnectionStat, error) {
 			&size,
 			true,
 			family,
-			UDP_TABLE_OWNER_PID,
+			udpTableOwnerPid,
 			0,
 		)
 		if err == nil {
@@ -416,11 +416,11 @@ func getUDPConnections(family uint32) ([]ConnectionStat, error) {
 	for i := 0; i < length; i++ {
 		switch family {
 		case kindUDP4.family:
-			mibs := (*MIB_UDPROW_OWNER_PID)(unsafe.Pointer(&buf[index]))
+			mibs := (*mibUDPRowOwnerPid)(unsafe.Pointer(&buf[index]))
 			ns := mibs.convertToConnectionStat()
 			stats = append(stats, ns)
 		case kindUDP4.family:
-			mibs := (*MIB_UDP6ROW_OWNER_PID)(unsafe.Pointer(&buf[index]))
+			mibs := (*mibUDP6RowOwnerPid)(unsafe.Pointer(&buf[index]))
 			ns := mibs.convertToConnectionStat()
 			stats = append(stats, ns)
 		}
@@ -431,7 +431,7 @@ func getUDPConnections(family uint32) ([]ConnectionStat, error) {
 }
 
 // tcpStatuses https://msdn.microsoft.com/en-us/library/windows/desktop/bb485761(v=vs.85).aspx
-var tcpStatuses = map[MIB_TCP_STATE]string{
+var tcpStatuses = map[mibTCPState]string{
 	1:  "CLOSED",
 	2:  "LISTEN",
 	3:  "SYN_SENT",
@@ -446,7 +446,7 @@ var tcpStatuses = map[MIB_TCP_STATE]string{
 	12: "DELETE",
 }
 
-func getExtendedTcpTable(pTcpTable uintptr, pdwSize *uint32, bOrder bool, ulAf uint32, tableClass TCP_TABLE_CLASS, reserved uint32) (errcode error) {
+func getExtendedTcpTable(pTcpTable uintptr, pdwSize *uint32, bOrder bool, ulAf uint32, tableClass tcpTableClass, reserved uint32) (errcode error) {
 	r1, _, _ := syscall.Syscall6(procGetExtendedTCPTable.Addr(), 6, pTcpTable, uintptr(unsafe.Pointer(pdwSize)), getUintptrFromBool(bOrder), uintptr(ulAf), uintptr(tableClass), uintptr(reserved))
 	if r1 != 0 {
 		errcode = syscall.Errno(r1)
@@ -454,7 +454,7 @@ func getExtendedTcpTable(pTcpTable uintptr, pdwSize *uint32, bOrder bool, ulAf u
 	return
 }
 
-func getExtendedUdpTable(pUdpTable uintptr, pdwSize *uint32, bOrder bool, ulAf uint32, tableClass UDP_TABLE_CLASS, reserved uint32) (errcode error) {
+func getExtendedUdpTable(pUdpTable uintptr, pdwSize *uint32, bOrder bool, ulAf uint32, tableClass udpTableClass, reserved uint32) (errcode error) {
 	r1, _, _ := syscall.Syscall6(procGetExtendedUDPTable.Addr(), 6, pUdpTable, uintptr(unsafe.Pointer(pdwSize)), getUintptrFromBool(bOrder), uintptr(ulAf), uintptr(tableClass), uintptr(reserved))
 	if r1 != 0 {
 		errcode = syscall.Errno(r1)
@@ -469,35 +469,36 @@ func getUintptrFromBool(b bool) uintptr {
 	return 0
 }
 
-const ANY_SIZE = 1
+const anySize = 1
 
-type MIB_TCP_STATE int32
+// type MIB_TCP_STATE int32
+type mibTCPState int32
 
-type TCP_TABLE_CLASS int32
+type tcpTableClass int32
 
 const (
-	TCP_TABLE_BASIC_LISTENER TCP_TABLE_CLASS = iota
-	TCP_TABLE_BASIC_CONNECTIONS
-	TCP_TABLE_BASIC_ALL
-	TCP_TABLE_OWNER_PID_LISTENER
-	TCP_TABLE_OWNER_PID_CONNECTIONS
-	TCP_TABLE_OWNER_PID_ALL
-	TCP_TABLE_OWNER_MODULE_LISTENER
-	TCP_TABLE_OWNER_MODULE_CONNECTIONS
-	TCP_TABLE_OWNER_MODULE_ALL
+	tcpTableBasicListener tcpTableClass = iota
+	tcpTableBasicConnections
+	tcpTableBasicAll
+	tcpTableOwnerPidListener
+	tcpTableOwnerPidConnections
+	tcpTableOwnerPidAll
+	tcpTableOwnerModuleListener
+	tcpTableOwnerModuleConnections
+	tcpTableOwnerModuleAll
 )
 
-type UDP_TABLE_CLASS int32
+type udpTableClass int32
 
 const (
-	UDP_TABLE_BASIC UDP_TABLE_CLASS = iota
-	UDP_TABLE_OWNER_PID
-	UDP_TABLE_OWNER_MODULE
+	udpTableBasic udpTableClass = iota
+	udpTableOwnerPid
+	udpTableOwnerModule
 )
 
 // TCP
 
-type MIB_TCPROW_OWNER_PID struct {
+type mibTCPRowOwnerPid struct {
 	DwState      uint32
 	DwLocalAddr  uint32
 	DwLocalPort  uint32
@@ -506,7 +507,7 @@ type MIB_TCPROW_OWNER_PID struct {
 	DwOwningPid  uint32
 }
 
-func (m *MIB_TCPROW_OWNER_PID) convertToConnectionStat() ConnectionStat {
+func (m *mibTCPRowOwnerPid) convertToConnectionStat() ConnectionStat {
 	ns := ConnectionStat{
 		Family: kindTCP4.family,
 		Type:   kindTCP4.sockType,
@@ -519,18 +520,18 @@ func (m *MIB_TCPROW_OWNER_PID) convertToConnectionStat() ConnectionStat {
 			Port: uint32(decodePort(m.DwRemotePort)),
 		},
 		Pid:    int32(m.DwOwningPid),
-		Status: tcpStatuses[MIB_TCP_STATE(m.DwState)],
+		Status: tcpStatuses[mibTCPState(m.DwState)],
 	}
 
 	return ns
 }
 
-type MIB_TCPTABLE_OWNER_PID struct {
+type mibTCPTableOwnerPid struct {
 	DwNumEntries uint32
-	Table        [ANY_SIZE]MIB_TCPROW_OWNER_PID
+	Table        [anySize]mibTCPRowOwnerPid
 }
 
-type MIB_TCP6ROW_OWNER_PID struct {
+type mibTCP6RowOwnerPid struct {
 	UcLocalAddr     [16]byte
 	DwLocalScopeId  uint32
 	DwLocalPort     uint32
@@ -541,7 +542,7 @@ type MIB_TCP6ROW_OWNER_PID struct {
 	DwOwningPid     uint32
 }
 
-func (m *MIB_TCP6ROW_OWNER_PID) convertToConnectionStat() ConnectionStat {
+func (m *mibTCP6RowOwnerPid) convertToConnectionStat() ConnectionStat {
 	ns := ConnectionStat{
 		Family: kindTCP6.family,
 		Type:   kindTCP6.sockType,
@@ -554,29 +555,29 @@ func (m *MIB_TCP6ROW_OWNER_PID) convertToConnectionStat() ConnectionStat {
 			Port: uint32(decodePort(m.DwRemotePort)),
 		},
 		Pid:    int32(m.DwOwningPid),
-		Status: tcpStatuses[MIB_TCP_STATE(m.DwState)],
+		Status: tcpStatuses[mibTCPState(m.DwState)],
 	}
 
 	return ns
 }
 
-type MIB_TCP6TABLE_OWNER_PID struct {
+type mibTCP6TableOwnerPid struct {
 	DwNumEntries uint32
-	Table        [ANY_SIZE]MIB_TCP6ROW_OWNER_PID
+	Table        [anySize]mibTCP6RowOwnerPid
 }
 
-type PMIB_TCPTABLE_OWNER_PID_ALL *MIB_TCPTABLE_OWNER_PID
-type PMIB_TCP6TABLE_OWNER_PID_ALL *MIB_TCP6TABLE_OWNER_PID
+type pmibTCPTableOwnerPidAll *mibTCPTableOwnerPid
+type pmibTCP6TableOwnerPidAll *mibTCP6TableOwnerPid
 
 // UDP
 
-type MIB_UDPROW_OWNER_PID struct {
+type mibUDPRowOwnerPid struct {
 	DwLocalAddr uint32
 	DwLocalPort uint32
 	DwOwningPid uint32
 }
 
-func (m *MIB_UDPROW_OWNER_PID) convertToConnectionStat() ConnectionStat {
+func (m *mibUDPRowOwnerPid) convertToConnectionStat() ConnectionStat {
 	ns := ConnectionStat{
 		Family: kindUDP4.family,
 		Type:   kindUDP4.sockType,
@@ -590,19 +591,19 @@ func (m *MIB_UDPROW_OWNER_PID) convertToConnectionStat() ConnectionStat {
 	return ns
 }
 
-type MIB_UDPTABLE_OWNER_PID struct {
+type mibUDPTableOwnerPid struct {
 	DwNumEntries uint32
-	Table        [ANY_SIZE]MIB_UDPROW_OWNER_PID
+	Table        [anySize]mibUDPRowOwnerPid
 }
 
-type MIB_UDP6ROW_OWNER_PID struct {
+type mibUDP6RowOwnerPid struct {
 	UcLocalAddr    [16]byte
 	DwLocalScopeId uint32
 	DwLocalPort    uint32
 	DwOwningPid    uint32
 }
 
-func (m *MIB_UDP6ROW_OWNER_PID) convertToConnectionStat() ConnectionStat {
+func (m *mibUDP6RowOwnerPid) convertToConnectionStat() ConnectionStat {
 	ns := ConnectionStat{
 		Family: kindUDP6.family,
 		Type:   kindUDP6.sockType,
@@ -616,13 +617,13 @@ func (m *MIB_UDP6ROW_OWNER_PID) convertToConnectionStat() ConnectionStat {
 	return ns
 }
 
-type MIB_UDP6TABLE_OWNER_PID struct {
+type mibUDP6TableOwnerPid struct {
 	DwNumEntries uint32
-	Table        [ANY_SIZE]MIB_UDP6ROW_OWNER_PID
+	Table        [anySize]mibUDP6RowOwnerPid
 }
 
-type PMIB_UDPTABLE_OWNER_PID *MIB_UDPTABLE_OWNER_PID
-type PMIB_UDP6TABLE_OWNER_PID *MIB_UDP6TABLE_OWNER_PID
+type pmibUDPTableOwnerPid *mibUDPTableOwnerPid
+type pmibUDP6TableOwnerPid *mibUDP6TableOwnerPid
 
 func decodePort(port uint32) uint16 {
 	return syscall.Ntohs(uint16(port))
