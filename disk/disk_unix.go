@@ -4,6 +4,7 @@ package disk
 
 import (
 	"context"
+	"strconv"
 
 	"golang.org/x/sys/unix"
 )
@@ -24,7 +25,7 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 	bsize := stat.Bsize
 
 	ret := &UsageStat{
-		Path:        path,
+		Path:        unescapeFstab(path),
 		Fstype:      getFsType(stat),
 		Total:       (uint64(stat.Blocks) * uint64(bsize)),
 		Free:        (uint64(stat.Bavail) * uint64(bsize)),
@@ -53,4 +54,13 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 	}
 
 	return ret, nil
+}
+
+// Unescape escaped octal chars (like space 040, ampersand 046 and backslash 134) to their real value in fstab fields issue#555
+func unescapeFstab(path string) string {
+	escaped, err := strconv.Unquote(`"` + path + `"`)
+	if err != nil {
+		return path
+	}
+	return escaped
 }
