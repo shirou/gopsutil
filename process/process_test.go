@@ -113,22 +113,6 @@ func Test_Process_MemoryInfo(t *testing.T) {
 	}
 }
 
-func Test_Process_MemoryInfoSmaps(t *testing.T) {
-	if runtime.GOOS == "linux" {
-		p := testGetProcess()
-		v, err := p.MemoryInfoSmaps()
-		if err != nil {
-			t.Errorf("geting extended memory info error %v", err)
-		}
-		empty := MemoryInfoSmapsStat{}
-		if v == nil || *v == empty {
-			t.Errorf("could not get extended memory info %v", v)
-		}
-	} else {
-		t.Skip("Skipping testing in other platforms than Linux")
-	}
-}
-
 func Test_Process_CmdLine(t *testing.T) {
 	p := testGetProcess()
 
