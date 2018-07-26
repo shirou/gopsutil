@@ -631,6 +631,9 @@ func (p *Process) MemoryInfoSmaps() (*MemoryInfoSmapsStat, error) {
 }
 
 // Calculate PSS and USS from smaps
+// PSS  (Proportional set size) - The total number of private pages a process has and shared pages which are divided by the number of processes using it.
+// USS (Unique set size) - The total number of private pages a process has (without shared pages).
+// Returns PSS and USS in bytes
 func (p *Process) MemoryInfoSmapsWithContext(ctx context.Context) (*MemoryInfoSmapsStat, error) {
 	memoryMaps, err := p.MemoryMaps(true)
 	if err != nil {
