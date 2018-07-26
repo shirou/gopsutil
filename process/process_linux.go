@@ -54,7 +54,7 @@ type MemoryMapsStat struct {
 	SharedDirty    uint64 `json:"sharedDirty"`
 	PrivateClean   uint64 `json:"privateClean"`
 	PrivateDirty   uint64 `json:"privateDirty"`
-	PrivateHugetlb uint64 `json:"privateHugetlb"`
+	PrivateHugeTLB uint64 `json:"privateHugeTLB"`
 	Referenced     uint64 `json:"referenced"`
 	Anonymous      uint64 `json:"anonymous"`
 	Swap           uint64 `json:"swap"`
@@ -592,7 +592,7 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 			case "Private_Dirty":
 				m.PrivateDirty = t
 			case "Private_Hugetlb":
-				m.PrivateHugetlb = t
+				m.PrivateHugeTLB = t
 			case "Referenced":
 				m.Referenced = t
 			case "Anonymous":
@@ -639,7 +639,7 @@ func (p *Process) MemoryInfoSmapsWithContext(ctx context.Context) (*MemoryInfoSm
 	smaps := &MemoryInfoSmapsStat{}
 	for _, memoryMap := range *memoryMaps {
 		smaps.PSS += memoryMap.Pss * 1024
-		smaps.USS += memoryMap.PrivateDirty*1024 + memoryMap.PrivateClean*1024 + memoryMap.PrivateHugetlb*1024
+		smaps.USS += memoryMap.PrivateDirty*1024 + memoryMap.PrivateClean*1024 + memoryMap.PrivateHugeTLB*1024
 	}
 
 	return smaps, nil
