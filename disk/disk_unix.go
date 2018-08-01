@@ -47,10 +47,10 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 		ret.InodesUsedPercent = (float64(ret.InodesUsed) / float64(ret.InodesTotal)) * 100.0
 	}
 
-	if ret.Total == 0 {
+	if (ret.Used + ret.Free) == 0 {
 		ret.UsedPercent = 0
 	} else {
-		ret.UsedPercent = (float64(ret.Used) / float64(ret.Total)) * 100.0
+		ret.UsedPercent = (float64(ret.Used) / float64(ret.Used+ret.Free)) * 100.0
 	}
 
 	return ret, nil
