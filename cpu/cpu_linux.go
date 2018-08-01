@@ -198,6 +198,10 @@ func Info() ([]InfoStat, error) {
 func parseStatLine(line string) (*TimesStat, error) {
 	fields := strings.Fields(line)
 
+	if len(fields) == 0 {
+		return nil, errors.New("no stats found")
+	}
+
 	if strings.HasPrefix(fields[0], "cpu") == false {
 		//		return CPUTimesStat{}, e
 		return nil, errors.New("not contain cpu")
