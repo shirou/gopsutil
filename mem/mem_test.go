@@ -32,6 +32,10 @@ func TestVirtual_memory(t *testing.T) {
 		total = v.Used + v.Available
 		totalStr = "used + available"
 	}
+	if runtime.GOOS == "freebsd" {
+		total = v.Used + v.Free + v.Cached + v.Inactive
+		totalStr = "used + free + cached + inactive"
+	}
 	assert.Equal(t, v.Total, total,
 		"Total should be computable (%v): %v", totalStr, v)
 

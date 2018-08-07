@@ -19,7 +19,7 @@ func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
 	if err != nil {
 		return nil, err
 	}
-	pageCount, err := unix.SysctlUint32("vm.stats.vm.v_page_count")
+	physmem, err := unix.SysctlUint64("hw.physmem")
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
 
 	p := uint64(pageSize)
 	ret := &VirtualMemoryStat{
-		Total:    uint64(pageCount) * p,
+		Total:    uint64(physmem),
 		Free:     uint64(free) * p,
 		Active:   uint64(active) * p,
 		Inactive: uint64(inactive) * p,
