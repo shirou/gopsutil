@@ -603,16 +603,16 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 					return &ret, err
 				}
 				if grouped {
-				    ret.Size += g.Size
-				    ret.Rss += g.Rss
-				    ret.Pss += g.Pss
-				    ret.SharedClean += g.SharedClean
-				    ret.SharedDirty += g.SharedDirty
-				    ret.PrivateClean += g.PrivateClean
-				    ret.PrivateDirty += g.PrivateDirty
-				    ret.Referenced += g.Referenced
-				    ret.Anonymous += g.Anonymous
-				    ret.Swap += g.Swap
+				    ret[0].Size += g.Size
+				    ret[0].Rss += g.Rss
+				    ret[0].Pss += g.Pss
+				    ret[0].SharedClean += g.SharedClean
+				    ret[0].SharedDirty += g.SharedDirty
+				    ret[0].PrivateClean += g.PrivateClean
+				    ret[0].PrivateDirty += g.PrivateDirty
+				    ret[0].Referenced += g.Referenced
+				    ret[0].Anonymous += g.Anonymous
+				    ret[0].Swap += g.Swap
                 } else {
                     ret = append(ret, g)
                 }

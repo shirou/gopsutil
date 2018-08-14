@@ -102,14 +102,14 @@ func Test_Process_memory_maps(t *testing.T) {
 	}
 
 	// grouped memory maps
-	mmaps, err := ret.MemoryMaps(true)
+	mmaps, err = ret.MemoryMaps(true)
 	if err != nil {
 		t.Errorf("memory map get error %v", err)
 	}
-	if len(mmaps) != 1 {
-		t.Errorf("grouped memory maps length (%v) is not equal to 1", len(mmaps))
+	if len(*mmaps) != 1 {
+		t.Errorf("grouped memory maps length (%v) is not equal to 1", len(*mmaps))
 	}
-    if mmaps[0] == empty {
+    if (*mmaps)[0] == empty {
         t.Errorf("memory map is empty")
     }
 }
