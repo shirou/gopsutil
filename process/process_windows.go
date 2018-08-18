@@ -25,7 +25,7 @@ const (
 )
 
 var (
-	modpsapi                 = windows.NewLazyDLL("psapi.dll")
+	modpsapi                 = windows.NewLazySystemDLL("psapi.dll")
 	procGetProcessMemoryInfo = modpsapi.NewProc("GetProcessMemoryInfo")
 )
 

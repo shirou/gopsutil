@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	modiphlpapi             = windows.NewLazyDLL("iphlpapi.dll")
+	modiphlpapi             = windows.NewLazySystemDLL("iphlpapi.dll")
 	procGetExtendedTCPTable = modiphlpapi.NewProc("GetExtendedTcpTable")
 	procGetExtendedUDPTable = modiphlpapi.NewProc("GetExtendedUdpTable")
 )
