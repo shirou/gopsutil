@@ -38,6 +38,18 @@ type Win32_PerfFormattedData_Counters_ProcessorInformation struct {
 	DPCRate               uint32
 }
 
+type systemTimes struct {
+	idleTime   uint64
+	kernelTime uint64
+	userTime   uint64
+}
+
+var lastSystemTimes systemTimes
+
+func init() {
+	totalCPUTimes()
+}
+
 // Win32_PerfFormattedData_PerfOS_System struct to have count of processes and processor queue length
 type Win32_PerfFormattedData_PerfOS_System struct {
 	Processes            uint32
@@ -54,32 +66,7 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 		return perCPUTimes()
 	}
 
-	var ret []TimesStat
-	var lpIdleTime common.FILETIME
-	var lpKernelTime common.FILETIME
-	var lpUserTime common.FILETIME
-	r, _, _ := common.ProcGetSystemTimes.Call(
-		uintptr(unsafe.Pointer(&lpIdleTime)),
-		uintptr(unsafe.Pointer(&lpKernelTime)),
-		uintptr(unsafe.Pointer(&lpUserTime)))
-	if r == 0 {
-		return ret, windows.GetLastError()
-	}
-
-	LOT := float64(0.0000001)
-	HIT := (LOT * 4294967296.0)
-	idle := ((HIT * float64(lpIdleTime.DwHighDateTime)) + (LOT * float64(lpIdleTime.DwLowDateTime)))
-	user := ((HIT * float64(lpUserTime.DwHighDateTime)) + (LOT * float64(lpUserTime.DwLowDateTime)))
-	kernel := ((HIT * float64(lpKernelTime.DwHighDateTime)) + (LOT * float64(lpKernelTime.DwLowDateTime)))
-	system := (kernel - idle)
-
-	ret = append(ret, TimesStat{
-		CPU:    "cpu-total",
-		Idle:   float64(idle),
-		User:   float64(user),
-		System: float64(system),
-	})
-	return ret, nil
+	return totalCPUTimes()
 }
 
 func Info() ([]InfoStat, error) {
@@ -169,4 +156,65 @@ func perCPUTimes() ([]TimesStat, error) {
 		ret = append(ret, c)
 	}
 	return ret, nil
+}
+
+func totalCPUTimes() ([]TimesStat, error) {
+	var ret []TimesStat
+	currSystemTimes, err := getSystemTimes()
+
+	if err != nil {
+		return ret, err
+	}
+
+	if lastSystemTimes.idleTime != 0 {
+		deltaTimes := systemTimes{
+			idleTime:   currSystemTimes.idleTime - lastSystemTimes.idleTime,
+			kernelTime: currSystemTimes.kernelTime - lastSystemTimes.kernelTime,
+			userTime:   currSystemTimes.userTime - lastSystemTimes.userTime,
+		}
+
+		// Duration between consecutive API calls was enough to calculate CPU
+		if (deltaTimes.userTime != 0 && deltaTimes.kernelTime != 0) {
+			// kernelTime already contains idleTime
+			deltaAll := deltaTimes.kernelTime + deltaTimes.userTime
+
+			currUtilizationPerc := (1.0 - float64(deltaTimes.idleTime)/float64(deltaAll)) * 100
+			currUserPerc := (float64(deltaTimes.userTime) / float64(deltaAll)) * 100
+
+			ret = append(ret, TimesStat{
+				CPU:    "cpu-total",
+				User:   currUserPerc,
+				System: 100.0 - (100.0 - currUtilizationPerc) - currUserPerc,
+				Idle:   100.0 - currUtilizationPerc,
+			})
+		}
+	}
+
+	lastSystemTimes = currSystemTimes
+	return ret, nil
+}
+
+func getSystemTimes() (systemTimes, error) {
+	var lpIdleTime, lpKernelTime, lpUserTime common.FILETIME
+
+	r, _, _ := common.ProcGetSystemTimes.Call(
+		uintptr(unsafe.Pointer(&lpIdleTime)),
+		uintptr(unsafe.Pointer(&lpKernelTime)),
+		uintptr(unsafe.Pointer(&lpUserTime)))
+
+	if r == 0 {
+		return systemTimes{}, windows.GetLastError()
+	}
+
+	ret := systemTimes{
+		idleTime:   convertFiletimeToInt64(lpIdleTime),
+		kernelTime: convertFiletimeToInt64(lpKernelTime),
+		userTime:   convertFiletimeToInt64(lpUserTime),
+	}
+
+	return ret, nil
+}
+
+func convertFiletimeToInt64(ft common.FILETIME) uint64 {
+	return (uint64(ft.DwHighDateTime) << 32) | uint64(ft.DwLowDateTime)
 }
