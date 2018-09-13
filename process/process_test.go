@@ -168,12 +168,6 @@ func Test_Process_Terminal(t *testing.T) {
 	if err != nil {
 		t.Errorf("geting terminal error %v", err)
 	}
-
-	/*
-		if v == "" {
-			t.Errorf("could not get terminal %v", v)
-		}
-	*/
 }
 
 func Test_Process_IOCounters(t *testing.T) {
