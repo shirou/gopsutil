@@ -1,11 +1,9 @@
 version: 2
 jobs:
-  build:
-    working_directory: ~/shirou/gopsutil
-    parallelism: 1
-    shell: /bin/bash --login
+  test:
     docker:
       - image: circleci/golang:1.10
+    working_directory: ~/shirou/gopsutil
     steps:
       - run:
           working_directory: ~/shirou/gopsutil
@@ -21,3 +19,9 @@ jobs:
       - run: GOOS=freebsd GOARCH=amd64 go get -v ./...
       - run: GOOS=windows GOARCH=amd64 go get -v ./...
       - run: GOOS=darwin GOARCH=amd64 go get -v ./...
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test
