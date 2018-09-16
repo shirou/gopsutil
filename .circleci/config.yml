@@ -15,6 +15,8 @@ jobs:
       - run:
           command: make init_tools
       - run:
+          command: dep ensure
+      - run:
           command: go get -t -d -v ./...
       - run:
           command: go build -v
