@@ -6,9 +6,14 @@ jobs:
     working_directory: /home/circleci/go/src/github.com/shirou/gopsutil
     environment:
       GOPATH: /home/circleci/go
+      BASH_ENV: ~/.bashrc
       PATH: $PATH:/home/circleci/go/bin
     steps:
       - checkout
+      - run:
+          command: |
+            echo 'export PATH=$GOPATH/bin:$PATH' >> $BASH_ENV
+            source /home/circleci/.bashrc
       - run:
           command: make init_tools
       - run:
