@@ -7,10 +7,6 @@ jobs:
     steps:
       - checkout
       - run:
-          command: sudo chown -R ubuntu:ubuntu /usr/local/go/pkg/
-      - run:
-          command: mkdir -p $HOME/.go_project/src/github.com/shirou/shirou && ln -fs ~/shirou/gopsutil $HOME/.go_project/src/github.com/shirou/shirou/gopsutil && echo -e "export GOPATH=$GOPATH:$HOME/.go_project" >> $BASH_ENV
-      - run:
           command: go get -t -d -v ./...
       - run:
           command: go build -v
