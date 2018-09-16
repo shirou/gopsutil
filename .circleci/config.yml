@@ -6,8 +6,11 @@ jobs:
     working_directory: /home/circleci/go/src/github.com/shirou/gopsutil
     environment:
       GOPATH: /home/circleci/go
+      PATH: $PATH:/home/circleci/go/bin
     steps:
       - checkout
+      - run:
+          command: make init_tools
       - run:
           command: go get -t -d -v ./...
       - run:
