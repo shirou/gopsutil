@@ -17,8 +17,6 @@ jobs:
       - run:
           command: dep ensure
       - run:
-          command: go get -t -d -v ./...
-      - run:
           command: go build -v
       - run:
           command: make build_test
