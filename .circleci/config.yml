@@ -1,0 +1,23 @@
+version: 2
+jobs:
+  build:
+    working_directory: ~/shirou/gopsutil
+    parallelism: 1
+    shell: /bin/bash --login
+    docker:
+      - image: circleci/golang:1.10
+    steps:
+      - run:
+          working_directory: ~/shirou/gopsutil
+          command: sudo chown -R ubuntu:ubuntu /usr/local/go/pkg/
+      - run:
+          working_directory: ~/shirou/gopsutil
+      - run: mkdir -p $HOME/.go_project/src/github.com/shirou/shirou && ln -fs ~/shirou/gopsutil $HOME/.go_project/src/github.com/shirou/shirou/gopsutil && echo -e "export GOPATH=$GOPATH:$HOME/.go_project" >> $BASH_ENV
+      - run: go get -t -d -v ./...
+      - run: go build -v
+      - run: GOOS=linux GOARCH=amd64 go test -v ./...
+      - run: GOOS=linux GOARCH=386 go get -v ./...
+      - run: GOOS=linux GOARCH=arm GOARM=7 go get -v ./...
+      - run: GOOS=freebsd GOARCH=amd64 go get -v ./...
+      - run: GOOS=windows GOARCH=amd64 go get -v ./...
+      - run: GOOS=darwin GOARCH=amd64 go get -v ./...
