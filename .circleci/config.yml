@@ -6,11 +6,10 @@ jobs:
     working_directory: /home/circleci/go/src/github.com/shirou/gopsutil
     environment:
       GOPATH: /home/circleci/go
-      BASH_ENV: ~/.bashrc
     steps:
       - run:
           command: |
-            echo 'export PATH=$GOPATH/bin:$PATH' >> $BASH_ENV
+            echo -e 'export PATH=$GOPATH/bin:$PATH' >> $BASH_ENV
             source /home/circleci/.bashrc
       - checkout
       - run:
