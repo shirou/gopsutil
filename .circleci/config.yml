@@ -5,6 +5,7 @@ jobs:
       - image: circleci/golang:1.10
     working_directory: ~/shirou/gopsutil
     steps:
+      - checkout
       - run:
           working_directory: ~/shirou/gopsutil
           command: sudo chown -R ubuntu:ubuntu /usr/local/go/pkg/
