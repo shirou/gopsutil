@@ -3,9 +3,9 @@ jobs:
   test:
     docker:
       - image: circleci/golang:1.10
-    working_directory: ~/go/src/github.com/shirou/gopsutil
+    working_directory: /home/circleci/go/src/github.com/shirou/gopsutil
     environment:
-      GOPATH: ~/go
+      GOPATH: /home/circleci/go
     steps:
       - checkout
       - run:
