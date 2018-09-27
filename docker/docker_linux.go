@@ -93,6 +93,14 @@ func CgroupCPU(containerID string, base string) (*cpu.TimesStat, error) {
 	return CgroupCPUWithContext(context.Background(), containerID, base)
 }
 
+// CgroupCPUUsage returnes specified cgroup id CPU usage.
+// containerID is same as docker id if you use docker.
+// If you use container via systemd.slice, you could use
+// containerID = docker-<container id>.scope and base=/sys/fs/cgroup/cpuacct/system.slice/
+func CgroupCPUUsage(containerID string, base string) (float64, error) {
+	return CgroupCPUUsageWithContext(context.Background(), containerID, base)
+}
+
 func CgroupCPUWithContext(ctx context.Context, containerID string, base string) (*cpu.TimesStat, error) {
 	statfile := getCgroupFilePath(containerID, base, "cpuacct", "cpuacct.stat")
 	lines, err := common.ReadLines(statfile)
@@ -109,18 +117,32 @@ func CgroupCPUWithContext(ctx context.Context, containerID string, base string) 
 		if fields[0] == "user" {
 			user, err := strconv.ParseFloat(fields[1], 64)
 			if err == nil {
-				ret.User = float64(user)
+				ret.User = user / cpu.CPUTick
 			}
 		}
 		if fields[0] == "system" {
 			system, err := strconv.ParseFloat(fields[1], 64)
 			if err == nil {
-				ret.System = float64(system)
+				ret.System = system / cpu.CPUTick
 			}
 		}
 	}
-
 	return ret, nil
+}
+
+func CgroupCPUUsageWithContext(ctx context.Context, containerID, base string) (float64, error) {
+	usagefile := getCgroupFilePath(containerID, base, "cpuacct", "cpuacct.usage")
+	lines, err := common.ReadLinesOffsetN(usagefile, 0, 1)
+	if err != nil {
+		return 0.0, err
+	}
+
+	ns, err := strconv.ParseFloat(lines[0], 64)
+	if err != nil {
+		return 0.0, err
+	}
+
+	return ns / nanoseconds, nil
 }
 
 func CgroupCPUDocker(containerid string) (*cpu.TimesStat, error) {
@@ -129,6 +151,10 @@ func CgroupCPUDocker(containerid string) (*cpu.TimesStat, error) {
 
 func CgroupCPUDockerWithContext(ctx context.Context, containerid string) (*cpu.TimesStat, error) {
 	return CgroupCPU(containerid, common.HostSys("fs/cgroup/cpuacct/docker"))
+}
+
+func CgroupCPUDockerUsageWithContext(ctx context.Context, containerid string) (float64, error) {
+	return CgroupCPUUsage(containerid, common.HostSys("fs/cgroup/cpuacct/docker"))
 }
 
 func CgroupMem(containerID string, base string) (*CgroupMemStat, error) {

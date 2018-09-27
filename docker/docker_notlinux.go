@@ -4,7 +4,8 @@ package docker
 
 import (
 	"context"
-	"github.com/shirou/gopsutil/cpu"
+
+	cpu "github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/internal/common"
 )
 
