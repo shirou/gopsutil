@@ -8,13 +8,13 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 
-	"golang.org/x/sys/unix"
-
 	"github.com/shirou/gopsutil/internal/common"
+	"golang.org/x/sys/unix"
 )
 
 const (
@@ -224,7 +224,7 @@ func Partitions(all bool) ([]PartitionStat, error) {
 }
 
 func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {
-	filename := common.HostProc("self/mounts")
+	filename := common.HostProc("self/mountinfo")
 	lines, err := common.ReadLines(filename)
 	if err != nil {
 		return nil, err
@@ -238,17 +238,46 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 	ret := make([]PartitionStat, 0, len(lines))
 
 	for _, line := range lines {
+		// a line of self/mountinfo has the following structure:
+		// 36  35  98:0 /mnt1 /mnt2 rw,noatime master:1 - ext3 /dev/root rw,errors=continue
+		// (1) (2) (3)   (4)   (5)      (6)      (7)   (8) (9)   (10)         (11)
 		fields := strings.Fields(line)
+
+		mountOpts := fields[5]
+		mountPoint := fields[4]
+		blockDeviceID := fields[2]
+		var device string
+		var fstype string
+
+		// field (7) is optional and can include multiple lines,
+		// so to find the disk and the fstype we need to loop for the separator "-"
+		for i, field := range fields[6:] {
+			if field == "-" {
+				device = fields[6+i+2]
+				fstype = fields[6+i+1]
+			}
+		}
+
 		d := PartitionStat{
-			Device:     fields[0],
-			Mountpoint: fields[1],
-			Fstype:     fields[2],
-			Opts:       fields[3],
+			Device:     device,
+			Mountpoint: mountPoint,
+			Fstype:     fstype,
+			Opts:       mountOpts,
 		}
 		if all == false {
 			if d.Device == "none" || !common.StringsHas(fs, d.Fstype) {
 				continue
 			}
+		}
+		// /dev/root is not the real device name
+		// so we get the real device name from its major/minor number
+		if d.Device == "/dev/root" {
+			link := "/sys/dev/block/" + blockDeviceID
+			devpath, err := os.Readlink(link)
+			if err != nil {
+				return nil, err
+			}
+			d.Device = strings.Replace(d.Device, "root", filepath.Base(devpath), 1)
 		}
 		ret = append(ret, d)
 	}
