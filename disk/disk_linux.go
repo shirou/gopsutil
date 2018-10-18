@@ -241,22 +241,21 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 		// a line of self/mountinfo has the following structure:
 		// 36  35  98:0 /mnt1 /mnt2 rw,noatime master:1 - ext3 /dev/root rw,errors=continue
 		// (1) (2) (3)   (4)   (5)      (6)      (7)   (8) (9)   (10)         (11)
-		fields := strings.Fields(line)
 
-		mountOpts := fields[5]
-		mountPoint := fields[4]
-		blockDeviceID := fields[2]
-		var device string
-		var fstype string
-
-		// field (7) is optional and can include multiple lines,
-		// so to find the disk and the fstype we need to loop for the separator "-"
-		for i, field := range fields[6:] {
-			if field == "-" {
-				device = fields[6+i+2]
-				fstype = fields[6+i+1]
-			}
+		// split the mountinfo line by the separator hyphen
+		parts := strings.Split(line, " - ")
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("found invalid mountinfo line in file %s: %s ", filename, line)
 		}
+
+		fields := strings.Fields(parts[0])
+		blockDeviceID := fields[2]
+		mountPoint := fields[4]
+		mountOpts := fields[5]
+
+		fields = strings.Fields(parts[1])
+		fstype := fields[0]
+		device := fields[1]
 
 		d := PartitionStat{
 			Device:     device,
