@@ -149,6 +149,10 @@ func CgroupCPUDocker(containerid string) (*cpu.TimesStat, error) {
 	return CgroupCPUDockerWithContext(context.Background(), containerid)
 }
 
+func CgroupCPUUsageDocker(containerid string) (float64, error) {
+	return CgroupCPUDockerUsageWithContext(context.Background(), containerid)
+}
+
 func CgroupCPUDockerWithContext(ctx context.Context, containerid string) (*cpu.TimesStat, error) {
 	return CgroupCPU(containerid, common.HostSys("fs/cgroup/cpuacct/docker"))
 }
