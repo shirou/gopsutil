@@ -196,43 +196,43 @@ func CgroupMemWithContext(ctx context.Context, containerID string, base string) 
 			ret.Pgfault = v
 		case "pgmajfault":
 			ret.Pgmajfault = v
-		case "inactiveAnon":
+		case "inactiveAnon", "inactive_anon":
 			ret.InactiveAnon = v
-		case "activeAnon":
+		case "activeAnon", "active_anon":
 			ret.ActiveAnon = v
-		case "inactiveFile":
+		case "inactiveFile", "inactive_file":
 			ret.InactiveFile = v
-		case "activeFile":
+		case "activeFile", "active_file":
 			ret.ActiveFile = v
 		case "unevictable":
 			ret.Unevictable = v
-		case "hierarchicalMemoryLimit":
+		case "hierarchicalMemoryLimit", "hierarchical_memory_limit":
 			ret.HierarchicalMemoryLimit = v
-		case "totalCache":
+		case "totalCache", "total_cache":
 			ret.TotalCache = v
-		case "totalRss":
+		case "totalRss", "total_rss":
 			ret.TotalRSS = v
-		case "totalRssHuge":
+		case "totalRssHuge", "total_rss_huge":
 			ret.TotalRSSHuge = v
-		case "totalMappedFile":
+		case "totalMappedFile", "total_mapped_file":
 			ret.TotalMappedFile = v
-		case "totalPgpgin":
+		case "totalPgpgin", "total_pgpgin":
 			ret.TotalPgpgIn = v
-		case "totalPgpgout":
+		case "totalPgpgout", "total_pgpgout":
 			ret.TotalPgpgOut = v
-		case "totalPgfault":
+		case "totalPgfault", "total_pgfault":
 			ret.TotalPgFault = v
-		case "totalPgmajfault":
+		case "totalPgmajfault", "total_pgmajfault":
 			ret.TotalPgMajFault = v
-		case "totalInactiveAnon":
+		case "totalInactiveAnon", "total_inactive_anon":
 			ret.TotalInactiveAnon = v
-		case "totalActiveAnon":
+		case "totalActiveAnon", "total_active_anon":
 			ret.TotalActiveAnon = v
-		case "totalInactiveFile":
+		case "totalInactiveFile", "total_inactive_file":
 			ret.TotalInactiveFile = v
-		case "totalActiveFile":
+		case "totalActiveFile", "total_active_file":
 			ret.TotalActiveFile = v
-		case "totalUnevictable":
+		case "totalUnevictable", "total_unevictable":
 			ret.TotalUnevictable = v
 		}
 	}
