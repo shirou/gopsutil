@@ -75,7 +75,8 @@ func InfoWithContext(ctx context.Context) (*InfoStat, error) {
 	sysProductUUID := common.HostSys("class/dmi/id/product_uuid")
 	machineID := common.HostEtc("machine-id")
 	switch {
-	// When not running as root, lib cannot read the value
+	// In order to read this file, needs to be supported by kernel/arch and run as root
+	// so having fallback is important
 	case common.PathExists(sysProductUUID):
 		lines, err := common.ReadLines(sysProductUUID)
 		if err == nil && len(lines) > 0 && lines[0] != "" {
@@ -83,6 +84,7 @@ func InfoWithContext(ctx context.Context) (*InfoStat, error) {
 			break
 		}
 		fallthrough
+	// Fallback on GNU Linux systems with systemd, readable by everyone
 	case common.PathExists(machineID):
 		lines, err := common.ReadLines(machineID)
 		if err == nil && len(lines) > 0 && len(lines[0]) == 32 {
@@ -91,6 +93,7 @@ func InfoWithContext(ctx context.Context) (*InfoStat, error) {
 			break
 		}
 		fallthrough
+	// Not stable between reboot, but better than nothing
 	default:
 		values, err := common.DoSysctrl("kernel.random.boot_id")
 		if err == nil && len(values) == 1 && values[0] != "" {
