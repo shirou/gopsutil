@@ -46,40 +46,19 @@ type Win32_PerfFormattedData_PerfOS_System struct {
 
 // Times returns times stat per cpu and combined for all CPUs
 func Times(percpu bool) ([]TimesStat, error) {
-	return TimesWithContext(context.Background(), percpu)
-}
-
-func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 	if percpu {
 		return perCPUTimes()
 	}
 
-	var ret []TimesStat
-	var lpIdleTime common.FILETIME
-	var lpKernelTime common.FILETIME
-	var lpUserTime common.FILETIME
-	r, _, _ := common.ProcGetSystemTimes.Call(
-		uintptr(unsafe.Pointer(&lpIdleTime)),
-		uintptr(unsafe.Pointer(&lpKernelTime)),
-		uintptr(unsafe.Pointer(&lpUserTime)))
-	if r == 0 {
-		return ret, windows.GetLastError()
+	return allCPUTimes()
+}
+
+func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
+	if percpu {
+		return perCPUTimesWithContext(ctx)
 	}
 
-	LOT := float64(0.0000001)
-	HIT := (LOT * 4294967296.0)
-	idle := ((HIT * float64(lpIdleTime.DwHighDateTime)) + (LOT * float64(lpIdleTime.DwLowDateTime)))
-	user := ((HIT * float64(lpUserTime.DwHighDateTime)) + (LOT * float64(lpUserTime.DwLowDateTime)))
-	kernel := ((HIT * float64(lpKernelTime.DwHighDateTime)) + (LOT * float64(lpKernelTime.DwLowDateTime)))
-	system := (kernel - idle)
-
-	ret = append(ret, TimesStat{
-		CPU:    "cpu-total",
-		Idle:   float64(idle),
-		User:   float64(user),
-		System: float64(system),
-	})
-	return ret, nil
+	return allCPUTimesWithContext(ctx)
 }
 
 func Info() ([]InfoStat, error) {
@@ -151,10 +130,63 @@ func ProcInfoWithContext(ctx context.Context) ([]Win32_PerfFormattedData_PerfOS_
 	return ret, err
 }
 
+// allCPUTimes returns times overall for all CPUs
+func allCPUTimes() ([]TimesStat, error) {
+	var ret []TimesStat
+	var lpIdleTime common.FILETIME
+	var lpKernelTime common.FILETIME
+	var lpUserTime common.FILETIME
+	r, _, _ := common.ProcGetSystemTimes.Call(
+		uintptr(unsafe.Pointer(&lpIdleTime)),
+		uintptr(unsafe.Pointer(&lpKernelTime)),
+		uintptr(unsafe.Pointer(&lpUserTime)))
+	if r == 0 {
+		return ret, windows.GetLastError()
+	}
+
+	LOT := float64(0.0000001)
+	HIT := (LOT * 4294967296.0)
+	idle := ((HIT * float64(lpIdleTime.DwHighDateTime)) + (LOT * float64(lpIdleTime.DwLowDateTime)))
+	user := ((HIT * float64(lpUserTime.DwHighDateTime)) + (LOT * float64(lpUserTime.DwLowDateTime)))
+	kernel := ((HIT * float64(lpKernelTime.DwHighDateTime)) + (LOT * float64(lpKernelTime.DwLowDateTime)))
+	system := (kernel - idle)
+
+	ret = append(ret, TimesStat{
+		CPU:    "cpu-total",
+		Idle:   float64(idle),
+		User:   float64(user),
+		System: float64(system),
+	})
+	return ret, nil
+}
+
+// allCPUTimes returns times overall for all CPUs
+func allCPUTimesWithContext(ctx context.Context) ([]TimesStat, error) {
+	var ret []TimesStat
+	errChan := make(chan error, 1)
+	go func() {
+		var err error
+		ret, err = allCPUTimes()
+		errChan <- err
+	}()
+
+	select {
+	case <-ctx.Done():
+		return ret, ctx.Err()
+	case err := <-errChan:
+		return ret, err
+	}
+}
+
 // perCPUTimes returns times stat per cpu, per core and overall for all CPUs
 func perCPUTimes() ([]TimesStat, error) {
+	return perCPUTimesWithContext(context.Background())
+}
+
+// perCPUTimesWithContext returns times stat per cpu, per core and overall for all CPUs
+func perCPUTimesWithContext(ctx context.Context) ([]TimesStat, error) {
 	var ret []TimesStat
-	stats, err := PerfInfo()
+	stats, err := PerfInfoWithContext(ctx)
 	if err != nil {
 		return nil, err
 	}
