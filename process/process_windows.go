@@ -250,6 +250,15 @@ func (p *Process) Status() (string, error) {
 func (p *Process) StatusWithContext(ctx context.Context) (string, error) {
 	return "", common.ErrNotImplementedError
 }
+
+func (p *Process) Foreground() (bool, error) {
+	return p.ForegroundWithContext(context.Background())
+}
+
+func (p *Process) ForegroundWithContext(ctx context.Context) (bool, error) {
+	return false, common.ErrNotImplementedError
+}
+
 func (p *Process) Username() (string, error) {
 	return p.UsernameWithContext(context.Background())
 }
