@@ -181,7 +181,7 @@ func (p *Process) ForegroundWithContext(ctx context.Context) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	out, err := invoke.CommandWithContext(ctx, ps, "-o", "stat=", "-p", string(pid))
+	out, err := invoke.CommandWithContext(ctx, ps, "-o", "stat=", "-p", strconv.Itoa(int(pid)))
 	if err != nil {
 		return false, err
 	}
