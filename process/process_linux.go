@@ -30,8 +30,9 @@ var (
 )
 
 const (
-	PrioProcess = 0   // linux/resource.h
-	ClockTicks  = 100 // C.sysconf(C._SC_CLK_TCK)
+	PrioProcess               = 0   // linux/resource.h
+	ClockTicks                = 100 // C.sysconf(C._SC_CLK_TCK)
+	WorldReadable os.FileMode = 4
 )
 
 type MemoryMapsStat struct {
@@ -399,6 +400,11 @@ func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 func (p *Process) fillFromfdList() (string, []string, error) {
 	pid := p.Pid
 	statPath := common.HostProc(strconv.Itoa(int(pid)), "fd")
+
+	if err := ensurePathReadable(statPath); err != nil {
+		return statPath, []string{}, err
+	}
+
 	d, err := os.Open(statPath)
 	if err != nil {
 		return statPath, []string{}, err
@@ -441,6 +447,9 @@ func (p *Process) fillFromfd() (int32, []*OpenFilesStat, error) {
 func (p *Process) fillFromCwd() (string, error) {
 	pid := p.Pid
 	cwdPath := common.HostProc(strconv.Itoa(int(pid)), "cwd")
+	if err := ensurePathReadable(cwdPath); err != nil {
+		return "", err
+	}
 	cwd, err := os.Readlink(cwdPath)
 	if err != nil {
 		return "", err
@@ -452,6 +461,9 @@ func (p *Process) fillFromCwd() (string, error) {
 func (p *Process) fillFromExe() (string, error) {
 	pid := p.Pid
 	exePath := common.HostProc(strconv.Itoa(int(pid)), "exe")
+	if err := ensurePathReadable(exePath); err != nil {
+		return "", err
+	}
 	exe, err := os.Readlink(exePath)
 	if err != nil {
 		return "", err
@@ -503,6 +515,11 @@ func (p *Process) fillSliceFromCmdline() ([]string, error) {
 func (p *Process) fillFromIO() (*IOCountersStat, error) {
 	pid := p.Pid
 	ioPath := common.HostProc(strconv.Itoa(int(pid)), "io")
+
+	if err := ensurePathReadable(ioPath); err != nil {
+		return nil, err
+	}
+
 	ioline, err := ioutil.ReadFile(ioPath)
 	if err != nil {
 		return nil, err
@@ -893,4 +910,39 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 		}
 	}
 	return procs, nil
+}
+
+// ensurePathReadable ensures that the current user is able to read the path in question
+// before opening it.  on some systems, attempting to open a file that the user does
+// not have permission is problematic for customer security auditing
+func ensurePathReadable(path string) error {
+	euid := uint32(os.Geteuid())
+
+	// User is (effectively or actually) root
+	if euid == 0 {
+		return nil
+	}
+
+	info, err := os.Lstat(path)
+	if err != nil {
+		return err
+	}
+
+	// File mode is world readable and not a symlink
+	// If the file is a symlink, the owner check below will cover it
+	if mode := info.Mode(); mode&os.ModeSymlink == 0 && mode.Perm()&WorldReadable != 0 {
+		return nil
+	}
+
+	if stat, ok := info.Sys().(*syscall.Stat_t); ok {
+		uid := uint32(os.Getuid())
+
+		// If file is not owned by the user id or effective user id, return a permission error
+		// Group permissions don't come in to play with procfs so we don't bother checking
+		if stat.Uid != uid && stat.Uid != euid {
+			return os.ErrPermission
+		}
+	}
+
+	return nil
 }
