@@ -8,7 +8,7 @@ import (
 	"unsafe"
 
 	"github.com/StackExchange/wmi"
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/marcospedreiro/gopsutil/internal/common"
 	"golang.org/x/sys/windows"
 )
 
@@ -25,6 +25,20 @@ type Win32_Processor struct {
 
 // win32_PerfFormattedData_Counters_ProcessorInformation stores instance value of the perf counters
 type win32_PerfFormattedData_Counters_ProcessorInformation struct {
+	Name                  string
+	PercentDPCTime        uint64
+	PercentIdleTime       uint64
+	PercentUserTime       uint64
+	PercentProcessorTime  uint64
+	PercentInterruptTime  uint64
+	PercentPriorityTime   uint64
+	PercentPrivilegedTime uint64
+	InterruptsPerSec      uint32
+	ProcessorFrequency    uint32
+	DPCRate               uint32
+}
+
+type win32_PerfRawData_Counters_ProcessorInformation struct {
 	Name                  string
 	PercentDPCTime        uint64
 	PercentIdleTime       uint64
@@ -119,13 +133,14 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 
 // PerfInfo returns the performance counter's instance value for ProcessorInformation.
 // Name property is the key by which overall, per cpu and per core metric is known.
-func perfInfoWithContext(ctx context.Context) ([]win32_PerfFormattedData_Counters_ProcessorInformation, error) {
-	var ret []win32_PerfFormattedData_Counters_ProcessorInformation
+func perfInfoWithContext(ctx context.Context) ([]win32_PerfRawData_Counters_ProcessorInformation, error) {
+	var ret []win32_PerfRawData_Counters_ProcessorInformation
+	// Win32_PerfRawData_Counters_ProcessorInformation
 
 	q := wmi.CreateQuery(&ret, "WHERE NOT Name LIKE '%_Total'")
 	err := common.WMIQueryWithContext(ctx, q, &ret)
 	if err != nil {
-		return []win32_PerfFormattedData_Counters_ProcessorInformation{}, err
+		return []win32_PerfRawData_Counters_ProcessorInformation{}, err
 	}
 
 	return ret, err

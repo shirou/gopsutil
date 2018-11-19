@@ -5,7 +5,7 @@ package load
 import (
 	"context"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/marcospedreiro/gopsutil/internal/common"
 )
 
 func Avg() (*AvgStat, error) {

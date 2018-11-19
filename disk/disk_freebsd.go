@@ -12,7 +12,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/marcospedreiro/gopsutil/internal/common"
 )
 
 func Partitions(all bool) ([]PartitionStat, error) {

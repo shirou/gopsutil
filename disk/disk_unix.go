@@ -51,7 +51,7 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 		ret.UsedPercent = 0
 	} else {
 		// We don't use ret.Total to calculate percent.
-		// see https://github.com/shirou/gopsutil/issues/562
+		// see https://github.com/marcospedreiro/gopsutil/issues/562
 		ret.UsedPercent = (float64(ret.Used) / float64(ret.Used+ret.Free)) * 100.0
 	}
 

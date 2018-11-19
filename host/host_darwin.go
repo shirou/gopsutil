@@ -16,8 +16,8 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/shirou/gopsutil/internal/common"
-	"github.com/shirou/gopsutil/process"
+	"github.com/marcospedreiro/gopsutil/internal/common"
+	"github.com/marcospedreiro/gopsutil/process"
 )
 
 // from utmpx.h
