@@ -15,8 +15,8 @@ import (
 	"unsafe"
 
 	"github.com/StackExchange/wmi"
-	"github.com/marcospedreiro/gopsutil/internal/common"
-	process "github.com/marcospedreiro/gopsutil/process"
+	"github.com/shirou/gopsutil/internal/common"
+	process "github.com/shirou/gopsutil/process"
 	"golang.org/x/sys/windows"
 )
 
@@ -102,7 +102,7 @@ func InfoWithContext(ctx context.Context) (*InfoStat, error) {
 }
 
 func getMachineGuid() (string, error) {
-	// there has been reports of issues on 32bit using golang.org/x/sys/windows/registry, see https://github.com/marcospedreiro/gopsutil/pull/312#issuecomment-277422612
+	// there has been reports of issues on 32bit using golang.org/x/sys/windows/registry, see https://github.com/shirou/gopsutil/pull/312#issuecomment-277422612
 	// for rationale of using windows.RegOpenKeyEx/RegQueryValueEx instead of registry.OpenKey/GetStringValue
 	var h windows.Handle
 	err := windows.RegOpenKeyEx(windows.HKEY_LOCAL_MACHINE, windows.StringToUTF16Ptr(`SOFTWARE\Microsoft\Cryptography`), 0, windows.KEY_READ|windows.KEY_WOW64_64KEY, &h)

@@ -6,9 +6,9 @@ import (
 	"context"
 	"syscall"
 
-	"github.com/marcospedreiro/gopsutil/cpu"
-	"github.com/marcospedreiro/gopsutil/internal/common"
-	"github.com/marcospedreiro/gopsutil/net"
+	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/net"
 )
 
 type MemoryMapsStat struct {

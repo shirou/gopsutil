@@ -61,7 +61,7 @@ Note: gopsutil v2 breaks compatibility. If you want to stay with compatibility, 
    import (
        "fmt"
 
-       "github.com/marcospedreiro/gopsutil/mem"
+       "github.com/shirou/gopsutil/mem"
    )
 
    func main() {
