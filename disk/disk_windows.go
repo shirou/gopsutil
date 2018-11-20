@@ -15,7 +15,7 @@ var (
 	procGetDiskFreeSpaceExW     = common.Modkernel32.NewProc("GetDiskFreeSpaceExW")
 	procGetLogicalDriveStringsW = common.Modkernel32.NewProc("GetLogicalDriveStringsW")
 	procGetDriveType            = common.Modkernel32.NewProc("GetDriveTypeW")
-	provGetVolumeInformation    = common.Modkernel32.NewProc("GetVolumeInformationW")
+	procGetVolumeInformation    = common.Modkernel32.NewProc("GetVolumeInformationW")
 )
 
 var (
@@ -100,7 +100,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 				lpFileSystemFlags := int64(0)
 				lpFileSystemNameBuffer := make([]byte, 256)
 				volpath, _ := windows.UTF16PtrFromString(string(v) + ":/")
-				driveret, _, err := provGetVolumeInformation.Call(
+				driveret, _, err := procGetVolumeInformation.Call(
 					uintptr(unsafe.Pointer(volpath)),
 					uintptr(unsafe.Pointer(&lpVolumeNameBuffer[0])),
 					uintptr(len(lpVolumeNameBuffer)),
