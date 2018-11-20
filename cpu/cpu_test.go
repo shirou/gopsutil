@@ -6,6 +6,8 @@ import (
 	"runtime"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCpu_times(t *testing.T) {
@@ -47,19 +49,9 @@ func TestCpu_times(t *testing.T) {
 		perCPUIdleTimeSum += pc.Idle
 	}
 	margin := 2.0
-	if !isWithinMargin(perCPUUserTimeSum, cpuTotal[0].User, margin) {
-		t.Errorf("perCPUUserTimeSum (%f) not within margin (%f) of cpuTotal (%f)", perCPUUserTimeSum, margin, cpuTotal[0].User)
-	}
-	if !isWithinMargin(perCPUSystemTimeSum, cpuTotal[0].System, margin) {
-		t.Errorf("perCPUSystemTimeSum (%f) not within margin (%f) of cpuTotal (%f)", perCPUSystemTimeSum, margin, cpuTotal[0].System)
-	}
-	if !isWithinMargin(perCPUIdleTimeSum, cpuTotal[0].Idle, margin) {
-		t.Errorf("perCPUIdleTimeSum (%f) not within margin (%f) of cpuTotal (%f)", perCPUIdleTimeSum, margin, cpuTotal[0].Idle)
-	}
-}
-
-func isWithinMargin(n, source, margin float64) bool {
-	return n >= source-margin && n <= source+margin
+	assert.InEpsilon(t, cpuTotal[0].User, perCPUUserTimeSum, margin)
+	assert.InEpsilon(t, cpuTotal[0].System, perCPUSystemTimeSum, margin)
+	assert.InEpsilon(t, cpuTotal[0].Idle, perCPUIdleTimeSum, margin)
 }
 
 func TestCpu_counts(t *testing.T) {
