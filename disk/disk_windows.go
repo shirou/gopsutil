@@ -83,9 +83,6 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 	for _, v := range lpBuffer {
 		if v >= 65 && v <= 90 {
 			path := string(v) + ":"
-			if path == "A:" || path == "B:" { // skip floppy drives
-				continue
-			}
 			typepath, _ := windows.UTF16PtrFromString(path)
 			typeret, _, _ := procGetDriveType.Call(uintptr(unsafe.Pointer(typepath)))
 			if typeret == 0 {
