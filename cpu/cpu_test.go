@@ -22,6 +22,44 @@ func TestCpu_times(t *testing.T) {
 			t.Errorf("could not get CPU User: %v", vv)
 		}
 	}
+
+	// test sum of per cpu stats is within margin of error for cpu total stats
+	cpuTotal, err := Times(false)
+	if err != nil {
+		t.Errorf("error %v", err)
+	}
+	if len(cpuTotal) == 0 {
+		t.Error("could not get CPUs ", err)
+	}
+	perCPU, err := Times(true)
+	if err != nil {
+		t.Errorf("error %v", err)
+	}
+	if len(perCPU) == 0 {
+		t.Error("could not get CPUs ", err)
+	}
+	var perCPUUserTimeSum float64
+	var perCPUSystemTimeSum float64
+	var perCPUIdleTimeSum float64
+	for _, pc := range perCPU {
+		perCPUUserTimeSum += pc.User
+		perCPUSystemTimeSum += pc.System
+		perCPUIdleTimeSum += pc.Idle
+	}
+	margin := 2.0
+	if !isWithinMargin(perCPUUserTimeSum, cpuTotal[0].User, margin) {
+		t.Errorf("perCPUUserTimeSum (%f) not within margin (%f) of cpuTotal (%f)", perCPUUserTimeSum, margin, cpuTotal[0].User)
+	}
+	if !isWithinMargin(perCPUSystemTimeSum, cpuTotal[0].System, margin) {
+		t.Errorf("perCPUSystemTimeSum (%f) not within margin (%f) of cpuTotal (%f)", perCPUSystemTimeSum, margin, cpuTotal[0].System)
+	}
+	if !isWithinMargin(perCPUIdleTimeSum, cpuTotal[0].Idle, margin) {
+		t.Errorf("perCPUIdleTimeSum (%f) not within margin (%f) of cpuTotal (%f)", perCPUIdleTimeSum, margin, cpuTotal[0].Idle)
+	}
+}
+
+func isWithinMargin(n, source, margin float64) bool {
+	return n >= source-margin && n <= source+margin
 }
 
 func TestCpu_counts(t *testing.T) {
