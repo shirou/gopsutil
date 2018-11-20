@@ -30,8 +30,9 @@ var (
 )
 
 const (
-	PrioProcess = 0   // linux/resource.h
-	ClockTicks  = 100 // C.sysconf(C._SC_CLK_TCK)
+	PrioProcess               = 0   // linux/resource.h
+	ClockTicks                = 100 // C.sysconf(C._SC_CLK_TCK)
+	WorldReadable os.FileMode = 4
 )
 
 type MemoryMapsStat struct {
@@ -46,6 +47,11 @@ type MemoryMapsStat struct {
 	Referenced   uint64 `json:"referenced"`
 	Anonymous    uint64 `json:"anonymous"`
 	Swap         uint64 `json:"swap"`
+}
+
+type currentUser struct {
+	uid  uint32
+	euid uint32
 }
 
 // String returns JSON value of the process.
@@ -88,7 +94,7 @@ func (p *Process) Name() (string, error) {
 
 // Exe returns executable path of the process.
 func (p *Process) Exe() (string, error) {
-	return p.fillFromExe()
+	return p.fillFromExe(getCurrentUser())
 }
 
 // Cmdline returns the command line arguments of the process as a string with
@@ -114,7 +120,7 @@ func (p *Process) CreateTime() (int64, error) {
 
 // Cwd returns current working directory of the process.
 func (p *Process) Cwd() (string, error) {
-	return p.fillFromCwd()
+	return p.fillFromCwd(getCurrentUser())
 }
 
 // Parent returns parent Process of the process.
@@ -191,7 +197,7 @@ func (p *Process) Rlimit() ([]RlimitStat, error) {
 
 // IOCounters returns IO Counters.
 func (p *Process) IOCounters() (*IOCountersStat, error) {
-	return p.fillFromIO()
+	return p.fillFromIO(getCurrentUser())
 }
 
 // NumCtxSwitches returns the number of the context switches of the process.
@@ -205,7 +211,7 @@ func (p *Process) NumCtxSwitches() (*NumCtxSwitchesStat, error) {
 
 // NumFDs returns the number of File Descriptors used by the process.
 func (p *Process) NumFDs() (int32, error) {
-	_, fds, err := p.fillFromfdList()
+	_, fds, err := p.fillFromfdList(getCurrentUser())
 	return int32(len(fds)), err
 }
 
@@ -283,7 +289,7 @@ func (p *Process) Children() ([]*Process, error) {
 // OpenFiles returns a slice of OpenFilesStat opend by the process.
 // OpenFilesStat includes a file path and file descriptor.
 func (p *Process) OpenFiles() ([]OpenFilesStat, error) {
-	_, ofs, err := p.fillFromfd()
+	_, ofs, err := p.fillFromfd(getCurrentUser())
 	if err != nil {
 		return nil, err
 	}
@@ -396,9 +402,14 @@ func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 **/
 
 // Get list of /proc/(pid)/fd files
-func (p *Process) fillFromfdList() (string, []string, error) {
+func (p *Process) fillFromfdList(user *currentUser) (string, []string, error) {
 	pid := p.Pid
 	statPath := common.HostProc(strconv.Itoa(int(pid)), "fd")
+
+	if err := ensurePathReadable(statPath, user); err != nil {
+		return statPath, []string{}, err
+	}
+
 	d, err := os.Open(statPath)
 	if err != nil {
 		return statPath, []string{}, err
@@ -409,8 +420,8 @@ func (p *Process) fillFromfdList() (string, []string, error) {
 }
 
 // Get num_fds from /proc/(pid)/fd
-func (p *Process) fillFromfd() (int32, []*OpenFilesStat, error) {
-	statPath, fnames, err := p.fillFromfdList()
+func (p *Process) fillFromfd(user *currentUser) (int32, []*OpenFilesStat, error) {
+	statPath, fnames, err := p.fillFromfdList(user)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -438,9 +449,12 @@ func (p *Process) fillFromfd() (int32, []*OpenFilesStat, error) {
 }
 
 // Get cwd from /proc/(pid)/cwd
-func (p *Process) fillFromCwd() (string, error) {
+func (p *Process) fillFromCwd(user *currentUser) (string, error) {
 	pid := p.Pid
 	cwdPath := common.HostProc(strconv.Itoa(int(pid)), "cwd")
+	if err := ensurePathReadable(cwdPath, user); err != nil {
+		return "", err
+	}
 	cwd, err := os.Readlink(cwdPath)
 	if err != nil {
 		return "", err
@@ -449,9 +463,12 @@ func (p *Process) fillFromCwd() (string, error) {
 }
 
 // Get exe from /proc/(pid)/exe
-func (p *Process) fillFromExe() (string, error) {
+func (p *Process) fillFromExe(user *currentUser) (string, error) {
 	pid := p.Pid
 	exePath := common.HostProc(strconv.Itoa(int(pid)), "exe")
+	if err := ensurePathReadable(exePath, user); err != nil {
+		return "", err
+	}
 	exe, err := os.Readlink(exePath)
 	if err != nil {
 		return "", err
@@ -500,9 +517,14 @@ func (p *Process) fillSliceFromCmdline() ([]string, error) {
 }
 
 // Get IO status from /proc/(pid)/io
-func (p *Process) fillFromIO() (*IOCountersStat, error) {
+func (p *Process) fillFromIO(user *currentUser) (*IOCountersStat, error) {
 	pid := p.Pid
 	ioPath := common.HostProc(strconv.Itoa(int(pid)), "io")
+
+	if err := ensurePathReadable(ioPath, user); err != nil {
+		return nil, err
+	}
+
 	ioline, err := ioutil.ReadFile(ioPath)
 	if err != nil {
 		return nil, err
@@ -799,6 +821,7 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 		return nil, fmt.Errorf("could not collect pids: %s", err)
 	}
 
+	user := getCurrentUser()
 	// Collect stats on all processes limiting the number of required syscalls.
 	// All errors are swallowed for now.
 	procs := make(map[int32]*FilledProcess)
@@ -823,7 +846,7 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 			memInfo = &MemoryInfoStat{}
 			memInfoEx = &MemoryInfoExStat{}
 		}
-		ioStat, err := p.fillFromIO()
+		ioStat, err := p.fillFromIO(user)
 		if os.IsPermission(err) {
 			log.Debugf("Unable to access /proc/%d/io, permission denied", pid)
 			// Without root permissions we can't read for other processes.
@@ -837,7 +860,7 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 			log.Debugf("Unable to fill from /proc/%d/stat: %s", pid, err)
 			t1 = &cpu.TimesStat{}
 		}
-		cwd, err := p.fillFromCwd()
+		cwd, err := p.fillFromCwd(user)
 		if os.IsPermission(err) {
 			log.Debugf("Unable to access /proc/%d/cwd, permission denied", pid)
 			cwd = ""
@@ -845,7 +868,7 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 			log.Debugf("Unable to access /proc/%d/cwd: %s", pid, err)
 			cwd = ""
 		}
-		exe, err := p.fillFromExe()
+		exe, err := p.fillFromExe(user)
 		if os.IsPermission(err) {
 			// Without root permissions we can't read for other processes.
 			log.Debugf("Unable to access /proc/%d/exe, permission denied", pid)
@@ -854,14 +877,15 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 			log.Debugf("Unable to access /proc/%d/exe: %s", pid, err)
 			exe = ""
 		}
-		openFdCount, err := p.NumFDs()
+		openFdCount := int32(-1)
+		_, fds, err := p.fillFromfdList(user)
 		if os.IsPermission(err) {
 			// Without root permissions we can't read for other processes.
 			log.Debugf("Unable to access /proc/%d/fd, permission denied", pid)
-			openFdCount = -1
 		} else if err != nil {
 			log.Debugf("Unable to access /proc/%d/fd: %s", pid, err)
-			openFdCount = -1
+		} else {
+			openFdCount = int32(len(fds))
 		}
 
 		procs[p.Pid] = &FilledProcess{
@@ -893,4 +917,42 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 		}
 	}
 	return procs, nil
+}
+
+func getCurrentUser() *currentUser {
+	return &currentUser{
+		uid:  uint32(os.Getuid()),
+		euid: uint32(os.Geteuid()),
+	}
+}
+
+// ensurePathReadable ensures that the current user is able to read the path in question
+// before opening it.  on some systems, attempting to open a file that the user does
+// not have permission is problematic for customer security auditing
+func ensurePathReadable(path string, user *currentUser) error {
+	// User is (effectively or actually) root
+	if user.euid == 0 {
+		return nil
+	}
+
+	info, err := os.Lstat(path)
+	if err != nil {
+		return err
+	}
+
+	// File mode is world readable and not a symlink
+	// If the file is a symlink, the owner check below will cover it
+	if mode := info.Mode(); mode&os.ModeSymlink == 0 && mode.Perm()&WorldReadable != 0 {
+		return nil
+	}
+
+	if stat, ok := info.Sys().(*syscall.Stat_t); ok {
+		// If file is not owned by the user id or effective user id, return a permission error
+		// Group permissions don't come in to play with procfs so we don't bother checking
+		if stat.Uid != user.uid && stat.Uid != user.euid {
+			return os.ErrPermission
+		}
+	}
+
+	return nil
 }
