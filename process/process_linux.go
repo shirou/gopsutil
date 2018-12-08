@@ -199,6 +199,28 @@ func (p *Process) StatusWithContext(ctx context.Context) (string, error) {
 	return p.status, nil
 }
 
+// Foreground returns true if the process is in foreground, false otherwise.
+func (p *Process) Foreground() (bool, error) {
+	return p.ForegroundWithContext(context.Background())
+}
+
+func (p *Process) ForegroundWithContext(ctx context.Context) (bool, error) {
+	// see https://github.com/shirou/gopsutil/issues/596#issuecomment-432707831 for implementation details
+	pid := p.Pid
+	statPath := common.HostProc(strconv.Itoa(int(pid)), "stat")
+	contents, err := ioutil.ReadFile(statPath)
+	if err != nil {
+		return false, err
+	}
+	fields := strings.Fields(string(contents))
+	if len(fields) < 8 {
+		return false, fmt.Errorf("insufficient data in %s", statPath)
+	}
+	pgid := fields[4]
+	tpgid := fields[7]
+	return pgid == tpgid, nil
+}
+
 // Uids returns user ids of the process as a slice of the int
 func (p *Process) Uids() ([]int32, error) {
 	return p.UidsWithContext(context.Background())
