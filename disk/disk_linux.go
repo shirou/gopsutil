@@ -241,7 +241,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 		fields := strings.Fields(line)
 		d := PartitionStat{
 			Device:     fields[0],
-			Mountpoint: fields[1],
+			Mountpoint: unescapeFstab(fields[1]),
 			Fstype:     fields[2],
 			Opts:       fields[3],
 		}

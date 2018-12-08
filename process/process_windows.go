@@ -465,22 +465,33 @@ func (p *Process) Children() ([]*Process, error) {
 }
 
 func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
-	var dst []Win32_Process
-	query := wmi.CreateQuery(&dst, fmt.Sprintf("Where ParentProcessId = %d", p.Pid))
-	err := common.WMIQueryWithContext(ctx, query, &dst)
-	if err != nil {
-		return nil, err
-	}
-
 	out := []*Process{}
-	for _, proc := range dst {
-		p, err := NewProcess(int32(proc.ProcessID))
-		if err != nil {
-			continue
-		}
-		out = append(out, p)
+	snap := w32.CreateToolhelp32Snapshot(w32.TH32CS_SNAPPROCESS, uint32(0))
+	if snap == 0 {
+		return out, windows.GetLastError()
+	}
+	defer w32.CloseHandle(snap)
+	var pe32 w32.PROCESSENTRY32
+	pe32.DwSize = uint32(unsafe.Sizeof(pe32))
+	if w32.Process32First(snap, &pe32) == false {
+		return out, windows.GetLastError()
 	}
 
+	if pe32.Th32ParentProcessID == uint32(p.Pid) {
+		p, err := NewProcess(int32(pe32.Th32ProcessID))
+		if err == nil {
+			out = append(out, p)
+		}
+	}
+
+	for w32.Process32Next(snap, &pe32) {
+		if pe32.Th32ParentProcessID == uint32(p.Pid) {
+			p, err := NewProcess(int32(pe32.Th32ProcessID))
+			if err == nil {
+				out = append(out, p)
+			}
+		}
+	}
 	return out, nil
 }
 
