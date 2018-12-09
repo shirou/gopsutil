@@ -23,8 +23,7 @@ type Win32_Processor struct {
 	MaxClockSpeed             uint32
 }
 
-// win32_PerfFormattedData_Counters_ProcessorInformation stores instance value of the perf counters
-type win32_PerfFormattedData_Counters_ProcessorInformation struct {
+type win32_PerfRawData_Counters_ProcessorInformation struct {
 	Name                  string
 	PercentDPCTime        uint64
 	PercentIdleTime       uint64
@@ -43,6 +42,10 @@ type Win32_PerfFormattedData_PerfOS_System struct {
 	Processes            uint32
 	ProcessorQueueLength uint32
 }
+
+const (
+	win32_TicksPerSecond = 10000000.0
+)
 
 // Times returns times stat per cpu and combined for all CPUs
 func Times(percpu bool) ([]TimesStat, error) {
@@ -119,13 +122,13 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 
 // PerfInfo returns the performance counter's instance value for ProcessorInformation.
 // Name property is the key by which overall, per cpu and per core metric is known.
-func perfInfoWithContext(ctx context.Context) ([]win32_PerfFormattedData_Counters_ProcessorInformation, error) {
-	var ret []win32_PerfFormattedData_Counters_ProcessorInformation
+func perfInfoWithContext(ctx context.Context) ([]win32_PerfRawData_Counters_ProcessorInformation, error) {
+	var ret []win32_PerfRawData_Counters_ProcessorInformation
 
 	q := wmi.CreateQuery(&ret, "WHERE NOT Name LIKE '%_Total'")
 	err := common.WMIQueryWithContext(ctx, q, &ret)
 	if err != nil {
-		return []win32_PerfFormattedData_Counters_ProcessorInformation{}, err
+		return []win32_PerfRawData_Counters_ProcessorInformation{}, err
 	}
 
 	return ret, err
@@ -157,10 +160,10 @@ func perCPUTimesWithContext(ctx context.Context) ([]TimesStat, error) {
 	for _, v := range stats {
 		c := TimesStat{
 			CPU:    v.Name,
-			User:   float64(v.PercentUserTime),
-			System: float64(v.PercentPrivilegedTime),
-			Idle:   float64(v.PercentIdleTime),
-			Irq:    float64(v.PercentInterruptTime),
+			User:   float64(v.PercentUserTime) / win32_TicksPerSecond,
+			System: float64(v.PercentPrivilegedTime) / win32_TicksPerSecond,
+			Idle:   float64(v.PercentIdleTime) / win32_TicksPerSecond,
+			Irq:    float64(v.PercentInterruptTime) / win32_TicksPerSecond,
 		}
 		ret = append(ret, c)
 	}
