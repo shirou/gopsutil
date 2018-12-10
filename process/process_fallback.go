@@ -118,7 +118,7 @@ func (p *Process) Foreground() (bool, error) {
 	return p.ForegroundWithContext(context.Background())
 }
 
-func (p *Process) ForegroundWithContext() (bool, error) {
+func (p *Process) ForegroundWithContext(ctx context.Context) (bool, error) {
 	return false, common.ErrNotImplementedError
 }
 func (p *Process) Uids() ([]int32, error) {
