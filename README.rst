@@ -241,6 +241,7 @@ parent              x            x       x       x
 children            x     x      x       x       x
 connections         x            x       x
 is_running
+page_faults         x
 ================ ===== ======= ======= ====== =======
 
 Original Metrics

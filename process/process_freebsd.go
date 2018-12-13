@@ -371,6 +371,14 @@ func (p *Process) MemoryInfoExWithContext(ctx context.Context) (*MemoryInfoExSta
 	return nil, common.ErrNotImplementedError
 }
 
+func (p *Process) PageFaults() (*PageFaultsStat, error) {
+	return p.PageFaultsWithContext(context.Background())
+}
+
+func (p *Process) PageFaultsWithContext(ctx context.Context) (*PageFaultsStat, error) {
+	return nil, common.ErrNotImplementedError
+}
+
 func (p *Process) Children() ([]*Process, error) {
 	return p.ChildrenWithContext(context.Background())
 }
