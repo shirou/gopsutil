@@ -12,7 +12,6 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
-
 	"github.com/okmeter/gopsutil/cpu"
 	"github.com/okmeter/gopsutil/host"
 	"github.com/okmeter/gopsutil/internal/common"
@@ -235,9 +234,9 @@ func (p *Process) OpenFiles() ([]OpenFilesStat, error) {
 	if err != nil {
 		return nil, err
 	}
-	ret := make([]OpenFilesStat, len(ofs))
-	for i, o := range ofs {
-		ret[i] = *o
+	ret := make([]OpenFilesStat, 0, len(ofs))
+	for _, o := range ofs {
+		ret = append(ret,*o)
 	}
 
 	return ret, nil
@@ -350,7 +349,7 @@ func (p *Process) fillFromfd() (int32, []*OpenFilesStat, error) {
 	fnames, err := d.Readdirnames(-1)
 	numFDs := int32(len(fnames))
 
-	openfiles := make([]*OpenFilesStat, numFDs)
+	openfiles := make([]*OpenFilesStat, 0, len(fnames))
 	for _, fd := range fnames {
 		fpath := filepath.Join(statPath, fd)
 		filepath, err := os.Readlink(fpath)
