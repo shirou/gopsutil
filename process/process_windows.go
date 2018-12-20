@@ -190,7 +190,7 @@ func (p *Process) ExeWithContext(ctx context.Context) (string, error) {
 			}
 		}
 	}
-	dst, err := GetWin32Proc(p.Pid)
+	dst, err := GetWin32ProcWithContext(ctx, p.Pid)
 	if err != nil {
 		return "", fmt.Errorf("could not get ExecutablePath: %s", err)
 	}
@@ -202,7 +202,7 @@ func (p *Process) Cmdline() (string, error) {
 }
 
 func (p *Process) CmdlineWithContext(ctx context.Context) (string, error) {
-	dst, err := GetWin32Proc(p.Pid)
+	dst, err := GetWin32ProcWithContext(ctx, p.Pid)
 	if err != nil {
 		return "", fmt.Errorf("could not get CommandLine: %s", err)
 	}
@@ -217,7 +217,7 @@ func (p *Process) CmdlineSlice() ([]string, error) {
 }
 
 func (p *Process) CmdlineSliceWithContext(ctx context.Context) ([]string, error) {
-	cmdline, err := p.Cmdline()
+	cmdline, err := p.CmdlineWithContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -331,7 +331,7 @@ func (p *Process) Nice() (int32, error) {
 }
 
 func (p *Process) NiceWithContext(ctx context.Context) (int32, error) {
-	dst, err := GetWin32Proc(p.Pid)
+	dst, err := GetWin32ProcWithContext(ctx, p.Pid)
 	if err != nil {
 		return 0, fmt.Errorf("could not get Priority: %s", err)
 	}
@@ -368,7 +368,7 @@ func (p *Process) IOCounters() (*IOCountersStat, error) {
 }
 
 func (p *Process) IOCountersWithContext(ctx context.Context) (*IOCountersStat, error) {
-	dst, err := GetWin32Proc(p.Pid)
+	dst, err := GetWin32ProcWithContext(ctx, p.Pid)
 	if err != nil || len(dst) == 0 {
 		return nil, fmt.Errorf("could not get Win32Proc: %s", err)
 	}
@@ -400,7 +400,7 @@ func (p *Process) NumThreads() (int32, error) {
 }
 
 func (p *Process) NumThreadsWithContext(ctx context.Context) (int32, error) {
-	dst, err := GetWin32Proc(p.Pid)
+	dst, err := GetWin32ProcWithContext(ctx, p.Pid)
 	if err != nil {
 		return 0, fmt.Errorf("could not get ThreadCount: %s", err)
 	}
