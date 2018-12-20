@@ -177,6 +177,19 @@ func (p *Process) Exe() (string, error) {
 }
 
 func (p *Process) ExeWithContext(ctx context.Context) (string, error) {
+	if p.Pid != 0 { // 0 or null is the current process for CreateToolhelp32Snapshot
+		snap := w32.CreateToolhelp32Snapshot(w32.TH32CS_SNAPMODULE|w32.TH32CS_SNAPMODULE32, uint32(p.Pid))
+		if snap != 0 { // don't report errors here, fallback to WMI instead
+			defer w32.CloseHandle(snap)
+			var me32 w32.MODULEENTRY32
+			me32.Size = uint32(unsafe.Sizeof(me32))
+
+			if w32.Module32First(snap, &me32) {
+				szexepath := windows.UTF16ToString(me32.SzExePath[:])
+				return szexepath, nil
+			}
+		}
+	}
 	dst, err := GetWin32Proc(p.Pid)
 	if err != nil {
 		return "", fmt.Errorf("could not get ExecutablePath: %s", err)
