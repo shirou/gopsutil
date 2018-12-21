@@ -16,6 +16,7 @@ import (
 	"github.com/okmeter/gopsutil/host"
 	"github.com/okmeter/gopsutil/internal/common"
 	"github.com/okmeter/gopsutil/net"
+	"bytes"
 )
 
 var ErrorNoChildren = errors.New("process does not have children")
@@ -89,8 +90,17 @@ func (p *Process) Exe() (string, error) {
 	return p.fillFromExe()
 }
 func (p *Process) Cmdline() (string, error) {
-	return p.fillFromCmdline()
+	cmdlineParts, err := p.CmdlineSlice()
+	if err != nil {
+		return "", err
+	}
+	return strings.Join(cmdlineParts, " "), nil
 }
+
+func (p *Process) CmdlineSlice() ([]string, error) {
+	return p.fillSliceFromCmdline()
+}
+
 func (p *Process) CreateTime() (int64, error) {
 	_, _, _, createTime, _, err := p.fillFromStat()
 	if err != nil {
@@ -393,21 +403,25 @@ func (p *Process) fillFromExe() (string, error) {
 }
 
 // Get cmdline from /proc/(pid)/cmdline
-func (p *Process) fillFromCmdline() (string, error) {
+func (p *Process) fillSliceFromCmdline() ([]string, error) {
 	pid := p.Pid
 	cmdPath := common.HostProc(strconv.Itoa(int(pid)), "cmdline")
 	cmdline, err := ioutil.ReadFile(cmdPath)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	ret := strings.FieldsFunc(string(cmdline), func(r rune) bool {
-		if r == '\u0000' {
-			return true
-		}
-		return false
-	})
-
-	return strings.Join(ret, " "), nil
+	if len(cmdline) == 0 {
+		return nil, nil
+	}
+	if cmdline[len(cmdline)-1] == 0 {
+		cmdline = cmdline[:len(cmdline)-1]
+	}
+	parts := bytes.Split(cmdline, []byte{0})
+	var strParts []string
+	for _, p := range parts {
+		strParts = append(strParts, string(p))
+	}
+	return strParts, nil
 }
 
 // Get IO status from /proc/(pid)/io

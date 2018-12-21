@@ -87,6 +87,15 @@ func (p *Process) Cmdline() (string, error) {
 	}
 	return strings.Join(r[0], " "), err
 }
+
+func (p *Process) CmdlineSlice() ([]string, error) {
+	cmdline, err := p.Cmdline()
+	if err != nil {
+		return nil, err
+	}
+	return strings.Split(cmdline, " "), nil
+}
+
 func (p *Process) CreateTime() (int64, error) {
 	return 0, common.NotImplementedError
 }
