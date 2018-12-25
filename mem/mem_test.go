@@ -28,11 +28,14 @@ func TestVirtual_memory(t *testing.T) {
 
 	total := v.Used + v.Free + v.Buffers + v.Cached
 	totalStr := "used + free + buffers + cached"
-	if runtime.GOOS == "windows" {
+	switch runtime.GOOS {
+	case "windows":
 		total = v.Used + v.Available
 		totalStr = "used + available"
-	}
-	if runtime.GOOS == "freebsd" {
+	case "darwin":
+		total = v.Used + v.Free + v.Cached + v.Inactive
+		totalStr = "used + free + cached + inactive"
+	case "freebsd":
 		total = v.Used + v.Free + v.Cached + v.Inactive + v.Laundry
 		totalStr = "used + free + cached + inactive + laundry"
 	}
