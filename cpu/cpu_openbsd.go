@@ -134,7 +134,7 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 	}
 	c.Mhz = float64(u32)
 
-	if u32, err = unix.SysctlUint32("hw.ncpu"); err != nil {
+	if u32, err = unix.SysctlUint32("hw.ncpuonline"); err != nil {
 		return nil, err
 	}
 	c.Cores = int32(u32)
