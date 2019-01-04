@@ -33,6 +33,7 @@ const (
 type MemoryInfoExStat struct {
 	RSS    uint64 `json:"rss"`    // bytes
 	VMS    uint64 `json:"vms"`    // bytes
+	HWM    uint64 `json:"hwm"` .  // bytes
 	Shared uint64 `json:"shared"` // bytes
 	Text   uint64 `json:"text"`   // bytes
 	Lib    uint64 `json:"lib"`    // bytes
@@ -1083,6 +1084,13 @@ func (p *Process) fillFromStatusWithContext(ctx context.Context) error {
 				return err
 			}
 			p.memInfo.Swap = v * 1024
+	        case "VmHWM":
+			value := strings.Trim(value, " kB") // remove last "kB"
+			v, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return err
+			}
+			p.memInfo.HWM = v * 1024		
 		case "VmData":
 			value := strings.Trim(value, " kB") // remove last "kB"
 			v, err := strconv.ParseUint(value, 10, 64)
