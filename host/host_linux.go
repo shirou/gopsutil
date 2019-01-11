@@ -318,6 +318,11 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 	if err != nil {
 		lsb = &LSB{}
 	}
+	
+	platf, vers, err := getOSRelease()
+	if err != nil {
+		platf, vers = "", ""
+	}
 
 	if common.PathExists(common.HostEtc("oracle-release")) {
 		platform = "oracle"
@@ -356,6 +361,9 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 				version = contents[0]
 			}
 		}
+	} else if common.PathExists(common.HostEtc("bedrock-release")) {
+		platform = "bedrock"
+		version = vers
 	} else if common.PathExists(common.HostEtc("redhat-release")) {
 		contents, err := common.ReadLines(common.HostEtc("redhat-release"))
 		if err == nil {
@@ -434,6 +442,10 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 		family = "alpine"
 	case "coreos":
 		family = "coreos"
+	case "bedrock":
+		family = "bedrock"
+	default:
+		family = "unknown"	
 	}
 
 	return platform, family, version, nil
