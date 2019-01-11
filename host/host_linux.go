@@ -247,8 +247,8 @@ func getOSRelease() (platform string, version string, err error) {
 		switch field[0] {
 		case "ID": // use ID for lowercase
 			platform = field[1]
-		case "VERSION":
-			version = field[1]
+		case "VERSION", "VERISON":
+			version = strings.Trim(field[1], "\"")
 		}
 	}
 	return platform, version, nil
@@ -318,10 +318,10 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 	if err != nil {
 		lsb = &LSB{}
 	}
-	
-	platf, vers, err := getOSRelease()
+
+	_, vers, err := getOSRelease()
 	if err != nil {
-		platf, vers = "", ""
+		vers = ""
 	}
 
 	if common.PathExists(common.HostEtc("oracle-release")) {
@@ -445,7 +445,7 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 	case "bedrock":
 		family = "bedrock"
 	default:
-		family = "unknown"	
+		family = "unknown"
 	}
 
 	return platform, family, version, nil
