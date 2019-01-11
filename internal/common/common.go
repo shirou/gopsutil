@@ -301,15 +301,23 @@ func GetEnv(key string, dfault string, combineWith ...string) string {
 	switch len(combineWith) {
 	case 0:
 		return value
-	case 1:
-		return filepath.Join(value, combineWith[0])
 	default:
-		all := make([]string, len(combineWith)+1)
-		all[0] = value
-		copy(all[1:], combineWith)
-		return filepath.Join(all...)
+		return filepath.Join(value, combineWith...)
 	}
 	panic("invalid switch case")
+}
+
+//InclusionaryPath retrieves the proper path for a file, resepecting a Bedrock Linux install with the provided environment variables over all else
+func InclusionaryPath(key string, dfault string, fpath string) string {
+	if os.Getenv(key) !== "" {
+		if PathExists(filepath.Join("/bedrock", dfault, filepath)) {
+			return filepath.Join("/bedrock", dfault, filepath)
+		} else {
+			return filepath.Join(dfault, filepath)
+		}
+	} else {
+		return GetEnv(key, "", filepath)
+	}
 }
 
 func HostProc(combineWith ...string) string {
@@ -321,15 +329,15 @@ func HostSys(combineWith ...string) string {
 }
 
 func HostEtc(combineWith ...string) string {
-	return GetEnv("HOST_ETC", "/etc", combineWith...)
+	return InclusionaryPath("HOST_ETC", "/etc", combineWith...)
 }
 
 func HostVar(combineWith ...string) string {
-	return GetEnv("HOST_VAR", "/var", combineWith...)
+	return InclusionaryPath("HOST_VAR", "/var", combineWith...)
 }
 
 func HostRun(combineWith ...string) string {
-	return GetEnv("HOST_RUN", "/run", combineWith...)
+	return InclusionaryPath("HOST_RUN", "/run", combineWith...)
 }
 
 // https://gist.github.com/kylelemons/1525278
