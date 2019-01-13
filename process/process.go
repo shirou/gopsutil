@@ -43,6 +43,7 @@ type OpenFilesStat struct {
 type MemoryInfoStat struct {
 	RSS    uint64 `json:"rss"`    // bytes
 	VMS    uint64 `json:"vms"`    // bytes
+	HWM    uint64 `json:"hwm"`    // bytes
 	Data   uint64 `json:"data"`   // bytes
 	Stack  uint64 `json:"stack"`  // bytes
 	Locked uint64 `json:"locked"` // bytes

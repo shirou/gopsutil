@@ -33,7 +33,6 @@ const (
 type MemoryInfoExStat struct {
 	RSS    uint64 `json:"rss"`    // bytes
 	VMS    uint64 `json:"vms"`    // bytes
-	HWM    uint64 `json:"hwm"` .  // bytes
 	Shared uint64 `json:"shared"` // bytes
 	Text   uint64 `json:"text"`   // bytes
 	Lib    uint64 `json:"lib"`    // bytes
@@ -582,8 +581,8 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 	pid := p.Pid
 	var ret []MemoryMapsStat
 	if grouped {
-        ret = make([]MemoryMapsStat, 1)
-    }
+		ret = make([]MemoryMapsStat, 1)
+	}
 	smapsPath := common.HostProc(strconv.Itoa(int(pid)), "smaps")
 	contents, err := ioutil.ReadFile(smapsPath)
 	if err != nil {
@@ -647,19 +646,19 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 					return &ret, err
 				}
 				if grouped {
-				    ret[0].Size += g.Size
-				    ret[0].Rss += g.Rss
-				    ret[0].Pss += g.Pss
-				    ret[0].SharedClean += g.SharedClean
-				    ret[0].SharedDirty += g.SharedDirty
-				    ret[0].PrivateClean += g.PrivateClean
-				    ret[0].PrivateDirty += g.PrivateDirty
-				    ret[0].Referenced += g.Referenced
-				    ret[0].Anonymous += g.Anonymous
-				    ret[0].Swap += g.Swap
-                } else {
-                    ret = append(ret, g)
-                }
+					ret[0].Size += g.Size
+					ret[0].Rss += g.Rss
+					ret[0].Pss += g.Pss
+					ret[0].SharedClean += g.SharedClean
+					ret[0].SharedDirty += g.SharedDirty
+					ret[0].PrivateClean += g.PrivateClean
+					ret[0].PrivateDirty += g.PrivateDirty
+					ret[0].Referenced += g.Referenced
+					ret[0].Anonymous += g.Anonymous
+					ret[0].Swap += g.Swap
+				} else {
+					ret = append(ret, g)
+				}
 			}
 			// starts new block
 			blocks = make([]string, 16)
@@ -1121,13 +1120,13 @@ func (p *Process) fillFromStatusWithContext(ctx context.Context) error {
 				return err
 			}
 			p.memInfo.Swap = v * 1024
-	        case "VmHWM":
+		case "VmHWM":
 			value := strings.Trim(value, " kB") // remove last "kB"
 			v, err := strconv.ParseUint(value, 10, 64)
 			if err != nil {
 				return err
 			}
-			p.memInfo.HWM = v * 1024		
+			p.memInfo.HWM = v * 1024
 		case "VmData":
 			value := strings.Trim(value, " kB") // remove last "kB"
 			v, err := strconv.ParseUint(value, 10, 64)
