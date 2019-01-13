@@ -581,6 +581,9 @@ func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]MemoryMapsStat, error) {
 	pid := p.Pid
 	var ret []MemoryMapsStat
+	if grouped {
+        ret = make([]MemoryMapsStat, 1)
+    }
 	smapsPath := common.HostProc(strconv.Itoa(int(pid)), "smaps")
 	contents, err := ioutil.ReadFile(smapsPath)
 	if err != nil {
@@ -643,7 +646,20 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 				if err != nil {
 					return &ret, err
 				}
-				ret = append(ret, g)
+				if grouped {
+				    ret[0].Size += g.Size
+				    ret[0].Rss += g.Rss
+				    ret[0].Pss += g.Pss
+				    ret[0].SharedClean += g.SharedClean
+				    ret[0].SharedDirty += g.SharedDirty
+				    ret[0].PrivateClean += g.PrivateClean
+				    ret[0].PrivateDirty += g.PrivateDirty
+				    ret[0].Referenced += g.Referenced
+				    ret[0].Anonymous += g.Anonymous
+				    ret[0].Swap += g.Swap
+                } else {
+                    ret = append(ret, g)
+                }
 			}
 			// starts new block
 			blocks = make([]string, 16)
