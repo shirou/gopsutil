@@ -124,14 +124,24 @@ func Info() ([]InfoStat, error) {
 
 func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 	var ret []InfoStat
+	var err error
 
 	c := InfoStat{}
 
-	v, err := unix.Sysctl("hw.model")
-	if err != nil {
+	var u32 uint32
+	if u32, err = unix.SysctlUint32("hw.cpuspeed"); err != nil {
 		return nil, err
 	}
-	c.ModelName = v
+	c.Mhz = float64(u32)
+
+	if u32, err = unix.SysctlUint32("hw.ncpuonline"); err != nil {
+		return nil, err
+	}
+	c.Cores = int32(u32)
+
+	if c.ModelName, err = unix.Sysctl("hw.model"); err != nil {
+		return nil, err
+	}
 
 	return append(ret, c), nil
 }
