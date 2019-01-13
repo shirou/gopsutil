@@ -77,6 +77,13 @@ type NumCtxSwitchesStat struct {
 	Involuntary int64 `json:"involuntary"`
 }
 
+type PageFaultsStat struct {
+	MinorFaults      uint64 `json:"minorFaults"`
+	MajorFaults      uint64 `json:"majorFaults"`
+	ChildMinorFaults uint64 `json:"childMinorFaults"`
+	ChildMajorFaults uint64 `json:"childMajorFaults"`
+}
+
 // Resource limit constants are from /usr/include/x86_64-linux-gnu/bits/resource.h
 // from libc6-dev package in Ubuntu 16.10
 const (

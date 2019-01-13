@@ -59,13 +59,6 @@ type MemoryMapsStat struct {
 	Swap         uint64 `json:"swap"`
 }
 
-type PageFaultsStat struct {
-	MinorFaults      uint64 `json:"minorFaults"`
-	MajorFaults      uint64 `json:"majorFaults"`
-	ChildMinorFaults uint64 `json:"childMinorFaults"`
-	ChildMajorFaults uint64 `json:"childMajorFaults"`
-}
-
 // String returns JSON value of the process.
 func (m MemoryMapsStat) String() string {
 	s, _ := json.Marshal(m)
