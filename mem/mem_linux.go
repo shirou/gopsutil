@@ -20,7 +20,7 @@ func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
 	lines, _ := common.ReadLines(filename)
 	// flag if MemAvailable is in /proc/meminfo (kernel 3.14+)
 	memavail := false
-
+	
 	ret := &VirtualMemoryStat{}
 	for _, line := range lines {
 		fields := strings.Split(line, ":")
@@ -33,7 +33,7 @@ func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
 
 		t, err := strconv.ParseUint(value, 10, 64)
 		if err != nil {
-			return ret, err
+			continue
 		}
 		switch key {
 		case "MemTotal":
