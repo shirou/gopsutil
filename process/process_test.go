@@ -89,6 +89,7 @@ func Test_Process_memory_maps(t *testing.T) {
 		t.Errorf("error %v", err)
 	}
 
+	// ungrouped memory maps
 	mmaps, err := ret.MemoryMaps(false)
 	if err != nil {
 		t.Errorf("memory map get error %v", err)
@@ -99,6 +100,18 @@ func Test_Process_memory_maps(t *testing.T) {
 			t.Errorf("memory map get error %v", m)
 		}
 	}
+
+	// grouped memory maps
+	mmaps, err = ret.MemoryMaps(true)
+	if err != nil {
+		t.Errorf("memory map get error %v", err)
+	}
+	if len(*mmaps) != 1 {
+		t.Errorf("grouped memory maps length (%v) is not equal to 1", len(*mmaps))
+	}
+    if (*mmaps)[0] == empty {
+        t.Errorf("memory map is empty")
+    }
 }
 func Test_Process_MemoryInfo(t *testing.T) {
 	p := testGetProcess()
