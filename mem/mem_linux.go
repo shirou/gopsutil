@@ -20,9 +20,12 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
 	filename := common.HostProc("meminfo")
 	lines, _ := common.ReadLines(filename)
+
 	// flag if MemAvailable is in /proc/meminfo (kernel 3.14+)
 	memavail := false
-	memavailFallback := false
+	activeFile := false      // "Active(file)" not available: 2.6.28 / Dec 2008
+	inactiveFile := false    // "Inactive(file)" not available: 2.6.28 / Dec 2008
+	sReclaimable := false    // "SReclaimable:" not available: 2.6.19 / Nov 2006
 
 	ret := &VirtualMemoryStat{}
 	for _, line := range lines {
@@ -51,11 +54,17 @@ func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
 		case "Cached":
 			ret.Cached = t * 1024
 		case "Active":
-			memavailFallback = true
+			activeFile = true
 			ret.Active = t * 1024
 		case "Inactive":
-			memavailFallback = true
+			inactiveFile = true
 			ret.Inactive = t * 1024
+		case "Active(file)":
+			activeFile = true
+			ret.ActiveFile = t * 1024
+		case "InActive(file)":
+			inactiveFile = true
+			ret.InactiveFile = t * 1024
 		case "Writeback":
 			ret.Writeback = t * 1024
 		case "WritebackTmp":
@@ -67,7 +76,7 @@ func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
 		case "Slab":
 			ret.Slab = t * 1024
 		case "SReclaimable":
-			memavailFallback = true
+			sReclaimable = true
 			ret.SReclaimable = t * 1024
 		case "PageTables":
 			ret.PageTables = t * 1024
@@ -109,7 +118,11 @@ func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
 	ret.Cached += ret.SReclaimable
 
 	if !memavail {
-		ret.Available = calcuateAvailVmem(ret, memavailFallback)
+		if !(activeFile && inactiveFile && sReclaimable) {
+			ret.Available = ret.Cached + ret.Free
+		} else {
+			ret.Available = calcuateAvailVmem(ret)
+		}
 	}
 
 	ret.Used = ret.Total - ret.Free - ret.Buffers - ret.Cached
@@ -167,24 +180,14 @@ func SwapMemoryWithContext(ctx context.Context) (*SwapMemoryStat, error) {
 // calcuateAvailVmem is a fallback under kernel 3.14 where /proc/meminfo does not provide
 // "MemAvailable:" column. It reimplements an algorithm from the link below
 // https://github.com/giampaolo/psutil/pull/890
-func calcuateAvailVmem(ret *VirtualMemoryStat, memavailFallback bool) uint64 {
+func calcuateAvailVmem(ret *VirtualMemoryStat) uint64 {
 	var watermarkLow uint64
-
-	fallback := ret.Free + ret.Cached
-
-	if (memavailFallback) {
-		return fallback
-	}
-
-	active := ret.Active
-	inactive := ret.Inactive
-	sreclaimable := ret.SReclaimable
 
 	fn := common.HostProc("zoneinfo")
 	lines, err := common.ReadLines(fn)
 
 	if err != nil {
-		return fallback	// fallback under kernel 2.6.13
+		return ret.Free + ret.Cached	// fallback under kernel 2.6.13
 	}
 
 	pagesize := uint64(os.Getpagesize())
@@ -199,7 +202,6 @@ func calcuateAvailVmem(ret *VirtualMemoryStat, memavailFallback bool) uint64 {
 			if err != nil {
 				lowValue = 0
 			}
-
 			watermarkLow += lowValue
 		}
 	}
@@ -207,10 +209,10 @@ func calcuateAvailVmem(ret *VirtualMemoryStat, memavailFallback bool) uint64 {
 	watermarkLow *= pagesize
 
 	availMemory := ret.Free - watermarkLow
-	pageCache := active + inactive
+	pageCache := ret.ActiveFile + ret.InactiveFile
 	pageCache -= uint64(math.Min(float64(pageCache/2), float64(watermarkLow)))
 	availMemory += pageCache
-	availMemory += ret.SReclaimable - uint64(math.Min(float64(sreclaimable/2.0), float64(watermarkLow)))
+	availMemory += ret.SReclaimable - uint64(math.Min(float64(ret.SReclaimable/2.0), float64(watermarkLow)))
 
 	if availMemory < 0 {
 		availMemory = 0
