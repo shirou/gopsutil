@@ -22,6 +22,7 @@ func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
 	lines, _ := common.ReadLines(filename)
 	// flag if MemAvailable is in /proc/meminfo (kernel 3.14+)
 	memavail := false
+	memavailFallback := false
 
 	ret := &VirtualMemoryStat{}
 	for _, line := range lines {
@@ -50,8 +51,10 @@ func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
 		case "Cached":
 			ret.Cached = t * 1024
 		case "Active":
+			memavailFallback = true
 			ret.Active = t * 1024
 		case "Inactive":
+			memavailFallback = true
 			ret.Inactive = t * 1024
 		case "Writeback":
 			ret.Writeback = t * 1024
@@ -64,6 +67,7 @@ func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
 		case "Slab":
 			ret.Slab = t * 1024
 		case "SReclaimable":
+			memavailFallback = true
 			ret.SReclaimable = t * 1024
 		case "PageTables":
 			ret.PageTables = t * 1024
@@ -105,7 +109,7 @@ func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
 	ret.Cached += ret.SReclaimable
 
 	if !memavail {
-		ret.Available = calcuateAvailVmem(ret)
+		ret.Available = calcuateAvailVmem(ret, memavailFallback)
 	}
 
 	ret.Used = ret.Total - ret.Free - ret.Buffers - ret.Cached
@@ -160,10 +164,29 @@ func SwapMemoryWithContext(ctx context.Context) (*SwapMemoryStat, error) {
 	return ret, nil
 }
 
-func calcuateAvailVmem(ret *VirtualMemoryStat) uint64 {
+// calcuateAvailVmem is a fallback under kernel 3.14 where /proc/meminfo does not provide
+// "MemAvailable:" column. It reimplements an algorithm from the link below
+// https://github.com/giampaolo/psutil/pull/890
+func calcuateAvailVmem(ret *VirtualMemoryStat, memavailFallback bool) uint64 {
 	var watermarkLow uint64
+
+	fallback := ret.Free + ret.Cached
+
+	if (memavailFallback) {
+		return fallback
+	}
+
+	active := ret.Active
+	inactive := ret.Inactive
+	sreclaimable := ret.SReclaimable
+
 	fn := common.HostProc("zoneinfo")
-	lines, _ := common.ReadLines(fn)
+	lines, err := common.ReadLines(fn)
+
+	if err != nil {
+		return fallback	// fallback under kernel 2.6.13
+	}
+
 	pagesize := uint64(os.Getpagesize())
 	watermarkLow = 0
 
@@ -184,10 +207,10 @@ func calcuateAvailVmem(ret *VirtualMemoryStat) uint64 {
 	watermarkLow *= pagesize
 
 	availMemory := ret.Free - watermarkLow
-	pageCache := ret.Active + ret.Inactive
+	pageCache := active + inactive
 	pageCache -= uint64(math.Min(float64(pageCache/2), float64(watermarkLow)))
 	availMemory += pageCache
-	availMemory += ret.SReclaimable - uint64(math.Min(float64(ret.SReclaimable/2.0), float64(watermarkLow)))
+	availMemory += ret.SReclaimable - uint64(math.Min(float64(sreclaimable/2.0), float64(watermarkLow)))
 
 	if availMemory < 0 {
 		availMemory = 0
