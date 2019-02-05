@@ -226,12 +226,13 @@ func Partitions(all bool) ([]PartitionStat, error) {
 func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {
 	filename := common.HostProc("self/mountinfo")
 	lines, err := common.ReadLines(filename)
+	UseMounts := false
 	if err != nil {
-		UseMounts := true
+		UseMounts = true
 	}
 
 	//if kernel not support self/mountinfo
-	if UseMounts {
+	if UseMounts == true {
 		filename := common.HostProc("self/mounts")
 		lines, err := common.ReadLines(filename)
 		if err != nil {
@@ -252,7 +253,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 		// (1) (2) (3)   (4)   (5)      (6)      (7)   (8) (9)   (10)         (11)
 
 		// split the mountinfo line by the separator hyphen
-		if UseMounts {
+		if UseMounts == true {
 			fields := strings.Fields(line)
 
 			d := PartitionStat{
@@ -284,12 +285,13 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 			}
 		}
 
-		if UseMounts {
-			if all == false {
-				if d.Device == "none" || !common.StringsHas(fs, d.Fstype) {
-					continue
-				}
+		if all == false {
+			if d.Device == "none" || !common.StringsHas(fs, d.Fstype) {
+				continue
 			}
+		}
+
+		if UseMounts == true {
 			// /dev/root is not the real device name
 			// so we get the real device name from its major/minor number
 			if d.Device == "/dev/root" {
