@@ -224,9 +224,10 @@ func Partitions(all bool) ([]PartitionStat, error) {
 }
 
 func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {
+	UseMounts := false
+
 	filename := common.HostProc("self/mountinfo")
 	lines, err := common.ReadLines(filename)
-	UseMounts := false
 	if err != nil {
 		UseMounts = true
 	}
@@ -234,7 +235,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 	//if kernel not support self/mountinfo
 	if UseMounts == true {
 		filename := common.HostProc("self/mounts")
-		lines, err := common.ReadLines(filename)
+		lines, err = common.ReadLines(filename)
 		if err != nil {
 			return nil, err
 		}
@@ -247,6 +248,8 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 
 	ret := make([]PartitionStat, 0, len(lines))
 
+	var d PartitionStat
+
 	for _, line := range lines {
 		// a line of self/mountinfo has the following structure:
 		// 36  35  98:0 /mnt1 /mnt2 rw,noatime master:1 - ext3 /dev/root rw,errors=continue
@@ -256,11 +259,17 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 		if UseMounts == true {
 			fields := strings.Fields(line)
 
-			d := PartitionStat{
+			d = PartitionStat{
 				Device:     fields[0],
 				Mountpoint: unescapeFstab(fields[1]),
 				Fstype:     fields[2],
 				Opts:       fields[3],
+			}
+
+			if all == false {
+				if d.Device == "none" || !common.StringsHas(fs, d.Fstype) {
+					continue
+				}
 			}
 		} else {
 			parts := strings.Split(line, " - ")
@@ -277,21 +286,19 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 			fstype := fields[0]
 			device := fields[1]
 
-			d := PartitionStat{
+			d = PartitionStat{
 				Device:     device,
 				Mountpoint: mountPoint,
 				Fstype:     fstype,
 				Opts:       mountOpts,
 			}
-		}
 
-		if all == false {
-			if d.Device == "none" || !common.StringsHas(fs, d.Fstype) {
-				continue
+			if all == false {
+				if d.Device == "none" || !common.StringsHas(fs, d.Fstype) {
+					continue
+				}
 			}
-		}
 
-		if UseMounts == true {
 			// /dev/root is not the real device name
 			// so we get the real device name from its major/minor number
 			if d.Device == "/dev/root" {
