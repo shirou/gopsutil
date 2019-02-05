@@ -227,7 +227,16 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 	filename := common.HostProc("self/mountinfo")
 	lines, err := common.ReadLines(filename)
 	if err != nil {
-		return nil, err
+		UseMounts := true
+	}
+
+	//if kernel not support self/mountinfo
+	if UseMounts {
+		filename := common.HostProc("self/mounts")
+		lines, err := common.ReadLines(filename)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	fs, err := getFileSystems()
@@ -243,39 +252,53 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 		// (1) (2) (3)   (4)   (5)      (6)      (7)   (8) (9)   (10)         (11)
 
 		// split the mountinfo line by the separator hyphen
-		parts := strings.Split(line, " - ")
-		if len(parts) != 2 {
-			return nil, fmt.Errorf("found invalid mountinfo line in file %s: %s ", filename, line)
-		}
+		if UseMounts {
+			fields := strings.Fields(line)
 
-		fields := strings.Fields(parts[0])
-		blockDeviceID := fields[2]
-		mountPoint := fields[4]
-		mountOpts := fields[5]
+			d := PartitionStat{
+				Device:     fields[0],
+				Mountpoint: unescapeFstab(fields[1]),
+				Fstype:     fields[2],
+				Opts:       fields[3],
+			}
+		} else {
+			parts := strings.Split(line, " - ")
+			if len(parts) != 2 {
+				return nil, fmt.Errorf("found invalid mountinfo line in file %s: %s ", filename, line)
+			}
 
-		fields = strings.Fields(parts[1])
-		fstype := fields[0]
-		device := fields[1]
+			fields := strings.Fields(parts[0])
+			blockDeviceID := fields[2]
+			mountPoint := fields[4]
+			mountOpts := fields[5]
 
-		d := PartitionStat{
-			Device:     device,
-			Mountpoint: mountPoint,
-			Fstype:     fstype,
-			Opts:       mountOpts,
-		}
-		if all == false {
-			if d.Device == "none" || !common.StringsHas(fs, d.Fstype) {
-				continue
+			fields = strings.Fields(parts[1])
+			fstype := fields[0]
+			device := fields[1]
+
+			d := PartitionStat{
+				Device:     device,
+				Mountpoint: mountPoint,
+				Fstype:     fstype,
+				Opts:       mountOpts,
 			}
 		}
-		// /dev/root is not the real device name
-		// so we get the real device name from its major/minor number
-		if d.Device == "/dev/root" {
-			devpath, err := os.Readlink(common.HostSys("/dev/block/" + blockDeviceID))
-			if err != nil {
-				return nil, err
+
+		if UseMounts {
+			if all == false {
+				if d.Device == "none" || !common.StringsHas(fs, d.Fstype) {
+					continue
+				}
 			}
-			d.Device = strings.Replace(d.Device, "root", filepath.Base(devpath), 1)
+			// /dev/root is not the real device name
+			// so we get the real device name from its major/minor number
+			if d.Device == "/dev/root" {
+				devpath, err := os.Readlink(common.HostSys("/dev/block/" + blockDeviceID))
+				if err != nil {
+					return nil, err
+				}
+				d.Device = strings.Replace(d.Device, "root", filepath.Base(devpath), 1)
+			}
 		}
 		ret = append(ret, d)
 	}
