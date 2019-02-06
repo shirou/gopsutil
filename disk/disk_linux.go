@@ -224,16 +224,16 @@ func Partitions(all bool) ([]PartitionStat, error) {
 }
 
 func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {
-	UseMounts := false
+	useMounts := false
 
 	filename := common.HostProc("self/mountinfo")
 	lines, err := common.ReadLines(filename)
 	if err != nil {
-		UseMounts = true
+		useMounts = true
 	}
 
 	//if kernel not support self/mountinfo
-	if UseMounts == true {
+	if useMounts {
 		filename := common.HostProc("self/mounts")
 		lines, err = common.ReadLines(filename)
 		if err != nil {
@@ -256,7 +256,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 		// (1) (2) (3)   (4)   (5)      (6)      (7)   (8) (9)   (10)         (11)
 
 		// split the mountinfo line by the separator hyphen
-		if UseMounts == true {
+		if useMounts {
 			fields := strings.Fields(line)
 
 			d = PartitionStat{
@@ -266,7 +266,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 				Opts:       fields[3],
 			}
 
-			if all == false {
+			if !all {
 				if d.Device == "none" || !common.StringsHas(fs, d.Fstype) {
 					continue
 				}
@@ -293,7 +293,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 				Opts:       mountOpts,
 			}
 
-			if all == false {
+			if !all {
 				if d.Device == "none" || !common.StringsHas(fs, d.Fstype) {
 					continue
 				}
