@@ -229,12 +229,12 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 	filename := common.HostProc("self/mountinfo")
 	lines, err := common.ReadLines(filename)
 	if err != nil {
+		if err != err.(*os.PathError) {
+			return nil, err
+		}
+		//if kernel not support self/mountinfo
 		useMounts = true
-	}
-
-	//if kernel not support self/mountinfo
-	if useMounts {
-		filename := common.HostProc("self/mounts")
+		filename = common.HostProc("self/mounts")
 		lines, err = common.ReadLines(filename)
 		if err != nil {
 			return nil, err
@@ -248,9 +248,8 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 
 	ret := make([]PartitionStat, 0, len(lines))
 
-	var d PartitionStat
-
 	for _, line := range lines {
+		var d PartitionStat
 		// a line of self/mountinfo has the following structure:
 		// 36  35  98:0 /mnt1 /mnt2 rw,noatime master:1 - ext3 /dev/root rw,errors=continue
 		// (1) (2) (3)   (4)   (5)      (6)      (7)   (8) (9)   (10)         (11)
