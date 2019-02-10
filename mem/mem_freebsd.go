@@ -84,11 +84,22 @@ func SwapMemory() (*SwapMemoryStat, error) {
 // Constants from vm/vm_param.h
 // nolint: golint
 const (
-	XSWDEV_VERSION = 1
+	XSWDEV_VERSION11 = 1
+	XSWDEV_VERSION   = 2
 )
 
 // Types from vm/vm_param.h
 type xswdev struct {
+	Version uint32 // Version is the version
+	Dev     uint64 // Dev is the device identifier
+	Flags   int32  // Flags is the swap flags applied to the device
+	NBlks   int32  // NBlks is the total number of blocks
+	Used    int32  // Used is the number of blocks used
+}
+
+// xswdev11 is a compatiblity for under FreeBSD 11
+// sys/vm/swap_pager.c
+type xswdev11 struct {
 	Version uint32 // Version is the version
 	Dev     uint32 // Dev is the device identifier
 	Flags   int32  // Flags is the swap flags applied to the device
@@ -123,12 +134,23 @@ func SwapMemoryWithContext(ctx context.Context) (*SwapMemoryStat, error) {
 			return nil, err
 		}
 
+		// first, try to parse with version 2
 		xsw := (*xswdev)(unsafe.Pointer(&buf[0]))
-		if xsw.Version != XSWDEV_VERSION {
+		if xsw.Version == XSWDEV_VERSION11 {
+			// this is version 1, so try to parse again
+			xsw := (*xswdev11)(unsafe.Pointer(&buf[0]))
+			if xsw.Version != XSWDEV_VERSION11 {
+				return nil, errors.New("xswdev version mismatch(11)")
+			}
+			s.Total += uint64(xsw.NBlks)
+			s.Used += uint64(xsw.Used)
+		} else if xsw.Version != XSWDEV_VERSION {
 			return nil, errors.New("xswdev version mismatch")
+		} else {
+			s.Total += uint64(xsw.NBlks)
+			s.Used += uint64(xsw.Used)
 		}
-		s.Total += uint64(xsw.NBlks)
-		s.Used += uint64(xsw.Used)
+
 	}
 
 	if s.Total != 0 {
