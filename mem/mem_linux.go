@@ -13,6 +13,11 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+type VirtualMemoryExStat struct {
+	ActiveFile		uint64	`json:"activefile"`
+	InactiveFile	uint64	`json:"inactivefile"`
+}
+
 func VirtualMemory() (*VirtualMemoryStat, error) {
 	return VirtualMemoryWithContext(context.Background())
 }
@@ -28,6 +33,8 @@ func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
 	sReclaimable := false    // "SReclaimable:" not available: 2.6.19 / Nov 2006
 
 	ret := &VirtualMemoryStat{}
+	retEx := &VirtualMemoryExStat{}
+
 	for _, line := range lines {
 		fields := strings.Split(line, ":")
 		if len(fields) != 2 {
@@ -54,17 +61,15 @@ func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
 		case "Cached":
 			ret.Cached = t * 1024
 		case "Active":
-			activeFile = true
 			ret.Active = t * 1024
 		case "Inactive":
-			inactiveFile = true
 			ret.Inactive = t * 1024
 		case "Active(file)":
 			activeFile = true
-			ret.ActiveFile = t * 1024
+			retEx.ActiveFile = t * 1024
 		case "InActive(file)":
 			inactiveFile = true
-			ret.InactiveFile = t * 1024
+			retEx.InactiveFile = t * 1024
 		case "Writeback":
 			ret.Writeback = t * 1024
 		case "WritebackTmp":
@@ -118,10 +123,10 @@ func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
 	ret.Cached += ret.SReclaimable
 
 	if !memavail {
-		if !(activeFile && inactiveFile && sReclaimable) {
-			ret.Available = ret.Cached + ret.Free
+		if (activeFile && inactiveFile && sReclaimable) {
+			ret.Available = calcuateAvailVmem(ret, retEx)
 		} else {
-			ret.Available = calcuateAvailVmem(ret)
+			ret.Available = ret.Cached + ret.Free
 		}
 	}
 
@@ -180,7 +185,7 @@ func SwapMemoryWithContext(ctx context.Context) (*SwapMemoryStat, error) {
 // calcuateAvailVmem is a fallback under kernel 3.14 where /proc/meminfo does not provide
 // "MemAvailable:" column. It reimplements an algorithm from the link below
 // https://github.com/giampaolo/psutil/pull/890
-func calcuateAvailVmem(ret *VirtualMemoryStat) uint64 {
+func calcuateAvailVmem(ret *VirtualMemoryStat, retEx *VirtualMemoryExStat) uint64 {
 	var watermarkLow uint64
 
 	fn := common.HostProc("zoneinfo")
@@ -209,7 +214,7 @@ func calcuateAvailVmem(ret *VirtualMemoryStat) uint64 {
 	watermarkLow *= pagesize
 
 	availMemory := ret.Free - watermarkLow
-	pageCache := ret.ActiveFile + ret.InactiveFile
+	pageCache := retEx.ActiveFile + retEx.InactiveFile
 	pageCache -= uint64(math.Min(float64(pageCache/2), float64(watermarkLow)))
 	availMemory += pageCache
 	availMemory += ret.SReclaimable - uint64(math.Min(float64(ret.SReclaimable/2.0), float64(watermarkLow)))
