@@ -250,11 +250,6 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 
 	for _, line := range lines {
 		var d PartitionStat
-		// a line of self/mountinfo has the following structure:
-		// 36  35  98:0 /mnt1 /mnt2 rw,noatime master:1 - ext3 /dev/root rw,errors=continue
-		// (1) (2) (3)   (4)   (5)      (6)      (7)   (8) (9)   (10)         (11)
-
-		// split the mountinfo line by the separator hyphen
 		if useMounts {
 			fields := strings.Fields(line)
 
@@ -271,6 +266,11 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 				}
 			}
 		} else {
+			// a line of self/mountinfo has the following structure:
+			// 36  35  98:0 /mnt1 /mnt2 rw,noatime master:1 - ext3 /dev/root rw,errors=continue
+			// (1) (2) (3)   (4)   (5)      (6)      (7)   (8) (9)   (10)         (11)
+
+			// split the mountinfo line by the separator hyphen
 			parts := strings.Split(line, " - ")
 			if len(parts) != 2 {
 				return nil, fmt.Errorf("found invalid mountinfo line in file %s: %s ", filename, line)
