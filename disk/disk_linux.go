@@ -232,7 +232,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 		if err != err.(*os.PathError) {
 			return nil, err
 		}
-		//if kernel not support self/mountinfo
+		// if kernel does not support self/mountinfo, fallback to self/mounts (<2.6.26)
 		useMounts = true
 		filename = common.HostProc("self/mounts")
 		lines, err = common.ReadLines(filename)
