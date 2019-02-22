@@ -61,7 +61,7 @@ func Times(percpu bool) ([]TimesStat, error) {
 
 func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 	if percpu {
-		return perCPUTimesWithContext()
+		return perCPUTimes()
 	}
 
 	var ret []TimesStat
@@ -144,9 +144,9 @@ func ProcInfoWithContext(ctx context.Context) ([]Win32_PerfFormattedData_PerfOS_
 }
 
 // perCPUTimes returns times stat per cpu, per core and overall for all CPUs
-func perCPUTimesWithContext() ([]TimesStat, error) {
+func perCPUTimes() ([]TimesStat, error) {
 	var ret []TimesStat
-	stats, err := perfInfoWithContext()
+	stats, err := perfInfo()
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +164,7 @@ func perCPUTimesWithContext() ([]TimesStat, error) {
 }
 
 // makes call to Windows API function to retrieve performance information for each core
-func perfInfoWithContext() ([]win32_SystemProcessorPerformanceInformation, error) {
+func perfInfo() ([]win32_SystemProcessorPerformanceInformation, error) {
 	// Make maxResults large for safety.
 	// We can't invoke the api call with a results array that's too small.
 	// If we have more than 2056 cores on a single host, then it's probably the future.
