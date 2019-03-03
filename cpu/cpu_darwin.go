@@ -4,6 +4,7 @@ package cpu
 
 import (
 	"context"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -84,4 +85,8 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 	c.Mhz = float64(cpuFrequency) / 1000000.0
 
 	return append(ret, c), nil
+}
+
+func CountsWithContext(ctx context.Context, logical bool) (int, error) {
+	return runtime.NumCPU(), nil
 }
