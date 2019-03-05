@@ -27,14 +27,14 @@ var (
 	// A blacklist of read-only virtual filesystems.  Writable filesystems are of
 	// operational concern and must not be included in this list.
 	fsTypeBlacklist = map[string]struct{}{
-		"ctfs":   struct{}{},
-		"dev":    struct{}{},
-		"fd":     struct{}{},
-		"lofs":   struct{}{},
-		"lxproc": struct{}{},
-		"mntfs":  struct{}{},
-		"objfs":  struct{}{},
-		"proc":   struct{}{},
+		"ctfs":   {},
+		"dev":    {},
+		"fd":     {},
+		"lofs":   {},
+		"lxproc": {},
+		"mntfs":  {},
+		"objfs":  {},
+		"proc":   {},
 	}
 )
 

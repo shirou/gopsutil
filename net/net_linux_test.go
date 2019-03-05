@@ -20,10 +20,10 @@ func TestIOCountersByFileParsing(t *testing.T) {
 	assert.Nil(t, err, "Temporary file creation failed: ", err)
 
 	cases := [4][2]string{
-		[2]string{"eth0:   ", "eth1:   "},
-		[2]string{"eth0:0:   ", "eth1:0:   "},
-		[2]string{"eth0:", "eth1:"},
-		[2]string{"eth0:0:", "eth1:0:"},
+		{"eth0:   ", "eth1:   "},
+		{"eth0:0:   ", "eth1:0:   "},
+		{"eth0:", "eth1:"},
+		{"eth0:0:", "eth1:0:"},
 	}
 	for _, testCase := range cases {
 		err = tmpfile.Truncate(0)
