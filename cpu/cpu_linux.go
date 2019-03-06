@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -304,10 +303,8 @@ func CountsWithContext(ctx context.Context, logical bool) (int, error) {
 			if err != nil {
 				return 0, err
 			}
-			re := regexp.MustCompile(`cpu\d`)
 			for _, line := range lines {
-				line = strings.Split(line, " ")[0]
-				if re.MatchString(line) {
+				if len(line) >= 4 && strings.HasPrefix(line, "cpu") && '0' <= line[3] && line[3] <= '9' { // `^cpu\d` regexp matching
 					ret++
 				}
 			}
@@ -342,7 +339,6 @@ func CountsWithContext(ctx context.Context, logical bool) (int, error) {
 		if fields[0] == "physical id" || fields[0] == "cpu cores" {
 			val, err := strconv.Atoi(strings.TrimSpace(fields[1]))
 			if err != nil {
-				fmt.Println(err)
 				continue
 			}
 			currentInfo[fields[0]] = val
