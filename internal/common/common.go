@@ -311,17 +311,42 @@ func GetEnv(key string, dfault string, combineWith ...string) string {
 	}
 }
 
-//InclusionaryPath retrieves the proper path for a file, resepecting a Bedrock Linux install with the provided environment variables over all else
-func InclusionaryPath(key string, dfault string, fpath string) string {
-	if os.Getenv(key) == "" {
-		if PathExists(filepath.Join("/bedrock", dfault, fpath)) {
-			return filepath.Join("/bedrock", dfault, fpath)
-		} else {
-			return filepath.Join(dfault, fpath)
+// BedrockCrossExists holds the result from SearchForBedrockCross to avoid excess
+// searching
+//
+// Possible values include:
+//   * -1 - not searched yet
+//   *  0 - doesn't exist in PATH
+//   *  1 - exists in path
+var BedrockCrossExists = -1
+
+// SearchForBedrockCross searches $PATH for any directories starting with /bedrock/cross
+// and stores the result in BedrockCrossExists
+func SearchForBedrockCross() {
+	pathList := strings.Split(os.Getenv("PATH"), string(os.PathListSeparator))
+
+	for _, path := range pathList {
+		if strings.HasPrefix(path, "/bedrock/cross") {
+			BedrockCrossExists = 1
+			return
 		}
-	} else {
-		return GetEnv(key, "", fpath)
 	}
+	BedrockCrossExists = 0
+			
+}
+
+// InclusionaryPath retrieves the proper path for a file, resepecting a Bedrock Linux install with the provided environment variables over all else
+func InclusionaryPath(key string, dfault string, fpath string) string {
+	if BedrockCrossExists == -1 {
+		SearchForBedrockCross()
+	}
+	if os.Getenv(key) == "" {
+		if BedrockCrossExists == 1 && PathExists(filepath.Join("/bedrock", dfault, fpath)) {
+			return filepath.Join("/bedrock", dfault, fpath)
+		}
+		return filepath.Join(dfault, fpath)
+	}
+	return GetEnv(key, "", fpath)
 }
 
 func HostProc(combineWith ...string) string {
