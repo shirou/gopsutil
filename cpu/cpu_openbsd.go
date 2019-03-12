@@ -85,9 +85,9 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 		var cpuTimes = make([]int64, CPUStates)
 		var mib []int32
 		if percpu {
-			mib = []int32{CTLKern, KernCptime}
-		} else {
 			mib = []int32{CTLKern, KernCptime2, int32(i)}
+		} else {
+			mib = []int32{CTLKern, KernCptime}
 		}
 		buf, _, err := common.CallSyscall(mib)
 		if err != nil {
@@ -106,10 +106,10 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 			Idle:   float64(cpuTimes[CPIdle]) / ClocksPerSec,
 			Irq:    float64(cpuTimes[CPIntr]) / ClocksPerSec,
 		}
-		if !percpu {
-			c.CPU = "cpu-total"
-		} else {
+		if percpu {
 			c.CPU = fmt.Sprintf("cpu%d", i)
+		} else {
+			c.CPU = "cpu-total"
 		}
 		ret = append(ret, c)
 	}
