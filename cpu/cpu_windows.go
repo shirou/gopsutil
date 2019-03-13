@@ -5,6 +5,7 @@ package cpu
 import (
 	"context"
 	"fmt"
+	"runtime"
 	"unsafe"
 
 	"github.com/StackExchange/wmi"
@@ -198,4 +199,8 @@ func perfInfo() ([]win32_SystemProcessorPerformanceInformation, error) {
 	resultBuffer = resultBuffer[:numReturnedElements]
 
 	return resultBuffer, nil
+}
+
+func CountsWithContext(ctx context.Context, logical bool) (int, error) {
+	return runtime.NumCPU(), nil
 }
