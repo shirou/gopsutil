@@ -28,6 +28,8 @@ var (
 // sys/sysctl.h
 const (
 	CTLKern     = 1  // "high kernel": proc, limits
+	CTLHw       = 6  // CTL_HW
+	NCpuOnline  = 25 // HW_NCPUONLINE
 	KernCptime  = 40 // KERN_CPTIME
 	KernCptime2 = 71 // KERN_CPTIME2
 )
@@ -134,10 +136,19 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 	}
 	c.Mhz = float64(u32)
 
-	if u32, err = unix.SysctlUint32("hw.ncpuonline"); err != nil {
+	mib := []int32{CTLHw, NCpuOnline}
+	buf, _, err := common.CallSyscall(mib)
+	if err != nil {
 		return nil, err
 	}
-	c.Cores = int32(u32)
+
+	var ncpu int32
+	br := bytes.NewReader(buf)
+	err = binary.Read(br, binary.LittleEndian, &ncpu)
+	if err != nil {
+		return nil, err
+	}
+	c.Cores = ncpu
 
 	if c.ModelName, err = unix.Sysctl("hw.model"); err != nil {
 		return nil, err
