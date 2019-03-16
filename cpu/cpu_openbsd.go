@@ -29,6 +29,7 @@ var (
 const (
 	CTLKern     = 1  // "high kernel": proc, limits
 	CTLHw       = 6  // CTL_HW
+	SMT         = 24 // HW_SMT
 	NCpuOnline  = 25 // HW_NCPUONLINE
 	KernCptime  = 40 // KERN_CPTIME
 	KernCptime2 = 71 // KERN_CPTIME2
@@ -69,6 +70,22 @@ func init() {
 	}()
 }
 
+func smt() (bool, error) {
+	mib := []int32{CTLHw, SMT}
+	buf, _, err := common.CallSyscall(mib)
+	if err != nil {
+		return false, err
+	}
+
+	var ret bool
+	br := bytes.NewReader(buf)
+	if err := binary.Read(br, binary.LittleEndian, ret); err != nil {
+		return false, err
+	}
+
+	return ret, nil
+}
+
 func Times(percpu bool) ([]TimesStat, error) {
 	return TimesWithContext(context.Background(), percpu)
 }
@@ -83,11 +100,21 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 		ncpu = 1
 	}
 
+	smt, err := smt()
+	if err != nil {
+		return nil, err
+	}
+
 	for i := 0; i < ncpu; i++ {
+		j := i
+		if !smt {
+			j *= 2
+		}
+
 		var cpuTimes = make([]int64, CPUStates)
 		var mib []int32
 		if percpu {
-			mib = []int32{CTLKern, KernCptime2, int32(i)}
+			mib = []int32{CTLKern, KernCptime2, int32(j)}
 		} else {
 			mib = []int32{CTLKern, KernCptime}
 		}
@@ -109,7 +136,7 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 			Irq:    float64(cpuTimes[CPIntr]) / ClocksPerSec,
 		}
 		if percpu {
-			c.CPU = fmt.Sprintf("cpu%d", i)
+			c.CPU = fmt.Sprintf("cpu%d", j)
 		} else {
 			c.CPU = "cpu-total"
 		}
