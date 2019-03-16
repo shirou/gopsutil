@@ -21,6 +21,7 @@ func TestVirtual_memory(t *testing.T) {
 	if v == empty {
 		t.Errorf("error %v", v)
 	}
+	t.Log(v)
 
 	assert.True(t, v.Total > 0)
 	assert.True(t, v.Available > 0)
@@ -64,6 +65,8 @@ func TestSwap_memory(t *testing.T) {
 	if v == empty {
 		t.Errorf("error %v", v)
 	}
+
+	t.Log(v)
 }
 
 func TestVirtualMemoryStat_String(t *testing.T) {
