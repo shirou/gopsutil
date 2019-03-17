@@ -100,7 +100,7 @@ type xswdev struct {
 	Used    int32  // Used is the number of blocks used
 }
 
-// xswdev11 is a compatiblity for under FreeBSD 11
+// xswdev11 is a compatibility for under FreeBSD 11
 // sys/vm/swap_pager.c
 type xswdev11 struct {
 	Version uint32 // Version is the version

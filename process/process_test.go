@@ -357,7 +357,7 @@ func Test_Connections(t *testing.T) {
 		t.Fatalf("error %v", err)
 	}
 	// TODO:
-	// Since go test open no conneciton, ret is empty.
+	// Since go test open no connection, ret is empty.
 	// should invoke child process or other solutions.
 	if len(c) != 0 {
 		t.Fatalf("wrong connections")
