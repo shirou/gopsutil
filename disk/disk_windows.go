@@ -40,8 +40,6 @@ func Usage(path string) (*UsageStat, error) {
 }
 
 func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
-	ret := &UsageStat{}
-
 	lpFreeBytesAvailable := int64(0)
 	lpTotalNumberOfBytes := int64(0)
 	lpTotalNumberOfFreeBytes := int64(0)
@@ -53,7 +51,7 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 	if diskret == 0 {
 		return nil, err
 	}
-	ret = &UsageStat{
+	return &UsageStat{
 		Path:        path,
 		Total:       uint64(lpTotalNumberOfBytes),
 		Free:        uint64(lpTotalNumberOfFreeBytes),
@@ -63,8 +61,7 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 		// InodesFree: 0,
 		// InodesUsed: 0,
 		// InodesUsedPercent: 0,
-	}
-	return ret, nil
+	}, nil
 }
 
 func Partitions(all bool) ([]PartitionStat, error) {
