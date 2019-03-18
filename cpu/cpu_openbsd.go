@@ -79,7 +79,7 @@ func smt() (bool, error) {
 
 	var ret bool
 	br := bytes.NewReader(buf)
-	if err := binary.Read(br, binary.LittleEndian, ret); err != nil {
+	if err := binary.Read(br, binary.LittleEndian, &ret); err != nil {
 		return false, err
 	}
 
