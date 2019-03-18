@@ -186,7 +186,7 @@ func (p *Process) ParentWithContext(ctx context.Context) (*Process, error) {
 // Return value could be one of these.
 // R: Running S: Sleep T: Stop I: Idle
 // Z: Zombie W: Wait L: Lock
-// The charactor is same within all supported platforms.
+// The character is same within all supported platforms.
 func (p *Process) Status() (string, error) {
 	return p.StatusWithContext(context.Background())
 }

@@ -657,7 +657,7 @@ func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, err
 			label = fmt.Sprintf("%s_", strings.Join(strings.Split(strings.TrimSpace(strings.ToLower(string(c))), " "), ""))
 		}
 
-		// Get the name of the tempearture you are reading
+		// Get the name of the temperature you are reading
 		name, err := ioutil.ReadFile(filepath.Join(filepath.Dir(file), "name"))
 		if err != nil {
 			return temperatures, err
