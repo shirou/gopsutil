@@ -390,30 +390,30 @@ func convertCPUTimes(s string) (ret float64, err error) {
 	if strings.Contains(s, ":") {
 		_t := strings.Split(s, ":")
 		if len(_t) > 3 {
-            return ret, err
-        } else if len(_t) == 3 {
-            hour, err := strconv.Atoi(_t[0])
-            if err != nil {
-                return ret, err
-            }
-            t += hour * 60 * 60 * ClockTicks
+			return ret, err
+		} else if len(_t) == 3 {
+			hour, err := strconv.Atoi(_t[0])
+			if err != nil {
+				return ret, err
+			}
+			t += hour * 60 * 60 * ClockTicks
 
-            mins, err := strconv.Atoi(_t[1])
-            if err != nil {
-                return ret, err
-            }
-            t += mins * 60 * ClockTicks
-            _tmp = _t[2]
-        } else if len(_t) == 2 {
-            mins, err := strconv.Atoi(_t[0])
-            if err != nil {
-                return ret, err
-            }
-            t += mins * 60 * ClockTicks
-            _tmp = _t[1]
-        } else {
-            _tmp = s
-        }
+			mins, err := strconv.Atoi(_t[1])
+			if err != nil {
+				return ret, err
+			}
+			t += mins * 60 * ClockTicks
+			_tmp = _t[2]
+		} else if len(_t) == 2 {
+			mins, err := strconv.Atoi(_t[0])
+			if err != nil {
+				return ret, err
+			}
+			t += mins * 60 * ClockTicks
+			_tmp = _t[1]
+		} else {
+			_tmp = s
+		}
 	} else {
 		_tmp = s
 	}
