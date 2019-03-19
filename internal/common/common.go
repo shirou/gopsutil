@@ -100,6 +100,31 @@ func ReadLines(filename string) ([]string, error) {
 	return ReadLinesOffsetN(filename, 0, -1)
 }
 
+// SplitToTwoColumns splits string with sep, and zero alloc on heap
+func SplitToTwoColumns(line, sep string) [2]string {
+	var cols [2]string
+
+	for i, v := range line {
+		if string(v) == sep {
+			cols[0] = strings.TrimSpace(line[:i])
+			if i == len(line)-1 {
+				break
+			}
+			cols[1] = strings.TrimSpace(line[i+1:])
+			break
+		}
+	}
+	return cols
+}
+
+// ReplaceSubString replace sub string with new, and zero alloc on heap
+func ReplaceSubString(s, old, new string) string {
+	if index := strings.Index(s, old); index != -1 {
+		return s[:index] + new
+	}
+	return s
+}
+
 // ReadLines reads contents from file and splits them by new line.
 // The offset tells at which line number to start.
 // The count determines the number of lines to read (starting from offset):
