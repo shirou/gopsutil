@@ -23,10 +23,13 @@ func VirtualMemory() (VirtualMemoryStat, error) {
 }
 
 func VirtualMemoryWithContext(ctx context.Context) (VirtualMemoryStat, error) {
+	ret := VirtualMemoryStat{}
+	retEx := VirtualMemoryExStat{}
+
 	filename := common.HostProc("meminfo")
 	lines, err := common.ReadLines(filename)
-	if lines == nil {
-		return nil, err
+	if err != nil {
+		return ret, err
 	}
 
 	// flag if MemAvailable is in /proc/meminfo (kernel 3.14+)
@@ -34,9 +37,6 @@ func VirtualMemoryWithContext(ctx context.Context) (VirtualMemoryStat, error) {
 	activeFile := false   // "Active(file)" not available: 2.6.28 / Dec 2008
 	inactiveFile := false // "Inactive(file)" not available: 2.6.28 / Dec 2008
 	sReclaimable := false // "SReclaimable:" not available: 2.6.19 / Nov 2006
-
-	ret := VirtualMemoryStat{}
-	retEx := VirtualMemoryExStat{}
 
 	for _, line := range lines {
 		fields := common.SplitToTwoColumns(line, ":")
