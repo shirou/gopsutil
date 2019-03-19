@@ -18,13 +18,16 @@ type VirtualMemoryExStat struct {
 	InactiveFile uint64 `json:"inactivefile"`
 }
 
-func VirtualMemory() (*VirtualMemoryStat, error) {
+func VirtualMemory() (VirtualMemoryStat, error) {
 	return VirtualMemoryWithContext(context.Background())
 }
 
 func VirtualMemoryWithContext(ctx context.Context) (VirtualMemoryStat, error) {
 	filename := common.HostProc("meminfo")
-	lines, _ := common.ReadLines(filename)
+	lines, err := common.ReadLines(filename)
+	if lines == nil {
+		return nil, err
+	}
 
 	// flag if MemAvailable is in /proc/meminfo (kernel 3.14+)
 	memavail := false
@@ -40,8 +43,8 @@ func VirtualMemoryWithContext(ctx context.Context) (VirtualMemoryStat, error) {
 		if len(fields) != 2 && fields[1] == "" {
 			continue
 		}
-		key := strings.TrimSpace(fields[0])
-		value := strings.TrimSpace(fields[1])
+		key := fields[0]
+		value := fields[1]
 		value = common.ReplaceSubString(value, " kB", "")
 
 		t, err := strconv.ParseUint(value, 10, 64)

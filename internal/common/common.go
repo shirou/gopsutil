@@ -133,13 +133,13 @@ func ReplaceSubString(s, old, new string) string {
 func ReadLinesOffsetN(filename string, offset uint, n int) ([]string, error) {
 	f, err := os.Open(filename)
 	if err != nil {
-		return []string{""}, err
+		return nil, err
 	}
 	defer f.Close()
 
-	var ret []string
+	ret := make([]string, 0, 32)
 
-	r := bufio.NewReader(f)
+	r := bufio.NewReaderSize(f, 2048)
 	for i := 0; i < n+int(offset) || n < 0; i++ {
 		line, err := r.ReadString('\n')
 		if err != nil {
