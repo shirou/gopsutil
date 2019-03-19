@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/shirou/gopsutil/internal/common"
 	"golang.org/x/sys/unix"
@@ -101,7 +102,11 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 	}
 
 	smt, err := smt()
-	if err != nil {
+	if err == syscall.EOPNOTSUPP {
+		// if hw.smt is not applicable for this platform (e.g. i386),
+		// pretend it's enabled
+		smt = true
+	} else if err != nil {
 		return nil, err
 	}
 
