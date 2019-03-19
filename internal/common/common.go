@@ -105,7 +105,7 @@ func SplitToTwoColumns(line, sep string) [2]string {
 	var cols [2]string
 
 	for i, v := range line {
-		if string(v) == sep {
+		if v == int32(sep[0]) {
 			cols[0] = strings.TrimSpace(line[:i])
 			if i == len(line)-1 {
 				break
