@@ -121,12 +121,12 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 
 	c := InfoStat{CPU: -1, Cores: 1}
 	for _, line := range lines {
-		fields := strings.Split(line, ":")
-		if len(fields) < 2 {
+		fields := common.SplitToTwoColumns(line, ":")
+		if len(fields) < 2 || fields[1] == "" {
 			continue
 		}
-		key := strings.TrimSpace(fields[0])
-		value := strings.TrimSpace(fields[1])
+		key := fields[0]
+		value := fields[1]
 
 		switch key {
 		case "Processor":
@@ -187,9 +187,7 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 		case "core id":
 			c.CoreID = value
 		case "flags", "Features":
-			c.Flags = strings.FieldsFunc(value, func(r rune) bool {
-				return r == ',' || r == ' '
-			})
+			c.Flags = value
 		case "microcode":
 			c.Microcode = value
 		}
