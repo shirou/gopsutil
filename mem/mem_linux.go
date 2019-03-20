@@ -40,7 +40,7 @@ func VirtualMemoryWithContext(ctx context.Context) (VirtualMemoryStat, error) {
 
 	for _, line := range lines {
 		fields := common.SplitToTwoColumns(line, ":")
-		if len(fields) != 2 && fields[1] == "" {
+		if len(fields) != 2 || fields[1] == "" {
 			continue
 		}
 		key := fields[0]
@@ -127,7 +127,7 @@ func VirtualMemoryWithContext(ctx context.Context) (VirtualMemoryStat, error) {
 
 	if !memavail {
 		if activeFile && inactiveFile && sReclaimable {
-			ret.Available = calcuateAvailVmem(ret, retEx)
+			ret.Available = calcuateAvailVmem(&ret, retEx)
 		} else {
 			ret.Available = ret.Cached + ret.Free
 		}
@@ -188,7 +188,7 @@ func SwapMemoryWithContext(ctx context.Context) (*SwapMemoryStat, error) {
 // calcuateAvailVmem is a fallback under kernel 3.14 where /proc/meminfo does not provide
 // "MemAvailable:" column. It reimplements an algorithm from the link below
 // https://github.com/giampaolo/psutil/pull/890
-func calcuateAvailVmem(ret VirtualMemoryStat, retEx VirtualMemoryExStat) uint64 {
+func calcuateAvailVmem(ret *VirtualMemoryStat, retEx VirtualMemoryExStat) uint64 {
 	var watermarkLow uint64
 
 	fn := common.HostProc("zoneinfo")
