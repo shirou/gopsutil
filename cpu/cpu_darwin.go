@@ -4,7 +4,6 @@ package cpu
 
 import (
 	"context"
-	"runtime"
 	"strconv"
 	"strings"
 
@@ -96,9 +95,8 @@ func CountsWithContext(ctx context.Context, logical bool) (int, error) {
 	}
 
 	count, err := unix.SysctlUint32(cpuArgument)
-
 	if err != nil {
-		return runtime.NumCPU(), nil
+		return 0, err
 	}
 
 	return int(count), nil
