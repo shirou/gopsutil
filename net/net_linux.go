@@ -16,7 +16,91 @@ import (
 	"syscall"
 
 	"github.com/shirou/gopsutil/internal/common"
+	"time"
 )
+
+func TrafficStats(pernic bool, interval time.Duration) ([]TrafficStat, error) {
+	stats1, err := TrafficStatsWithContext(context.Background(), pernic)
+	time.Sleep(interval * time.Second)
+	stats2, err := TrafficStatsWithContext(context.Background(), pernic)
+
+	merged, err := CalculateTraffic(stats1, stats2, interval)
+	return merged, err
+}
+
+func CalculateTraffic(stats1 []TrafficStat, stats2 []TrafficStat, interval time.Duration) ([]TrafficStat, error) {
+
+	merged := make([]TrafficStat, 0, len(stats1))
+
+
+	for index, nic := range stats2 {
+		bitsRecvPerSecond := (nic.BitsRecvPerSecond - stats1[index].BitsRecvPerSecond) /  uint64(interval) * 8
+		bitsSentPerSecond := (nic.BitsSentPerSecond - stats1[index].BitsSentPerSecond) / uint64(interval) * 8
+
+		calculatedNic := TrafficStat{
+			Name:              nic.Name,
+			BitsRecvPerSecond: bitsRecvPerSecond,
+			BitsSentPerSecond: bitsSentPerSecond,
+		}
+		merged = append(merged, calculatedNic)
+	}
+
+	return merged, nil
+}
+
+func TrafficStatsWithContext(ctx context.Context, pernic bool) ([]TrafficStat, error) {
+	filename := common.HostProc("net/dev")
+	return TrafficStatsByFile(pernic, filename)
+}
+
+func TrafficStatsByFile(pernic bool, filename string) ([]TrafficStat, error) {
+	return TrafficStatsByFileWithContext(context.Background(), pernic, filename)
+}
+
+func TrafficStatsByFileWithContext(ctx context.Context, pernic bool, filename string) ([]TrafficStat, error) {
+	lines, err := common.ReadLines(filename)
+
+	if err != nil {
+		return nil, err
+	}
+
+	parts := make([]string, 2)
+	statlen := len(lines) - 1
+	ret := make([]TrafficStat, 0, statlen)
+
+	for _, line := range lines[2:] {
+		separatorPos := strings.LastIndex(line, ":")
+		if separatorPos == -1 {
+			continue
+		}
+		parts[0] = line[0:separatorPos]
+		parts[1] = line[separatorPos+1:]
+
+		interfaceName := strings.TrimSpace(parts[0])
+		if interfaceName == "" {
+			continue
+		}
+
+		fields := strings.Fields(strings.TrimSpace(parts[1]))
+		bytesRecv, err := strconv.ParseUint(fields[0], 10, 64)
+		if err != nil {
+			return ret, err
+		}
+		packetsRecv, err := strconv.ParseUint(fields[1], 10, 64)
+		if err != nil {
+			return ret, err
+		}
+
+		nic := TrafficStat{
+			Name:              interfaceName,
+			BitsRecvPerSecond: bytesRecv,
+			BitsSentPerSecond: packetsRecv,
+		}
+		ret = append(ret, nic)
+	}
+
+	return ret, nil
+}
 
 // NetIOCounters returnes network I/O statistics for every network
 // interface installed on the system.  If pernic argument is false,
