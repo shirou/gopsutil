@@ -413,7 +413,7 @@ func convertCPUTimes(s string) (ret float64, err error) {
 		case 1, 0:
 			_tmp = s
 		default:
-			return ret, err
+			return ret, fmt.Errorf("wrong cpu time string")
 		}
 	} else {
 		_tmp = s
