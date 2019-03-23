@@ -4,7 +4,6 @@ package cpu
 
 import (
 	"context"
-	"runtime"
 	"strconv"
 	"strings"
 
@@ -88,5 +87,17 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 }
 
 func CountsWithContext(ctx context.Context, logical bool) (int, error) {
-	return runtime.NumCPU(), nil
+	var cpuArgument string
+	if logical {
+		cpuArgument = "hw.logicalcpu"
+	} else {
+		cpuArgument = "hw.physicalcpu"
+	}
+
+	count, err := unix.SysctlUint32(cpuArgument)
+	if err != nil {
+		return 0, err
+	}
+
+	return int(count), nil
 }
