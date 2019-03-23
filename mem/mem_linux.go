@@ -14,8 +14,8 @@ import (
 )
 
 type VirtualMemoryExStat struct {
-	ActiveFile		uint64	`json:"activefile"`
-	InactiveFile	uint64	`json:"inactivefile"`
+	ActiveFile   uint64 `json:"activefile"`
+	InactiveFile uint64 `json:"inactivefile"`
 }
 
 func VirtualMemory() (*VirtualMemoryStat, error) {
@@ -28,9 +28,9 @@ func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
 
 	// flag if MemAvailable is in /proc/meminfo (kernel 3.14+)
 	memavail := false
-	activeFile := false      // "Active(file)" not available: 2.6.28 / Dec 2008
-	inactiveFile := false    // "Inactive(file)" not available: 2.6.28 / Dec 2008
-	sReclaimable := false    // "SReclaimable:" not available: 2.6.19 / Nov 2006
+	activeFile := false   // "Active(file)" not available: 2.6.28 / Dec 2008
+	inactiveFile := false // "Inactive(file)" not available: 2.6.28 / Dec 2008
+	sReclaimable := false // "SReclaimable:" not available: 2.6.19 / Nov 2006
 
 	ret := &VirtualMemoryStat{}
 	retEx := &VirtualMemoryExStat{}
@@ -123,7 +123,7 @@ func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
 	ret.Cached += ret.SReclaimable
 
 	if !memavail {
-		if (activeFile && inactiveFile && sReclaimable) {
+		if activeFile && inactiveFile && sReclaimable {
 			ret.Available = calcuateAvailVmem(ret, retEx)
 		} else {
 			ret.Available = ret.Cached + ret.Free
@@ -192,7 +192,7 @@ func calcuateAvailVmem(ret *VirtualMemoryStat, retEx *VirtualMemoryExStat) uint6
 	lines, err := common.ReadLines(fn)
 
 	if err != nil {
-		return ret.Free + ret.Cached	// fallback under kernel 2.6.13
+		return ret.Free + ret.Cached // fallback under kernel 2.6.13
 	}
 
 	pagesize := uint64(os.Getpagesize())
