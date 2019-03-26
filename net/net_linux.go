@@ -14,27 +14,36 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/shirou/gopsutil/internal/common"
-	"time"
 )
 
 func TrafficStats(pernic bool, interval time.Duration) ([]TrafficStat, error) {
 	stats1, err := TrafficStatsWithContext(context.Background(), pernic)
+	if err != nil {
+		return nil, err
+	}
 	time.Sleep(interval * time.Second)
 	stats2, err := TrafficStatsWithContext(context.Background(), pernic)
-
+	if err != nil {
+		return nil, err
+	}
 	merged, err := CalculateTraffic(stats1, stats2, interval)
 	return merged, err
 }
 
 func CalculateTraffic(stats1 []TrafficStat, stats2 []TrafficStat, interval time.Duration) ([]TrafficStat, error) {
-
+	if len(stats1) <= 0 {
+		return nil,errors.New("First Stat size is zero")
+	}
+	if uint64(interval) <= 0 {
+		return nil, errors.New("Duration must be greater than zero")
+	}
 	merged := make([]TrafficStat, 0, len(stats1))
 
-
 	for index, nic := range stats2 {
-		bitsRecvPerSecond := (nic.BitsRecvPerSecond - stats1[index].BitsRecvPerSecond) /  uint64(interval) * 8
+		bitsRecvPerSecond := (nic.BitsRecvPerSecond - stats1[index].BitsRecvPerSecond) / uint64(interval) * 8
 		bitsSentPerSecond := (nic.BitsSentPerSecond - stats1[index].BitsSentPerSecond) / uint64(interval) * 8
 
 		calculatedNic := TrafficStat{
@@ -50,11 +59,11 @@ func CalculateTraffic(stats1 []TrafficStat, stats2 []TrafficStat, interval time.
 
 func TrafficStatsWithContext(ctx context.Context, pernic bool) ([]TrafficStat, error) {
 	filename := common.HostProc("net/dev")
-	return TrafficStatsByFile(pernic, filename)
+	return TrafficStatsByFile(ctx, pernic, filename)
 }
 
-func TrafficStatsByFile(pernic bool, filename string) ([]TrafficStat, error) {
-	return TrafficStatsByFileWithContext(context.Background(), pernic, filename)
+func TrafficStatsByFile(ctx context.Context, pernic bool, filename string) ([]TrafficStat, error) {
+	return TrafficStatsByFileWithContext(ctx, pernic, filename)
 }
 
 func TrafficStatsByFileWithContext(ctx context.Context, pernic bool, filename string) ([]TrafficStat, error) {
@@ -66,6 +75,10 @@ func TrafficStatsByFileWithContext(ctx context.Context, pernic bool, filename st
 
 	parts := make([]string, 2)
 	statlen := len(lines) - 1
+
+	if statlen <= 0 {
+		return nil, err
+	}
 	ret := make([]TrafficStat, 0, statlen)
 
 	for _, line := range lines[2:] {

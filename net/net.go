@@ -33,7 +33,10 @@ type TrafficStat struct {
 	BitsRecvPerSecond uint64 `json:"bitsRecv"` // received bits per second with N seconds average
 	BitsSentPerSecond uint64 `json:"bitsSent"` // sent bits per second with N seconds average
 }
-
+func (t TrafficStat) String() string {
+	s, _ := json.Marshal(t)
+	return string(s)
+}
 // Addr is implemented compatibility to psutil
 type Addr struct {
 	IP   string `json:"ip"`

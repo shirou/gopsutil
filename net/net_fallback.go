@@ -7,7 +7,9 @@ import (
 
 	"github.com/shirou/gopsutil/internal/common"
 )
-
+func TrafficStats(pernic bool, interval time.Duration) ([]TrafficStat, error) {
+	return 0, common.common.ErrNotImplementedError
+}
 func IOCounters(pernic bool) ([]IOCountersStat, error) {
 	return IOCountersWithContext(context.Background(), pernic)
 }
