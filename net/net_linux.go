@@ -19,21 +19,21 @@ import (
 	"github.com/shirou/gopsutil/internal/common"
 )
 
-func TrafficStats(pernic bool, interval time.Duration) ([]TrafficStat, error) {
-	stats1, err := TrafficStatsWithContext(context.Background(), pernic)
+// TrafficStats returnes traffic statistics for every network
+// interface installed on the system. Duration argument is using for
+// time window for average calculation. Duration argument must be 
+// greater than zero. 
+func TrafficStats(interval time.Duration) ([]TrafficStat, error) {
+	stats1, err := TrafficStatsWithContext(context.Background())
 	if err != nil {
 		return nil, err
 	}
 	time.Sleep(interval * time.Second)
-	stats2, err := TrafficStatsWithContext(context.Background(), pernic)
+	stats2, err := TrafficStatsWithContext(context.Background())
 	if err != nil {
 		return nil, err
 	}
-	merged, err := CalculateTraffic(stats1, stats2, interval)
-	return merged, err
-}
-
-func CalculateTraffic(stats1 []TrafficStat, stats2 []TrafficStat, interval time.Duration) ([]TrafficStat, error) {
+	
 	if len(stats1) <= 0 {
 		return nil,errors.New("First Stat size is zero")
 	}
@@ -41,7 +41,6 @@ func CalculateTraffic(stats1 []TrafficStat, stats2 []TrafficStat, interval time.
 		return nil, errors.New("Duration must be greater than zero")
 	}
 	merged := make([]TrafficStat, 0, len(stats1))
-
 	for index, nic := range stats2 {
 		bitsRecvPerSecond := (nic.BitsRecvPerSecond - stats1[index].BitsRecvPerSecond) / uint64(interval) * 8
 		bitsSentPerSecond := (nic.BitsSentPerSecond - stats1[index].BitsSentPerSecond) / uint64(interval) * 8
@@ -52,21 +51,20 @@ func CalculateTraffic(stats1 []TrafficStat, stats2 []TrafficStat, interval time.
 			BitsSentPerSecond: bitsSentPerSecond,
 		}
 		merged = append(merged, calculatedNic)
-	}
-
+	}	
 	return merged, nil
 }
 
-func TrafficStatsWithContext(ctx context.Context, pernic bool) ([]TrafficStat, error) {
+func TrafficStatsWithContext(ctx context.Context) ([]TrafficStat, error) {
 	filename := common.HostProc("net/dev")
-	return TrafficStatsByFile(ctx, pernic, filename)
+	return TrafficStatsByFile(ctx, filename)
 }
 
-func TrafficStatsByFile(ctx context.Context, pernic bool, filename string) ([]TrafficStat, error) {
-	return TrafficStatsByFileWithContext(ctx, pernic, filename)
+func TrafficStatsByFile(ctx context.Context, filename string) ([]TrafficStat, error) {
+	return TrafficStatsByFileWithContext(ctx, filename)
 }
 
-func TrafficStatsByFileWithContext(ctx context.Context, pernic bool, filename string) ([]TrafficStat, error) {
+func TrafficStatsByFileWithContext(ctx context.Context, filename string) ([]TrafficStat, error) {
 	lines, err := common.ReadLines(filename)
 
 	if err != nil {
