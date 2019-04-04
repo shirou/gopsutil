@@ -250,7 +250,7 @@ func (p *Process) CPUAffinity() ([]int32, error) {
 
 // MemoryInfo returns platform in-dependend memory information, such as RSS, VMS and Swap
 func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
-	meminfo, _, err := p.fillFromStatm()
+	meminfo, _, err := p.readFromStatm()
 	if err != nil {
 		return nil, err
 	}
@@ -259,7 +259,7 @@ func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
 
 // MemoryInfoEx returns platform dependend memory information.
 func (p *Process) MemoryInfoEx() (*MemoryInfoExStat, error) {
-	_, memInfoEx, err := p.fillFromStatm()
+	_, memInfoEx, err := p.readFromStatm()
 	if err != nil {
 		return nil, err
 	}
@@ -561,7 +561,7 @@ func (p *Process) fillFromIO(user *currentUser) (*IOCountersStat, error) {
 }
 
 // Get memory info from /proc/(pid)/statm
-func (p *Process) fillFromStatm() (*MemoryInfoStat, *MemoryInfoExStat, error) {
+func (p *Process) readFromStatm() (*MemoryInfoStat, *MemoryInfoExStat, error) {
 	pid := p.Pid
 	memPath := common.HostProc(strconv.Itoa(int(pid)), "statm")
 	contents, err := ioutil.ReadFile(memPath)
@@ -837,10 +837,14 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 			log.Debugf("Unable to read process command line for %d: %s", pid, err)
 			cmdline = []string{}
 		}
+
+		ctxSwitchesStat := &NumCtxSwitchesStat{}
 		if err := p.fillFromStatus(); err != nil {
 			log.Debugf("Unable to fill from /proc/%d/status: %s", pid, err)
+		} else {
+			ctxSwitchesStat = p.numCtxSwitches
 		}
-		memInfo, memInfoEx, err := p.fillFromStatm()
+		memInfo, memInfoEx, err := p.readFromStatm()
 		if err != nil {
 			log.Debugf("Unable to fill from /proc/%d/statm: %s", pid, err)
 			memInfo = &MemoryInfoStat{}
@@ -862,6 +866,7 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 		}
 		cwd, err := p.fillFromCwd(user)
 		if os.IsPermission(err) {
+
 			log.Debugf("Unable to access /proc/%d/cwd, permission denied", pid)
 			cwd = ""
 		} else if err != nil {
@@ -904,7 +909,7 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 			Uids:        p.uids,
 			Gids:        p.gids,
 			NumThreads:  p.numThreads,
-			CtxSwitches: p.numCtxSwitches,
+			CtxSwitches: ctxSwitchesStat,
 			// statm
 			MemInfo:   memInfo,
 			MemInfoEx: memInfoEx,
