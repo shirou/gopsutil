@@ -250,7 +250,7 @@ func (p *Process) CPUAffinity() ([]int32, error) {
 
 // MemoryInfo returns platform in-dependend memory information, such as RSS, VMS and Swap
 func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
-	meminfo, _, err := p.fillFromStatm()
+	meminfo, _, err := p.readFromStatm()
 	if err != nil {
 		return nil, err
 	}
@@ -259,7 +259,7 @@ func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
 
 // MemoryInfoEx returns platform dependend memory information.
 func (p *Process) MemoryInfoEx() (*MemoryInfoExStat, error) {
-	_, memInfoEx, err := p.fillFromStatm()
+	_, memInfoEx, err := p.readFromStatm()
 	if err != nil {
 		return nil, err
 	}
@@ -561,7 +561,7 @@ func (p *Process) fillFromIO(user *currentUser) (*IOCountersStat, error) {
 }
 
 // Get memory info from /proc/(pid)/statm
-func (p *Process) fillFromStatm() (*MemoryInfoStat, *MemoryInfoExStat, error) {
+func (p *Process) readFromStatm() (*MemoryInfoStat, *MemoryInfoExStat, error) {
 	pid := p.Pid
 	memPath := common.HostProc(strconv.Itoa(int(pid)), "statm")
 	contents, err := ioutil.ReadFile(memPath)
@@ -615,14 +615,22 @@ func (p *Process) fillFromStatm() (*MemoryInfoStat, *MemoryInfoExStat, error) {
 // Get various status from /proc/(pid)/status
 func (p *Process) fillFromStatus() error {
 	pid := p.Pid
+
+	// make sure ctxSwitches/memInfo are not nil since we are about to fill them in.
+	if p.numCtxSwitches == nil {
+		p.numCtxSwitches = &NumCtxSwitchesStat{}
+	}
+	if p.memInfo == nil {
+		p.memInfo = &MemoryInfoStat{}
+	}
+
 	statPath := common.HostProc(strconv.Itoa(int(pid)), "status")
 	contents, err := ioutil.ReadFile(statPath)
 	if err != nil {
 		return err
 	}
+
 	lines := strings.Split(string(contents), "\n")
-	p.numCtxSwitches = &NumCtxSwitchesStat{}
-	p.memInfo = &MemoryInfoStat{}
 	for _, line := range lines {
 		tabParts := strings.SplitN(line, "\t", 2)
 		if len(tabParts) < 2 {
@@ -840,7 +848,7 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 		if err := p.fillFromStatus(); err != nil {
 			log.Debugf("Unable to fill from /proc/%d/status: %s", pid, err)
 		}
-		memInfo, memInfoEx, err := p.fillFromStatm()
+		memInfo, memInfoEx, err := p.readFromStatm()
 		if err != nil {
 			log.Debugf("Unable to fill from /proc/%d/statm: %s", pid, err)
 			memInfo = &MemoryInfoStat{}
@@ -862,6 +870,7 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 		}
 		cwd, err := p.fillFromCwd(user)
 		if os.IsPermission(err) {
+
 			log.Debugf("Unable to access /proc/%d/cwd, permission denied", pid)
 			cwd = ""
 		} else if err != nil {
@@ -886,6 +895,8 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 			log.Debugf("Unable to access /proc/%d/fd: %s", pid, err)
 		} else {
 			openFdCount = int32(len(fds))
+		} else {
+			ctxSwitchesStat = p.numCtxSwitches
 		}
 
 		procs[p.Pid] = &FilledProcess{
