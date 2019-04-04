@@ -615,14 +615,22 @@ func (p *Process) readFromStatm() (*MemoryInfoStat, *MemoryInfoExStat, error) {
 // Get various status from /proc/(pid)/status
 func (p *Process) fillFromStatus() error {
 	pid := p.Pid
+
+	// make sure ctxSwitches/memInfo are not nil since we are about to fill them in.
+	if p.numCtxSwitches == nil {
+		p.numCtxSwitches = &NumCtxSwitchesStat{}
+	}
+	if p.memInfo == nil {
+		p.memInfo = &MemoryInfoStat{}
+	}
+
 	statPath := common.HostProc(strconv.Itoa(int(pid)), "status")
 	contents, err := ioutil.ReadFile(statPath)
 	if err != nil {
 		return err
 	}
+
 	lines := strings.Split(string(contents), "\n")
-	p.numCtxSwitches = &NumCtxSwitchesStat{}
-	p.memInfo = &MemoryInfoStat{}
 	for _, line := range lines {
 		tabParts := strings.SplitN(line, "\t", 2)
 		if len(tabParts) < 2 {
@@ -837,12 +845,8 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 			log.Debugf("Unable to read process command line for %d: %s", pid, err)
 			cmdline = []string{}
 		}
-
-		ctxSwitchesStat := &NumCtxSwitchesStat{}
 		if err := p.fillFromStatus(); err != nil {
 			log.Debugf("Unable to fill from /proc/%d/status: %s", pid, err)
-		} else {
-			ctxSwitchesStat = p.numCtxSwitches
 		}
 		memInfo, memInfoEx, err := p.readFromStatm()
 		if err != nil {
@@ -891,6 +895,8 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 			log.Debugf("Unable to access /proc/%d/fd: %s", pid, err)
 		} else {
 			openFdCount = int32(len(fds))
+		} else {
+			ctxSwitchesStat = p.numCtxSwitches
 		}
 
 		procs[p.Pid] = &FilledProcess{
@@ -909,7 +915,7 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 			Uids:        p.uids,
 			Gids:        p.gids,
 			NumThreads:  p.numThreads,
-			CtxSwitches: ctxSwitchesStat,
+			CtxSwitches: p.numCtxSwitches,
 			// statm
 			MemInfo:   memInfo,
 			MemInfoEx: memInfoEx,
