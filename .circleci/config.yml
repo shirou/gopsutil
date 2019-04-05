@@ -1,0 +1,23 @@
+version: 2 # use CircleCI 2.0
+jobs: # basic units of work in a run
+  build: # runs not using Workflows must have a `build` job as entry point
+    docker: # run the steps with Docker
+      # CircleCI Go images available at: https://hub.docker.com/r/circleci/golang/
+      - image: circleci/golang:1.11
+
+    # directory where steps are run. Path must conform to the Go Workspace requirements
+    working_directory: /go/src/github.com/DataDog/gopsutil
+
+    steps: # steps that comprise the `build` job
+      - checkout # check out source code to working directory
+
+      # Normally, this step would be in a custom primary image;
+      # we've added it here for the sake of explanation.
+      - run:
+          name: vendor
+          command: GO111MODULE=on go mod vendor
+
+      - run:
+          name: Run unit tests
+          command:  go test ./...
+
