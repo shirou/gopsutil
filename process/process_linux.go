@@ -895,8 +895,6 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 			log.Debugf("Unable to access /proc/%d/fd: %s", pid, err)
 		} else {
 			openFdCount = int32(len(fds))
-		} else {
-			ctxSwitchesStat = p.numCtxSwitches
 		}
 
 		procs[p.Pid] = &FilledProcess{
