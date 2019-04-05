@@ -329,21 +329,6 @@ func Test_Connections(t *testing.T) {
 	}
 }
 
-func Test_Children(t *testing.T) {
-	p, err := NewProcess(1)
-	if err != nil {
-		t.Fatalf("new process error %v", err)
-	}
-
-	c, err := p.Children()
-	if err != nil {
-		t.Fatalf("error %v", err)
-	}
-	if len(c) == 0 {
-		t.Fatalf("children is empty")
-	}
-}
-
 func Test_Username(t *testing.T) {
 	myPid := os.Getpid()
 	currentUser, _ := user.Current()

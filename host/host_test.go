@@ -47,22 +47,6 @@ func TestBoot_time(t *testing.T) {
 	}
 }
 
-func TestUsers(t *testing.T) {
-	v, err := Users()
-	if err != nil {
-		t.Errorf("error %v", err)
-	}
-	empty := UserStat{}
-	if len(v) == 0 {
-		t.Errorf("Users is empty")
-	}
-	for _, u := range v {
-		if u == empty {
-			t.Errorf("Could not Users %v", v)
-		}
-	}
-}
-
 func TestHostInfoStat_String(t *testing.T) {
 	v := InfoStat{
 		Hostname: "test",
