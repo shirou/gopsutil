@@ -1,14 +1,9 @@
 gopsutil: psutil for golang
 ==============================
 
-.. image:: https://circleci.com/gh/shirou/gopsutil.svg?&style=shield
-        :target: https://circleci.com/gh/shirou/gopsutil
+.. image:: https://circleci.com/gh/DataDog/gopsutil.svg?style=svg
+    :target: https://circleci.com/gh/DataDog/gopsutil
 
-.. image:: https://coveralls.io/repos/shirou/gopsutil/badge.svg?branch=master
-        :target: https://coveralls.io/r/shirou/gopsutil?branch=master
-
-.. image:: https://godoc.org/github.com/shirou/gopsutil?status.svg
-        :target: http://godoc.org/github.com/shirou/gopsutil
 
 This is a port of psutil (http://pythonhosted.org/psutil/). The challenge is porting all
 psutil functions on some architectures.
