@@ -622,17 +622,33 @@ func SensorsTemperatures() ([]TemperatureStat, error) {
 }
 
 func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
-	var temperatures []TemperatureStat
-	files, err := filepath.Glob(common.HostSys("/class/hwmon/hwmon*/temp*_*"))
+	temperatures, err, warnings := SensorsTemperaturesDetailsWithContext(ctx)
 	if err != nil {
 		return temperatures, err
+	}
+	if len(warnings) > 0 {
+		return temperatures, warnings[0]
+	}
+	return temperatures, nil
+}
+
+func SensorsTemperaturesDetails() ([]TemperatureStat, error, []error) {
+	return SensorsTemperaturesDetailsWithContext(context.Background())
+}
+
+func SensorsTemperaturesDetailsWithContext(ctx context.Context) ([]TemperatureStat, error, []error) {
+	var temperatures []TemperatureStat
+	var warnings []error
+	files, err := filepath.Glob(common.HostSys("/class/hwmon/hwmon*/temp*_*"))
+	if err != nil {
+		return temperatures, err, warnings
 	}
 	if len(files) == 0 {
 		// CentOS has an intermediate /device directory:
 		// https://github.com/giampaolo/psutil/issues/971
 		files, err = filepath.Glob(common.HostSys("/class/hwmon/hwmon*/device/temp*_*"))
 		if err != nil {
-			return temperatures, err
+			return temperatures, err, warnings
 		}
 	}
 
@@ -660,16 +676,19 @@ func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, err
 		// Get the name of the temperature you are reading
 		name, err := ioutil.ReadFile(filepath.Join(filepath.Dir(file), "name"))
 		if err != nil {
-			return temperatures, err
+			warnings = append(warnings, err)
+			continue
 		}
 
 		// Get the temperature reading
 		current, err := ioutil.ReadFile(file)
 		if err != nil {
-			return temperatures, err
+			warnings = append(warnings, err)
+			continue
 		}
 		temperature, err := strconv.ParseFloat(strings.TrimSpace(string(current)), 64)
 		if err != nil {
+			warnings = append(warnings, err)
 			continue
 		}
 
@@ -679,5 +698,5 @@ func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, err
 			Temperature: temperature / 1000.0,
 		})
 	}
-	return temperatures, nil
+	return temperatures, nil, warnings
 }
