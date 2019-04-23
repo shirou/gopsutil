@@ -950,6 +950,10 @@ func (p *Process) fillFromIOWithContext(ctx context.Context) (*IOCountersStat, e
 			ret.ReadBytes = t
 		case "write_bytes":
 			ret.WriteBytes = t
+		case "rchar":
+			ret.ReadChars = t
+		case "wchar":
+			ret.WriteChars = t
 		}
 	}
 
