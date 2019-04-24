@@ -89,8 +89,13 @@ func TestSwapMemoryStat_String(t *testing.T) {
 		Used:        30,
 		Free:        40,
 		UsedPercent: 30.1,
+		Sin:         1,
+		Sout:        2,
+		PgIn:        3,
+		PgOut:       4,
+		PgFault:     5,
 	}
-	e := `{"total":10,"used":30,"free":40,"usedPercent":30.1,"sin":0,"sout":0}`
+	e := `{"total":10,"used":30,"free":40,"usedPercent":30.1,"sin":1,"sout":2,"pgin":3,"pgout":4,"pgfault":5}`
 	if e != fmt.Sprintf("%v", v) {
 		t.Errorf("SwapMemoryStat string is invalid: %v", v)
 	}
