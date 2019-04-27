@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/common"
 )
 
 func TestParseDmesgBoot(t *testing.T) {

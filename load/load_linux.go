@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/common"
 )
 
 func Avg() (*AvgStat, error) {

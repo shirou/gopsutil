@@ -15,7 +15,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/common"
 )
 
 // NetIOCounters returnes network I/O statistics for every network

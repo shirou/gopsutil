@@ -6,7 +6,7 @@ import (
 	"context"
 
 	cpu "github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/common"
 )
 
 // GetDockerStat returns a list of Docker basic stats.

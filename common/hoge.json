@@ -1,0 +1,20 @@
+[
+  {"fd":4,"family":10,"type":1,"localaddr":{"ip":"","port":80},"remoteaddr":{"ip":"","port":0},"status":"LISTEN","pid":10493},
+  {"fd":6,"family":10,"type":1,"localaddr":{"ip":"","port":443},"remoteaddr":{"ip":"","port":0},"status":"LISTEN","pid":10493},
+  {"fd":4,"family":10,"type":1,"localaddr":{"ip":"","port":80},"remoteaddr":{"ip":"","port":0},"status":"LISTEN","pid":10495},
+  {"fd":6,"family":10,"type":1,"localaddr":{"ip":"","port":443},"remoteaddr":{"ip":"","port":0},"status":"LISTEN","pid":10495}, 
+  {"fd":4,"family":10,"type":1,"localaddr":{"ip":"","port":80},"remoteaddr":{"ip":"","port":0},"status":"LISTEN","pid":10497},
+  {"fd":6,"family":10,"type":1,"localaddr":{"ip":"","port":443},"remoteaddr":{"ip":"","port":0},"status":"LISTEN","pid":10497}, 
+  {"fd":4,"family":10,"type":1,"localaddr":{"ip":"","port":80},"remoteaddr":{"ip":"","port":0},"status":"LISTEN","pid":10558},
+  {"fd":6,"family":10,"type":1,"localaddr":{"ip":"","port":443},"remoteaddr":{"ip":"","port":0},"status":"LISTEN","pid":10558},
+  {"fd":4,"family":10,"type":1,"localaddr":{"ip":"","port":80},"remoteaddr":{"ip":"","port":0},"status":"LISTEN","pid":10560},
+  {"fd":6,"family":10,"type":1,"localaddr":{"ip":"","port":443},"remoteaddr":{"ip":"","port":0},"status":"LISTEN","pid":10560},
+  {"fd":4,"family":10,"type":1,"localaddr":{"ip":"","port":80},"remoteaddr":{"ip":"","port":0},"status":"LISTEN","pid":14003},
+  {"fd":6,"family":10,"type":1,"localaddr":{"ip":"","port":443},"remoteaddr":{"ip":"","port":0},"status":"LISTEN","pid":14003},
+  {"fd":4,"family":10,"type":1,"localaddr":{"ip":"","port":80},"remoteaddr":{"ip":"","port":0},"status":"LISTEN","pid":23044},
+  {"fd":6,"family":10,"type":1,"localaddr":{"ip":"","port":443},"remoteaddr":{"ip":"","port":0},"status":"LISTEN","pid":23044},
+  {"fd":4,"family":10,"type":1,"localaddr":{"ip":"","port":80},"remoteaddr":{"ip":"","port":0},"status":"LISTEN","pid":23046},
+  {"fd":6,"family":10,"type":1,"localaddr":{"ip":"","port":443},"remoteaddr":{"ip":"","port":0},"status":"LISTEN","pid":23046},
+  {"fd":4,"family":10,"type":1,"localaddr":{"ip":"","port":80},"remoteaddr":{"ip":"","port":0},"status":"LISTEN","pid":28452},
+  {"fd":6,"family":10,"type":1,"localaddr":{"ip":"","port":443},"remoteaddr":{"ip":"","port":0},"status":"LISTEN","pid":28452}
+  ]
