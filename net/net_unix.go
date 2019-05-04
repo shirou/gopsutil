@@ -6,7 +6,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/superwhiskers/gopsutil/internal/common"
 )
 
 // Return a list of network connections opened.

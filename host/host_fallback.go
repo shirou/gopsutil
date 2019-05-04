@@ -5,7 +5,7 @@ package host
 import (
 	"context"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/superwhiskers/gopsutil/internal/common"
 )
 
 func Info() (*InfoStat, error) {

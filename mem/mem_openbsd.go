@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"os/exec"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/superwhiskers/gopsutil/internal/common"
 )
 
 func GetPageSize() (uint64, error) {

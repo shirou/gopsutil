@@ -9,7 +9,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/superwhiskers/gopsutil/internal/common"
 )
 
 var invoke common.Invoker = common.Invoke{}

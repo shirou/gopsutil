@@ -12,7 +12,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/superwhiskers/gopsutil/internal/common"
 )
 
 var portMatch = regexp.MustCompile(`(.*)\.(\d+)$`)

@@ -13,9 +13,9 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/internal/common"
-	"github.com/shirou/gopsutil/net"
+	"github.com/superwhiskers/gopsutil/cpu"
+	"github.com/superwhiskers/gopsutil/internal/common"
+	"github.com/superwhiskers/gopsutil/net"
 	"golang.org/x/sys/unix"
 )
 
@@ -245,7 +245,7 @@ func (p *Process) Foreground() (bool, error) {
 }
 
 func (p *Process) ForegroundWithContext(ctx context.Context) (bool, error) {
-	// see https://github.com/shirou/gopsutil/issues/596#issuecomment-432707831 for implementation details
+	// see https://github.com/superwhiskers/gopsutil/issues/596#issuecomment-432707831 for implementation details
 	pid := p.Pid
 	ps, err := exec.LookPath("ps")
 	if err != nil {
