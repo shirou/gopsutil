@@ -46,11 +46,12 @@ func TestMisc(t *testing.T) {
 
 func TestMiscStatString(t *testing.T) {
 	v := MiscStat{
+		ProcsTotal:   4,
 		ProcsRunning: 1,
 		ProcsBlocked: 2,
 		Ctxt:         3,
 	}
-	e := `{"procsRunning":1,"procsBlocked":2,"ctxt":3}`
+	e := `{"procsTotal":4,"procsRunning":1,"procsBlocked":2,"ctxt":3}`
 	if e != fmt.Sprintf("%v", v) {
 		t.Errorf("TestMiscString string is invalid: %v", v)
 	}
