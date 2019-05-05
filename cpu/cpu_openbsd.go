@@ -37,7 +37,7 @@ var ClocksPerSec = float64(128)
 
 func init() {
 	func() {
-		getconf, err := exec.LookPath("/usr/bin/getconf")
+		getconf, err := exec.LookPath("getconf")
 		if err != nil {
 			return
 		}
