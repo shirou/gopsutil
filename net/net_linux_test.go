@@ -161,3 +161,142 @@ func TestReverse(t *testing.T) {
 	src := []byte{0x01, 0x02, 0x03}
 	assert.Equal(t, []byte{0x03, 0x02, 0x01}, Reverse(src))
 }
+
+func TestConntrackStatFileParsing(t *testing.T) {
+	tmpfile, err := ioutil.TempFile("", "proc_net_stat_conntrack")
+	defer os.Remove(tmpfile.Name())
+	assert.Nil(t, err, "Temporary file creation failed: ", err)
+
+	data := []byte(`
+entries  searched found new invalid ignore delete delete_list insert insert_failed drop early_drop icmp_error  expect_new expect_create expect_delete search_restart
+0000007b  00000000 00000000 00000000 000b115a 00000084 00000000 00000000 00000000 00000000 00000000 00000000 00000000  00000000 00000000 00000000 0000004a
+0000007b  00000000 00000000 00000000 0007eee5 00000068 00000000 00000000 00000000 00000000 00000000 00000000 00000000  00000000 00000000 00000000 00000035
+0000007b  00000000 00000000 00000000 0090346b 00000057 00000000 00000000 00000000 00000000 00000000 00000000 00000000  00000000 00000000 00000000 00000025
+0000007b  00000000 00000000 00000000 0005920f 00000069 00000000 00000000 00000000 00000000 00000000 00000000 00000000  00000000 00000000 00000000 00000064
+0000007b  00000000 00000000 00000000 000331ff 00000059 00000000 00000000 00000000 00000000 00000000 00000000 00000000  00000000 00000000 00000000 0000003b
+0000007b  00000000 00000000 00000000 000314ea 00000066 00000000 00000000 00000000 00000000 00000000 00000000 00000000  00000000 00000000 00000000 00000054
+0000007b  00000000 00000000 00000000 0002b270 00000055 00000000 00000000 00000000 00000000 00000000 00000000 00000000  00000000 00000000 00000000 0000003d
+0000007b  00000000 00000000 00000000 0002f67d 00000057 00000000 00000000 00000000 00000000 00000000 00000000 00000000  00000000 00000000 00000000 00000042
+`)
+
+	// Expected results
+	slist := NewConntrackStatList()
+
+	slist.Append(&ConntrackStat{
+		Entries:       123,
+		Searched:      0,
+		Found:         0,
+		New:           0,
+		Invalid:       725338,
+		Ignore:        132,
+		Delete:        0,
+		DeleteList:    0,
+		Insert:        0,
+		InsertFailed:  0,
+		Drop:          0,
+		EarlyDrop:     0,
+		IcmpError:     0,
+		ExpectNew:     0,
+		ExpectCreate:  0,
+		ExpectDelete:  0,
+		SearchRestart: 74,
+	})
+	slist.Append(&ConntrackStat{123, 0, 0, 0, 519909, 104, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 53})
+
+	slist.Append(&ConntrackStat{123, 0, 0, 0, 9450603, 87, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 37})
+	slist.Append(&ConntrackStat{123, 0, 0, 0, 365071, 105, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100})
+
+	slist.Append(&ConntrackStat{123, 0, 0, 0, 209407, 89, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 59})
+	slist.Append(&ConntrackStat{123, 0, 0, 0, 201962, 102, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 84})
+
+	slist.Append(&ConntrackStat{123, 0, 0, 0, 176752, 85, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 61})
+	slist.Append(&ConntrackStat{123, 0, 0, 0, 194173, 87, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 66})
+
+	// Write data to tempfile
+	_, err = tmpfile.Write(data)
+	assert.Nil(t, err, "Temporary file writing failed: ", err)
+
+	// Function under test
+	stats, err := conntrackStatsFromFile(tmpfile.Name(), true)
+	assert.Equal(t, 8, len(stats), "Expected 8 results")
+
+	summary := &ConntrackStat{}
+	for i, exp := range slist.Items() {
+		st := stats[i]
+
+		assert.Equal(t, exp.Entries, st.Entries)
+		summary.Entries += st.Entries
+
+		assert.Equal(t, exp.Searched, st.Searched)
+		summary.Searched += st.Searched
+
+		assert.Equal(t, exp.Found, st.Found)
+		summary.Found += st.Found
+
+		assert.Equal(t, exp.New, st.New)
+		summary.New += st.New
+
+		assert.Equal(t, exp.Invalid, st.Invalid)
+		summary.Invalid += st.Invalid
+
+		assert.Equal(t, exp.Ignore, st.Ignore)
+		summary.Ignore += st.Ignore
+
+		assert.Equal(t, exp.Delete, st.Delete)
+		summary.Delete += st.Delete
+
+		assert.Equal(t, exp.DeleteList, st.DeleteList)
+		summary.DeleteList += st.DeleteList
+
+		assert.Equal(t, exp.Insert, st.Insert)
+		summary.Insert += st.Insert
+
+		assert.Equal(t, exp.InsertFailed, st.InsertFailed)
+		summary.InsertFailed += st.InsertFailed
+
+		assert.Equal(t, exp.Drop, st.Drop)
+		summary.Drop += st.Drop
+
+		assert.Equal(t, exp.EarlyDrop, st.EarlyDrop)
+		summary.EarlyDrop += st.EarlyDrop
+
+		assert.Equal(t, exp.IcmpError, st.IcmpError)
+		summary.IcmpError += st.IcmpError
+
+		assert.Equal(t, exp.ExpectNew, st.ExpectNew)
+		summary.ExpectNew += st.ExpectNew
+
+		assert.Equal(t, exp.ExpectCreate, st.ExpectCreate)
+		summary.ExpectCreate += st.ExpectCreate
+
+		assert.Equal(t, exp.ExpectDelete, st.ExpectDelete)
+		summary.ExpectDelete += st.ExpectDelete
+
+		assert.Equal(t, exp.SearchRestart, st.SearchRestart)
+		summary.SearchRestart += st.SearchRestart
+	}
+
+	// Test summary grouping
+	totals, err := conntrackStatsFromFile(tmpfile.Name(), false)
+	for i, st := range totals {
+		assert.Equal(t, summary.Entries, st.Entries)
+		assert.Equal(t, summary.Searched, st.Searched)
+		assert.Equal(t, summary.Found, st.Found)
+		assert.Equal(t, summary.New, st.New)
+		assert.Equal(t, summary.Invalid, st.Invalid)
+		assert.Equal(t, summary.Ignore, st.Ignore)
+		assert.Equal(t, summary.Delete, st.Delete)
+		assert.Equal(t, summary.DeleteList, st.DeleteList)
+		assert.Equal(t, summary.Insert, st.Insert)
+		assert.Equal(t, summary.InsertFailed, st.InsertFailed)
+		assert.Equal(t, summary.Drop, st.Drop)
+		assert.Equal(t, summary.EarlyDrop, st.EarlyDrop)
+		assert.Equal(t, summary.IcmpError, st.IcmpError)
+		assert.Equal(t, summary.ExpectNew, st.ExpectNew)
+		assert.Equal(t, summary.ExpectCreate, st.ExpectCreate)
+		assert.Equal(t, summary.ExpectDelete, st.ExpectDelete)
+		assert.Equal(t, summary.SearchRestart, st.SearchRestart)
+
+		assert.Equal(t, 0, i) // Should only have one element
+	}
+}
