@@ -298,6 +298,14 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 				}
 			}
 
+			if strings.HasPrefix(d.Device, "/dev/mapper/") {
+				devpath, err := os.Readlink(d.Device)
+				if err != nil {
+					return nil, err
+				}
+				d.Device = "/dev/" + filepath.Base(devpath)
+			}
+
 			// /dev/root is not the real device name
 			// so we get the real device name from its major/minor number
 			if d.Device == "/dev/root" {
