@@ -31,6 +31,7 @@ type Win32_PerfFormattedData struct {
 	AvgDiskWriteQueueLength uint64
 	AvgDisksecPerRead       uint64
 	AvgDisksecPerWrite      uint64
+	AvgDiskQueueLength      uint64
 }
 
 const WaitMSec = 500
@@ -160,6 +161,7 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 			WriteBytes: uint64(d.AvgDiskBytesPerWrite),
 			ReadTime:   d.AvgDisksecPerRead,
 			WriteTime:  d.AvgDisksecPerWrite,
+			WeightedIO: d.AvgDiskQueueLength,
 		}
 	}
 	return ret, nil
