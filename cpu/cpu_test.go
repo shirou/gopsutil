@@ -6,6 +6,8 @@ import (
 	"runtime"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCpu_times(t *testing.T) {
@@ -22,6 +24,34 @@ func TestCpu_times(t *testing.T) {
 			t.Errorf("could not get CPU User: %v", vv)
 		}
 	}
+
+	// test sum of per cpu stats is within margin of error for cpu total stats
+	cpuTotal, err := Times(false)
+	if err != nil {
+		t.Errorf("error %v", err)
+	}
+	if len(cpuTotal) == 0 {
+		t.Error("could not get CPUs ", err)
+	}
+	perCPU, err := Times(true)
+	if err != nil {
+		t.Errorf("error %v", err)
+	}
+	if len(perCPU) == 0 {
+		t.Error("could not get CPUs ", err)
+	}
+	var perCPUUserTimeSum float64
+	var perCPUSystemTimeSum float64
+	var perCPUIdleTimeSum float64
+	for _, pc := range perCPU {
+		perCPUUserTimeSum += pc.User
+		perCPUSystemTimeSum += pc.System
+		perCPUIdleTimeSum += pc.Idle
+	}
+	margin := 2.0
+	assert.InEpsilon(t, cpuTotal[0].User, perCPUUserTimeSum, margin)
+	assert.InEpsilon(t, cpuTotal[0].System, perCPUSystemTimeSum, margin)
+	assert.InEpsilon(t, cpuTotal[0].Idle, perCPUIdleTimeSum, margin)
 }
 
 func TestCpu_counts(t *testing.T) {
@@ -41,7 +71,7 @@ func TestCPUTimeStat_String(t *testing.T) {
 		System: 200.1,
 		Idle:   300.1,
 	}
-	e := `{"cpu":"cpu0","user":100.1,"system":200.1,"idle":300.1,"nice":0.0,"iowait":0.0,"irq":0.0,"softirq":0.0,"steal":0.0,"guest":0.0,"guestNice":0.0,"stolen":0.0}`
+	e := `{"cpu":"cpu0","user":100.1,"system":200.1,"idle":300.1,"nice":0.0,"iowait":0.0,"irq":0.0,"softirq":0.0,"steal":0.0,"guest":0.0,"guestNice":0.0}`
 	if e != fmt.Sprintf("%v", v) {
 		t.Errorf("CPUTimesStat string is invalid: %v", v)
 	}

@@ -89,6 +89,7 @@ func Test_Process_memory_maps(t *testing.T) {
 		t.Errorf("error %v", err)
 	}
 
+	// ungrouped memory maps
 	mmaps, err := ret.MemoryMaps(false)
 	if err != nil {
 		t.Errorf("memory map get error %v", err)
@@ -98,6 +99,18 @@ func Test_Process_memory_maps(t *testing.T) {
 		if m == empty {
 			t.Errorf("memory map get error %v", m)
 		}
+	}
+
+	// grouped memory maps
+	mmaps, err = ret.MemoryMaps(true)
+	if err != nil {
+		t.Errorf("memory map get error %v", err)
+	}
+	if len(*mmaps) != 1 {
+		t.Errorf("grouped memory maps length (%v) is not equal to 1", len(*mmaps))
+	}
+	if (*mmaps)[0] == empty {
+		t.Errorf("memory map is empty")
 	}
 }
 func Test_Process_MemoryInfo(t *testing.T) {
@@ -168,12 +181,6 @@ func Test_Process_Terminal(t *testing.T) {
 	if err != nil {
 		t.Errorf("geting terminal error %v", err)
 	}
-
-	/*
-		if v == "" {
-			t.Errorf("could not get terminal %v", v)
-		}
-	*/
 }
 
 func Test_Process_IOCounters(t *testing.T) {
@@ -350,7 +357,7 @@ func Test_Connections(t *testing.T) {
 		t.Fatalf("error %v", err)
 	}
 	// TODO:
-	// Since go test open no conneciton, ret is empty.
+	// Since go test open no connection, ret is empty.
 	// should invoke child process or other solutions.
 	if len(c) != 0 {
 		t.Fatalf("wrong connections")

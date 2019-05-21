@@ -42,6 +42,10 @@ type VirtualMemoryStat struct {
 	Inactive uint64 `json:"inactive"`
 	Wired    uint64 `json:"wired"`
 
+	// FreeBSD specific numbers:
+	// https://reviews.freebsd.org/D8467
+	Laundry uint64 `json:"laundry"`
+
 	// Linux specific numbers
 	// https://www.centos.org/docs/5/html/5.1/Deployment_Guide/s2-proc-meminfo.html
 	// https://www.kernel.org/doc/Documentation/filesystems/proc.txt
@@ -53,6 +57,7 @@ type VirtualMemoryStat struct {
 	WritebackTmp   uint64 `json:"writebacktmp"`
 	Shared         uint64 `json:"shared"`
 	Slab           uint64 `json:"slab"`
+	SReclaimable   uint64 `json:"sreclaimable"`
 	PageTables     uint64 `json:"pagetables"`
 	SwapCached     uint64 `json:"swapcached"`
 	CommitLimit    uint64 `json:"commitlimit"`
@@ -79,6 +84,9 @@ type SwapMemoryStat struct {
 	UsedPercent float64 `json:"usedPercent"`
 	Sin         uint64  `json:"sin"`
 	Sout        uint64  `json:"sout"`
+	PgIn        uint64  `json:"pgin"`
+	PgOut       uint64  `json:"pgout"`
+	PgFault     uint64  `json:"pgfault"`
 }
 
 func (m VirtualMemoryStat) String() string {

@@ -73,7 +73,11 @@ func InfoWithContext(ctx context.Context) (*InfoStat, error) {
 	}
 
 	sysProductUUID := common.HostSys("class/dmi/id/product_uuid")
+	machineID := common.HostEtc("machine-id")
+	procSysKernelRandomBootID := common.HostProc("sys/kernel/random/boot_id")
 	switch {
+	// In order to read this file, needs to be supported by kernel/arch and run as root
+	// so having fallback is important
 	case common.PathExists(sysProductUUID):
 		lines, err := common.ReadLines(sysProductUUID)
 		if err == nil && len(lines) > 0 && lines[0] != "" {
@@ -81,10 +85,20 @@ func InfoWithContext(ctx context.Context) (*InfoStat, error) {
 			break
 		}
 		fallthrough
+	// Fallback on GNU Linux systems with systemd, readable by everyone
+	case common.PathExists(machineID):
+		lines, err := common.ReadLines(machineID)
+		if err == nil && len(lines) > 0 && len(lines[0]) == 32 {
+			st := lines[0]
+			ret.HostID = fmt.Sprintf("%s-%s-%s-%s-%s", st[0:8], st[8:12], st[12:16], st[16:20], st[20:32])
+			break
+		}
+		fallthrough
+	// Not stable between reboot, but better than nothing
 	default:
-		values, err := common.DoSysctrl("kernel.random.boot_id")
-		if err == nil && len(values) == 1 && values[0] != "" {
-			ret.HostID = strings.ToLower(values[0])
+		lines, err := common.ReadLines(procSysKernelRandomBootID)
+		if err == nil && len(lines) > 0 && lines[0] != "" {
+			ret.HostID = strings.ToLower(lines[0])
 		}
 	}
 
@@ -265,7 +279,7 @@ func getLSB() (*LSB, error) {
 			}
 		}
 	} else if common.PathExists("/usr/bin/lsb_release") {
-		lsb_release, err := exec.LookPath("/usr/bin/lsb_release")
+		lsb_release, err := exec.LookPath("lsb_release")
 		if err != nil {
 			return ret, err
 		}
@@ -643,7 +657,7 @@ func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, err
 			label = fmt.Sprintf("%s_", strings.Join(strings.Split(strings.TrimSpace(strings.ToLower(string(c))), " "), ""))
 		}
 
-		// Get the name of the tempearture you are reading
+		// Get the name of the temperature you are reading
 		name, err := ioutil.ReadFile(filepath.Join(filepath.Dir(file), "name"))
 		if err != nil {
 			return temperatures, err

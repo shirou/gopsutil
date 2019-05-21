@@ -42,7 +42,7 @@ func parseNetstatLine(line string) (stat *IOCountersStat, linkID *uint, err erro
 
 	base := 1
 	numberColumns := len(columns)
-	// sometimes Address is ommitted
+	// sometimes Address is omitted
 	if numberColumns < 12 {
 		base = 0
 	}
@@ -174,7 +174,7 @@ func IOCountersWithContext(ctx context.Context, pernic bool) ([]IOCountersStat, 
 		retIndex int
 	)
 
-	netstat, err := exec.LookPath("/usr/sbin/netstat")
+	netstat, err := exec.LookPath("netstat")
 	if err != nil {
 		return nil, err
 	}
@@ -204,7 +204,7 @@ func IOCountersWithContext(ctx context.Context, pernic bool) ([]IOCountersStat, 
 		}
 	} else {
 		// duplicated interface, list all interfaces
-		ifconfig, err := exec.LookPath("/sbin/ifconfig")
+		ifconfig, err := exec.LookPath("ifconfig")
 		if err != nil {
 			return nil, err
 		}

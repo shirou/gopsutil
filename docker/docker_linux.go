@@ -93,6 +93,14 @@ func CgroupCPU(containerID string, base string) (*cpu.TimesStat, error) {
 	return CgroupCPUWithContext(context.Background(), containerID, base)
 }
 
+// CgroupCPUUsage returnes specified cgroup id CPU usage.
+// containerID is same as docker id if you use docker.
+// If you use container via systemd.slice, you could use
+// containerID = docker-<container id>.scope and base=/sys/fs/cgroup/cpuacct/system.slice/
+func CgroupCPUUsage(containerID string, base string) (float64, error) {
+	return CgroupCPUUsageWithContext(context.Background(), containerID, base)
+}
+
 func CgroupCPUWithContext(ctx context.Context, containerID string, base string) (*cpu.TimesStat, error) {
 	statfile := getCgroupFilePath(containerID, base, "cpuacct", "cpuacct.stat")
 	lines, err := common.ReadLines(statfile)
@@ -109,26 +117,48 @@ func CgroupCPUWithContext(ctx context.Context, containerID string, base string) 
 		if fields[0] == "user" {
 			user, err := strconv.ParseFloat(fields[1], 64)
 			if err == nil {
-				ret.User = float64(user)
+				ret.User = user / cpu.CPUTick
 			}
 		}
 		if fields[0] == "system" {
 			system, err := strconv.ParseFloat(fields[1], 64)
 			if err == nil {
-				ret.System = float64(system)
+				ret.System = system / cpu.CPUTick
 			}
 		}
 	}
-
 	return ret, nil
+}
+
+func CgroupCPUUsageWithContext(ctx context.Context, containerID, base string) (float64, error) {
+	usagefile := getCgroupFilePath(containerID, base, "cpuacct", "cpuacct.usage")
+	lines, err := common.ReadLinesOffsetN(usagefile, 0, 1)
+	if err != nil {
+		return 0.0, err
+	}
+
+	ns, err := strconv.ParseFloat(lines[0], 64)
+	if err != nil {
+		return 0.0, err
+	}
+
+	return ns / nanoseconds, nil
 }
 
 func CgroupCPUDocker(containerid string) (*cpu.TimesStat, error) {
 	return CgroupCPUDockerWithContext(context.Background(), containerid)
 }
 
+func CgroupCPUUsageDocker(containerid string) (float64, error) {
+	return CgroupCPUDockerUsageWithContext(context.Background(), containerid)
+}
+
 func CgroupCPUDockerWithContext(ctx context.Context, containerid string) (*cpu.TimesStat, error) {
 	return CgroupCPU(containerid, common.HostSys("fs/cgroup/cpuacct/docker"))
+}
+
+func CgroupCPUDockerUsageWithContext(ctx context.Context, containerid string) (float64, error) {
+	return CgroupCPUUsage(containerid, common.HostSys("fs/cgroup/cpuacct/docker"))
 }
 
 func CgroupMem(containerID string, base string) (*CgroupMemStat, error) {
@@ -170,43 +200,43 @@ func CgroupMemWithContext(ctx context.Context, containerID string, base string) 
 			ret.Pgfault = v
 		case "pgmajfault":
 			ret.Pgmajfault = v
-		case "inactiveAnon":
+		case "inactiveAnon", "inactive_anon":
 			ret.InactiveAnon = v
-		case "activeAnon":
+		case "activeAnon", "active_anon":
 			ret.ActiveAnon = v
-		case "inactiveFile":
+		case "inactiveFile", "inactive_file":
 			ret.InactiveFile = v
-		case "activeFile":
+		case "activeFile", "active_file":
 			ret.ActiveFile = v
 		case "unevictable":
 			ret.Unevictable = v
-		case "hierarchicalMemoryLimit":
+		case "hierarchicalMemoryLimit", "hierarchical_memory_limit":
 			ret.HierarchicalMemoryLimit = v
-		case "totalCache":
+		case "totalCache", "total_cache":
 			ret.TotalCache = v
-		case "totalRss":
+		case "totalRss", "total_rss":
 			ret.TotalRSS = v
-		case "totalRssHuge":
+		case "totalRssHuge", "total_rss_huge":
 			ret.TotalRSSHuge = v
-		case "totalMappedFile":
+		case "totalMappedFile", "total_mapped_file":
 			ret.TotalMappedFile = v
-		case "totalPgpgin":
+		case "totalPgpgin", "total_pgpgin":
 			ret.TotalPgpgIn = v
-		case "totalPgpgout":
+		case "totalPgpgout", "total_pgpgout":
 			ret.TotalPgpgOut = v
-		case "totalPgfault":
+		case "totalPgfault", "total_pgfault":
 			ret.TotalPgFault = v
-		case "totalPgmajfault":
+		case "totalPgmajfault", "total_pgmajfault":
 			ret.TotalPgMajFault = v
-		case "totalInactiveAnon":
+		case "totalInactiveAnon", "total_inactive_anon":
 			ret.TotalInactiveAnon = v
-		case "totalActiveAnon":
+		case "totalActiveAnon", "total_active_anon":
 			ret.TotalActiveAnon = v
-		case "totalInactiveFile":
+		case "totalInactiveFile", "total_inactive_file":
 			ret.TotalInactiveFile = v
-		case "totalActiveFile":
+		case "totalActiveFile", "total_active_file":
 			ret.TotalActiveFile = v
-		case "totalUnevictable":
+		case "totalUnevictable", "total_unevictable":
 			ret.TotalUnevictable = v
 		}
 	}
@@ -239,7 +269,7 @@ func CgroupMemDockerWithContext(ctx context.Context, containerID string) (*Cgrou
 	return CgroupMem(containerID, common.HostSys("fs/cgroup/memory/docker"))
 }
 
-// getCgroupFilePath constructs file path to get targetted stats file.
+// getCgroupFilePath constructs file path to get targeted stats file.
 func getCgroupFilePath(containerID, base, target, file string) string {
 	if len(base) == 0 {
 		base = common.HostSys(fmt.Sprintf("fs/cgroup/%s/docker", target))
