@@ -17,7 +17,7 @@ import (
 var ClocksPerSec = float64(128)
 
 func init() {
-	getconf, err := exec.LookPath("/usr/bin/getconf")
+	getconf, err := exec.LookPath("getconf")
 	if err != nil {
 		return
 	}
@@ -44,7 +44,7 @@ func Info() ([]InfoStat, error) {
 }
 
 func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
-	psrInfo, err := exec.LookPath("/usr/sbin/psrinfo")
+	psrInfo, err := exec.LookPath("psrinfo")
 	if err != nil {
 		return nil, fmt.Errorf("cannot find psrinfo: %s", err)
 	}
@@ -53,7 +53,7 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 		return nil, fmt.Errorf("cannot execute psrinfo: %s", err)
 	}
 
-	isaInfo, err := exec.LookPath("/usr/bin/isainfo")
+	isaInfo, err := exec.LookPath("isainfo")
 	if err != nil {
 		return nil, fmt.Errorf("cannot find isainfo: %s", err)
 	}
