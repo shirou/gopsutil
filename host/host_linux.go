@@ -571,7 +571,6 @@ func VirtualizationWithContext(ctx context.Context) (string, string, error) {
 		contents, err := common.ReadLines(filename)
 		if err == nil {
 			if common.StringsContains(contents, "virtio-pci") {
-				system = "kvm"
 				role = "guest"
 			}
 		}
