@@ -49,11 +49,6 @@ func NumProcs() (uint64, error) {
 // cachedBootTime must be accessed via atomic.Load/StoreUint64
 var cachedBootTime uint64
 
-// BootTime returns the system boot time expressed in seconds since the epoch.
-func BootTime() (uint64, error) {
-	return BootTimeWithContext(context.Background())
-}
-
 func BootTimeWithContext(ctx context.Context) (uint64, error) {
 	t := atomic.LoadUint64(&cachedBootTime)
 	if t != 0 {
