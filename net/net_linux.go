@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"io"
 
 	"github.com/shirou/gopsutil/internal/common"
 )
@@ -581,7 +582,7 @@ func getProcInodesAll(root string, max int) (map[string][]inodeMap, error) {
 		t, err := getProcInodes(root, pid, max)
 		if err != nil {
 			// skip if permission error or no longer exists
-			if os.IsPermission(err) || os.IsNotExist(err) {
+			if os.IsPermission(err) || os.IsNotExist(err) || err == io.EOF {
 				continue
 			}
 			return ret, err
