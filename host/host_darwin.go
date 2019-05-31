@@ -190,7 +190,7 @@ func PlatformInformationWithContext(ctx context.Context) (string, string, string
 	}
 
 	// check if the macos server version file exists
-	_, err := os.Stat("/System/Library/CoreServices/ServerVersion.plist")
+	_, err = os.Stat("/System/Library/CoreServices/ServerVersion.plist")
 
 	// server file doesn't exist
 	if os.IsNotExist(err) {
