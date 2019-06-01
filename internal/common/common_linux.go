@@ -164,6 +164,16 @@ func VirtualizationWithContext(ctx context.Context) (string, string, error) {
 		}
 	}
 
+	filename = HostProc("bus/pci/devices")
+	if PathExists(filename) {
+		contents, err := ReadLines(filename)
+		if err == nil {
+			if StringsContains(contents, "virtio-pci") {
+				role = "guest"
+			}
+		}
+	}
+
 	filename = HostProc()
 	if PathExists(filepath.Join(filename, "bc", "0")) {
 		system = "openvz"
