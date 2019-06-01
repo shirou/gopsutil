@@ -51,6 +51,12 @@ func TestByteToString(t *testing.T) {
 	}
 }
 
+func TestHexToUint32(t *testing.T) {
+	if HexToUint32("FFFFFFFF") != 4294967295 {
+		t.Error("Could not convert")
+	}
+}
+
 func TestmustParseInt32(t *testing.T) {
 	ret := mustParseInt32("11111")
 	if ret != int32(11111) {
