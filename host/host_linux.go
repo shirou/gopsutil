@@ -342,7 +342,7 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 		family = "fedora"
 	case "oracle", "centos", "redhat", "scientific", "enterpriseenterprise", "amazon", "xenserver", "cloudlinux", "ibm_powerkvm":
 		family = "rhel"
-	case "suse", "opensuse":
+	case "suse", "opensuse", "sles":
 		family = "suse"
 	case "gentoo":
 		family = "gentoo"
@@ -457,6 +457,7 @@ func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, err
 			return temperatures, err
 		}
 	}
+	var warns Warnings
 
 	// example directory
 	// device/           temp1_crit_alarm  temp2_crit_alarm  temp3_crit_alarm  temp4_crit_alarm  temp5_crit_alarm  temp6_crit_alarm  temp7_crit_alarm
@@ -482,16 +483,19 @@ func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, err
 		// Get the name of the temperature you are reading
 		name, err := ioutil.ReadFile(filepath.Join(filepath.Dir(file), "name"))
 		if err != nil {
-			return temperatures, err
+			warns.Add(err)
+			continue
 		}
 
 		// Get the temperature reading
 		current, err := ioutil.ReadFile(file)
 		if err != nil {
-			return temperatures, err
+			warns.Add(err)
+			continue
 		}
 		temperature, err := strconv.ParseFloat(strings.TrimSpace(string(current)), 64)
 		if err != nil {
+			warns.Add(err)
 			continue
 		}
 
@@ -501,5 +505,5 @@ func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, err
 			Temperature: temperature / 1000.0,
 		})
 	}
-	return temperatures, nil
+	return temperatures, warns.Reference()
 }
