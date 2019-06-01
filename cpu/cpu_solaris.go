@@ -1,6 +1,7 @@
 package cpu
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -10,8 +11,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-
-	"github.com/shirou/gopsutil/internal/common"
 )
 
 var ClocksPerSec = float64(128)
@@ -31,12 +30,96 @@ func init() {
 	}
 }
 
+//sum all values in a float64 map with float64 keys
+func msum(x map[float64]float64) float64 {
+	total := 0.0
+	for _, y := range x {
+		total += y
+	}
+	return total
+}
+
 func Times(percpu bool) ([]TimesStat, error) {
 	return TimesWithContext(context.Background(), percpu)
 }
 
 func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
-	return []TimesStat{}, common.ErrNotImplementedError
+	kstatSys, err := exec.LookPath("kstat")
+	if err != nil {
+		return nil, fmt.Errorf("cannot find kstat: %s", err)
+	}
+	cpu := make(map[float64]float64)
+	idle := make(map[float64]float64)
+	user := make(map[float64]float64)
+	kern := make(map[float64]float64)
+	iowt := make(map[float64]float64)
+	//swap := make(map[float64]float64)
+	kstatSysOut, err := invoke.CommandWithContext(ctx, kstatSys, "-C", "cpu_stat:*:*:/^idle$|^user$|^kernel$|^iowait$|^swap$/")
+	if err != nil {
+		return nil, fmt.Errorf("cannot execute kstat: %s", err)
+	}
+	for _, line := range strings.Split(bytes.NewBuffer(kstatSysOut).String(), "\n") {
+		fields := strings.Split(line, ":")
+		if fields[0] != "cpu_stat" {
+			continue
+		}
+		cpuNumber, err := strconv.ParseFloat(fields[1], 64)
+		if err != nil {
+			return nil, fmt.Errorf("cannot parse cpu number: %s", err)
+		}
+		cpu[cpuNumber] = cpuNumber
+		switch fields[3] {
+		case "idle":
+			idle[cpuNumber], err = strconv.ParseFloat(fields[4], 64)
+			if err != nil {
+				return nil, fmt.Errorf("cannot parse idle: %s", err)
+			}
+		case "user":
+			user[cpuNumber], err = strconv.ParseFloat(fields[4], 64)
+			if err != nil {
+				return nil, fmt.Errorf("cannot parse user: %s", err)
+			}
+		case "kernel":
+			kern[cpuNumber], err = strconv.ParseFloat(fields[4], 64)
+			if err != nil {
+				return nil, fmt.Errorf("cannot parse kernel: %s", err)
+			}
+		case "iowait":
+			iowt[cpuNumber], err = strconv.ParseFloat(fields[4], 64)
+			if err != nil {
+				return nil, fmt.Errorf("cannot parse iowait: %s", err)
+			}
+			//not sure how this translates, don't report, add to kernel, something else?
+			/*case "swap":
+			swap[cpuNumber], err = strconv.ParseFloat(fields[4], 64)
+			if err != nil {
+				return nil, fmt.Errorf("cannot parse swap: %s", err)
+			} */
+		}
+	}
+	ret := make([]TimesStat, 0, len(cpu))
+	if percpu {
+		for _, c := range cpu {
+			ct := &TimesStat{
+				CPU:    fmt.Sprintf("cpu%d", int(cpu[c])),
+				Idle:   idle[c] / ClocksPerSec,
+				User:   user[c] / ClocksPerSec,
+				System: kern[c] / ClocksPerSec,
+				Iowait: iowt[c] / ClocksPerSec,
+			}
+			ret = append(ret, *ct)
+		}
+	} else {
+		ct := &TimesStat{
+			CPU:    "cpu-total",
+			Idle:   msum(idle) / ClocksPerSec,
+			User:   msum(user) / ClocksPerSec,
+			System: msum(kern) / ClocksPerSec,
+			Iowait: msum(iowt) / ClocksPerSec,
+		}
+		ret = append(ret, *ct)
+	}
+	return ret, nil
 }
 
 func Info() ([]InfoStat, error) {
