@@ -16,7 +16,6 @@ import (
 	"strings"
 
 	"github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/internal/common"
 	"github.com/shirou/gopsutil/net"
 	"golang.org/x/sys/unix"
@@ -1236,7 +1235,7 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 		System: float64(stime / ClockTicks),
 	}
 
-	bootTime, _ := host.BootTime()
+	bootTime, _ := common.BootTimeWithContext(ctx)
 	t, err := strconv.ParseUint(fields[i+20], 10, 64)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
