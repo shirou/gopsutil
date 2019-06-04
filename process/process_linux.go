@@ -856,7 +856,7 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 		}
 		ioStat, err := p.fillFromIO(user)
 		if os.IsPermission(err) {
-			log.Debugf("Unable to access /proc/%d/io, permission denied", pid)
+			log.Tracef("Unable to access /proc/%d/io, permission denied", pid)
 			// Without root permissions we can't read for other processes.
 			ioStat = &IOCountersStat{}
 		} else if err != nil {
@@ -871,7 +871,7 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 		cwd, err := p.fillFromCwd(user)
 		if os.IsPermission(err) {
 
-			log.Debugf("Unable to access /proc/%d/cwd, permission denied", pid)
+			log.Tracef("Unable to access /proc/%d/cwd, permission denied", pid)
 			cwd = ""
 		} else if err != nil {
 			log.Debugf("Unable to access /proc/%d/cwd: %s", pid, err)
@@ -880,7 +880,7 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 		exe, err := p.fillFromExe(user)
 		if os.IsPermission(err) {
 			// Without root permissions we can't read for other processes.
-			log.Debugf("Unable to access /proc/%d/exe, permission denied", pid)
+			log.Tracef("Unable to access /proc/%d/exe, permission denied", pid)
 			exe = ""
 		} else if err != nil {
 			log.Debugf("Unable to access /proc/%d/exe: %s", pid, err)
@@ -890,7 +890,7 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 		_, fds, err := p.fillFromfdList(user)
 		if os.IsPermission(err) {
 			// Without root permissions we can't read for other processes.
-			log.Debugf("Unable to access /proc/%d/fd, permission denied", pid)
+			log.Tracef("Unable to access /proc/%d/fd, permission denied", pid)
 		} else if err != nil {
 			log.Debugf("Unable to access /proc/%d/fd: %s", pid, err)
 		} else {
