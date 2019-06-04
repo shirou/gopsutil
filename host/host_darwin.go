@@ -189,6 +189,16 @@ func PlatformInformationWithContext(ctx context.Context) (string, string, string
 		pver = strings.ToLower(strings.TrimSpace(string(out)))
 	}
 
+	// check if the macos server version file exists
+	_, err = os.Stat("/System/Library/CoreServices/ServerVersion.plist")
+
+	// server file doesn't exist
+	if os.IsNotExist(err) {
+		family = "Standalone Workstation"
+	} else {
+		family = "Server"
+	}
+
 	return platform, family, pver, nil
 }
 
