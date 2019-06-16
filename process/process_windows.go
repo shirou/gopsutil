@@ -25,12 +25,15 @@ const (
 )
 
 var (
-	modpsapi                 = windows.NewLazySystemDLL("psapi.dll")
-	procGetProcessMemoryInfo = modpsapi.NewProc("GetProcessMemoryInfo")
+	modpsapi                     = windows.NewLazySystemDLL("psapi.dll")
+	procGetProcessMemoryInfo     = modpsapi.NewProc("GetProcessMemoryInfo")
+	procGetProcessImageFileNameW = modpsapi.NewProc("GetProcessImageFileNameW")
 
 	advapi32                  = windows.NewLazySystemDLL("advapi32.dll")
 	procLookupPrivilegeValue  = advapi32.NewProc("LookupPrivilegeValueW")
 	procAdjustTokenPrivileges = advapi32.NewProc("AdjustTokenPrivileges")
+
+	procQueryFullProcessImageNameW = common.Modkernel32.NewProc("QueryFullProcessImageNameW")
 )
 
 type SystemProcessInformation struct {
@@ -234,24 +237,31 @@ func (p *Process) Exe() (string, error) {
 }
 
 func (p *Process) ExeWithContext(ctx context.Context) (string, error) {
-	if p.Pid != 0 { // 0 or null is the current process for CreateToolhelp32Snapshot
-		snap := w32.CreateToolhelp32Snapshot(w32.TH32CS_SNAPMODULE|w32.TH32CS_SNAPMODULE32, uint32(p.Pid))
-		if snap != 0 { // don't report errors here, fallback to WMI instead
-			defer w32.CloseHandle(snap)
-			var me32 w32.MODULEENTRY32
-			me32.Size = uint32(unsafe.Sizeof(me32))
-
-			if w32.Module32First(snap, &me32) {
-				szexepath := windows.UTF16ToString(me32.SzExePath[:])
-				return szexepath, nil
-			}
-		}
-	}
-	dst, err := GetWin32ProcWithContext(ctx, p.Pid)
+	// 0x1000 is PROCESS_QUERY_LIMITED_INFORMATION
+	c, err := syscall.OpenProcess(0x1000, false, uint32(p.Pid))
 	if err != nil {
-		return "", fmt.Errorf("could not get ExecutablePath: %s", err)
+		return "", err
 	}
-	return *dst[0].ExecutablePath, nil
+	defer syscall.CloseHandle(c)
+	buf := make([]uint16, syscall.MAX_LONG_PATH)
+	size := uint32(syscall.MAX_LONG_PATH)
+	if err := procQueryFullProcessImageNameW.Find(); err == nil { // Vista+
+		ret, _, err := procQueryFullProcessImageNameW.Call(
+			uintptr(c),
+			uintptr(0),
+			uintptr(unsafe.Pointer(&buf[0])),
+			uintptr(unsafe.Pointer(&size)))
+		if ret == 0 {
+			return "", err
+		}
+		return windows.UTF16ToString(buf[:]), nil
+	}
+	// XP fallback
+	ret, _, err := procGetProcessImageFileNameW.Call(uintptr(c), uintptr(unsafe.Pointer(&buf[0])), uintptr(size))
+	if ret == 0 {
+		return "", err
+	}
+	return common.ConvertDOSPath(windows.UTF16ToString(buf[:])), nil
 }
 
 func (p *Process) Cmdline() (string, error) {
