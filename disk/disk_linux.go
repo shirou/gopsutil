@@ -299,11 +299,11 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 			}
 
 			if strings.HasPrefix(d.Device, "/dev/mapper/") {
-				devpath, err := os.Readlink(d.Device)
+				devpath, err := filepath.EvalSymlinks(d.Device)
 				if err != nil {
 					return nil, err
 				}
-				d.Device = "/dev/" + filepath.Base(devpath)
+				d.Device = devpath
 			}
 
 			// /dev/root is not the real device name
