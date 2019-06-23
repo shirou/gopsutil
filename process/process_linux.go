@@ -69,12 +69,10 @@ func (m MemoryMapsStat) String() string {
 // to get more information about the process. An error will be returned
 // if the process does not exist.
 func NewProcess(pid int32) (*Process, error) {
-	p := &Process{
-		Pid: int32(pid),
+	if _, err := os.Stat(common.HostProc(strconv.Itoa(int(p.Pid)))); err != nil {
+		return nil, err
 	}
-	file, err := os.Open(common.HostProc(strconv.Itoa(int(p.Pid))))
-	defer file.Close()
-	return p, err
+	return &Process{Pid: int32(pid)}, nil
 }
 
 // Ppid returns Parent Process ID of the process.
