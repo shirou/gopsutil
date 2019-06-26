@@ -584,6 +584,10 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 				VMS:  uint64(vms) * 1024,
 				Swap: uint64(pagein),
 			},
+			// Unsupported stats
+			IOStat:      &IOCountersStat{},
+			CtxSwitches: &NumCtxSwitchesStat{},
+			MemInfoEx:   &MemoryInfoExStat{},
 		}
 	}
 

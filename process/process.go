@@ -58,7 +58,7 @@ type FilledProcess struct {
 	// IO
 	IOStat *IOCountersStat
 	// Username (windows only)
-	Username	string
+	Username string
 }
 
 type OpenFilesStat struct {
