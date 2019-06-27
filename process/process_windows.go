@@ -561,23 +561,18 @@ func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
 	defer w32.CloseHandle(snap)
 	var pe32 w32.PROCESSENTRY32
 	pe32.DwSize = uint32(unsafe.Sizeof(pe32))
-	if w32.Process32First(snap, &pe32) == false {
+	if !w32.Process32First(snap, &pe32) {
 		return out, windows.GetLastError()
 	}
-
-	if pe32.Th32ParentProcessID == uint32(p.Pid) {
-		p, err := NewProcess(int32(pe32.Th32ProcessID))
-		if err == nil {
-			out = append(out, p)
-		}
-	}
-
-	for w32.Process32Next(snap, &pe32) {
+	for {
 		if pe32.Th32ParentProcessID == uint32(p.Pid) {
 			p, err := NewProcess(int32(pe32.Th32ProcessID))
 			if err == nil {
 				out = append(out, p)
 			}
+		}
+		if !w32.Process32Next(snap, &pe32) {
+			break
 		}
 	}
 	return out, nil
@@ -695,22 +690,19 @@ func getFromSnapProcess(pid int32) (int32, int32, string, error) {
 	defer w32.CloseHandle(snap)
 	var pe32 w32.PROCESSENTRY32
 	pe32.DwSize = uint32(unsafe.Sizeof(pe32))
-	if w32.Process32First(snap, &pe32) == false {
+	if !w32.Process32First(snap, &pe32) {
 		return 0, 0, "", windows.GetLastError()
 	}
-
-	if pe32.Th32ProcessID == uint32(pid) {
-		szexe := windows.UTF16ToString(pe32.SzExeFile[:])
-		return int32(pe32.Th32ParentProcessID), int32(pe32.CntThreads), szexe, nil
-	}
-
-	for w32.Process32Next(snap, &pe32) {
+	for {
 		if pe32.Th32ProcessID == uint32(pid) {
 			szexe := windows.UTF16ToString(pe32.SzExeFile[:])
 			return int32(pe32.Th32ParentProcessID), int32(pe32.CntThreads), szexe, nil
 		}
+		if !w32.Process32Next(snap, &pe32) {
+			break
+		}
 	}
-	return 0, 0, "", fmt.Errorf("Couldn't find pid: %d", pid)
+	return 0, 0, "", fmt.Errorf("couldn't find pid: %d", pid)
 }
 
 // Get processes
