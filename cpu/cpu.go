@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"sync"
@@ -112,7 +113,7 @@ func calculateBusy(t1, t2 TimesStat) float64 {
 	if t2All <= t1All {
 		return 1
 	}
-	return (t2Busy - t1Busy) / (t2All - t1All) * 100
+	return math.Min(100, math.Max(0, (t2Busy-t1Busy)/(t2All-t1All)*100))
 }
 
 func calculateAllBusy(t1, t2 []TimesStat) ([]float64, error) {
