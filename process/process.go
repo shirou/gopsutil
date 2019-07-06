@@ -139,21 +139,6 @@ func PidExists(pid int32) (bool, error) {
 	return PidExistsWithContext(context.Background(), pid)
 }
 
-func PidExistsWithContext(ctx context.Context, pid int32) (bool, error) {
-	pids, err := Pids()
-	if err != nil {
-		return false, err
-	}
-
-	for _, i := range pids {
-		if i == pid {
-			return true, err
-		}
-	}
-
-	return false, err
-}
-
 // Background returns true if the process is in background, false otherwise.
 func (p *Process) Background() (bool, error) {
 	return p.BackgroundWithContext(context.Background())

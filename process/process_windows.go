@@ -185,6 +185,21 @@ func PidsWithContext(ctx context.Context) ([]int32, error) {
 
 }
 
+func PidExistsWithContext(ctx context.Context, pid int32) (bool, error) {
+	pids, err := Pids()
+	if err != nil {
+		return false, err
+	}
+
+	for _, i := range pids {
+		if i == pid {
+			return true, err
+		}
+	}
+
+	return false, err
+}
+
 func (p *Process) Ppid() (int32, error) {
 	return p.PpidWithContext(context.Background())
 }

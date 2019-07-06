@@ -48,6 +48,21 @@ func NewProcess(pid int32) (*Process, error) {
 	return nil, common.ErrNotImplementedError
 }
 
+func PidExistsWithContext(ctx context.Context, pid int32) (bool, error) {
+	pids, err := PidsWithContext(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	for _, i := range pids {
+		if i == pid {
+			return true, err
+		}
+	}
+
+	return false, err
+}
+
 func (p *Process) Ppid() (int32, error) {
 	return p.PpidWithContext(context.Background())
 }
