@@ -19,11 +19,6 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-const (
-	NoMoreFiles   = 0x12
-	MaxPathLength = 260
-)
-
 var (
 	modpsapi                     = windows.NewLazySystemDLL("psapi.dll")
 	procGetProcessMemoryInfo     = modpsapi.NewProc("GetProcessMemoryInfo")
@@ -253,12 +248,11 @@ func (p *Process) Exe() (string, error) {
 }
 
 func (p *Process) ExeWithContext(ctx context.Context) (string, error) {
-	// 0x1000 is PROCESS_QUERY_LIMITED_INFORMATION
-	c, err := syscall.OpenProcess(0x1000, false, uint32(p.Pid))
+	c, err := windows.OpenProcess(windows.PROCESS_QUERY_LIMITED_INFORMATION, false, uint32(p.Pid))
 	if err != nil {
 		return "", err
 	}
-	defer syscall.CloseHandle(c)
+	defer windows.CloseHandle(c)
 	buf := make([]uint16, syscall.MAX_LONG_PATH)
 	size := uint32(syscall.MAX_LONG_PATH)
 	if err := procQueryFullProcessImageNameW.Find(); err == nil { // Vista+
@@ -361,15 +355,14 @@ func (p *Process) Username() (string, error) {
 
 func (p *Process) UsernameWithContext(ctx context.Context) (string, error) {
 	pid := p.Pid
-	// 0x1000 is PROCESS_QUERY_LIMITED_INFORMATION
-	c, err := syscall.OpenProcess(0x1000, false, uint32(pid))
+	c, err := windows.OpenProcess(windows.PROCESS_QUERY_LIMITED_INFORMATION, false, uint32(pid))
 	if err != nil {
 		return "", err
 	}
-	defer syscall.CloseHandle(c)
+	defer windows.CloseHandle(c)
 
 	var token syscall.Token
-	err = syscall.OpenProcessToken(c, syscall.TOKEN_QUERY, &token)
+	err = syscall.OpenProcessToken(syscall.Handle(c), syscall.TOKEN_QUERY, &token)
 	if err != nil {
 		return "", err
 	}
@@ -426,19 +419,18 @@ func (p *Process) Nice() (int32, error) {
 }
 
 func (p *Process) NiceWithContext(ctx context.Context) (int32, error) {
-	// 0x1000 is PROCESS_QUERY_LIMITED_INFORMATION
-	c, err := syscall.OpenProcess(0x1000, false, uint32(p.Pid))
+	c, err := windows.OpenProcess(windows.PROCESS_QUERY_LIMITED_INFORMATION, false, uint32(p.Pid))
 	if err != nil {
 		return 0, err
 	}
-	defer syscall.CloseHandle(c)
+	defer windows.CloseHandle(c)
 	ret, _, err := procGetPriorityClass.Call(uintptr(c))
 	if ret == 0 {
 		return 0, err
 	}
 	priority, ok := priorityClasses[int(ret)]
 	if !ok {
-		return 0, fmt.Errorf("unknown priority class %s", ret)
+		return 0, fmt.Errorf("unknown priority class %v", ret)
 	}
 	return priority, nil
 }
@@ -803,8 +795,7 @@ func getRusage(pid int32) (*windows.Rusage, error) {
 
 func getMemoryInfo(pid int32) (PROCESS_MEMORY_COUNTERS, error) {
 	var mem PROCESS_MEMORY_COUNTERS
-	// PROCESS_QUERY_LIMITED_INFORMATION is 0x1000
-	c, err := windows.OpenProcess(0x1000, false, uint32(pid))
+	c, err := windows.OpenProcess(windows.PROCESS_QUERY_LIMITED_INFORMATION, false, uint32(pid))
 	if err != nil {
 		return mem, err
 	}
@@ -838,8 +829,7 @@ type SYSTEM_TIMES struct {
 func getProcessCPUTimes(pid int32) (SYSTEM_TIMES, error) {
 	var times SYSTEM_TIMES
 
-	// PROCESS_QUERY_LIMITED_INFORMATION is 0x1000
-	h, err := windows.OpenProcess(0x1000, false, uint32(pid))
+	h, err := windows.OpenProcess(windows.PROCESS_QUERY_LIMITED_INFORMATION, false, uint32(pid))
 	if err != nil {
 		return times, err
 	}
