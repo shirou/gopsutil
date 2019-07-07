@@ -181,18 +181,41 @@ func PidsWithContext(ctx context.Context) ([]int32, error) {
 }
 
 func PidExistsWithContext(ctx context.Context, pid int32) (bool, error) {
-	pids, err := Pids()
+	if pid == 0 { // special case for pid 0 System Idle Process
+		return true, nil
+	}
+	if pid < 0 {
+		return false, fmt.Errorf("invalid pid %v", pid)
+	}
+	if pid%4 != 0 {
+		// OpenProcess will succeed even on non-existing pid here https://devblogs.microsoft.com/oldnewthing/20080606-00/?p=22043
+		// so we list every pid just to be sure and be future-proof
+		pids, err := PidsWithContext(ctx)
+		if err != nil {
+			return false, err
+		}
+		for _, i := range pids {
+			if i == pid {
+				return true, err
+			}
+		}
+		return false, err
+	}
+	const STILL_ACTIVE = 259 // https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getexitcodeprocess
+	h, err := windows.OpenProcess(windows.PROCESS_QUERY_LIMITED_INFORMATION, false, uint32(pid))
+	if err == windows.ERROR_ACCESS_DENIED {
+		return true, nil
+	}
+	if err == windows.ERROR_INVALID_PARAMETER {
+		return false, nil
+	}
 	if err != nil {
 		return false, err
 	}
-
-	for _, i := range pids {
-		if i == pid {
-			return true, err
-		}
-	}
-
-	return false, err
+	defer syscall.CloseHandle(syscall.Handle(h))
+	var exitCode uint32
+	err = windows.GetExitCodeProcess(h, &exitCode)
+	return exitCode == STILL_ACTIVE, err
 }
 
 func (p *Process) Ppid() (int32, error) {
