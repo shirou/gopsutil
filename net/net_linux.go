@@ -8,13 +8,13 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
 	"os"
 	"strconv"
 	"strings"
 	"syscall"
-	"io"
 
 	"github.com/shirou/gopsutil/internal/common"
 )
