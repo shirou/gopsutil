@@ -356,6 +356,8 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 		family = "alpine"
 	case "coreos":
 		family = "coreos"
+	case "solus":
+		family = "solus"
 	}
 
 	return platform, family, version, nil
