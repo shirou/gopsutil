@@ -1,0 +1,49 @@
+Name:	postgres
+State:	S (sleeping)
+Tgid:	28255
+Ngid:	0
+Pid:	28255
+PPid:	16026
+TracerPid:	0
+Uid:	114	114	114	114
+Gid:	119	119	119	119
+FDSize:	64
+Groups:	118 119 
+NStgid:	28255
+NSpid:	28255
+NSpgid:	28255
+NSsid:	28255
+VmPeak:	 2388452 kB
+VmSize:	 2387996 kB
+VmLck:	       0 kB
+VmPin:	       0 kB
+VmHWM:	   30144 kB
+VmRSS:	   29972 kB
+VmData:	    4972 kB
+VmStk:	     132 kB
+VmExe:	    6476 kB
+VmLib:	   46112 kB
+VmPTE:	     424 kB
+VmPMD:	      20 kB
+VmSwap:	       0 kB
+HugetlbPages:	       0 kB
+Threads:	1
+SigQ:	0/62945
+SigPnd:	0000000000000000
+ShdPnd:	0000000000000000
+SigBlk:	0000000000000000
+SigIgn:	0000000001301800
+SigCgt:	0000000180006287
+CapInh:	0000000000000000
+CapPrm:	0000000000000000
+CapEff:	0000000000000000
+CapBnd:	0000003fffffffff
+CapAmb:	0000000000000000
+Seccomp:	0
+Speculation_Store_Bypass:	vulnerable
+Cpus_allowed:	3
+Cpus_allowed_list:	0-1
+Mems_allowed:	00000000,00000001
+Mems_allowed_list:	0
+voluntary_ctxt_switches:	3
+nonvoluntary_ctxt_switches:	4

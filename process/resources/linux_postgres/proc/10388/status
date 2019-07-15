@@ -1,0 +1,49 @@
+Name:	process-agent
+State:	S (sleeping)
+Tgid:	10388
+Ngid:	0
+Pid:	10388
+PPid:	10284
+TracerPid:	0
+Uid:	112	112	112	112
+Gid:	116	116	116	116
+FDSize:	64
+Groups:	116 
+NStgid:	10388
+NSpid:	10388
+NSpgid:	10388
+NSsid:	10284
+VmPeak:	   54260 kB
+VmSize:	   53520 kB
+VmLck:	       0 kB
+VmPin:	       0 kB
+VmHWM:	   42796 kB
+VmRSS:	   41600 kB
+VmData:	   24260 kB
+VmStk:	     132 kB
+VmExe:	   28736 kB
+VmLib:	       0 kB
+VmPTE:	     136 kB
+VmPMD:	      20 kB
+VmSwap:	       0 kB
+HugetlbPages:	       0 kB
+Threads:	13
+SigQ:	0/62945
+SigPnd:	0000000000000000
+ShdPnd:	0000000000000000
+SigBlk:	0000000000000000
+SigIgn:	0000000000000000
+SigCgt:	fffffffe7ffbfeff
+CapInh:	0000000000000000
+CapPrm:	0000000000000000
+CapEff:	0000000000000000
+CapBnd:	0000003fffffffff
+CapAmb:	0000000000000000
+Seccomp:	0
+Speculation_Store_Bypass:	vulnerable
+Cpus_allowed:	3
+Cpus_allowed_list:	0-1
+Mems_allowed:	00000000,00000001
+Mems_allowed_list:	0
+voluntary_ctxt_switches:	1279988
+nonvoluntary_ctxt_switches:	150391

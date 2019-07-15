@@ -1,0 +1,49 @@
+Name:	snapd
+State:	S (sleeping)
+Tgid:	3134
+Ngid:	0
+Pid:	3134
+PPid:	1
+TracerPid:	0
+Uid:	0	0	0	0
+Gid:	0	0	0	0
+FDSize:	64
+Groups:	
+NStgid:	3134
+NSpid:	3134
+NSpgid:	3134
+NSsid:	3134
+VmPeak:	  467012 kB
+VmSize:	  464964 kB
+VmLck:	       0 kB
+VmPin:	       0 kB
+VmHWM:	   31648 kB
+VmRSS:	   24784 kB
+VmData:	  441500 kB
+VmStk:	     132 kB
+VmExe:	   10964 kB
+VmLib:	    2040 kB
+VmPTE:	     168 kB
+VmPMD:	      24 kB
+VmSwap:	       0 kB
+HugetlbPages:	       0 kB
+Threads:	13
+SigQ:	0/62945
+SigPnd:	0000000000000000
+ShdPnd:	0000000000000000
+SigBlk:	fffffffe3bfa3a00
+SigIgn:	0000000000000000
+SigCgt:	ffffffffffc1feff
+CapInh:	0000000000000000
+CapPrm:	0000003fffffffff
+CapEff:	0000003fffffffff
+CapBnd:	0000003fffffffff
+CapAmb:	0000000000000000
+Seccomp:	0
+Speculation_Store_Bypass:	vulnerable
+Cpus_allowed:	3
+Cpus_allowed_list:	0-1
+Mems_allowed:	00000000,00000001
+Mems_allowed_list:	0
+voluntary_ctxt_switches:	10
+nonvoluntary_ctxt_switches:	14

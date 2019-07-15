@@ -1,0 +1,49 @@
+Name:	chef-client
+State:	S (sleeping)
+Tgid:	9041
+Ngid:	0
+Pid:	9041
+PPid:	1
+TracerPid:	0
+Uid:	0	0	0	0
+Gid:	0	0	0	0
+FDSize:	128
+Groups:	
+NStgid:	9041
+NSpid:	9041
+NSpgid:	9041
+NSsid:	9041
+VmPeak:	  156736 kB
+VmSize:	  156736 kB
+VmLck:	       0 kB
+VmPin:	       0 kB
+VmHWM:	   51568 kB
+VmRSS:	   51568 kB
+VmData:	   44468 kB
+VmStk:	    8188 kB
+VmExe:	       4 kB
+VmLib:	    9792 kB
+VmPTE:	     308 kB
+VmPMD:	      12 kB
+VmSwap:	       0 kB
+HugetlbPages:	       0 kB
+Threads:	2
+SigQ:	0/62945
+SigPnd:	0000000000000000
+ShdPnd:	0000000000000000
+SigBlk:	0000000000000000
+SigIgn:	0000000000001000
+SigCgt:	00000001c2006e4f
+CapInh:	0000000000000000
+CapPrm:	0000003fffffffff
+CapEff:	0000003fffffffff
+CapBnd:	0000003fffffffff
+CapAmb:	0000000000000000
+Seccomp:	0
+Speculation_Store_Bypass:	vulnerable
+Cpus_allowed:	3
+Cpus_allowed_list:	0-1
+Mems_allowed:	00000000,00000001
+Mems_allowed_list:	0
+voluntary_ctxt_switches:	35
+nonvoluntary_ctxt_switches:	960

@@ -1,0 +1,49 @@
+Name:	docker-proxy
+State:	S (sleeping)
+Tgid:	15644
+Ngid:	0
+Pid:	15644
+PPid:	1
+TracerPid:	0
+Uid:	112	112	112	112
+Gid:	116	116	116	116
+FDSize:	128
+Groups:	116 
+NStgid:	15644
+NSpid:	15644
+NSpgid:	15644
+NSsid:	15644
+VmPeak:	  383740 kB
+VmSize:	  383740 kB
+VmLck:	       0 kB
+VmPin:	       0 kB
+VmHWM:	   23508 kB
+VmRSS:	   12152 kB
+VmData:	  365372 kB
+VmStk:	     132 kB
+VmExe:	    5304 kB
+VmLib:	    2040 kB
+VmPTE:	     120 kB
+VmPMD:	      20 kB
+VmSwap:	       0 kB
+HugetlbPages:	       0 kB
+Threads:	9
+SigQ:	0/62945
+SigPnd:	0000000000000000
+ShdPnd:	0000000000000000
+SigBlk:	0000000000000000
+SigIgn:	0000000000000000
+SigCgt:	fffffffffffbfeff
+CapInh:	0000000000000000
+CapPrm:	0000000000000000
+CapEff:	0000000000000000
+CapBnd:	0000003fffffffff
+CapAmb:	0000000000000000
+Seccomp:	0
+Speculation_Store_Bypass:	vulnerable
+Cpus_allowed:	3
+Cpus_allowed_list:	0-1
+Mems_allowed:	00000000,00000001
+Mems_allowed_list:	0
+voluntary_ctxt_switches:	1607702
+nonvoluntary_ctxt_switches:	326963

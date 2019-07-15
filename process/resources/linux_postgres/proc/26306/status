@@ -1,0 +1,49 @@
+Name:	polkitd
+State:	S (sleeping)
+Tgid:	26306
+Ngid:	0
+Pid:	26306
+PPid:	1
+TracerPid:	0
+Uid:	0	0	0	0
+Gid:	0	0	0	0
+FDSize:	128
+Groups:	
+NStgid:	26306
+NSpid:	26306
+NSpgid:	26306
+NSsid:	26306
+VmPeak:	  279188 kB
+VmSize:	  277088 kB
+VmLck:	       0 kB
+VmPin:	       0 kB
+VmHWM:	    5984 kB
+VmRSS:	    5984 kB
+VmData:	  221628 kB
+VmStk:	     132 kB
+VmExe:	      12 kB
+VmLib:	    7960 kB
+VmPTE:	     152 kB
+VmPMD:	      16 kB
+VmSwap:	       0 kB
+HugetlbPages:	       0 kB
+Threads:	3
+SigQ:	0/62945
+SigPnd:	0000000000000000
+ShdPnd:	0000000000000000
+SigBlk:	0000000000000002
+SigIgn:	0000000000001000
+SigCgt:	0000000180000000
+CapInh:	0000000000000000
+CapPrm:	0000003fffffffff
+CapEff:	0000003fffffffff
+CapBnd:	0000003fffffffff
+CapAmb:	0000000000000000
+Seccomp:	0
+Speculation_Store_Bypass:	vulnerable
+Cpus_allowed:	3
+Cpus_allowed_list:	0-1
+Mems_allowed:	00000000,00000001
+Mems_allowed_list:	0
+voluntary_ctxt_switches:	533
+nonvoluntary_ctxt_switches:	32

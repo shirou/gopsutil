@@ -1,0 +1,49 @@
+Name:	goshe
+State:	S (sleeping)
+Tgid:	16079
+Ngid:	0
+Pid:	16079
+PPid:	1
+TracerPid:	0
+Uid:	0	0	0	0
+Gid:	0	0	0	0
+FDSize:	128
+Groups:	
+NStgid:	16079
+NSpid:	16079
+NSpgid:	16079
+NSsid:	16079
+VmPeak:	  408580 kB
+VmSize:	  361548 kB
+VmLck:	       0 kB
+VmPin:	       0 kB
+VmHWM:	   18592 kB
+VmRSS:	   14872 kB
+VmData:	  347140 kB
+VmStk:	     132 kB
+VmExe:	    4228 kB
+VmLib:	    2040 kB
+VmPTE:	     124 kB
+VmPMD:	      24 kB
+VmSwap:	       0 kB
+HugetlbPages:	       0 kB
+Threads:	10
+SigQ:	0/62945
+SigPnd:	0000000000000000
+ShdPnd:	0000000000000000
+SigBlk:	fffffffe3bfa3a00
+SigIgn:	0000000000000000
+SigCgt:	ffffffffffc1feff
+CapInh:	0000000000000000
+CapPrm:	0000003fffffffff
+CapEff:	0000003fffffffff
+CapBnd:	0000003fffffffff
+CapAmb:	0000000000000000
+Seccomp:	0
+Speculation_Store_Bypass:	vulnerable
+Cpus_allowed:	3
+Cpus_allowed_list:	0-1
+Mems_allowed:	00000000,00000001
+Mems_allowed_list:	0
+voluntary_ctxt_switches:	5
+nonvoluntary_ctxt_switches:	5

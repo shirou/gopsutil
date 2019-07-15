@@ -1,0 +1,49 @@
+Name:	sshd
+State:	S (sleeping)
+Tgid:	29997
+Ngid:	0
+Pid:	29997
+PPid:	29939
+TracerPid:	0
+Uid:	1010	1010	1010	1010
+Gid:	1010	1010	1010	1010
+FDSize:	64
+Groups:	1010 2300 
+NStgid:	29997
+NSpid:	29997
+NSpgid:	29939
+NSsid:	29939
+VmPeak:	   92824 kB
+VmSize:	   92800 kB
+VmLck:	       0 kB
+VmPin:	       0 kB
+VmHWM:	    4168 kB
+VmRSS:	    4168 kB
+VmData:	     744 kB
+VmStk:	     132 kB
+VmExe:	     756 kB
+VmLib:	    8744 kB
+VmPTE:	     192 kB
+VmPMD:	      12 kB
+VmSwap:	       0 kB
+HugetlbPages:	       0 kB
+Threads:	1
+SigQ:	0/62945
+SigPnd:	0000000000000000
+ShdPnd:	0000000000000000
+SigBlk:	0000000000000000
+SigIgn:	0000000000001000
+SigCgt:	0000000180010000
+CapInh:	0000000000000000
+CapPrm:	0000000000000000
+CapEff:	0000000000000000
+CapBnd:	0000003fffffffff
+CapAmb:	0000000000000000
+Seccomp:	0
+Speculation_Store_Bypass:	vulnerable
+Cpus_allowed:	3
+Cpus_allowed_list:	0-1
+Mems_allowed:	00000000,00000001
+Mems_allowed_list:	0
+voluntary_ctxt_switches:	23025
+nonvoluntary_ctxt_switches:	28084

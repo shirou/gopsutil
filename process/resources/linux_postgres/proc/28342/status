@@ -1,0 +1,49 @@
+Name:	script.sh
+State:	S (sleeping)
+Tgid:	28342
+Ngid:	0
+Pid:	28342
+PPid:	28341
+TracerPid:	0
+Uid:	0	0	0	0
+Gid:	0	0	0	0
+FDSize:	256
+Groups:	0 
+NStgid:	28342
+NSpid:	28342
+NSpgid:	28341
+NSsid:	29998
+VmPeak:	   11324 kB
+VmSize:	   11324 kB
+VmLck:	       0 kB
+VmPin:	       0 kB
+VmHWM:	    3124 kB
+VmRSS:	    3124 kB
+VmData:	     216 kB
+VmStk:	     132 kB
+VmExe:	     976 kB
+VmLib:	    2104 kB
+VmPTE:	      40 kB
+VmPMD:	      12 kB
+VmSwap:	       0 kB
+HugetlbPages:	       0 kB
+Threads:	1
+SigQ:	0/62945
+SigPnd:	0000000000000000
+ShdPnd:	0000000000000000
+SigBlk:	0000000000010000
+SigIgn:	0000000000000004
+SigCgt:	0000000000010002
+CapInh:	0000000000000000
+CapPrm:	0000003fffffffff
+CapEff:	0000003fffffffff
+CapBnd:	0000003fffffffff
+CapAmb:	0000000000000000
+Seccomp:	0
+Speculation_Store_Bypass:	vulnerable
+Cpus_allowed:	3
+Cpus_allowed_list:	0-1
+Mems_allowed:	00000000,00000001
+Mems_allowed_list:	0
+voluntary_ctxt_switches:	1617
+nonvoluntary_ctxt_switches:	764

@@ -1,0 +1,49 @@
+Name:	systemd-udevd
+State:	S (sleeping)
+Tgid:	30714
+Ngid:	0
+Pid:	30714
+PPid:	1
+TracerPid:	0
+Uid:	0	0	0	0
+Gid:	0	0	0	0
+FDSize:	128
+Groups:	
+NStgid:	30714
+NSpid:	30714
+NSpgid:	30714
+NSsid:	30714
+VmPeak:	   42312 kB
+VmSize:	   42288 kB
+VmLck:	       0 kB
+VmPin:	       0 kB
+VmHWM:	    3676 kB
+VmRSS:	    3672 kB
+VmData:	     568 kB
+VmStk:	     132 kB
+VmExe:	     404 kB
+VmLib:	    3240 kB
+VmPTE:	      88 kB
+VmPMD:	      12 kB
+VmSwap:	       0 kB
+HugetlbPages:	       0 kB
+Threads:	1
+SigQ:	0/62945
+SigPnd:	0000000000000000
+ShdPnd:	0000000000000000
+SigBlk:	0000000000014003
+SigIgn:	0000000000001000
+SigCgt:	0000000180000000
+CapInh:	0000000000000000
+CapPrm:	0000003fffffffff
+CapEff:	0000003fffffffff
+CapBnd:	0000003fffffffff
+CapAmb:	0000000000000000
+Seccomp:	0
+Speculation_Store_Bypass:	vulnerable
+Cpus_allowed:	3
+Cpus_allowed_list:	0-1
+Mems_allowed:	00000000,00000001
+Mems_allowed_list:	0
+voluntary_ctxt_switches:	571
+nonvoluntary_ctxt_switches:	135

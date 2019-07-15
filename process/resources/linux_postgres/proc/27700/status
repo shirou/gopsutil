@@ -1,0 +1,49 @@
+Name:	sh
+State:	S (sleeping)
+Tgid:	27700
+Ngid:	0
+Pid:	27700
+PPid:	27698
+TracerPid:	0
+Uid:	114	114	114	114
+Gid:	119	119	119	119
+FDSize:	64
+Groups:	118 119 
+NStgid:	27700
+NSpid:	27700
+NSpgid:	27700
+NSsid:	27700
+VmPeak:	    4504 kB
+VmSize:	    4504 kB
+VmLck:	       0 kB
+VmPin:	       0 kB
+VmHWM:	     776 kB
+VmRSS:	     776 kB
+VmData:	     192 kB
+VmStk:	     132 kB
+VmExe:	     144 kB
+VmLib:	    1944 kB
+VmPTE:	      32 kB
+VmPMD:	      12 kB
+VmSwap:	       0 kB
+HugetlbPages:	       0 kB
+Threads:	1
+SigQ:	0/62945
+SigPnd:	0000000000000000
+ShdPnd:	0000000000000000
+SigBlk:	0000000000000000
+SigIgn:	0000000000000000
+SigCgt:	0000000000010002
+CapInh:	0000000000000000
+CapPrm:	0000000000000000
+CapEff:	0000000000000000
+CapBnd:	0000003fffffffff
+CapAmb:	0000000000000000
+Seccomp:	0
+Speculation_Store_Bypass:	vulnerable
+Cpus_allowed:	3
+Cpus_allowed_list:	0-1
+Mems_allowed:	00000000,00000001
+Mems_allowed_list:	0
+voluntary_ctxt_switches:	1
+nonvoluntary_ctxt_switches:	16
