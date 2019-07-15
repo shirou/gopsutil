@@ -1,0 +1,49 @@
+Name:	go-audit
+State:	S (sleeping)
+Tgid:	15887
+Ngid:	0
+Pid:	15887
+PPid:	1
+TracerPid:	0
+Uid:	0	0	0	0
+Gid:	0	0	0	0
+FDSize:	256
+Groups:	
+NStgid:	15887
+NSpid:	15887
+NSpgid:	15887
+NSsid:	15887
+VmPeak:	  488408 kB
+VmSize:	  422872 kB
+VmLck:	       0 kB
+VmPin:	       0 kB
+VmHWM:	   12484 kB
+VmRSS:	   12292 kB
+VmData:	  401352 kB
+VmStk:	     132 kB
+VmExe:	    3576 kB
+VmLib:	    2248 kB
+VmPTE:	     136 kB
+VmPMD:	      20 kB
+VmSwap:	       0 kB
+HugetlbPages:	       0 kB
+Threads:	9
+SigQ:	0/62945
+SigPnd:	0000000000000000
+ShdPnd:	0000000000000000
+SigBlk:	0000000000000000
+SigIgn:	0000000000000000
+SigCgt:	ffffffffffc1feff
+CapInh:	0000000000000000
+CapPrm:	0000003fffffffff
+CapEff:	0000003fffffffff
+CapBnd:	0000003fffffffff
+CapAmb:	0000000000000000
+Seccomp:	0
+Speculation_Store_Bypass:	vulnerable
+Cpus_allowed:	3
+Cpus_allowed_list:	0-1
+Mems_allowed:	00000000,00000001
+Mems_allowed_list:	0
+voluntary_ctxt_switches:	199768
+nonvoluntary_ctxt_switches:	2925

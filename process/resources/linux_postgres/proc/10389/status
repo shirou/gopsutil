@@ -1,0 +1,49 @@
+Name:	trace-agent
+State:	S (sleeping)
+Tgid:	10389
+Ngid:	0
+Pid:	10389
+PPid:	10284
+TracerPid:	0
+Uid:	112	112	112	112
+Gid:	116	116	116	116
+FDSize:	64
+Groups:	116 
+NStgid:	10389
+NSpid:	10389
+NSpgid:	10389
+NSsid:	10284
+VmPeak:	  268988 kB
+VmSize:	  231340 kB
+VmLck:	       0 kB
+VmPin:	       0 kB
+VmHWM:	   20968 kB
+VmRSS:	   18276 kB
+VmData:	  213960 kB
+VmStk:	     132 kB
+VmExe:	    5768 kB
+VmLib:	    2040 kB
+VmPTE:	     112 kB
+VmPMD:	      20 kB
+VmSwap:	       0 kB
+HugetlbPages:	       0 kB
+Threads:	10
+SigQ:	0/62945
+SigPnd:	0000000000000000
+ShdPnd:	0000000000000000
+SigBlk:	0000000000000000
+SigIgn:	0000000000000000
+SigCgt:	ffffffffffc1feff
+CapInh:	0000000000000000
+CapPrm:	0000000000000000
+CapEff:	0000000000000000
+CapBnd:	0000003fffffffff
+CapAmb:	0000000000000000
+Seccomp:	0
+Speculation_Store_Bypass:	vulnerable
+Cpus_allowed:	3
+Cpus_allowed_list:	0-1
+Mems_allowed:	00000000,00000001
+Mems_allowed_list:	0
+voluntary_ctxt_switches:	32230
+nonvoluntary_ctxt_switches:	424
