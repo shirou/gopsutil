@@ -1,4 +1,4 @@
-// +build openbsd,amd64
+// +build openbsd
 
 package disk
 

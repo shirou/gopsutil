@@ -1,4 +1,4 @@
-// +build !darwin,!linux,!freebsd,!openbsd,!windows,!solaris openbsd,!amd64
+// +build !darwin,!linux,!freebsd,!openbsd,!windows,!solaris
 
 package disk
 
