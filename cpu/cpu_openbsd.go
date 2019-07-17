@@ -39,6 +39,8 @@ const (
 
 var ClocksPerSec = float64(128)
 
+const CPUTick = 128
+
 func init() {
 	func() {
 		getconf, err := exec.LookPath("getconf")

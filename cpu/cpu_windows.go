@@ -47,6 +47,8 @@ type Win32_PerfFormattedData_PerfOS_System struct {
 const (
 	win32_TicksPerSecond = 10000000.0
 
+	CPUTick = 10000000
+
 	// systemProcessorPerformanceInformationClass information class to query with NTQuerySystemInformation
 	// https://processhacker.sourceforge.io/doc/ntexapi_8h.html#ad5d815b48e8f4da1ef2eb7a2f18a54e0
 	win32_SystemProcessorPerformanceInformationClass = 8

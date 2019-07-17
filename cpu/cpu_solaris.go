@@ -14,6 +14,8 @@ import (
 
 var ClocksPerSec = float64(128)
 
+const CPUTick = 128
+
 func init() {
 	getconf, err := exec.LookPath("getconf")
 	if err != nil {

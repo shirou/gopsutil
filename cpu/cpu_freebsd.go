@@ -25,6 +25,8 @@ var cpuCores = regexp.MustCompile(`FreeBSD/SMP: (\d*) package\(s\) x (\d*) core\
 var cpuTimesSize int
 var emptyTimes cpuTimes
 
+const CPUTick = 128
+
 func init() {
 	getconf, err := exec.LookPath("getconf")
 	if err != nil {

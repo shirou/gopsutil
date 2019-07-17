@@ -23,6 +23,8 @@ const (
 // default value. from time.h
 var ClocksPerSec = float64(128)
 
+const CPUTick = 128
+
 func Times(percpu bool) ([]TimesStat, error) {
 	return TimesWithContext(context.Background(), percpu)
 }
