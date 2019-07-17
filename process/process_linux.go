@@ -45,21 +45,33 @@ func (m MemoryInfoExStat) String() string {
 }
 
 type MemoryMapsStat struct {
-	Path         string `json:"path"`
-	Rss          uint64 `json:"rss"`
-	Size         uint64 `json:"size"`
-	Pss          uint64 `json:"pss"`
-	SharedClean  uint64 `json:"sharedClean"`
-	SharedDirty  uint64 `json:"sharedDirty"`
-	PrivateClean uint64 `json:"privateClean"`
-	PrivateDirty uint64 `json:"privateDirty"`
-	Referenced   uint64 `json:"referenced"`
-	Anonymous    uint64 `json:"anonymous"`
-	Swap         uint64 `json:"swap"`
+	Path           string `json:"path"`
+	Rss            uint64 `json:"rss"`
+	Size           uint64 `json:"size"`
+	Pss            uint64 `json:"pss"`
+	SharedClean    uint64 `json:"sharedClean"`
+	SharedDirty    uint64 `json:"sharedDirty"`
+	PrivateClean   uint64 `json:"privateClean"`
+	PrivateDirty   uint64 `json:"privateDirty"`
+	PrivateHugeTLB uint64 `json:"privateHugeTLB"`
+	Referenced     uint64 `json:"referenced"`
+	Anonymous      uint64 `json:"anonymous"`
+	Swap           uint64 `json:"swap"`
 }
 
 // String returns JSON value of the process.
 func (m MemoryMapsStat) String() string {
+	s, _ := json.Marshal(m)
+	return string(s)
+}
+
+// MemoryInfoSmapsStat
+type MemoryInfoSmapsStat struct {
+	PSS uint64 `json:"pss"` // bytes
+	USS uint64 `json:"uss`  // bytes
+}
+
+func (m MemoryInfoSmapsStat) String() string {
 	s, _ := json.Marshal(m)
 	return string(s)
 }
@@ -593,7 +605,8 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 		m.Path = first_line[len(first_line)-1]
 
 		for _, line := range block {
-			if strings.Contains(line, "VmFlags") {
+			if strings.Contains(line, "VmFlags") ||
+				strings.Contains(line, "Name") {
 				continue
 			}
 			field := strings.Split(line, ":")
@@ -621,6 +634,8 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 				m.PrivateClean = t
 			case "Private_Dirty":
 				m.PrivateDirty = t
+			case "Private_Hugetlb":
+				m.PrivateHugeTLB = t
 			case "Referenced":
 				m.Referenced = t
 			case "Anonymous":
@@ -665,6 +680,28 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 	}
 
 	return &ret, nil
+}
+
+func (p *Process) MemoryInfoSmaps() (*MemoryInfoSmapsStat, error) {
+	return p.MemoryInfoSmapsWithContext(context.Background())
+}
+
+// Calculate PSS and USS from smaps
+// PSS  (Proportional set size) - The total number of private pages a process has and shared pages which are divided by the number of processes using it.
+// USS (Unique set size) - The total number of private pages a process has (without shared pages).
+// Returns PSS and USS in bytes
+func (p *Process) MemoryInfoSmapsWithContext(ctx context.Context) (*MemoryInfoSmapsStat, error) {
+	memoryMaps, err := p.MemoryMaps(true)
+	if err != nil {
+		return nil, err
+	}
+	smaps := &MemoryInfoSmapsStat{}
+	for _, memoryMap := range *memoryMaps {
+		smaps.PSS += memoryMap.Pss * 1024
+		smaps.USS += memoryMap.PrivateDirty*1024 + memoryMap.PrivateClean*1024 + memoryMap.PrivateHugeTLB*1024
+	}
+
+	return smaps, nil
 }
 
 /**
