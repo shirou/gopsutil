@@ -213,6 +213,12 @@ func ReadInts(filename string) ([]int64, error) {
 	return ret, nil
 }
 
+// Parse Hex to uint32 without error
+func HexToUint32(hex string) uint32 {
+	vv, _ := strconv.ParseUint(hex, 16, 32)
+	return uint32(vv)
+}
+
 // Parse to int32 without error
 func mustParseInt32(val string) int32 {
 	vv, _ := strconv.ParseInt(val, 10, 32)

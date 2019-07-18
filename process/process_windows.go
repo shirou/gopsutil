@@ -25,12 +25,16 @@ const (
 )
 
 var (
-	modpsapi                 = windows.NewLazySystemDLL("psapi.dll")
-	procGetProcessMemoryInfo = modpsapi.NewProc("GetProcessMemoryInfo")
+	modpsapi                     = windows.NewLazySystemDLL("psapi.dll")
+	procGetProcessMemoryInfo     = modpsapi.NewProc("GetProcessMemoryInfo")
+	procGetProcessImageFileNameW = modpsapi.NewProc("GetProcessImageFileNameW")
 
 	advapi32                  = windows.NewLazySystemDLL("advapi32.dll")
 	procLookupPrivilegeValue  = advapi32.NewProc("LookupPrivilegeValueW")
 	procAdjustTokenPrivileges = advapi32.NewProc("AdjustTokenPrivileges")
+
+	procQueryFullProcessImageNameW = common.Modkernel32.NewProc("QueryFullProcessImageNameW")
+	procGetPriorityClass           = common.Modkernel32.NewProc("GetPriorityClass")
 )
 
 type SystemProcessInformation struct {
@@ -234,24 +238,31 @@ func (p *Process) Exe() (string, error) {
 }
 
 func (p *Process) ExeWithContext(ctx context.Context) (string, error) {
-	if p.Pid != 0 { // 0 or null is the current process for CreateToolhelp32Snapshot
-		snap := w32.CreateToolhelp32Snapshot(w32.TH32CS_SNAPMODULE|w32.TH32CS_SNAPMODULE32, uint32(p.Pid))
-		if snap != 0 { // don't report errors here, fallback to WMI instead
-			defer w32.CloseHandle(snap)
-			var me32 w32.MODULEENTRY32
-			me32.Size = uint32(unsafe.Sizeof(me32))
-
-			if w32.Module32First(snap, &me32) {
-				szexepath := windows.UTF16ToString(me32.SzExePath[:])
-				return szexepath, nil
-			}
-		}
-	}
-	dst, err := GetWin32ProcWithContext(ctx, p.Pid)
+	// 0x1000 is PROCESS_QUERY_LIMITED_INFORMATION
+	c, err := syscall.OpenProcess(0x1000, false, uint32(p.Pid))
 	if err != nil {
-		return "", fmt.Errorf("could not get ExecutablePath: %s", err)
+		return "", err
 	}
-	return *dst[0].ExecutablePath, nil
+	defer syscall.CloseHandle(c)
+	buf := make([]uint16, syscall.MAX_LONG_PATH)
+	size := uint32(syscall.MAX_LONG_PATH)
+	if err := procQueryFullProcessImageNameW.Find(); err == nil { // Vista+
+		ret, _, err := procQueryFullProcessImageNameW.Call(
+			uintptr(c),
+			uintptr(0),
+			uintptr(unsafe.Pointer(&buf[0])),
+			uintptr(unsafe.Pointer(&size)))
+		if ret == 0 {
+			return "", err
+		}
+		return windows.UTF16ToString(buf[:]), nil
+	}
+	// XP fallback
+	ret, _, err := procGetProcessImageFileNameW.Call(uintptr(c), uintptr(unsafe.Pointer(&buf[0])), uintptr(size))
+	if ret == 0 {
+		return "", err
+	}
+	return common.ConvertDOSPath(windows.UTF16ToString(buf[:])), nil
 }
 
 func (p *Process) Cmdline() (string, error) {
@@ -382,17 +393,39 @@ func (p *Process) TerminalWithContext(ctx context.Context) (string, error) {
 	return "", common.ErrNotImplementedError
 }
 
+// priorityClasses maps a win32 priority class to its WMI equivalent Win32_Process.Priority
+// https://docs.microsoft.com/en-us/windows/desktop/api/processthreadsapi/nf-processthreadsapi-getpriorityclass
+// https://docs.microsoft.com/en-us/windows/desktop/cimwin32prov/win32-process
+var priorityClasses = map[int]int32{
+	0x00008000: 10, // ABOVE_NORMAL_PRIORITY_CLASS
+	0x00004000: 6,  // BELOW_NORMAL_PRIORITY_CLASS
+	0x00000080: 13, // HIGH_PRIORITY_CLASS
+	0x00000040: 4,  // IDLE_PRIORITY_CLASS
+	0x00000020: 8,  // NORMAL_PRIORITY_CLASS
+	0x00000100: 24, // REALTIME_PRIORITY_CLASS
+}
+
 // Nice returns priority in Windows
 func (p *Process) Nice() (int32, error) {
 	return p.NiceWithContext(context.Background())
 }
 
 func (p *Process) NiceWithContext(ctx context.Context) (int32, error) {
-	dst, err := GetWin32ProcWithContext(ctx, p.Pid)
+	// 0x1000 is PROCESS_QUERY_LIMITED_INFORMATION
+	c, err := syscall.OpenProcess(0x1000, false, uint32(p.Pid))
 	if err != nil {
-		return 0, fmt.Errorf("could not get Priority: %s", err)
+		return 0, err
 	}
-	return int32(dst[0].Priority), nil
+	defer syscall.CloseHandle(c)
+	ret, _, err := procGetPriorityClass.Call(uintptr(c))
+	if ret == 0 {
+		return 0, err
+	}
+	priority, ok := priorityClasses[int(ret)]
+	if !ok {
+		return 0, fmt.Errorf("unknown priority class %s", ret)
+	}
+	return priority, nil
 }
 func (p *Process) IOnice() (int32, error) {
 	return p.IOniceWithContext(context.Background())
@@ -551,23 +584,18 @@ func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
 	defer w32.CloseHandle(snap)
 	var pe32 w32.PROCESSENTRY32
 	pe32.DwSize = uint32(unsafe.Sizeof(pe32))
-	if w32.Process32First(snap, &pe32) == false {
+	if !w32.Process32First(snap, &pe32) {
 		return out, windows.GetLastError()
 	}
-
-	if pe32.Th32ParentProcessID == uint32(p.Pid) {
-		p, err := NewProcess(int32(pe32.Th32ProcessID))
-		if err == nil {
-			out = append(out, p)
-		}
-	}
-
-	for w32.Process32Next(snap, &pe32) {
+	for {
 		if pe32.Th32ParentProcessID == uint32(p.Pid) {
 			p, err := NewProcess(int32(pe32.Th32ProcessID))
 			if err == nil {
 				out = append(out, p)
 			}
+		}
+		if !w32.Process32Next(snap, &pe32) {
+			break
 		}
 	}
 	return out, nil
@@ -685,22 +713,19 @@ func getFromSnapProcess(pid int32) (int32, int32, string, error) {
 	defer w32.CloseHandle(snap)
 	var pe32 w32.PROCESSENTRY32
 	pe32.DwSize = uint32(unsafe.Sizeof(pe32))
-	if w32.Process32First(snap, &pe32) == false {
+	if !w32.Process32First(snap, &pe32) {
 		return 0, 0, "", windows.GetLastError()
 	}
-
-	if pe32.Th32ProcessID == uint32(pid) {
-		szexe := windows.UTF16ToString(pe32.SzExeFile[:])
-		return int32(pe32.Th32ParentProcessID), int32(pe32.CntThreads), szexe, nil
-	}
-
-	for w32.Process32Next(snap, &pe32) {
+	for {
 		if pe32.Th32ProcessID == uint32(pid) {
 			szexe := windows.UTF16ToString(pe32.SzExeFile[:])
 			return int32(pe32.Th32ParentProcessID), int32(pe32.CntThreads), szexe, nil
 		}
+		if !w32.Process32Next(snap, &pe32) {
+			break
+		}
 	}
-	return 0, 0, "", fmt.Errorf("Couldn't find pid: %d", pid)
+	return 0, 0, "", fmt.Errorf("couldn't find pid: %d", pid)
 }
 
 // Get processes

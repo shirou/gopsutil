@@ -47,6 +47,7 @@ const (
 	FUSE_SUPER_MAGIC      = 0x65735546
 	FUTEXFS_SUPER_MAGIC   = 0xBAD1DEA
 	HFS_SUPER_MAGIC       = 0x4244
+	HFSPLUS_SUPER_MAGIC   = 0x482b
 	HOSTFS_SUPER_MAGIC    = 0x00c0ffee
 	HPFS_SUPER_MAGIC      = 0xF995E849
 	HUGETLBFS_MAGIC       = 0x958458f6
@@ -156,6 +157,7 @@ var fsTypeMap = map[int64]string{
 	GFS_SUPER_MAGIC:             "gfs/gfs2",            /* 0x1161970 remote */
 	GPFS_SUPER_MAGIC:            "gpfs",                /* 0x47504653 remote */
 	HFS_SUPER_MAGIC:             "hfs",                 /* 0x4244 local */
+	HFSPLUS_SUPER_MAGIC:         "hfsplus",             /* 0x482b local */
 	HPFS_SUPER_MAGIC:            "hpfs",                /* 0xF995E849 local */
 	HUGETLBFS_MAGIC:             "hugetlbfs",           /* 0x958458F6 local */
 	MTD_INODE_FS_SUPER_MAGIC:    "inodefs",             /* 0x11307854 local */
@@ -296,6 +298,14 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 				if d.Device == "none" || !common.StringsHas(fs, d.Fstype) {
 					continue
 				}
+			}
+
+			if strings.HasPrefix(d.Device, "/dev/mapper/") {
+				devpath, err := filepath.EvalSymlinks(d.Device)
+				if err != nil {
+					return nil, err
+				}
+				d.Device = devpath
 			}
 
 			// /dev/root is not the real device name
