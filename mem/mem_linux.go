@@ -83,6 +83,8 @@ func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
 		case "SReclaimable":
 			sReclaimable = true
 			ret.SReclaimable = t * 1024
+		case "SUnreclaim":
+			ret.SUnreclaim = t * 1024
 		case "PageTables":
 			ret.PageTables = t * 1024
 		case "SwapCached":
