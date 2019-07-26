@@ -43,7 +43,15 @@ func NumProcs() (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	return uint64(len(list)), err
+	var cnt uint64
+
+	for _, v := range list {
+		if _, err = strconv.ParseUint(v, 10, 64); err == nil {
+			cnt++
+		}
+	}
+
+	return cnt, nil
 }
 
 // cachedBootTime must be accessed via atomic.Load/StoreUint64
