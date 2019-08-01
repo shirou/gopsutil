@@ -64,15 +64,6 @@ func (m MemoryMapsStat) String() string {
 	return string(s)
 }
 
-// NewProcess creates a new Process instance, it only stores the pid and
-// checks that the process exists. Other method on Process can be used
-// to get more information about the process. An error will be returned
-// if the process does not exist.
-func NewProcess(pid int32) (*Process, error) {
-	_, err := os.Stat(common.HostProc(strconv.Itoa(int(pid))))
-	return &Process{Pid: pid}, err
-}
-
 // Ppid returns Parent Process ID of the process.
 func (p *Process) Ppid() (int32, error) {
 	return p.PpidWithContext(context.Background())

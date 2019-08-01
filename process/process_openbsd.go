@@ -496,12 +496,6 @@ func (p *Process) getKProcWithContext(ctx context.Context) (*KinfoProc, error) {
 	return &k, nil
 }
 
-func NewProcess(pid int32) (*Process, error) {
-	p := &Process{Pid: pid}
-
-	return p, nil
-}
-
 func CallKernProcSyscall(op int32, arg int32) ([]byte, uint64, error) {
 	return CallKernProcSyscallWithContext(context.Background(), op, arg)
 }
