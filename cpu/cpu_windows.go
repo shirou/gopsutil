@@ -14,14 +14,14 @@ import (
 )
 
 type Win32_Processor struct {
-	LoadPercentage            *uint16
-	Family                    uint16
-	Manufacturer              string
-	Name                      string
-	NumberOfLogicalProcessors uint32
-	ProcessorID               *string
-	Stepping                  *string
-	MaxClockSpeed             uint32
+	LoadPercentage *uint16
+	Family         uint16
+	Manufacturer   string
+	Name           string
+	NumberOfCores  uint32
+	ProcessorID    *string
+	Stepping       *string
+	MaxClockSpeed  uint32
 }
 
 // SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION
@@ -117,7 +117,7 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 			Family:     fmt.Sprintf("%d", l.Family),
 			VendorID:   l.Manufacturer,
 			ModelName:  l.Name,
-			Cores:      int32(l.NumberOfLogicalProcessors),
+			Cores:      int32(l.NumberOfCores),
 			PhysicalID: procID,
 			Mhz:        float64(l.MaxClockSpeed),
 			Flags:      []string{},
