@@ -77,7 +77,7 @@ func InfoWithContext(ctx context.Context) (*InfoStat, error) {
 	}
 
 	{
-		boot, err := BootTime()
+		boot, err := BootTimeWithContext(ctx)
 		if err == nil {
 			ret.BootTime = boot
 			ret.Uptime, _ = Uptime()
@@ -87,12 +87,12 @@ func InfoWithContext(ctx context.Context) (*InfoStat, error) {
 	{
 		hostID, err := getMachineGuid()
 		if err == nil {
-			ret.HostID = strings.ToLower(hostID)
+			ret.HostID = hostID
 		}
 	}
 
 	{
-		procs, err := process.Pids()
+		procs, err := process.PidsWithContext(ctx)
 		if err == nil {
 			ret.Procs = uint64(len(procs))
 		}
@@ -128,7 +128,7 @@ func getMachineGuid() (string, error) {
 		return "", fmt.Errorf("HostID incorrect: %q\n", hostID)
 	}
 
-	return hostID, nil
+	return strings.ToLower(hostID), nil
 }
 
 func Uptime() (uint64, error) {
