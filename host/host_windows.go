@@ -24,6 +24,7 @@ var (
 	procGetSystemTimeAsFileTime = common.Modkernel32.NewProc("GetSystemTimeAsFileTime")
 	procGetTickCount32          = common.Modkernel32.NewProc("GetTickCount")
 	procGetTickCount64          = common.Modkernel32.NewProc("GetTickCount64")
+	procGetNativeSystemInfo     = common.Modkernel32.NewProc("GetNativeSystemInfo")
 	procRtlGetVersion           = common.ModNt.NewProc("RtlGetVersion")
 )
 
@@ -40,6 +41,20 @@ type osVersionInfoExW struct {
 	wSuiteMask          uint16
 	wProductType        uint8
 	wReserved           uint8
+}
+
+type systemInfo struct {
+	wProcessorArchitecture      uint16
+	wReserved                   uint16
+	dwPageSize                  uint32
+	lpMinimumApplicationAddress uintptr
+	lpMaximumApplicationAddress uintptr
+	dwActiveProcessorMask       uintptr
+	dwNumberOfProcessors        uint32
+	dwProcessorType             uint32
+	dwAllocationGranularity     uint32
+	wProcessorLevel             uint16
+	wProcessorRevision          uint16
 }
 
 type msAcpi_ThermalZoneTemperature struct {
@@ -73,6 +88,13 @@ func InfoWithContext(ctx context.Context) (*InfoStat, error) {
 			ret.PlatformVersion = version
 		} else {
 			return ret, err
+		}
+	}
+
+	{
+		kernelArch, err := kernelArch()
+		if err == nil {
+			ret.KernelArch = kernelArch
 		}
 	}
 
@@ -292,4 +314,36 @@ func KernelVersion() (string, error) {
 func KernelVersionWithContext(ctx context.Context) (string, error) {
 	_, _, version, err := PlatformInformation()
 	return version, err
+}
+
+func kernelArch() (string, error) {
+	var systemInfo systemInfo
+	procGetNativeSystemInfo.Call(uintptr(unsafe.Pointer(&systemInfo)))
+
+	const (
+		PROCESSOR_ARCHITECTURE_INTEL = 0
+		PROCESSOR_ARCHITECTURE_ARM   = 5
+		PROCESSOR_ARCHITECTURE_ARM64 = 12
+		PROCESSOR_ARCHITECTURE_IA64  = 6
+		PROCESSOR_ARCHITECTURE_AMD64 = 9
+	)
+	switch systemInfo.wProcessorArchitecture {
+	case PROCESSOR_ARCHITECTURE_INTEL:
+		if systemInfo.wProcessorLevel < 3 {
+			return "i386", nil
+		}
+		if systemInfo.wProcessorLevel > 6 {
+			return "i686", nil
+		}
+		return fmt.Sprintf("i%d86", systemInfo.wProcessorLevel), nil
+	case PROCESSOR_ARCHITECTURE_ARM:
+		return "arm", nil
+	case PROCESSOR_ARCHITECTURE_ARM64:
+		return "aarch64", nil
+	case PROCESSOR_ARCHITECTURE_IA64:
+		return "ia64", nil
+	case PROCESSOR_ARCHITECTURE_AMD64:
+		return "x86_64", nil
+	}
+	return "", nil
 }

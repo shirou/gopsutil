@@ -55,6 +55,11 @@ func InfoWithContext(ctx context.Context) (*InfoStat, error) {
 		ret.KernelVersion = kernelVersion
 	}
 
+	kernelArch, err := kernelArch()
+	if err == nil {
+		ret.KernelArch = kernelArch
+	}
+
 	system, role, err := Virtualization()
 	if err == nil {
 		ret.VirtualizationSystem = system
