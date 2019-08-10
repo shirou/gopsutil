@@ -680,12 +680,6 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 	return &ret, common.ErrNotImplementedError
 }
 
-func NewProcess(pid int32) (*Process, error) {
-	p := &Process{Pid: pid}
-
-	return p, nil
-}
-
 func (p *Process) SendSignal(sig windows.Signal) error {
 	return p.SendSignalWithContext(context.Background(), sig)
 }

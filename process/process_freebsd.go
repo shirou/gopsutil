@@ -510,9 +510,3 @@ func (p *Process) getKProcWithContext(ctx context.Context) (*KinfoProc, error) {
 	}
 	return &k, nil
 }
-
-func NewProcess(pid int32) (*Process, error) {
-	p := &Process{Pid: pid}
-
-	return p, nil
-}

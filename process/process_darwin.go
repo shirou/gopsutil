@@ -634,12 +634,6 @@ func (p *Process) getKProcWithContext(ctx context.Context) (*KinfoProc, error) {
 	return &k, nil
 }
 
-func NewProcess(pid int32) (*Process, error) {
-	p := &Process{Pid: pid}
-
-	return p, nil
-}
-
 // call ps command.
 // Return value deletes Header line(you must not input wrong arg).
 // And splited by Space. Caller have responsibility to manage.

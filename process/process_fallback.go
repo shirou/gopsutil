@@ -44,10 +44,6 @@ func ProcessesWithContext(ctx context.Context) ([]*Process, error) {
 	return nil, common.ErrNotImplementedError
 }
 
-func NewProcess(pid int32) (*Process, error) {
-	return nil, common.ErrNotImplementedError
-}
-
 func PidExistsWithContext(ctx context.Context, pid int32) (bool, error) {
 	pids, err := PidsWithContext(ctx)
 	if err != nil {

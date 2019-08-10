@@ -16,6 +16,7 @@ import (
 var (
 	invoke          common.Invoker = common.Invoke{}
 	ErrorNoChildren                = errors.New("process does not have children")
+	ErrorProcessNotRunning         = errors.New("process does not exist")
 )
 
 type Process struct {
@@ -134,6 +135,23 @@ func (i IOCountersStat) String() string {
 func (p NumCtxSwitchesStat) String() string {
 	s, _ := json.Marshal(p)
 	return string(s)
+}
+
+// NewProcess creates a new Process instance, it only stores the pid and
+// checks that the process exists. Other method on Process can be used
+// to get more information about the process. An error will be returned
+// if the process does not exist.
+func NewProcess(pid int32) (*Process, error) {
+	p := &Process{Pid: pid}
+
+	exists, err := PidExists(pid)
+	if err != nil {
+		return p, err
+	}
+	if !exists {
+		return p, ErrorProcessNotRunning
+	}
+	return p, nil
 }
 
 func PidExists(pid int32) (bool, error) {
