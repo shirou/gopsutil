@@ -244,7 +244,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 	}
 
 	fs, err := getFileSystems()
-	if err != nil && all {
+	if err != nil && !all {
 		return nil, err
 	}
 
