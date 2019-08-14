@@ -5,7 +5,6 @@ package cpu
 import (
 	"context"
 	"fmt"
-	"runtime"
 	"unsafe"
 
 	"github.com/StackExchange/wmi"
@@ -24,6 +23,7 @@ type Win32_Processor struct {
 	Manufacturer              string
 	Name                      string
 	NumberOfLogicalProcessors uint32
+	NumberOfCores             uint32
 	ProcessorID               *string
 	Stepping                  *string
 	MaxClockSpeed             uint32
@@ -241,5 +241,15 @@ func CountsWithContext(ctx context.Context, logical bool) (int, error) {
 		return int(systemInfo.dwNumberOfProcessors), nil
 	}
 	// physical cores https://github.com/giampaolo/psutil/blob/d01a9eaa35a8aadf6c519839e987a49d8be2d891/psutil/_psutil_windows.c#L499
-	return runtime.NumCPU(), nil
+	// for the time being, try with unreliable and slow WMI call…
+	var dst []Win32_Processor
+	q := wmi.CreateQuery(&dst, "")
+	if err := common.WMIQueryWithContext(ctx, q, &dst); err != nil {
+		return 0, err
+	}
+	var count uint32
+	for _, d := range dst {
+		count += d.NumberOfCores
+	}
+	return int(count), nil
 }
