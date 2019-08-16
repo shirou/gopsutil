@@ -520,11 +520,11 @@ func (p *Process) NumThreads() (int32, error) {
 }
 
 func (p *Process) NumThreadsWithContext(ctx context.Context) (int32, error) {
-	dst, err := GetWin32ProcWithContext(ctx, p.Pid)
+	_, ret, _, err := getFromSnapProcess(p.Pid)
 	if err != nil {
 		return 0, fmt.Errorf("could not get ThreadCount: %s", err)
 	}
-	return int32(dst[0].ThreadCount), nil
+	return ret, nil
 }
 func (p *Process) Threads() (map[int32]*cpu.TimesStat, error) {
 	return p.ThreadsWithContext(context.Background())
