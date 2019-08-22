@@ -44,11 +44,7 @@ type MemoryInfoExStat struct {
 type MemoryMapsStat struct {
 }
 
-func Pids() ([]int32, error) {
-	return PidsWithContext(context.Background())
-}
-
-func PidsWithContext(ctx context.Context) ([]int32, error) {
+func pidsWithContext(ctx context.Context) ([]int32, error) {
 	var ret []int32
 
 	pids, err := callPsWithContext(ctx, "pid", 0, false)

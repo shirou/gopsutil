@@ -6,6 +6,7 @@ import (
 	"errors"
 	"math"
 	"runtime"
+	"sort"
 	"time"
 
 	"github.com/shirou/gopsutil/cpu"
@@ -14,9 +15,9 @@ import (
 )
 
 var (
-	invoke          common.Invoker = common.Invoke{}
-	ErrorNoChildren                = errors.New("process does not have children")
-	ErrorProcessNotRunning         = errors.New("process does not exist")
+	invoke                 common.Invoker = common.Invoke{}
+	ErrorNoChildren                       = errors.New("process does not have children")
+	ErrorProcessNotRunning                = errors.New("process does not exist")
 )
 
 type Process struct {
@@ -135,6 +136,17 @@ func (i IOCountersStat) String() string {
 func (p NumCtxSwitchesStat) String() string {
 	s, _ := json.Marshal(p)
 	return string(s)
+}
+
+// Pids returns a slice of process ID list which are running now.
+func Pids() ([]int32, error) {
+	return PidsWithContext(context.Background())
+}
+
+func PidsWithContext(ctx context.Context) ([]int32, error) {
+	pids, err := pidsWithContext(ctx)
+	sort.Slice(pids, func(i, j int) bool { return pids[i] < pids[j] })
+	return pids, err
 }
 
 // NewProcess creates a new Process instance, it only stores the pid and
