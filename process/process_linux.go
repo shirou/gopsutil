@@ -1280,12 +1280,7 @@ func (p *Process) fillFromStatWithContext(ctx context.Context) (uint64, int32, *
 	return p.fillFromTIDStat(-1)
 }
 
-// Pids returns a slice of process ID list which are running now.
-func Pids() ([]int32, error) {
-	return PidsWithContext(context.Background())
-}
-
-func PidsWithContext(ctx context.Context) ([]int32, error) {
+func pidsWithContext(ctx context.Context) ([]int32, error) {
 	return readPidsFromDir(common.HostProc())
 }
 
