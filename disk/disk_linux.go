@@ -289,7 +289,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 
 			d = PartitionStat{
 				Device:     device,
-				Mountpoint: mountPoint,
+				Mountpoint: unescapeFstab(mountPoint),
 				Fstype:     fstype,
 				Opts:       mountOpts,
 			}
