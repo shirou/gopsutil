@@ -168,7 +168,8 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 
 			t, err := strconv.ParseInt(val, 10, 64)
 			if err != nil {
-				return ret, err
+				// "stepping" might be 'unknown', so set to 0 in that case
+				c.Stepping = 0
 			}
 			c.Stepping = int32(t)
 		case "cpu MHz", "clock":
