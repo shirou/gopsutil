@@ -216,18 +216,18 @@ func (p *Process) PercentWithContext(ctx context.Context, interval time.Duration
 
 	numcpu := runtime.NumCPU()
 	delta := (now.Sub(p.lastCPUTime).Seconds()) * float64(numcpu)
-	ret := calculatePercent(p.lastCPUTimes, cpuTimes, delta, numcpu)
+	ret := calculatePercent(p.lastCPUTimes, cpuTimes, delta)
 	p.lastCPUTimes = cpuTimes
 	p.lastCPUTime = now
 	return ret, nil
 }
 
-func calculatePercent(t1, t2 *cpu.TimesStat, delta float64, numcpu int) float64 {
+func calculatePercent(t1, t2 *cpu.TimesStat, delta float64) float64 {
 	if delta == 0 {
 		return 0
 	}
 	delta_proc := t2.Total() - t1.Total()
-	overall_percent := ((delta_proc / delta) * 100) * float64(numcpu)
+	overall_percent := ((delta_proc / delta) * 100)
 	return math.Min(100, math.Max(0, overall_percent))
 }
 
