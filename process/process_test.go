@@ -2,11 +2,13 @@ package process
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"os/exec"
 	"os/user"
 	"reflect"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -351,16 +353,54 @@ func Test_Parent(t *testing.T) {
 
 func Test_Connections(t *testing.T) {
 	p := testGetProcess()
+	ch0 := make(chan string)
+	ch1 := make(chan string)
+	go func() { // TCP listening goroutine
+		addr, err := net.ResolveTCPAddr("tcp", "localhost:0") // dynamically get an open random port from OS
+		if err != nil {
+			t.Skip("unable to resolve localhost:", err)
+		}
+		l, err := net.ListenTCP(addr.Network(), addr)
+		if err != nil {
+			t.Skip(fmt.Sprintf("unable to listen on %v: %v", addr, err))
+		}
+		defer l.Close()
+		ch0 <- l.Addr().String()
+		for {
+			conn, err := l.Accept()
+			if err != nil {
+				t.Skip("unable to accept connection:", err)
+			}
+			ch1 <- l.Addr().String()
+			defer conn.Close()
+		}
+	}()
+	go func() { // TCP client goroutine
+		tcpServerAddr := <-ch0
+		net.Dial("tcp", tcpServerAddr)
+	}()
 
+	tcpServerAddr := <-ch1
+	tcpServerAddrIP := strings.Split(tcpServerAddr, ":")[0]
+	tcpServerAddrPort, err := strconv.ParseUint(strings.Split(tcpServerAddr, ":")[1], 10, 32)
+	if err != nil {
+		t.Errorf("unable to parse tcpServerAddr port: %v", err)
+	}
 	c, err := p.Connections()
 	if err != nil {
-		t.Fatalf("error %v", err)
+		t.Errorf("error %v", err)
 	}
-	// TODO:
-	// Since go test open no connection, ret is empty.
-	// should invoke child process or other solutions.
-	if len(c) != 0 {
-		t.Fatalf("wrong connections")
+	if len(c) == 0 {
+		t.Errorf("no connections found")
+	}
+	found := 0
+	for _, connection := range c {
+		if connection.Status == "ESTABLISHED" && (connection.Laddr.IP == tcpServerAddrIP && connection.Laddr.Port == uint32(tcpServerAddrPort)) || (connection.Raddr.IP == tcpServerAddrIP && connection.Raddr.Port == uint32(tcpServerAddrPort)) {
+			found++
+		}
+	}
+	if found != 2 { // two established connections, one for the server, the other for the client
+		t.Errorf(fmt.Sprintf("wrong connections: %+v", c))
 	}
 }
 
