@@ -252,7 +252,7 @@ func (p *Process) MemoryPercentWithContext(ctx context.Context) (float32, error)
 	return float32(math.Min(100, math.Max(0, (100*float64(used)/float64(total))))), nil
 }
 
-// CPU_Percent returns how many percent of the CPU time this process uses
+// CPUPercent returns how many percent of the CPU time this process uses
 func (p *Process) CPUPercent() (float64, error) {
 	return p.CPUPercentWithContext(context.Background())
 }
@@ -269,7 +269,7 @@ func (p *Process) CPUPercentWithContext(ctx context.Context) (float64, error) {
 	}
 
 	created := time.Unix(0, crt_time*int64(time.Millisecond))
-	totalTime := time.Since(created).Seconds()
+	totalTime := time.Since(created).Seconds() * float64(runtime.NumCPU())
 	if totalTime <= 0 {
 		return 0, nil
 	}
