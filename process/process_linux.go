@@ -130,12 +130,7 @@ func (p *Process) CmdlineSliceWithContext(ctx context.Context) ([]string, error)
 	return p.fillSliceFromCmdlineWithContext(ctx)
 }
 
-// CreateTime returns created time of the process in milliseconds since the epoch, in UTC.
-func (p *Process) CreateTime() (int64, error) {
-	return p.CreateTimeWithContext(context.Background())
-}
-
-func (p *Process) CreateTimeWithContext(ctx context.Context) (int64, error) {
+func (p *Process) createTimeWithContext(ctx context.Context) (int64, error) {
 	_, _, _, createTime, _, _, _, err := p.fillFromStatWithContext(ctx)
 	if err != nil {
 		return 0, err
@@ -548,16 +543,6 @@ func (p *Process) NetIOCounters(pernic bool) ([]net.IOCountersStat, error) {
 func (p *Process) NetIOCountersWithContext(ctx context.Context, pernic bool) ([]net.IOCountersStat, error) {
 	filename := common.HostProc(strconv.Itoa(int(p.Pid)), "net/dev")
 	return net.IOCountersByFile(pernic, filename)
-}
-
-// IsRunning returns whether the process is running or not.
-// Not implemented yet.
-func (p *Process) IsRunning() (bool, error) {
-	return p.IsRunningWithContext(context.Background())
-}
-
-func (p *Process) IsRunningWithContext(ctx context.Context) (bool, error) {
-	return true, common.ErrNotImplementedError
 }
 
 // MemoryMaps get memory maps from /proc/(pid)/smaps

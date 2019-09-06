@@ -129,11 +129,8 @@ func (p *Process) CmdlineSliceWithContext(ctx context.Context) ([]string, error)
 	}
 	return r[0], err
 }
-func (p *Process) CreateTime() (int64, error) {
-	return p.CreateTimeWithContext(context.Background())
-}
 
-func (p *Process) CreateTimeWithContext(ctx context.Context) (int64, error) {
+func (p *Process) createTimeWithContext(ctx context.Context) (int64, error) {
 	r, err := callPsWithContext(ctx, "etime", p.Pid, false)
 	if err != nil {
 		return 0, err
@@ -527,13 +524,6 @@ func (p *Process) NetIOCountersWithContext(ctx context.Context, pernic bool) ([]
 	return nil, common.ErrNotImplementedError
 }
 
-func (p *Process) IsRunning() (bool, error) {
-	return p.IsRunningWithContext(context.Background())
-}
-
-func (p *Process) IsRunningWithContext(ctx context.Context) (bool, error) {
-	return true, common.ErrNotImplementedError
-}
 func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 	return p.MemoryMapsWithContext(context.Background(), grouped)
 }
