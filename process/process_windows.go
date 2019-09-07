@@ -640,7 +640,7 @@ func (p *Process) Connections() ([]net.ConnectionStat, error) {
 }
 
 func (p *Process) ConnectionsWithContext(ctx context.Context) ([]net.ConnectionStat, error) {
-	return nil, common.ErrNotImplementedError
+	return net.ConnectionsPidWithContext(ctx, "all", p.Pid)
 }
 
 func (p *Process) ConnectionsMax(max int) ([]net.ConnectionStat, error) {
