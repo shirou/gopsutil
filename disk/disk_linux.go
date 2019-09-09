@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"runtime"
 
 	"github.com/shirou/gopsutil/internal/common"
 	"golang.org/x/sys/unix"
@@ -243,9 +244,16 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 		}
 	}
 
-	fs, err := getFileSystems()
-	if err != nil && !all {
-		return nil, err
+	if runtime.GOOS == "android" {
+		all = true
+	}
+
+	var fs []string
+	if !all {
+		fs, err = getFileSystems()
+		if err != nil  {
+			return nil, err
+		}
 	}
 
 	ret := make([]PartitionStat, 0, len(lines))
