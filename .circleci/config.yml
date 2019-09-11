@@ -20,9 +20,23 @@ jobs:
           command: go build -v
       - run:
           command: make build_test
-
+  fmt:
+    docker:
+      - image: circleci/golang:1.9
+    working_directory: /home/circleci/go/src/github.com/shirou/gopsutil
+    environment:
+      GOPATH: /home/circleci/go
+    steps:
+      - run:
+          command: |
+            echo -e 'export PATH=$GOPATH/bin:$PATH' >> $BASH_ENV
+            source /home/circleci/.bashrc
+      - checkout
+      - run:
+        command: '[[ -z "$(find -not \( -path ./.git -prune \) -name "*.go" -exec gofmt -l {} + | tee /dev/stderr)" ]]'
 workflows:
   version: 2
   test:
     jobs:
       - test
+      - fmt
