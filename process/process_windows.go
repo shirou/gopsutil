@@ -320,11 +320,7 @@ func (p *Process) CmdlineSliceWithContext(ctx context.Context) ([]string, error)
 	return strings.Split(cmdline, " "), nil
 }
 
-func (p *Process) CreateTime() (int64, error) {
-	return p.CreateTimeWithContext(context.Background())
-}
-
-func (p *Process) CreateTimeWithContext(ctx context.Context) (int64, error) {
+func (p *Process) createTimeWithContext(ctx context.Context) (int64, error) {
 	ru, err := getRusage(p.Pid)
 	if err != nil {
 		return 0, fmt.Errorf("could not get CreationDate: %s", err)
@@ -657,14 +653,6 @@ func (p *Process) NetIOCounters(pernic bool) ([]net.IOCountersStat, error) {
 
 func (p *Process) NetIOCountersWithContext(ctx context.Context, pernic bool) ([]net.IOCountersStat, error) {
 	return nil, common.ErrNotImplementedError
-}
-
-func (p *Process) IsRunning() (bool, error) {
-	return p.IsRunningWithContext(context.Background())
-}
-
-func (p *Process) IsRunningWithContext(ctx context.Context) (bool, error) {
-	return true, common.ErrNotImplementedError
 }
 
 func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {

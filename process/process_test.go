@@ -539,3 +539,30 @@ func Test_Kill(t *testing.T) {
 	assert.Nil(t, err)
 	cmd.Wait()
 }
+
+func Test_IsRunning(t *testing.T) {
+	var cmd *exec.Cmd
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("ping", "localhost", "-n", "2")
+	} else {
+		cmd = exec.Command("sleep", "1")
+	}
+	cmd.Start()
+	p, err := NewProcess(int32(cmd.Process.Pid))
+	assert.Nil(t, err)
+	running, err := p.IsRunning()
+	if err != nil {
+		t.Fatalf("IsRunning error: %v", err)
+	}
+	if !running {
+		t.Fatalf("process should be found running")
+	}
+	cmd.Wait()
+	running, err = p.IsRunning()
+	if err != nil {
+		t.Fatalf("IsRunning error: %v", err)
+	}
+	if running {
+		t.Fatalf("process should NOT be found running")
+	}
+}
