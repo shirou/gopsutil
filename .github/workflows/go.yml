@@ -1,0 +1,29 @@
+name: Go
+on: [push]
+jobs:
+
+  build:
+    name: Test on node ${{ matrix.node_version }} and ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+          go: [ '1.11', '1.12' ]
+          os: [ubuntu-18.04, ubuntu-16.04, windows-2019, windows-2016, macOS-10.14]
+    steps:
+
+    - name: Set up Go
+      uses: actions/setup-go@v1
+      with:
+          go-version: ${{ matrix.go }}
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v1
+
+    - name: Get dependencies
+      run: |
+        mkdir -p /home/runner/go/bin
+        curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+        /home/runner/go/bin/dep ensure
+
+    - name: Test
+      run: go test ./... -v
