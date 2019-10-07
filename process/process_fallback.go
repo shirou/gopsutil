@@ -139,6 +139,13 @@ func (p *Process) Gids() ([]int32, error) {
 func (p *Process) GidsWithContext(ctx context.Context) ([]int32, error) {
 	return []int32{}, common.ErrNotImplementedError
 }
+func (p *Process) Groups() ([]int32, error) {
+	return p.GroupsWithContext(context.Background())
+}
+
+func (p *Process) GroupsWithContext(ctx context.Context) ([]int32, error) {
+	return []int32{}, common.ErrNotImplementedError
+}
 func (p *Process) Terminal() (string, error) {
 	return p.TerminalWithContext(context.Background())
 }

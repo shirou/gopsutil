@@ -28,6 +28,7 @@ type Process struct {
 	numCtxSwitches *NumCtxSwitchesStat
 	uids           []int32
 	gids           []int32
+	groups         []int32
 	numThreads     int32
 	memInfo        *MemoryInfoStat
 	sigInfo        *SignalInfoStat
