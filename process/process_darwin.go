@@ -134,7 +134,8 @@ func (p *Process) createTimeWithContext(ctx context.Context) (int64, error) {
 	r, err := callPsWithContext(ctx, "etime", p.Pid, false)
 	if err != nil {
 		return 0, err
-	} else if len(r) == 0 || len(r[0]) == 0 {
+	}
+	if len(r) == 0 || len(r[0]) == 0 {
 		return 0, fmt.Errorf("unexpected return from ps")
 	}
 
