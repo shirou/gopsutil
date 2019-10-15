@@ -87,8 +87,8 @@ func (c TimesStat) String() string {
 
 // Total returns the total number of seconds in a CPUTimesStat
 func (c TimesStat) Total() float64 {
-	total := c.User + c.System + c.Nice + c.Iowait + c.Irq + c.Softirq + c.Steal +
-		c.Guest + c.GuestNice + c.Idle
+	total := c.User + c.System + c.Nice + c.Iowait + c.Irq + c.Softirq +
+		c.Steal + c.Idle
 	return total
 }
 
@@ -99,7 +99,7 @@ func (c InfoStat) String() string {
 
 func getAllBusy(t TimesStat) (float64, float64) {
 	busy := t.User + t.System + t.Nice + t.Iowait + t.Irq +
-		t.Softirq + t.Steal + t.Guest + t.GuestNice
+		t.Softirq + t.Steal
 	return busy + t.Idle, busy
 }
 
