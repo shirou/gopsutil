@@ -257,11 +257,11 @@ func parseNetstatAddr(local string, remote string, family uint32) (laddr Addr, r
 }
 
 // Return a list of network connections opened.
-func Connections(kind string) ([]ConnectionStat, error) {
-	return ConnectionsWithContext(context.Background(), kind)
+func Connections(kind string, config ...ConnectionStatConfigurer) ([]ConnectionStat, error) {
+	return ConnectionsWithContext(context.Background(), kind, config...)
 }
 
-func ConnectionsWithContext(ctx context.Context, kind string) ([]ConnectionStat, error) {
+func ConnectionsWithContext(ctx context.Context, kind string, config ...ConnectionStatConfigurer) ([]ConnectionStat, error) {
 	var ret []ConnectionStat
 
 	args := []string{"-na"}

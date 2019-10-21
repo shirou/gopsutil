@@ -383,30 +383,31 @@ type connTmp struct {
 }
 
 // Return a list of network connections opened.
-func Connections(kind string) ([]ConnectionStat, error) {
-	return ConnectionsWithContext(context.Background(), kind)
+func Connections(kind string, config ...ConnectionStatConfigurer) ([]ConnectionStat, error) {
+	return ConnectionsWithContext(context.Background(), kind, config...)
 }
 
-func ConnectionsWithContext(ctx context.Context, kind string) ([]ConnectionStat, error) {
-	return ConnectionsPid(kind, 0)
+func ConnectionsWithContext(ctx context.Context, kind string, config ...ConnectionStatConfigurer) ([]ConnectionStat, error) {
+	return ConnectionsPid(kind, 0, config...)
 }
 
 // Return a list of network connections opened returning at most `max`
 // connections for each running process.
-func ConnectionsMax(kind string, max int) ([]ConnectionStat, error) {
-	return ConnectionsMaxWithContext(context.Background(), kind, max)
+func ConnectionsMax(kind string, max int, config ...ConnectionStatConfigurer) ([]ConnectionStat, error) {
+	return ConnectionsMaxWithContext(context.Background(), kind, max, config...)
 }
 
-func ConnectionsMaxWithContext(ctx context.Context, kind string, max int) ([]ConnectionStat, error) {
-	return ConnectionsPidMax(kind, 0, max)
+func ConnectionsMaxWithContext(ctx context.Context, kind string, max int, config ...ConnectionStatConfigurer) ([]ConnectionStat, error) {
+	return ConnectionsPidMax(kind, 0, max, config...)
 }
 
 // Return a list of network connections opened by a process.
-func ConnectionsPid(kind string, pid int32) ([]ConnectionStat, error) {
+func ConnectionsPid(kind string, pid int32, config ...ConnectionStatConfigurer) ([]ConnectionStat, error) {
 	return ConnectionsPidWithContext(context.Background(), kind, pid)
 }
 
-func ConnectionsPidWithContext(ctx context.Context, kind string, pid int32) ([]ConnectionStat, error) {
+func ConnectionsPidWithContext(ctx context.Context, kind string, pid int32, config ...ConnectionStatConfigurer) ([]ConnectionStat, error) {
+	c := configConnectionStatConfig(config)
 	tmap, ok := netConnectionKindMap[kind]
 	if !ok {
 		return nil, fmt.Errorf("invalid kind, %s", kind)
@@ -426,15 +427,16 @@ func ConnectionsPidWithContext(ctx context.Context, kind string, pid int32) ([]C
 	if err != nil {
 		return nil, fmt.Errorf("cound not get pid(s), %d: %s", pid, err)
 	}
-	return statsFromInodes(root, pid, tmap, inodes)
+	return statsFromInodes(root, pid, tmap, inodes, c.skipUids)
 }
 
 // Return up to `max` network connections opened by a process.
-func ConnectionsPidMax(kind string, pid int32, max int) ([]ConnectionStat, error) {
-	return ConnectionsPidMaxWithContext(context.Background(), kind, pid, max)
+func ConnectionsPidMax(kind string, pid int32, max int, config ...ConnectionStatConfigurer) ([]ConnectionStat, error) {
+	return ConnectionsPidMaxWithContext(context.Background(), kind, pid, max, config...)
 }
 
-func ConnectionsPidMaxWithContext(ctx context.Context, kind string, pid int32, max int) ([]ConnectionStat, error) {
+func ConnectionsPidMaxWithContext(ctx context.Context, kind string, pid int32, max int, config ...ConnectionStatConfigurer) ([]ConnectionStat, error) {
+	c := configConnectionStatConfig(config)
 	tmap, ok := netConnectionKindMap[kind]
 	if !ok {
 		return nil, fmt.Errorf("invalid kind, %s", kind)
@@ -454,10 +456,10 @@ func ConnectionsPidMaxWithContext(ctx context.Context, kind string, pid int32, m
 	if err != nil {
 		return nil, fmt.Errorf("cound not get pid(s), %d", pid)
 	}
-	return statsFromInodes(root, pid, tmap, inodes)
+	return statsFromInodes(root, pid, tmap, inodes, c.skipUids)
 }
 
-func statsFromInodes(root string, pid int32, tmap []netConnectionKindType, inodes map[string][]inodeMap) ([]ConnectionStat, error) {
+func statsFromInodes(root string, pid int32, tmap []netConnectionKindType, inodes map[string][]inodeMap, skipUids bool) ([]ConnectionStat, error) {
 	dupCheckMap := make(map[string]struct{})
 	var ret []ConnectionStat
 
@@ -504,9 +506,11 @@ func statsFromInodes(root string, pid int32, tmap []netConnectionKindType, inode
 				conn.Pid = c.pid
 			}
 
-			// fetch process owner Real, effective, saved set, and filesystem UIDs
-			proc := process{Pid: conn.Pid}
-			conn.Uids, _ = proc.getUids()
+			if !skipUids {
+				// fetch process owner Real, effective, saved set, and filesystem UIDs
+				proc := process{Pid: conn.Pid}
+				conn.Uids, _ = proc.getUids()
+			}
 
 			ret = append(ret, conn)
 			dupCheckMap[connKey] = struct{}{}

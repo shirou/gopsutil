@@ -46,6 +46,29 @@ type ConnectionStat struct {
 	Pid    int32   `json:"pid"`
 }
 
+// connectionStatConfig configures what to search for with ConnectionStat
+type connectionStatConfig struct {
+	_               struct{}
+	skipUids        bool
+}
+
+type ConnectionStatConfigurer func(*connectionStatConfig)
+
+func configConnectionStatConfig(config []ConnectionStatConfigurer) connectionStatConfig {
+	var c connectionStatConfig
+	for _, opt := range config {
+		opt(&c)
+	}
+	return c
+}
+
+// SkipUids doesn't collect ConnectionStat.Uids if it is significantly faster to ignore them
+func SkipUids() ConnectionStatConfigurer {
+	return func(config *connectionStatConfig) {
+		config.skipUids = true
+	}
+}
+
 // System wide stats about different network protocols
 type ProtoCountersStat struct {
 	Protocol string           `json:"protocol"`

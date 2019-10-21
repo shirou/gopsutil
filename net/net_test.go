@@ -59,6 +59,20 @@ func TestNetConnectionStatString(t *testing.T) {
 
 }
 
+func TestConfigConnectionStatConfig(t *testing.T) {
+	noSkip := connectionStatConfig{skipUids: false}
+	skip := connectionStatConfig{skipUids: true}
+	emptyV := configConnectionStatConfig(nil)
+	if noSkip != emptyV {
+		t.Errorf("No config shouldn't skipUids: %+v", emptyV)
+	}
+	skipV := configConnectionStatConfig([]ConnectionStatConfigurer{SkipUids()})
+	if skip != skipV {
+		t.Errorf("SkipUids() should skipUids: %+v", emptyV)
+	}
+}
+
+
 func TestNetIOCountersAll(t *testing.T) {
 	v, err := IOCounters(false)
 	if err != nil {

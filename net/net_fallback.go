@@ -40,18 +40,18 @@ func ProtoCountersWithContext(ctx context.Context, protocols []string) ([]ProtoC
 	return []ProtoCountersStat{}, common.ErrNotImplementedError
 }
 
-func Connections(kind string) ([]ConnectionStat, error) {
-	return ConnectionsWithContext(context.Background(), kind)
+func Connections(kind string, config ...ConnectionStatConfigurer) ([]ConnectionStat, error) {
+	return ConnectionsWithContext(context.Background(), kind, config...)
 }
 
-func ConnectionsWithContext(ctx context.Context, kind string) ([]ConnectionStat, error) {
+func ConnectionsWithContext(ctx context.Context, kind string, config ...ConnectionStatConfigurer) ([]ConnectionStat, error) {
 	return []ConnectionStat{}, common.ErrNotImplementedError
 }
 
-func ConnectionsMax(kind string, max int) ([]ConnectionStat, error) {
-	return ConnectionsMaxWithContext(context.Background(), kind, max)
+func ConnectionsMax(kind string, max int, config ...ConnectionStatConfigurer) ([]ConnectionStat, error) {
+	return ConnectionsMaxWithContext(context.Background(), kind, max, config...)
 }
 
-func ConnectionsMaxWithContext(ctx context.Context, kind string, max int) ([]ConnectionStat, error) {
+func ConnectionsMaxWithContext(ctx context.Context, kind string, max int, config ...ConnectionStatConfigurer) ([]ConnectionStat, error) {
 	return []ConnectionStat{}, common.ErrNotImplementedError
 }
