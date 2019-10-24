@@ -408,9 +408,6 @@ func (p *Process) GidsWithContext(ctx context.Context) ([]int32, error) {
 	var gids []int32
 	return gids, common.ErrNotImplementedError
 }
-func (p *Process) Groups() ([]int32, error) {
-	return p.GroupsWithContext(context.Background())
-}
 
 func (p *Process) GroupsWithContext(ctx context.Context) ([]int32, error) {
 	var groups []int32

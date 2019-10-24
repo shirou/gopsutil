@@ -314,3 +314,8 @@ func (p *Process) CPUPercentWithContext(ctx context.Context) (float64, error) {
 
 	return math.Min(100, math.Max(0, 100*cput.Total()/totalTime)), nil
 }
+
+// Groups returns all group IDs(include supplementary groups) of the process as a slice of the int
+func (p *Process) Groups() ([]int32, error) {
+       return p.GroupsWithContext(context.Background())
+}

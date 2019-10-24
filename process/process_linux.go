@@ -228,11 +228,6 @@ func (p *Process) GidsWithContext(ctx context.Context) ([]int32, error) {
 	return p.gids, nil
 }
 
-// Groups returns groups of the process as a slice of the int
-func (p *Process) Groups() ([]int32, error) {
-	return p.GroupsWithContext(context.Background())
-}
-
 func (p *Process) GroupsWithContext(ctx context.Context) ([]int32, error) {
 	err := p.fillFromStatusWithContext(ctx)
 	if err != nil {
