@@ -37,14 +37,6 @@
   version = "v1.0.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:99c6a6dab47067c9b898e8c8b13d130c6ab4ffbcc4b7cc6236c2cd0b1e344f5b"
-  name = "github.com/shirou/w32"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "bb4de0191aa41b5507caa14b0650cdbddcd9280b"
-
-[[projects]]
   digest = "1:5da8ce674952566deae4dbc23d07c85caafc6cfa815b0b3e03e41979cedb8750"
   name = "github.com/stretchr/testify"
   packages = [
@@ -57,7 +49,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:4d36bc09c4ad87e371dce781b6bec6164de89e4e32fda093f780fcafc69bfee8"
+  digest = "1:d6ee10ad98c51535647d18a5f327e7e13c863e14ac4044cf7fcaedf570e17341"
   name = "golang.org/x/sys"
   packages = [
     "unix",
@@ -66,14 +58,13 @@
     "windows/svc/mgr",
   ]
   pruneopts = "UT"
-  revision = "fc99dfbffb4e5ed5758a37e31dd861afe285406b"
+  revision = "d32e6e3b99c40f2bfaea45ea9596ed539eed1c0d"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
     "github.com/StackExchange/wmi",
-    "github.com/shirou/w32",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/require",
     "golang.org/x/sys/unix",
