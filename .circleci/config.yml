@@ -2,7 +2,7 @@ version: 2
 jobs:
   test:
     docker:
-      - image: circleci/golang:1.9
+      - image: circleci/golang:1.11
     working_directory: /home/circleci/go/src/github.com/shirou/gopsutil
     environment:
       GOPATH: /home/circleci/go
