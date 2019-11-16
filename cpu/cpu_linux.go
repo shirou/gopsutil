@@ -87,7 +87,7 @@ func finishCPUInfo(c *InfoStat) error {
 	lines, err = common.ReadLines(sysCPUPath(c.CPU, "cpufreq/cpuinfo_max_freq"))
 	// if we encounter errors below such as there are no cpuinfo_max_freq file,
 	// we just ignore. so let Mhz is 0.
-	if err != nil {
+	if err != nil || len(lines) == 0 {
 		return nil
 	}
 	value, err = strconv.ParseFloat(lines[0], 64)
