@@ -163,7 +163,7 @@ func NewProcess(pid int32) (*Process, error) {
 	if !exists {
 		return p, ErrorProcessNotRunning
 	}
-	go p.CreateTime()
+	p.CreateTime()
 	return p, nil
 }
 
