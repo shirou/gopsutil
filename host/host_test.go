@@ -82,11 +82,12 @@ func TestHostInfoStat_String(t *testing.T) {
 		Uptime:   3000,
 		Procs:    100,
 		OS:       "linux",
+		CPUArch:  "amd64",
 		Platform: "ubuntu",
 		BootTime: 1447040000,
 		HostID:   "edfd25ff-3c9c-b1a4-e660-bd826495ad35",
 	}
-	e := `{"hostname":"test","uptime":3000,"bootTime":1447040000,"procs":100,"os":"linux","platform":"ubuntu","platformFamily":"","platformVersion":"","kernelVersion":"","virtualizationSystem":"","virtualizationRole":"","hostid":"edfd25ff-3c9c-b1a4-e660-bd826495ad35"}`
+	e := `{"hostname":"test","uptime":3000,"bootTime":1447040000,"procs":100,"os":"linux","cpuArch":"amd64","platform":"ubuntu","platformFamily":"","platformVersion":"","kernelVersion":"","virtualizationSystem":"","virtualizationRole":"","hostid":"edfd25ff-3c9c-b1a4-e660-bd826495ad35"}`
 	if e != fmt.Sprintf("%v", v) {
 		t.Errorf("HostInfoStat string is invalid: %v", v)
 	}
