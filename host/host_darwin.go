@@ -24,6 +24,7 @@ const USER_PROCESS = 7
 func Info() (*InfoStat, error) {
 	ret := &InfoStat{
 		OS:             runtime.GOOS,
+		CPUArch:        runtime.GOARCH,
 		PlatformFamily: "darwin",
 	}
 

@@ -30,7 +30,8 @@ type Win32_OperatingSystem struct {
 
 func Info() (*InfoStat, error) {
 	ret := &InfoStat{
-		OS: runtime.GOOS,
+		OS:      runtime.GOOS,
+		CPUArch: runtime.GOARCH,
 	}
 
 	hostname, err := os.Hostname()
