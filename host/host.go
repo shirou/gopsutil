@@ -16,6 +16,7 @@ type InfoStat struct {
 	BootTime             uint64 `json:"bootTime"`
 	Procs                uint64 `json:"procs"`           // number of processes
 	OS                   string `json:"os"`              // ex: freebsd, linux
+	CPUArch              string `json:"cpuArch"`         // cpu architecture
 	Platform             string `json:"platform"`        // ex: ubuntu, linuxmint
 	PlatformFamily       string `json:"platformFamily"`  // ex: debian, rhel
 	PlatformVersion      string `json:"platformVersion"` // version of the complete OS
