@@ -27,6 +27,7 @@ const (
 func Info() (*InfoStat, error) {
 	ret := &InfoStat{
 		OS:             runtime.GOOS,
+		CPUArch:        runtime.GOARCH,
 		PlatformFamily: "freebsd",
 	}
 

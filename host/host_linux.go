@@ -30,7 +30,8 @@ const USER_PROCESS = 7
 
 func Info() (*InfoStat, error) {
 	ret := &InfoStat{
-		OS: runtime.GOOS,
+		OS:      runtime.GOOS,
+		CPUArch: runtime.GOARCH,
 	}
 
 	hostname, err := os.Hostname()
