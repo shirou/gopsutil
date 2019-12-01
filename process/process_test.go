@@ -13,6 +13,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+	"path/filepath"
+	"io/ioutil"
 
 	"github.com/shirou/gopsutil/internal/common"
 	"github.com/stretchr/testify/assert"
@@ -288,6 +290,51 @@ func Test_Process_Name(t *testing.T) {
 	if !strings.Contains(n, "process.test") {
 		t.Errorf("invalid Exe %s", n)
 	}
+}
+func Test_Process_Long_Name(t *testing.T) {
+	tmpdir, err := ioutil.TempDir("", "")
+	if err != nil {
+		t.Fatalf("unable to create temp dir %v", err)
+	}
+	defer os.RemoveAll(tmpdir) // clean up
+	tmpfilepath := filepath.Join(tmpdir, "looooooooooooooooooooong.go")
+	tmpfile, err := os.Create(tmpfilepath)
+	if err != nil {
+		t.Fatalf("unable to create temp file %v", err)
+	}
+
+	tmpfilecontent := []byte("package main\nimport(\n\"time\"\n)\nfunc main(){\ntime.Sleep(time.Second)\n}")
+	if _, err := tmpfile.Write(tmpfilecontent); err != nil {
+		tmpfile.Close()
+		t.Fatalf("unable to write temp file %v", err)
+	}
+	if err := tmpfile.Close(); err != nil {
+		t.Fatalf("unable to close temp file %v", err)
+	}
+
+	err = exec.Command("go", "build", "-o", tmpfile.Name() + ".exe", tmpfile.Name()).Run()
+	if err != nil {
+		t.Fatalf("unable to build temp file %v", err)
+	}
+
+	cmd := exec.Command(tmpfile.Name() + ".exe")
+
+	assert.Nil(t, cmd.Start())
+	time.Sleep(100 * time.Millisecond)
+	p, err := NewProcess(int32(cmd.Process.Pid))
+	skipIfNotImplementedErr(t, err)
+	assert.Nil(t, err)
+	
+	n, err := p.Name()
+	skipIfNotImplementedErr(t, err)
+	if err != nil {
+		t.Fatalf("getting name error %v", err)
+	}
+	basename := filepath.Base(tmpfile.Name() + ".exe")
+	if basename != n {
+		t.Fatalf("%s != %s", basename, n)
+	}
+	cmd.Wait()
 }
 func Test_Process_Exe(t *testing.T) {
 	p := testGetProcess()
