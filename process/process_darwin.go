@@ -8,6 +8,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -89,8 +90,24 @@ func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	name := common.IntToString(k.Proc.P_comm[:])
 
-	return common.IntToString(k.Proc.P_comm[:]), nil
+	if len(name) >= 15 {
+		cmdlineSlice, err := p.CmdlineSliceWithContext(ctx)
+		if err != nil {
+			return "", err
+		}
+		if len(cmdlineSlice) > 0 {
+			extendedName := filepath.Base(cmdlineSlice[0])
+			if strings.HasPrefix(extendedName, p.name) {
+				name = extendedName
+			} else {
+				name = cmdlineSlice[0]
+			}
+		}
+	}
+
+	return name, nil
 }
 func (p *Process) Tgid() (int32, error) {
 	return 0, common.ErrNotImplementedError
