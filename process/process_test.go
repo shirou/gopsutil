@@ -596,8 +596,10 @@ func Test_IsRunning(t *testing.T) {
 	}
 	cmd.Start()
 	p, err := NewProcess(int32(cmd.Process.Pid))
+	skipIfNotImplementedErr(t, err)
 	assert.Nil(t, err)
 	running, err := p.IsRunning()
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Fatalf("IsRunning error: %v", err)
 	}
@@ -606,6 +608,7 @@ func Test_IsRunning(t *testing.T) {
 	}
 	cmd.Wait()
 	running, err = p.IsRunning()
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Fatalf("IsRunning error: %v", err)
 	}
