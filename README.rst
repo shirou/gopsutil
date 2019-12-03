@@ -89,6 +89,8 @@ You can set an alternative location to :code:`/etc` by setting the :code:`HOST_E
 
 You can set an alternative location to :code:`/var` by setting the :code:`HOST_VAR` environment variable.
 
+You can set an alternative location to :code:`/run` by setting the :code:`HOST_RUN` environment variable.
+
 Documentation
 ------------------------
 
