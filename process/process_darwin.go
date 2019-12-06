@@ -199,7 +199,7 @@ func (p *Process) StatusWithContext(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	return r[0][0], err
+	return r[0][0][0:1], err
 }
 
 func (p *Process) Foreground() (bool, error) {
