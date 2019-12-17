@@ -49,7 +49,11 @@
 
 [[projects]]
   branch = "master"
+<<<<<<< 68cbc90d35626c2dcb0797aa7315fd48f96e1262
   digest = "1:d6ee10ad98c51535647d18a5f327e7e13c863e14ac4044cf7fcaedf570e17341"
+=======
+  digest = "1:8da06ec4e3ad93b1315e59fa31393e43ae1b7e6d2111f12383e21b74bd29493f"
+>>>>>>> Add support for freebsd/arm64
   name = "golang.org/x/sys"
   packages = [
     "unix",
@@ -58,7 +62,11 @@
     "windows/svc/mgr",
   ]
   pruneopts = "UT"
+<<<<<<< 68cbc90d35626c2dcb0797aa7315fd48f96e1262
   revision = "d32e6e3b99c40f2bfaea45ea9596ed539eed1c0d"
+=======
+  revision = "ac6580df4449443a05718fd7858c1f91ad5f8d20"
+>>>>>>> Add support for freebsd/arm64
 
 [solve-meta]
   analyzer-name = "dep"
