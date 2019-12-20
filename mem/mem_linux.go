@@ -67,7 +67,7 @@ func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
 		case "Active(file)":
 			activeFile = true
 			retEx.ActiveFile = t * 1024
-		case "InActive(file)":
+		case "Inactive(file)":
 			inactiveFile = true
 			retEx.InactiveFile = t * 1024
 		case "Writeback":
