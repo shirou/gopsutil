@@ -1,0 +1,13 @@
+container:
+    image: golang:latest
+env:
+  GOPROXY: https://proxy.golang.org
+test_task:
+  modules_cache:
+    fingerprint_script: cat go.sum
+    folder: $GOPATH/pkg/mod
+  get_script: |
+     curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+     dep ensure
+  build_script: go build ./...
+  test_script: go test ./...
