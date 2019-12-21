@@ -15,7 +15,6 @@ import (
 	cpu "github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/internal/common"
 	net "github.com/shirou/gopsutil/net"
-	"github.com/shirou/w32"
 	"golang.org/x/sys/windows"
 )
 
@@ -160,8 +159,8 @@ func pidsWithContext(ctx context.Context) ([]int32, error) {
 
 	for {
 		ps := make([]uint32, psSize)
-		if !w32.EnumProcesses(ps, uint32(len(ps)), &read) {
-			return nil, fmt.Errorf("could not get w32.EnumProcesses")
+		if err := windows.EnumProcesses(ps, &read); err != nil {
+			return nil, err
 		}
 		if uint32(len(ps)) == read { // ps buffer was too small to host every results, retry with a bigger one
 			psSize += 1024
@@ -599,24 +598,24 @@ func (p *Process) Children() ([]*Process, error) {
 
 func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
 	out := []*Process{}
-	snap := w32.CreateToolhelp32Snapshot(w32.TH32CS_SNAPPROCESS, uint32(0))
-	if snap == 0 {
-		return out, windows.GetLastError()
+	snap, err := windows.CreateToolhelp32Snapshot(windows.TH32CS_SNAPPROCESS, uint32(0))
+	if err != nil {
+		return out, err
 	}
-	defer w32.CloseHandle(snap)
-	var pe32 w32.PROCESSENTRY32
-	pe32.DwSize = uint32(unsafe.Sizeof(pe32))
-	if !w32.Process32First(snap, &pe32) {
-		return out, windows.GetLastError()
+	defer windows.CloseHandle(snap)
+	var pe32 windows.ProcessEntry32
+	pe32.Size = uint32(unsafe.Sizeof(pe32))
+	if err := windows.Process32First(snap, &pe32); err != nil {
+		return out, err
 	}
 	for {
-		if pe32.Th32ParentProcessID == uint32(p.Pid) {
-			p, err := NewProcess(int32(pe32.Th32ProcessID))
+		if pe32.ParentProcessID == uint32(p.Pid) {
+			p, err := NewProcess(int32(pe32.ProcessID))
 			if err == nil {
 				out = append(out, p)
 			}
 		}
-		if !w32.Process32Next(snap, &pe32) {
+		if err = windows.Process32Next(snap, &pe32); err != nil {
 			break
 		}
 	}
@@ -692,16 +691,13 @@ func (p *Process) Terminate() error {
 }
 
 func (p *Process) TerminateWithContext(ctx context.Context) error {
-	// PROCESS_TERMINATE = 0x0001
-	proc := w32.OpenProcess(0x0001, false, uint32(p.Pid))
-	ret := w32.TerminateProcess(proc, 0)
-	w32.CloseHandle(proc)
-
-	if ret == false {
-		return windows.GetLastError()
-	} else {
-		return nil
+	proc, err := windows.OpenProcess(windows.PROCESS_TERMINATE, false, uint32(p.Pid))
+	if err != nil {
+		return err
 	}
+	err = windows.TerminateProcess(proc, 0)
+	windows.CloseHandle(proc)
+	return err
 }
 
 func (p *Process) Kill() error {
@@ -714,22 +710,22 @@ func (p *Process) KillWithContext(ctx context.Context) error {
 }
 
 func getFromSnapProcess(pid int32) (int32, int32, string, error) {
-	snap := w32.CreateToolhelp32Snapshot(w32.TH32CS_SNAPPROCESS, uint32(pid))
-	if snap == 0 {
-		return 0, 0, "", windows.GetLastError()
+	snap, err := windows.CreateToolhelp32Snapshot(windows.TH32CS_SNAPPROCESS, uint32(pid))
+	if err != nil {
+		return 0, 0, "", err
 	}
-	defer w32.CloseHandle(snap)
-	var pe32 w32.PROCESSENTRY32
-	pe32.DwSize = uint32(unsafe.Sizeof(pe32))
-	if !w32.Process32First(snap, &pe32) {
-		return 0, 0, "", windows.GetLastError()
+	defer windows.CloseHandle(snap)
+	var pe32 windows.ProcessEntry32
+	pe32.Size = uint32(unsafe.Sizeof(pe32))
+	if err = windows.Process32First(snap, &pe32); err != nil {
+		return 0, 0, "", err
 	}
 	for {
-		if pe32.Th32ProcessID == uint32(pid) {
-			szexe := windows.UTF16ToString(pe32.SzExeFile[:])
-			return int32(pe32.Th32ParentProcessID), int32(pe32.CntThreads), szexe, nil
+		if pe32.ProcessID == uint32(pid) {
+			szexe := windows.UTF16ToString(pe32.ExeFile[:])
+			return int32(pe32.ParentProcessID), int32(pe32.Threads), szexe, nil
 		}
-		if !w32.Process32Next(snap, &pe32) {
+		if err = windows.Process32Next(snap, &pe32); err != nil {
 			break
 		}
 	}
