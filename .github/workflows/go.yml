@@ -1,0 +1,54 @@
+name: Go
+on: [push]
+jobs:
+
+  build:
+    name: Test on node ${{ matrix.node_version }} and ${{ matrix.platform }}
+    runs-on: ${{ matrix.platform }}
+    strategy:
+      matrix:
+          go: [ '1.11', '1.12', '1.13' ]
+          platform: [ubuntu-18.04, ubuntu-16.04, windows-2019, windows-2016, macOS-10.14]
+    steps:
+
+    - name: Set up Go
+      uses: actions/setup-go@v1
+      with:
+          go-version: ${{ matrix.go }}
+
+    - name: setup env
+      run: |
+        echo "::set-env name=GOPATH::/home/runner/work/gopsutil"
+        echo "::set-env name=GOBIN::/home/runner/work/gopsutil/bin"
+        echo "::add-path::/home/runner/work/gopsutil/bin"
+      shell: bash
+
+    - name: Check out code
+      uses: actions/checkout@v1
+      with:
+        fetch-depth: 1
+        path: src/github.com/${{ github.repository }}
+
+    - name: setup env
+      run: pwd
+    - name: setup env
+      run: ls
+
+    - name: Get dependencies
+      env:
+        DEPPROJECTROOT: ${GOPATH}/src/github.com/${{ github.repository }}
+      run: |
+        mkdir -p ${GOBIN}
+        curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+        dep ensure
+    - name: setup env
+      run: pwd
+    - name: setup env
+      run: ls /home/runner/work/gopsutil/src/github.com/${{ github.repository }}
+    - name: setup env
+      run: env |grep GOPATH
+    - name: Test
+      run: |
+       cd /home/runner/work/gopsutil/src/github.com/${{ github.repository }}
+       rm -rf vendor/github.com/shirou/gopsutil/  # i don't know why ...
+       go test ./... -v
