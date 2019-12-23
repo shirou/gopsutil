@@ -63,7 +63,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 			opts += ",nosymfollow"
 		}
 		if stat.Flags&unix.MNT_GJOURNAL != 0 {
-			opts += ",gjounalc"
+			opts += ",gjournal"
 		}
 		if stat.Flags&unix.MNT_MULTILABEL != 0 {
 			opts += ",multilabel"
@@ -72,16 +72,16 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 			opts += ",acls"
 		}
 		if stat.Flags&unix.MNT_NOATIME != 0 {
-			opts += ",noattime"
+			opts += ",noatime"
 		}
 		if stat.Flags&unix.MNT_NOCLUSTERR != 0 {
-			opts += ",nocluster"
+			opts += ",noclusterr"
 		}
 		if stat.Flags&unix.MNT_NOCLUSTERW != 0 {
 			opts += ",noclusterw"
 		}
 		if stat.Flags&unix.MNT_NFS4ACLS != 0 {
-			opts += ",nfs4acls"
+			opts += ",nfsv4acls"
 		}
 
 		d := PartitionStat{
