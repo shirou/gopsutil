@@ -51,6 +51,15 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 		if stat.F_flags&unix.MNT_ASYNC != 0 {
 			opts += ",async"
 		}
+		if stat.F_flags&unix.MNT_SOFTDEP != 0 {
+			opts += ",softdep"
+		}
+		if stat.F_flags&unix.MNT_NOATIME != 0 {
+			opts += ",noatime"
+		}
+		if stat.F_flags&unix.MNT_WXALLOWED != 0 {
+			opts += ",wxallowed"
+		}
 
 		d := PartitionStat{
 			Device:     common.IntToString(stat.F_mntfromname[:]),
