@@ -777,7 +777,7 @@ func getProcInfo(pid int32) (*SystemProcessInformation, error) {
 func getRusage(pid int32) (*windows.Rusage, error) {
 	var CPU windows.Rusage
 
-	c, err := windows.OpenProcess(windows.PROCESS_QUERY_INFORMATION, false, uint32(pid))
+	c, err := windows.OpenProcess(windows.PROCESS_QUERY_LIMITED_INFORMATION, false, uint32(pid))
 	if err != nil {
 		return nil, err
 	}
