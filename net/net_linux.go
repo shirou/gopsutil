@@ -321,30 +321,35 @@ var TCPStatuses = map[string]string{
 }
 
 type netConnectionKindType struct {
-	family   uint32
-	sockType uint32
-	filename string
+	family       uint8
+	sockType     uint8
+	netlinkProto uint8
+	filename     string
 }
 
 var kindTCP4 = netConnectionKindType{
-	family:   syscall.AF_INET,
-	sockType: syscall.SOCK_STREAM,
-	filename: "tcp",
+	family:       syscall.AF_INET,
+	sockType:     syscall.SOCK_STREAM,
+	netlinkProto: syscall.IPPROTO_TCP,
+	filename:     "tcp",
 }
 var kindTCP6 = netConnectionKindType{
-	family:   syscall.AF_INET6,
-	sockType: syscall.SOCK_STREAM,
-	filename: "tcp6",
+	family:       syscall.AF_INET6,
+	sockType:     syscall.SOCK_STREAM,
+	netlinkProto: syscall.IPPROTO_TCP,
+	filename:     "tcp6",
 }
 var kindUDP4 = netConnectionKindType{
-	family:   syscall.AF_INET,
-	sockType: syscall.SOCK_DGRAM,
-	filename: "udp",
+	family:       syscall.AF_INET,
+	sockType:     syscall.SOCK_DGRAM,
+	netlinkProto: syscall.IPPROTO_UDP,
+	filename:     "udp",
 }
 var kindUDP6 = netConnectionKindType{
-	family:   syscall.AF_INET6,
-	sockType: syscall.SOCK_DGRAM,
-	filename: "udp6",
+	family:       syscall.AF_INET6,
+	sockType:     syscall.SOCK_DGRAM,
+	netlinkProto: syscall.IPPROTO_UDP,
+	filename:     "udp6",
 }
 var kindUNIX = netConnectionKindType{
 	family:   syscall.AF_UNIX,
@@ -372,8 +377,8 @@ type inodeMap struct {
 
 type connTmp struct {
 	fd       uint32
-	family   uint32
-	sockType uint32
+	family   uint8
+	sockType uint8
 	laddr    Addr
 	raddr    Addr
 	status   string
@@ -450,29 +455,6 @@ func ConnectionsPidMaxWithoutUidsWithContext(ctx context.Context, kind string, p
 	return connectionsPidMaxWithoutUidsWithContext(ctx, kind, pid, max, true)
 }
 
-func connectionsPidMaxWithoutUidsWithContext(ctx context.Context, kind string, pid int32, max int, skipUids bool) ([]ConnectionStat, error) {
-	tmap, ok := netConnectionKindMap[kind]
-	if !ok {
-		return nil, fmt.Errorf("invalid kind, %s", kind)
-	}
-	root := common.HostProc()
-	var err error
-	var inodes map[string][]inodeMap
-	if pid == 0 {
-		inodes, err = getProcInodesAll(root, max)
-	} else {
-		inodes, err = getProcInodes(root, pid, max)
-		if len(inodes) == 0 {
-			// no connection for the pid
-			return []ConnectionStat{}, nil
-		}
-	}
-	if err != nil {
-		return nil, fmt.Errorf("cound not get pid(s), %d: %s", pid, err)
-	}
-	return statsFromInodes(root, pid, tmap, inodes, skipUids)
-}
-
 func statsFromInodes(root string, pid int32, tmap []netConnectionKindType, inodes map[string][]inodeMap, skipUids bool) ([]ConnectionStat, error) {
 	dupCheckMap := make(map[string]struct{})
 	var ret []ConnectionStat
@@ -507,8 +489,8 @@ func statsFromInodes(root string, pid int32, tmap []netConnectionKindType, inode
 
 			conn := ConnectionStat{
 				Fd:     c.fd,
-				Family: c.family,
-				Type:   c.sockType,
+				Family: uint32(c.family),
+				Type:   uint32(c.sockType),
 				Laddr:  c.laddr,
 				Raddr:  c.raddr,
 				Status: c.status,
@@ -690,7 +672,7 @@ func getProcInodesAll(root string, max int) (map[string][]inodeMap, error) {
 // ex:
 // "0500000A:0016" -> "10.0.0.5", 22
 // "0085002452100113070057A13F025401:0035" -> "2400:8500:1301:1052:a157:7:154:23f", 53
-func decodeAddress(family uint32, src string) (Addr, error) {
+func decodeAddress(family uint8, src string) (Addr, error) {
 	t := strings.Split(src, ":")
 	if len(t) != 2 {
 		return Addr{}, fmt.Errorf("does not contain port, %s", src)
@@ -857,7 +839,7 @@ func processUnix(file string, kind netConnectionKindType, inodes map[string][]in
 			ret = append(ret, connTmp{
 				fd:       pair.fd,
 				family:   kind.family,
-				sockType: uint32(st),
+				sockType: uint8(st),
 				laddr: Addr{
 					IP: path,
 				},

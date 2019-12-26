@@ -146,7 +146,7 @@ func TestDecodeAddress(t *testing.T) {
 		if len(src) > 13 {
 			family = syscall.AF_INET6
 		}
-		addr, err := decodeAddress(uint32(family), src)
+		addr, err := decodeAddress(uint8(family), src)
 		if dst.Error {
 			assert.NotNil(err, src)
 		} else {
