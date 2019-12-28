@@ -189,7 +189,7 @@ func TestNetConnections(t *testing.T) {
 		return
 	}
 
-	v, err := Connections("inet")
+	v, err := Connections("all")
 	if err != nil {
 		t.Errorf("could not get NetConnections: %v", err)
 	}

@@ -35,39 +35,64 @@ func connectionsPidMaxWithoutUidsWithContext(ctx context.Context, kind string, p
 	return statsFromInodes(root, pid, tmap, inodes, skipUids)
 }
 
+func getInetConnections(wait *sync.WaitGroup, i int, k netConnectionKindType, reply [][]ConnectionStat) {
+	defer wait.Done()
+	msgs, err := netlink.InetConnections(k.family, k.netlinkProto)
+	if err != nil {
+		// just ignored
+		return
+	}
+	t := make([]ConnectionStat, len(msgs))
+	for i, msg := range msgs {
+		conn := ConnectionStat{
+			Family: uint32(msg.Family),
+			Type:   uint32(k.sockType),
+			Laddr:  Addr{msg.SrcIP().String(), uint32(msg.SrcPort())},
+			Raddr:  Addr{msg.DstIP().String(), uint32(msg.DstPort())},
+			Status: netlink.TCPState(msg.State).String(),
+			Uids:   []int32{int32(msg.UID)},
+			// Pid:    msg.Pid,
+			// Fd:     diag.Inode,
+		}
+		t[i] = conn
+	}
+	reply[i] = t
+}
+
+func getUnixConnections(wait *sync.WaitGroup, i int, reply [][]ConnectionStat) {
+	defer wait.Done()
+	msgs, err := netlink.UnixConnections()
+	if err != nil {
+		// just ignored
+		return
+	}
+	t := make([]ConnectionStat, len(msgs))
+	for i, msg := range msgs {
+		conn := ConnectionStat{
+			Family: uint32(msg.Family),
+			Status: netlink.TCPState(msg.State).String(),
+			Uids:   []int32{},
+			Laddr:  Addr{
+				IP: msg.Path,
+			},
+		}
+		t[i] = conn
+	}
+	reply[i] = t
+}
+
 func connectionsNetLink(kinds []netConnectionKindType) ([]ConnectionStat, error) {
-	var wait sync.WaitGroup
+	wait := &sync.WaitGroup{}
 	reply := make([][]ConnectionStat, len(kinds))
 	var retErrr error
 
 	for i, kind := range kinds {
-		if kind.family == syscall.AF_UNIX { // TODO: Unix Domain
-			continue
-		}
 		wait.Add(1)
-		go func(i int, k netConnectionKindType) {
-			defer wait.Done()
-			msgs, err := netlink.Connections(k.family, k.netlinkProto)
-			if err != nil {
-				retErrr = err
-				return
-			}
-			t := make([]ConnectionStat, len(msgs))
-			for i, msg := range msgs {
-				conn := ConnectionStat{
-					Family: uint32(msg.Family),
-					Type:   uint32(k.sockType),
-					Laddr:  Addr{msg.SrcIP().String(), uint32(msg.SrcPort())},
-					Raddr:  Addr{msg.DstIP().String(), uint32(msg.DstPort())},
-					Status: netlink.TCPState(msg.State).String(),
-					Uids:   []int32{int32(msg.UID)},
-					// Fd:     diag.Inode,
-					// Pid:    c.pid,
-				}
-				t[i] = conn
-			}
-			reply[i] = t
-		}(i, kind)
+		if kind.family == syscall.AF_UNIX {
+			go getUnixConnections(wait, i, reply)
+		} else {
+			go getInetConnections(wait, i, kind, reply)
+		}
 	}
 
 	wait.Wait()

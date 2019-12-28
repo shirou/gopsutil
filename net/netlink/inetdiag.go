@@ -102,23 +102,23 @@ var (
 	byteOrder = GetEndian()
 )
 
-// NetlinkInetDiag sends the given netlink request parses the responses with the
+// InetDiag sends the given netlink request parses the responses with the
 // assumption that they are inet_diag_msgs. This will allocate a temporary
 // buffer for reading from the socket whose size will be the length of a page
 // (usually 32k). Use NetlinkInetDiagWithBuf if you want to provide your own
 // buffer.
-func NetlinkInetDiag(request syscall.NetlinkMessage) ([]*InetDiagMsg, error) {
-	return NetlinkInetDiagWithBuf(request, nil, nil)
+func InetDiag(request syscall.NetlinkMessage) ([]*InetDiagMsg, error) {
+	return InetDiagWithBuf(request, nil, nil)
 }
 
-// NetlinkInetDiagWithBuf sends the given netlink request parses the responses
+// InetDiagWithBuf sends the given netlink request parses the responses
 // with the assumption that they are inet_diag_msgs. readBuf will be used to
 // hold the raw data read from the socket. If the length is not large enough to
 // hold the socket contents the data will be truncated. If readBuf is nil then a
 // temporary buffer will be allocated for each invocation. The resp writer, if
 // non-nil, will receive a copy of all bytes read (this is useful for
 // debugging).
-func NetlinkInetDiagWithBuf(request syscall.NetlinkMessage, readBuf []byte, resp io.Writer) ([]*InetDiagMsg, error) {
+func InetDiagWithBuf(request syscall.NetlinkMessage, readBuf []byte, resp io.Writer) ([]*InetDiagMsg, error) {
 	s, err := syscall.Socket(syscall.AF_NETLINK, syscall.SOCK_RAW, syscall.NETLINK_INET_DIAG)
 	if err != nil {
 		return nil, err
@@ -162,6 +162,7 @@ done:
 		}
 
 		for _, m := range msgs {
+
 			if m.Header.Type == syscall.NLMSG_DONE {
 				break done
 			}
@@ -260,8 +261,7 @@ type InetDiagMsg struct {
 func ParseInetDiagMsg(b []byte) (*InetDiagMsg, error) {
 	r := bytes.NewReader(b)
 	inetDiagMsg := &InetDiagMsg{}
-	err := binary.Read(r, byteOrder, inetDiagMsg)
-	if err != nil {
+	if err := binary.Read(r, byteOrder, inetDiagMsg); err != nil {
 		return nil, errors.Wrap(err, "failed to unmarshal inet_diag_msg")
 	}
 	return inetDiagMsg, nil

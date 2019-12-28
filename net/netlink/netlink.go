@@ -11,9 +11,14 @@ import (
 	"errors"
 )
 
-func Connections(af uint8, proto uint8) ([]*InetDiagMsg, error) {
+func InetConnections(af uint8, proto uint8) ([]*InetDiagMsg, error) {
 	msg := NewInetDiagReqV2(af, proto)
-	return NetlinkInetDiag(msg)
+	return InetDiag(msg)
+}
+
+func UnixConnections() ([]*UnixDiagMsgExtended, error) {
+	msg := NewUnixDiagReq()
+	return UnixDiag(msg)
 }
 
 // Netlink Error Code Handling
