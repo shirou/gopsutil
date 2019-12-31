@@ -22,10 +22,10 @@ func connectionsPidMaxWithoutUidsWithContext(ctx context.Context, kind string, p
 		inodes, err = getProcInodesAll(root, max)
 	} else {
 		inodes, err = getProcInodes(root, pid, max)
-		if len(inodes) == 0 {
-			// no connection for the pid
-			return []ConnectionStat{}, nil
-		}
+	}
+	if len(inodes) == 0 {
+		// no connection for the pid
+		return []ConnectionStat{}, nil
 	}
 	if err != nil {
 		return nil, fmt.Errorf("cound not get pid(s), %d: %s", pid, err)
