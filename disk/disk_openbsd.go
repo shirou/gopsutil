@@ -21,35 +21,44 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 	var ret []PartitionStat
 
 	// get length
-	count, err := unix.Getfsstat(nil, MNT_WAIT)
+	count, err := unix.Getfsstat(nil, unix.MNT_WAIT)
 	if err != nil {
 		return ret, err
 	}
 
 	fs := make([]Statfs, count)
-	if _, err = Getfsstat(fs, MNT_WAIT); err != nil {
+	if _, err = Getfsstat(fs, unix.MNT_WAIT); err != nil {
 		return ret, err
 	}
 
 	for _, stat := range fs {
 		opts := "rw"
-		if stat.F_flags&MNT_RDONLY != 0 {
+		if stat.F_flags&unix.MNT_RDONLY != 0 {
 			opts = "ro"
 		}
-		if stat.F_flags&MNT_SYNCHRONOUS != 0 {
+		if stat.F_flags&unix.MNT_SYNCHRONOUS != 0 {
 			opts += ",sync"
 		}
-		if stat.F_flags&MNT_NOEXEC != 0 {
+		if stat.F_flags&unix.MNT_NOEXEC != 0 {
 			opts += ",noexec"
 		}
-		if stat.F_flags&MNT_NOSUID != 0 {
+		if stat.F_flags&unix.MNT_NOSUID != 0 {
 			opts += ",nosuid"
 		}
-		if stat.F_flags&MNT_NODEV != 0 {
+		if stat.F_flags&unix.MNT_NODEV != 0 {
 			opts += ",nodev"
 		}
-		if stat.F_flags&MNT_ASYNC != 0 {
+		if stat.F_flags&unix.MNT_ASYNC != 0 {
 			opts += ",async"
+		}
+		if stat.F_flags&unix.MNT_SOFTDEP != 0 {
+			opts += ",softdep"
+		}
+		if stat.F_flags&unix.MNT_NOATIME != 0 {
+			opts += ",noatime"
+		}
+		if stat.F_flags&unix.MNT_WXALLOWED != 0 {
+			opts += ",wxallowed"
 		}
 
 		d := PartitionStat{

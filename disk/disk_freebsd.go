@@ -23,65 +23,65 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 	var ret []PartitionStat
 
 	// get length
-	count, err := unix.Getfsstat(nil, MNT_WAIT)
+	count, err := unix.Getfsstat(nil, unix.MNT_WAIT)
 	if err != nil {
 		return ret, err
 	}
 
 	fs := make([]Statfs, count)
-	if _, err = Getfsstat(fs, MNT_WAIT); err != nil {
+	if _, err = Getfsstat(fs, unix.MNT_WAIT); err != nil {
 		return ret, err
 	}
 
 	for _, stat := range fs {
 		opts := "rw"
-		if stat.Flags&MNT_RDONLY != 0 {
+		if stat.Flags&unix.MNT_RDONLY != 0 {
 			opts = "ro"
 		}
-		if stat.Flags&MNT_SYNCHRONOUS != 0 {
+		if stat.Flags&unix.MNT_SYNCHRONOUS != 0 {
 			opts += ",sync"
 		}
-		if stat.Flags&MNT_NOEXEC != 0 {
+		if stat.Flags&unix.MNT_NOEXEC != 0 {
 			opts += ",noexec"
 		}
-		if stat.Flags&MNT_NOSUID != 0 {
+		if stat.Flags&unix.MNT_NOSUID != 0 {
 			opts += ",nosuid"
 		}
-		if stat.Flags&MNT_UNION != 0 {
+		if stat.Flags&unix.MNT_UNION != 0 {
 			opts += ",union"
 		}
-		if stat.Flags&MNT_ASYNC != 0 {
+		if stat.Flags&unix.MNT_ASYNC != 0 {
 			opts += ",async"
 		}
-		if stat.Flags&MNT_SUIDDIR != 0 {
+		if stat.Flags&unix.MNT_SUIDDIR != 0 {
 			opts += ",suiddir"
 		}
-		if stat.Flags&MNT_SOFTDEP != 0 {
+		if stat.Flags&unix.MNT_SOFTDEP != 0 {
 			opts += ",softdep"
 		}
-		if stat.Flags&MNT_NOSYMFOLLOW != 0 {
+		if stat.Flags&unix.MNT_NOSYMFOLLOW != 0 {
 			opts += ",nosymfollow"
 		}
-		if stat.Flags&MNT_GJOURNAL != 0 {
-			opts += ",gjounalc"
+		if stat.Flags&unix.MNT_GJOURNAL != 0 {
+			opts += ",gjournal"
 		}
-		if stat.Flags&MNT_MULTILABEL != 0 {
+		if stat.Flags&unix.MNT_MULTILABEL != 0 {
 			opts += ",multilabel"
 		}
-		if stat.Flags&MNT_ACLS != 0 {
+		if stat.Flags&unix.MNT_ACLS != 0 {
 			opts += ",acls"
 		}
-		if stat.Flags&MNT_NOATIME != 0 {
-			opts += ",noattime"
+		if stat.Flags&unix.MNT_NOATIME != 0 {
+			opts += ",noatime"
 		}
-		if stat.Flags&MNT_NOCLUSTERR != 0 {
-			opts += ",nocluster"
+		if stat.Flags&unix.MNT_NOCLUSTERR != 0 {
+			opts += ",noclusterr"
 		}
-		if stat.Flags&MNT_NOCLUSTERW != 0 {
+		if stat.Flags&unix.MNT_NOCLUSTERW != 0 {
 			opts += ",noclusterw"
 		}
-		if stat.Flags&MNT_NFS4ACLS != 0 {
-			opts += ",nfs4acls"
+		if stat.Flags&unix.MNT_NFS4ACLS != 0 {
+			opts += ",nfsv4acls"
 		}
 
 		d := PartitionStat{

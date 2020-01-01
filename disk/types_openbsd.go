@@ -33,18 +33,6 @@ const (
 	DEVSTAT_READ    = 0x01
 	DEVSTAT_WRITE   = 0x02
 	DEVSTAT_FREE    = 0x03
-
-	// from sys/mount.h
-	MNT_RDONLY      = 0x00000001 /* read only filesystem */
-	MNT_SYNCHRONOUS = 0x00000002 /* filesystem written synchronously */
-	MNT_NOEXEC      = 0x00000004 /* can't exec from filesystem */
-	MNT_NOSUID      = 0x00000008 /* don't honor setuid bits on fs */
-	MNT_NODEV       = 0x00000010 /* don't interpret special files */
-	MNT_ASYNC       = 0x00000040 /* filesystem written asynchronously */
-
-	MNT_WAIT   = 1 /* synchronously wait for I/O to complete */
-	MNT_NOWAIT = 2 /* start all I/O, but do not wait for it */
-	MNT_LAZY   = 3 /* push data not written by filesystem syncer */
 )
 
 const (

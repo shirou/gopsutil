@@ -49,7 +49,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:8da06ec4e3ad93b1315e59fa31393e43ae1b7e6d2111f12383e21b74bd29493f"
+  digest = "1:945b127fc2488b7efd24553b270158847219fd9fa32d6fd2bece3bac81d02d7e"
   name = "golang.org/x/sys"
   packages = [
     "unix",
@@ -58,7 +58,7 @@
     "windows/svc/mgr",
   ]
   pruneopts = "UT"
-  revision = "ac6580df4449443a05718fd7858c1f91ad5f8d20"
+  revision = "0732a990476f7f2f5f7200b39ba4ab730c0f09f8"
 
 [solve-meta]
   analyzer-name = "dep"
