@@ -31,34 +31,6 @@ type (
 	_C_long_double int64
 )
 
-type Statfs struct {
-	Version     uint32
-	Type        uint32
-	Flags       uint64
-	Bsize       uint64
-	Iosize      uint64
-	Blocks      uint64
-	Bfree       uint64
-	Bavail      int64
-	Files       uint64
-	Ffree       int64
-	Syncwrites  uint64
-	Asyncwrites uint64
-	Syncreads   uint64
-	Asyncreads  uint64
-	Spare       [10]uint64
-	Namemax     uint32
-	Owner       uint32
-	Fsid        Fsid
-	Charspare   [80]uint8
-	Fstypename  [16]int8
-	Mntfromname [1024]int8
-	Mntonname   [1024]int8
-}
-type Fsid struct {
-	Val [2]int32
-}
-
 type Devstat struct {
 	Sequence0     uint32
 	Allocated     int32

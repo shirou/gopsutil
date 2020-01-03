@@ -58,8 +58,5 @@ type (
 	_C_long_double C.longlong
 )
 
-type Statfs C.struct_statfs
-type Fsid C.struct_fsid
-
 type Devstat C.struct_devstat
 type Bintime C.struct_bintime
