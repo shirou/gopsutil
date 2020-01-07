@@ -8,7 +8,6 @@ import (
 	"encoding/binary"
 	"path"
 	"strconv"
-	"unsafe"
 
 	"golang.org/x/sys/unix"
 
@@ -28,8 +27,8 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 		return ret, err
 	}
 
-	fs := make([]Statfs, count)
-	if _, err = Getfsstat(fs, unix.MNT_WAIT); err != nil {
+	fs := make([]unix.Statfs_t, count)
+	if _, err = unix.Getfsstat(fs, unix.MNT_WAIT); err != nil {
 		return ret, err
 	}
 
@@ -157,27 +156,6 @@ func (b Bintime) Compute() float64 {
 }
 
 // BT2LD(time)     ((long double)(time).sec + (time).frac * BINTIME_SCALE)
-
-// Getfsstat is borrowed from pkg/syscall/syscall_freebsd.go
-// change Statfs_t to Statfs in order to get more information
-func Getfsstat(buf []Statfs, flags int) (n int, err error) {
-	return GetfsstatWithContext(context.Background(), buf, flags)
-}
-
-func GetfsstatWithContext(ctx context.Context, buf []Statfs, flags int) (n int, err error) {
-	var _p0 unsafe.Pointer
-	var bufsize uintptr
-	if len(buf) > 0 {
-		_p0 = unsafe.Pointer(&buf[0])
-		bufsize = unsafe.Sizeof(Statfs{}) * uintptr(len(buf))
-	}
-	r0, _, e1 := unix.Syscall(unix.SYS_GETFSSTAT, uintptr(_p0), bufsize, uintptr(flags))
-	n = int(r0)
-	if e1 != 0 {
-		err = e1
-	}
-	return
-}
 
 func parseDevstat(buf []byte) (Devstat, error) {
 	var ds Devstat
