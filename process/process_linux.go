@@ -85,7 +85,15 @@ func (p *Process) Name() (string, error) {
 func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 	if p.name == "" {
 		if err := p.fillFromStatusWithContext(ctx); err != nil {
-			return "", err
+			statPath := common.HostProc(strconv.Itoa(int(p.Pid)), "stat")
+			contents, err := ioutil.ReadFile(statPath)
+			if err != nil {
+				return "", err
+			}
+			data := string(contents)
+			binStart := strings.IndexRune(data, '(') + 1
+			binEnd := strings.IndexRune(data[binStart:], ')')
+			p.name = data[binStart : binStart+binEnd]
 		}
 	}
 	return p.name, nil
