@@ -300,12 +300,18 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 				}
 			}
 
-			if strings.HasPrefix(d.Device, "/dev/mapper/") {
-				devpath, err := filepath.EvalSymlinks(d.Device)
-				if err == nil {
-					d.Device = devpath
-				}
-			}
+			//The block below has 2 problems, so should be disabled:
+			//1. Will not work, in case we track disk info on the host from container, as /dev will be mapped into other mount point
+			//2. Useful info about vg name removed if we follow symlink, here the example:
+			//	~# ls -la /dev/mapper/dm--01--vg-root
+			//	lrwxrwxrwx 1 root root 7 Oct  3 10:47 /dev/mapper/dm--01--vg-root -> ../dm-0
+
+			//if strings.HasPrefix(d.Device, "/dev/mapper/") {
+			//	devpath, err := filepath.EvalSymlinks(d.Device)
+			//	if err == nil {
+			//		d.Device = devpath
+			//	}
+			//}
 
 			// /dev/root is not the real device name
 			// so we get the real device name from its major/minor number
