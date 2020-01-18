@@ -280,7 +280,7 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 				platform = "debian"
 			}
 			contents, err := common.ReadLines(common.HostEtc("debian_version"))
-			if err == nil {
+			if err == nil && len(contents) > 0 && contents[0] != "" {
 				version = contents[0]
 			}
 		}
@@ -315,7 +315,7 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 	} else if common.PathExists(common.HostEtc("alpine-release")) {
 		platform = "alpine"
 		contents, err := common.ReadLines(common.HostEtc("alpine-release"))
-		if err == nil && len(contents) > 0 {
+		if err == nil && len(contents) > 0 && contents[0] != "" {
 			version = contents[0]
 		}
 	} else if common.PathExists(common.HostEtc("os-release")) {
