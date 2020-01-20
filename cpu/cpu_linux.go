@@ -37,6 +37,8 @@ func Times(percpu bool) ([]TimesStat, error) {
 func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 	filename := common.HostProc("stat")
 	var lines = []string{}
+	cpuTotal, _ := common.ReadLinesOffsetN(filename, 0, 1)
+	lines = append(lines, cpuTotal[0])
 	if percpu {
 		statlines, err := common.ReadLines(filename)
 		if err != nil || len(statlines) < 2 {
@@ -48,8 +50,6 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 			}
 			lines = append(lines, line)
 		}
-	} else {
-		lines, _ = common.ReadLinesOffsetN(filename, 0, 1)
 	}
 
 	ret := make([]TimesStat, 0, len(lines))
