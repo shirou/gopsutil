@@ -85,15 +85,7 @@ func (p *Process) Name() (string, error) {
 func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 	if p.name == "" {
 		if err := p.fillFromStatusWithContext(ctx); err != nil {
-			statPath := common.HostProc(strconv.Itoa(int(p.Pid)), "stat")
-			contents, err := ioutil.ReadFile(statPath)
-			if err != nil {
-				return "", err
-			}
-			data := string(contents)
-			binStart := strings.IndexRune(data, '(') + 1
-			binEnd := strings.IndexRune(data[binStart:], ')')
-			p.name = data[binStart : binStart+binEnd]
+			return "", err
 		}
 	}
 	return p.name, nil
@@ -819,7 +811,16 @@ func (p *Process) fillFromExeWithContext(ctx context.Context) (string, error) {
 	exePath := common.HostProc(strconv.Itoa(int(pid)), "exe")
 	exe, err := os.Readlink(exePath)
 	if err != nil {
-		return "", err
+		//Fallback to read from <HOST_FS>/proc/<PID>/stat, in case <HOST_FS>/proc/<PID>/exe is borken symlink or access denied
+		statPath := common.HostProc(strconv.Itoa(int(p.Pid)), "stat")
+		contents, err := ioutil.ReadFile(statPath)
+		if err != nil {
+			return "", err
+		}
+		data := string(contents)
+		binStart := strings.IndexRune(data, '(') + 1
+		binEnd := strings.IndexRune(data[binStart:], ')')
+		return string(data[binStart : binStart+binEnd]), err
 	}
 	return string(exe), nil
 }
