@@ -91,6 +91,9 @@ You can set an alternative location to :code:`/var` by setting the :code:`HOST_V
 
 You can set an alternative location to :code:`/run` by setting the :code:`HOST_RUN` environment variable.
 
+You can set an alternative location to :code:`/dev` by setting the :code:`HOST_DEV` environment variable.
+
+
 Documentation
 ------------------------
 
