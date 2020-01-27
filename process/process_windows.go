@@ -29,6 +29,7 @@ var (
 
 	procQueryFullProcessImageNameW = common.Modkernel32.NewProc("QueryFullProcessImageNameW")
 	procGetPriorityClass           = common.Modkernel32.NewProc("GetPriorityClass")
+	procGetProcessIoCounters       = common.Modkernel32.NewProc("GetProcessIoCounters")
 )
 
 type SystemProcessInformation struct {
@@ -51,6 +52,17 @@ type MemoryInfoExStat struct {
 }
 
 type MemoryMapsStat struct {
+}
+
+// ioCounters is an equivalent representation of IO_COUNTERS in the Windows API.
+// https://docs.microsoft.com/windows/win32/api/winnt/ns-winnt-io_counters
+type ioCounters struct {
+	ReadOperationCount  uint64
+	WriteOperationCount uint64
+	OtherOperationCount uint64
+	ReadTransferCount   uint64
+	WriteTransferCount  uint64
+	OtherTransferCount  uint64
 }
 
 type Win32_Process struct {
@@ -479,18 +491,24 @@ func (p *Process) IOCounters() (*IOCountersStat, error) {
 }
 
 func (p *Process) IOCountersWithContext(ctx context.Context) (*IOCountersStat, error) {
-	dst, err := GetWin32ProcWithContext(ctx, p.Pid)
-	if err != nil || len(dst) == 0 {
-		return nil, fmt.Errorf("could not get Win32Proc: %s", err)
+	c, err := windows.OpenProcess(windows.PROCESS_QUERY_LIMITED_INFORMATION, false, uint32(p.Pid))
+	if err != nil {
+		return nil, err
 	}
-	ret := &IOCountersStat{
-		ReadCount:  uint64(dst[0].ReadOperationCount),
-		ReadBytes:  uint64(dst[0].ReadTransferCount),
-		WriteCount: uint64(dst[0].WriteOperationCount),
-		WriteBytes: uint64(dst[0].WriteTransferCount),
+	defer windows.CloseHandle(c)
+	var ioCounters ioCounters
+	ret, _, err := procGetProcessIoCounters.Call(uintptr(c), uintptr(unsafe.Pointer(&ioCounters)))
+	if ret == 0 {
+		return nil, err
+	}
+	stats := &IOCountersStat{
+		ReadCount:  ioCounters.ReadOperationCount,
+		ReadBytes:  ioCounters.ReadTransferCount,
+		WriteCount: ioCounters.WriteOperationCount,
+		WriteBytes: ioCounters.WriteTransferCount,
 	}
 
-	return ret, nil
+	return stats, nil
 }
 func (p *Process) NumCtxSwitches() (*NumCtxSwitchesStat, error) {
 	return p.NumCtxSwitchesWithContext(context.Background())
