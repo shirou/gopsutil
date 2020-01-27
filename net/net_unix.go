@@ -74,7 +74,7 @@ func ConnectionsPidWithContext(ctx context.Context, kind string, pid int32) ([]C
 		if strings.HasPrefix(rr, "COMMAND") {
 			continue
 		}
-		n, err := parseNetLine(rr)
+		n, err := parseLsofNetLine(rr)
 		if err != nil {
 
 			continue

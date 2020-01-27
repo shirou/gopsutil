@@ -176,86 +176,6 @@ func ProtoCountersWithContext(ctx context.Context, protocols []string) ([]ProtoC
 	return nil, errors.New("NetProtoCounters not implemented for openbsd")
 }
 
-func parseNetstatLine(line string) (ConnectionStat, error) {
-	f := strings.Fields(line)
-	if len(f) < 5 {
-		return ConnectionStat{}, fmt.Errorf("wrong line,%s", line)
-	}
-
-	var netType, netFamily uint32
-	switch f[0] {
-	case "tcp":
-		netType = syscall.SOCK_STREAM
-		netFamily = syscall.AF_INET
-	case "udp":
-		netType = syscall.SOCK_DGRAM
-		netFamily = syscall.AF_INET
-	case "tcp6":
-		netType = syscall.SOCK_STREAM
-		netFamily = syscall.AF_INET6
-	case "udp6":
-		netType = syscall.SOCK_DGRAM
-		netFamily = syscall.AF_INET6
-	default:
-		return ConnectionStat{}, fmt.Errorf("unknown type, %s", f[0])
-	}
-
-	laddr, raddr, err := parseNetstatAddr(f[3], f[4], netFamily)
-	if err != nil {
-		return ConnectionStat{}, fmt.Errorf("failed to parse netaddr, %s %s", f[3], f[4])
-	}
-
-	n := ConnectionStat{
-		Fd:     uint32(0), // not supported
-		Family: uint32(netFamily),
-		Type:   uint32(netType),
-		Laddr:  laddr,
-		Raddr:  raddr,
-		Pid:    int32(0), // not supported
-	}
-	if len(f) == 6 {
-		n.Status = f[5]
-	}
-
-	return n, nil
-}
-
-func parseNetstatAddr(local string, remote string, family uint32) (laddr Addr, raddr Addr, err error) {
-	parse := func(l string) (Addr, error) {
-		matches := portMatch.FindStringSubmatch(l)
-		if matches == nil {
-			return Addr{}, fmt.Errorf("wrong addr, %s", l)
-		}
-		host := matches[1]
-		port := matches[2]
-		if host == "*" {
-			switch family {
-			case syscall.AF_INET:
-				host = "0.0.0.0"
-			case syscall.AF_INET6:
-				host = "::"
-			default:
-				return Addr{}, fmt.Errorf("unknown family, %d", family)
-			}
-		}
-		lport, err := strconv.Atoi(port)
-		if err != nil {
-			return Addr{}, err
-		}
-		return Addr{IP: host, Port: uint32(lport)}, nil
-	}
-
-	laddr, err = parse(local)
-	if remote != "*.*" { // remote addr exists
-		raddr, err = parse(remote)
-		if err != nil {
-			return laddr, raddr, err
-		}
-	}
-
-	return laddr, raddr, err
-}
-
 // Return a list of network connections opened.
 func Connections(kind string) ([]ConnectionStat, error) {
 	return ConnectionsWithContext(context.Background(), kind)
@@ -308,7 +228,7 @@ func ConnectionsWithContext(ctx context.Context, kind string) ([]ConnectionStat,
 		if !(strings.HasPrefix(line, "tcp") || strings.HasPrefix(line, "udp")) {
 			continue
 		}
-		n, err := parseNetstatLine(line)
+		n, err := parseNetstatNetLine(line)
 		if err != nil {
 			continue
 		}

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"regexp"
 	"strconv"
 	"strings"
 	"syscall"
@@ -274,7 +275,7 @@ func getIOCountersAll(n []IOCountersStat) ([]IOCountersStat, error) {
 	return []IOCountersStat{r}, nil
 }
 
-func parseNetLine(line string) (ConnectionStat, error) {
+func parseLsofNetLine(line string) (ConnectionStat, error) {
 	f := strings.Fields(line)
 	if len(f) < 8 {
 		return ConnectionStat{}, fmt.Errorf("wrong line,%s", line)
@@ -306,7 +307,7 @@ func parseNetLine(line string) (ConnectionStat, error) {
 	if f[7] == "unix" {
 		laddr.IP = f[8]
 	} else {
-		laddr, raddr, err = parseNetAddr(f[8])
+		laddr, raddr, err = parseLsofNetAddr(f[8])
 		if err != nil {
 			return ConnectionStat{}, fmt.Errorf("failed to parse netaddr, %s", f[8])
 		}
@@ -327,7 +328,7 @@ func parseNetLine(line string) (ConnectionStat, error) {
 	return n, nil
 }
 
-func parseNetAddr(line string) (laddr Addr, raddr Addr, err error) {
+func parseLsofNetAddr(line string) (laddr Addr, raddr Addr, err error) {
 	parse := func(l string) (Addr, error) {
 		host, port, err := net.SplitHostPort(l)
 		if err != nil {
@@ -347,6 +348,90 @@ func parseNetAddr(line string) (laddr Addr, raddr Addr, err error) {
 	laddr, err = parse(addrs[0])
 	if len(addrs) == 2 { // remote addr exists
 		raddr, err = parse(addrs[1])
+		if err != nil {
+			return laddr, raddr, err
+		}
+	}
+
+	return laddr, raddr, err
+}
+
+func parseNetstatNetLine(line string) (ConnectionStat, error) {
+	f := strings.Fields(line)
+	if len(f) < 5 {
+		return ConnectionStat{}, fmt.Errorf("wrong line,%s", line)
+	}
+
+	var netType, netFamily uint32
+	switch f[0] {
+	case "tcp", "tcp4":
+		netType = syscall.SOCK_STREAM
+		netFamily = syscall.AF_INET
+	case "udp", "udp4":
+		netType = syscall.SOCK_DGRAM
+		netFamily = syscall.AF_INET
+	case "tcp6":
+		netType = syscall.SOCK_STREAM
+		netFamily = syscall.AF_INET6
+	case "udp6":
+		netType = syscall.SOCK_DGRAM
+		netFamily = syscall.AF_INET6
+	default:
+		return ConnectionStat{}, fmt.Errorf("unknown type, %s", f[0])
+	}
+
+	laddr, raddr, err := parseNetstatAddr(f[3], f[4], netFamily)
+	if err != nil {
+		return ConnectionStat{}, fmt.Errorf("failed to parse netaddr, %s %s", f[3], f[4])
+	}
+
+	n := ConnectionStat{
+		Fd:     uint32(0), // not supported
+		Family: uint32(netFamily),
+		Type:   uint32(netType),
+		Laddr:  laddr,
+		Raddr:  raddr,
+		Pid:    int32(0), // not supported
+	}
+	if len(f) == 6 {
+		n.Status = f[5]
+	}
+
+	return n, nil
+}
+
+var portMatch = regexp.MustCompile(`(.*)\.(\d+)$`)
+
+// This function only works for netstat returning addresses with a "."
+// before the port (eg. 0.0.0.0.22).
+func parseNetstatAddr(local string, remote string, family uint32) (laddr Addr, raddr Addr, err error) {
+	parse := func(l string) (Addr, error) {
+		matches := portMatch.FindStringSubmatch(l)
+		if matches == nil {
+			return Addr{}, fmt.Errorf("wrong addr, %s", l)
+		}
+		host := matches[1]
+		port := matches[2]
+		if host == "*" {
+			switch family {
+			case syscall.AF_INET:
+				host = "0.0.0.0"
+			case syscall.AF_INET6:
+				host = "::"
+			default:
+				return Addr{}, fmt.Errorf("unknown family, %d", family)
+			}
+		}
+		lport, err := strconv.Atoi(port)
+		if err != nil {
+			return Addr{}, err
+		}
+		return Addr{IP: host, Port: uint32(lport)}, nil
+	}
+
+	laddr, err = parse(local)
+	if remote != "*.*" { // remote addr exists
+		raddr, err = parse(remote)
 		if err != nil {
 			return laddr, raddr, err
 		}
