@@ -16,6 +16,9 @@ import (
 type VirtualMemoryExStat struct {
 	ActiveFile   uint64 `json:"activefile"`
 	InactiveFile uint64 `json:"inactivefile"`
+	ActiveAnon   uint64 `json:"activeanon"`
+	InactiveAnon uint64 `json:"inactiveanon"`
+	Unevictable  uint64 `json:"unevictable"`
 }
 
 func VirtualMemory() (*VirtualMemoryStat, error) {
@@ -64,12 +67,18 @@ func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
 			ret.Active = t * 1024
 		case "Inactive":
 			ret.Inactive = t * 1024
+		case "Active(anon)":
+			retEx.ActiveAnon = t * 1024
+		case "Inactive(anon)":
+			retEx.InactiveAnon = t * 1024
 		case "Active(file)":
 			activeFile = true
 			retEx.ActiveFile = t * 1024
 		case "Inactive(file)":
 			inactiveFile = true
 			retEx.InactiveFile = t * 1024
+		case "Unevictable":
+			retEx.Unevictable = t * 1024
 		case "Writeback":
 			ret.Writeback = t * 1024
 		case "WritebackTmp":
