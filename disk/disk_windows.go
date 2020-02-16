@@ -5,6 +5,7 @@ package disk
 import (
 	"bytes"
 	"context"
+	"errors"
 	"unsafe"
 
 	"github.com/shirou/gopsutil/internal/common"
@@ -12,15 +13,13 @@ import (
 )
 
 var (
-	procGetDiskFreeSpaceExW     = common.Modkernel32.NewProc("GetDiskFreeSpaceExW")
-	procGetLogicalDriveStringsW = common.Modkernel32.NewProc("GetLogicalDriveStringsW")
-	procGetDriveType            = common.Modkernel32.NewProc("GetDriveTypeW")
-	procGetVolumeInformation    = common.Modkernel32.NewProc("GetVolumeInformationW")
+	procGetDiskFreeSpaceExW = common.Modkernel32.NewProc("GetDiskFreeSpaceExW")
+	procGetDriveType        = common.Modkernel32.NewProc("GetDriveTypeW")
 )
 
 var (
-	FileFileCompression = int64(16)     // 0x00000010
-	FileReadOnlyVolume  = int64(524288) // 0x00080000
+	FileFileCompression = uint32(16)     // 0x00000010
+	FileReadOnlyVolume  = uint32(524288) // 0x00080000
 )
 
 type Win32_PerfFormattedData struct {
@@ -71,64 +70,103 @@ func Partitions(all bool) ([]PartitionStat, error) {
 
 func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {
 	var ret []PartitionStat
-	lpBuffer := make([]byte, 254)
-	diskret, _, err := procGetLogicalDriveStringsW.Call(
-		uintptr(len(lpBuffer)),
-		uintptr(unsafe.Pointer(&lpBuffer[0])))
-	if diskret == 0 {
+
+	bufferSize := uint32(256)
+	volnameBuffer := make([]byte, bufferSize)
+
+	// find first volume
+	handle, err := windows.FindFirstVolume((*uint16)(unsafe.Pointer(&volnameBuffer[0])), bufferSize)
+	if nil != err {
+		return ret, windows.GetLastError()
+	}
+
+	volumeInfo, err := getVolumeInfo(string(cleanVolumePath(volnameBuffer)))
+	if err != nil {
 		return ret, err
 	}
-	for _, v := range lpBuffer {
-		if v >= 65 && v <= 90 {
-			path := string(v) + ":"
-			typepath, _ := windows.UTF16PtrFromString(path)
-			typeret, _, _ := procGetDriveType.Call(uintptr(unsafe.Pointer(typepath)))
-			if typeret == 0 {
-				return ret, windows.GetLastError()
-			}
-			// 2: DRIVE_REMOVABLE 3: DRIVE_FIXED 4: DRIVE_REMOTE 5: DRIVE_CDROM
+	ret = append(ret, volumeInfo)
 
-			if typeret == 2 || typeret == 3 || typeret == 4 || typeret == 5 {
-				lpVolumeNameBuffer := make([]byte, 256)
-				lpVolumeSerialNumber := int64(0)
-				lpMaximumComponentLength := int64(0)
-				lpFileSystemFlags := int64(0)
-				lpFileSystemNameBuffer := make([]byte, 256)
-				volpath, _ := windows.UTF16PtrFromString(string(v) + ":/")
-				driveret, _, err := procGetVolumeInformation.Call(
-					uintptr(unsafe.Pointer(volpath)),
-					uintptr(unsafe.Pointer(&lpVolumeNameBuffer[0])),
-					uintptr(len(lpVolumeNameBuffer)),
-					uintptr(unsafe.Pointer(&lpVolumeSerialNumber)),
-					uintptr(unsafe.Pointer(&lpMaximumComponentLength)),
-					uintptr(unsafe.Pointer(&lpFileSystemFlags)),
-					uintptr(unsafe.Pointer(&lpFileSystemNameBuffer[0])),
-					uintptr(len(lpFileSystemNameBuffer)))
-				if driveret == 0 {
-					if typeret == 5 || typeret == 2 {
-						continue //device is not ready will happen if there is no disk in the drive
-					}
-					return ret, err
-				}
-				opts := "rw"
-				if lpFileSystemFlags&FileReadOnlyVolume != 0 {
-					opts = "ro"
-				}
-				if lpFileSystemFlags&FileFileCompression != 0 {
-					opts += ".compress"
-				}
+	// loop over all volumes, excluding the first volume
+	for {
+		// If no more partiotions, returns error, exit the loop
+		err = windows.FindNextVolume(handle, (*uint16)(unsafe.Pointer(&volnameBuffer[0])), bufferSize)
+		if err != nil {
+			break
+		}
 
-				d := PartitionStat{
-					Mountpoint: path,
-					Device:     path,
-					Fstype:     string(bytes.Replace(lpFileSystemNameBuffer, []byte("\x00"), []byte(""), -1)),
-					Opts:       opts,
-				}
-				ret = append(ret, d)
+		volumeInfo, err := getVolumeInfo(string(cleanVolumePath(volnameBuffer)))
+		if err != nil {
+			return ret, err
+		}
+		ret = append(ret, volumeInfo)
+	}
+
+	// Close the handle
+	_ = windows.FindVolumeClose(handle)
+
+	return ret, nil
+}
+
+func getVolumeInfo(volumeName string) (partition PartitionStat, err error) {
+	d := PartitionStat{}
+
+	bufferSize := uint32(256)
+	volumeNameBuffer := make([]byte, bufferSize)
+	lpFileSystemNameBuffer := make([]byte, bufferSize)
+	volumeNameSerialNumber := uint32(0)
+	maximumComponentLength := uint32(0)
+	lpFileSystemFlags := uint32(0)
+
+	volpath, _ := windows.UTF16PtrFromString(volumeName)
+	typeret, _, _ := procGetDriveType.Call(uintptr(unsafe.Pointer(volpath)))
+	if typeret == 0 {
+		return PartitionStat{}, windows.GetLastError()
+	}
+	// 2: DRIVE_REMOVABLE 3: DRIVE_FIXED 4: DRIVE_REMOTE 5: DRIVE_CDROM
+	if typeret == 2 || typeret == 3 || typeret == 4 || typeret == 5 {
+		err = windows.GetVolumeInformation(
+			(*uint16)(unsafe.Pointer(volpath)),
+			(*uint16)(unsafe.Pointer(&volumeNameBuffer[0])),
+			bufferSize,
+			&volumeNameSerialNumber,
+			&maximumComponentLength,
+			&lpFileSystemFlags,
+			(*uint16)(unsafe.Pointer(&lpFileSystemNameBuffer[0])),
+			bufferSize)
+
+		if err != nil {
+			if typeret == 5 || typeret == 2 {
+				//device is not ready will happen if there is no disk in the drive
+				return PartitionStat{}, errors.New("Device is not ready!")
 			}
+			return PartitionStat{}, windows.GetLastError()
+		}
+
+		opts := "rw"
+		if lpFileSystemFlags&FileReadOnlyVolume != 0 {
+			opts = "ro"
+		}
+		if lpFileSystemFlags&FileFileCompression != 0 {
+			opts += ".compress"
+		}
+
+		d.Mountpoint = volumeName
+		d.Device = string(bytes.Replace(volumeNameBuffer, []byte("\x00"), []byte(""), -1))
+		d.Fstype = string(bytes.Replace(lpFileSystemNameBuffer, []byte("\x00"), []byte(""), -1))
+		d.Opts = opts
+	}
+
+	return d, nil
+}
+
+func cleanVolumePath(data []byte) []byte {
+	var res []byte
+	for _, key := range data {
+		if key != 0 {
+			res = append(res, key)
 		}
 	}
-	return ret, nil
+	return res
 }
 
 func IOCounters(names ...string) (map[string]IOCountersStat, error) {
