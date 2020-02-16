@@ -83,7 +83,11 @@ func PidExistsWithContext(ctx context.Context, pid int32) (bool, error) {
 	if _, err := os.Stat(common.HostProc()); err == nil { //Means that proc filesystem exist
 		// Checking PID existence based on existence of /<HOST_PROC>/proc/<PID> folder
 		// This covers the case when running inside container with a different process namespace (by default)
+
 		_, err := os.Stat(common.HostProc(strconv.Itoa(int(pid))))
+		if os.IsNotExist(err) {
+			return false, nil
+		}
 		return err == nil, err
 	}
 
