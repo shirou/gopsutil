@@ -1,4 +1,6 @@
-version: 2
+version: 2.1
+
+
 jobs:
   test:
     docker:
@@ -20,9 +22,37 @@ jobs:
           command: go build -v
       - run:
           command: make build_test
+  macos:
+    macos:
+      xcode: "10.2.0"
+    environment:
+      GOPATH: /Users/distiller/go
+      GOVERSION: "1.13.8"
+    steps:
+      - checkout
+      - run:
+          command: |
+            curl -O https://dl.google.com/go/go${GOVERSION}.darwin-amd64.pkg
+            sudo installer -pkg go${GOVERSION}.darwin-amd64.pkg -target /
+      - run:
+          command: |
+            make init_tools
+            mkdir -p ${GOPATH}/src/github.com/shirou/
+            mv /Users/distiller/project /Users/distiller/go/src/github.com/shirou/gopsutil
+      - run:
+          command: |
+            export PATH=$GOPATH/bin:$PATH
+            cd /Users/distiller/go/src/github.com/shirou/gopsutil && dep ensure
+      - run:
+          command: |
+            cd /Users/distiller/go/src/github.com/shirou/gopsutil && go build -v
+      - run:
+          command: |
+            cd /Users/distiller/go/src/github.com/shirou/gopsutil && make macos_test
 
 workflows:
   version: 2
   test:
     jobs:
+      - macos
       - test
