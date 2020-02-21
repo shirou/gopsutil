@@ -3,6 +3,7 @@ package cpu
 import (
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"runtime"
 	"testing"
@@ -194,6 +195,107 @@ func testCPUPercentLastUsed(t *testing.T, percpu bool) {
 	}
 }
 
+func checkTimesStatPercentages(t *testing.T, ps TimesStat, numcpu int) {
+	t.Helper()
+
+	// Check for slightly greater then 100% to account for any rounding issues.
+	if ps.User < 0.0 || ps.User > 100.0001*float64(numcpu) {
+		t.Fatalf("CPUPercent value User is invalid: %f", ps.User)
+	}
+	if ps.System < 0.0 || ps.System > 100.0001*float64(numcpu) {
+		t.Fatalf("CPUPercent value System is invalid: %f", ps.System)
+	}
+	if ps.Idle < 0.0 || ps.Idle > 100.0001*float64(numcpu) {
+		t.Fatalf("CPUPercent value Idle is invalid: %f", ps.Idle)
+	}
+	if ps.Nice < 0.0 || ps.Nice > 100.0001*float64(numcpu) {
+		t.Fatalf("CPUPercent value Nice is invalid: %f", ps.Nice)
+	}
+	if ps.Iowait < 0.0 || ps.Iowait > 100.0001*float64(numcpu) {
+		t.Fatalf("CPUPercent value Iowait is invalid: %f", ps.Iowait)
+	}
+	if ps.Irq < 0.0 || ps.Irq > 100.0001*float64(numcpu) {
+		t.Fatalf("CPUPercent value Irq is invalid: %f", ps.Irq)
+	}
+	if ps.Softirq < 0.0 || ps.Softirq > 100.0001*float64(numcpu) {
+		t.Fatalf("CPUPercent value Softirq is invalid: %f", ps.Softirq)
+	}
+	if ps.Steal < 0.0 || ps.Steal > 100.0001*float64(numcpu) {
+		t.Fatalf("CPUPercent value Steal is invalid: %f", ps.Steal)
+	}
+
+	total := ps.User + ps.System + ps.Idle + ps.Nice + ps.Iowait +
+		ps.Irq + ps.Softirq + ps.Steal
+	if math.Round(total) != 100 {
+		t.Fatalf("CPUPercent total is invalid: %f", total)
+	}
+
+	if ps.Guest < 0.0 || ps.Guest > 100.0001*float64(numcpu) {
+		t.Fatalf("CPUPercent value Guest is invalid: %f", ps.Guest)
+	}
+	if ps.GuestNice < 0.0 || ps.GuestNice > 100.0001*float64(numcpu) {
+		t.Fatalf("CPUPercent value GuestNice is invalid: %f", ps.GuestNice)
+	}
+}
+
+func testCPUTimesPercent(t *testing.T, percpu bool) {
+	numcpu := runtime.NumCPU()
+	testCount := 10
+
+	if runtime.GOOS != "windows" {
+		testCount = 2
+		v, err := CPUTimesPercent(time.Millisecond, percpu)
+		if err != nil {
+			t.Errorf("error %v", err)
+		}
+		// Skip CircleCI which CPU num is different
+		if os.Getenv("CIRCLECI") != "true" {
+			if (percpu && len(v) != numcpu) || (!percpu && len(v) != 1) {
+				t.Fatalf("wrong number of entries from CPUPercent: %v", v)
+			}
+		}
+	}
+	for i := 0; i < testCount; i++ {
+		duration := time.Duration(100) * time.Millisecond
+		v, err := CPUTimesPercent(duration, percpu)
+		if err != nil {
+			t.Errorf("error %v", err)
+		}
+		for _, ps := range v {
+			checkTimesStatPercentages(t, ps, numcpu)
+		}
+	}
+}
+
+func testCPUTimesPercentLastUsed(t *testing.T, percpu bool) {
+	numcpu := runtime.NumCPU()
+	testCount := 10
+
+	if runtime.GOOS != "windows" {
+		testCount = 2
+		v, err := CPUTimesPercent(time.Millisecond, percpu)
+		if err != nil {
+			t.Errorf("error %v", err)
+		}
+		// Skip CircleCI which CPU num is different
+		if os.Getenv("CIRCLECI") != "true" {
+			if (percpu && len(v) != numcpu) || (!percpu && len(v) != 1) {
+				t.Fatalf("wrong number of entries from CPUPercent: %v", v)
+			}
+		}
+	}
+	for i := 0; i < testCount; i++ {
+		v, err := CPUTimesPercent(0, percpu)
+		if err != nil {
+			t.Errorf("error %v", err)
+		}
+		time.Sleep(100 * time.Millisecond)
+		for _, ps := range v {
+			checkTimesStatPercentages(t, ps, numcpu)
+		}
+	}
+}
+
 func TestCPUPercent(t *testing.T) {
 	testCPUPercent(t, false)
 }
@@ -203,9 +305,27 @@ func TestCPUPercentPerCpu(t *testing.T) {
 }
 
 func TestCPUPercentIntervalZero(t *testing.T) {
+	time.Sleep(time.Millisecond * 200)
 	testCPUPercentLastUsed(t, false)
 }
 
 func TestCPUPercentIntervalZeroPerCPU(t *testing.T) {
+	time.Sleep(time.Millisecond * 200)
 	testCPUPercentLastUsed(t, true)
+}
+
+func TestCPUTimesPercent(t *testing.T) {
+	testCPUTimesPercent(t, false)
+}
+
+func TestCPUTimesPercentPerCpu(t *testing.T) {
+	testCPUTimesPercent(t, true)
+}
+
+func TestCPUTimesPercentIntervalZero(t *testing.T) {
+	testCPUTimesPercentLastUsed(t, false)
+}
+
+func TestCPUTimesPercentIntervalZeroPerCPU(t *testing.T) {
+	testCPUTimesPercentLastUsed(t, true)
 }
