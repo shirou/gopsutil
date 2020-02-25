@@ -33,5 +33,9 @@ ifeq ($(shell uname -s), Darwin)
 endif
 	@echo 'Successfully built on all known operating systems'
 
+macos_test:
+	CGO_ENABLED=0 GOOS=darwin go test ./... | $(BUILD_FAIL_PATTERN)
+	CGO_ENABLED=1 GOOS=darwin go test ./... | $(BUILD_FAIL_PATTERN)
+
 init_tools:
 	go get github.com/golang/dep/cmd/dep
