@@ -623,3 +623,21 @@ func Test_IsRunning(t *testing.T) {
 		t.Fatalf("process should NOT be found running")
 	}
 }
+
+func Test_AllProcesses_cmdLine(t *testing.T) {
+	procs, err := Processes()
+	if err == nil {
+		for _, proc := range procs {
+			var exeName string
+			var cmdLine string
+
+			exeName, _ = proc.Exe()
+			cmdLine, err = proc.Cmdline()
+			if err != nil {
+				cmdLine = "Error: " + err.Error()
+			}
+
+			t.Logf("Process #%v: Name: %v / CmdLine: %v\n", proc.Pid, exeName, cmdLine)
+		}
+	}
+}
