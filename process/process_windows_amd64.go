@@ -3,9 +3,10 @@
 package process
 
 import (
-	"github.com/shirou/gopsutil/internal/common"
 	"syscall"
 	"unsafe"
+
+	"github.com/shirou/gopsutil/internal/common"
 )
 
 type PROCESS_MEMORY_COUNTERS struct {
@@ -38,7 +39,7 @@ func queryPebAddress(procHandle syscall.Handle, is32BitProcess bool) uint64 {
 		}
 	} else {
 		//we are on a 64-bit process reading an external 64-bit process
-		var info PROCESS_BASIC_INFORMATION64
+		var info processBasicInformation64
 
 		ret, _, _ := common.ProcNtQueryInformationProcess.Call(
 			uintptr(procHandle),

@@ -29,6 +29,9 @@ var (
 	procQueryFullProcessImageNameW = common.Modkernel32.NewProc("QueryFullProcessImageNameW")
 	procGetPriorityClass           = common.Modkernel32.NewProc("GetPriorityClass")
 	procGetProcessIoCounters       = common.Modkernel32.NewProc("GetProcessIoCounters")
+	procGetNativeSystemInfo        = common.Modkernel32.NewProc("GetNativeSystemInfo")
+
+	processorArchitecture uint
 )
 
 type SystemProcessInformation struct {
@@ -46,12 +49,26 @@ type SystemProcessInformation struct {
 	Reserved6         [6]uint64
 }
 
-type SystemProcessorInformation struct {
+type systemProcessorInformation struct {
 	ProcessorArchitecture uint16
 	ProcessorLevel uint16
 	ProcessorRevision uint16
 	Reserved uint16
 	ProcessorFeatureBits uint16
+}
+
+type systemInfo struct {
+	wProcessorArchitecture      uint16
+	wReserved                   uint16
+	dwPageSize                  uint32
+	lpMinimumApplicationAddress uintptr
+	lpMaximumApplicationAddress uintptr
+	dwActiveProcessorMask       uintptr
+	dwNumberOfProcessors        uint32
+	dwProcessorType             uint32
+	dwAllocationGranularity     uint32
+	wProcessorLevel             uint16
+	wProcessorRevision          uint16
 }
 
 // Memory_info_ex is different between OSes
@@ -72,7 +89,7 @@ type ioCounters struct {
 	OtherTransferCount  uint64
 }
 
-type PROCESS_BASIC_INFORMATION32 struct {
+type processBasicInformation32 struct {
 	Reserved1       uint32
 	PebBaseAddress  uint32
 	Reserved2       uint32
@@ -81,7 +98,7 @@ type PROCESS_BASIC_INFORMATION32 struct {
 	Reserved4       uint32
 }
 
-type PROCESS_BASIC_INFORMATION64 struct {
+type processBasicInformation64 struct {
 	Reserved1       uint64
 	PebBaseAddress  uint64
 	Reserved2       uint64
@@ -111,6 +128,11 @@ type winLong int32
 type winDWord uint32
 
 func init() {
+	var systemInfo systemInfo
+
+	procGetNativeSystemInfo.Call(uintptr(unsafe.Pointer(&systemInfo)))
+	processorArchitecture = uint(systemInfo.wProcessorArchitecture)
+
 	// enable SeDebugPrivilege https://github.com/midstar/proci/blob/6ec79f57b90ba3d9efa2a7b16ef9c9369d4be875/proci_windows.go#L80-L119
 	handle, err := syscall.GetCurrentProcess()
 	if err != nil {
@@ -272,8 +294,8 @@ func (p *Process) Cmdline() (string, error) {
 	return p.CmdlineWithContext(context.Background())
 }
 
-func (p *Process) CmdlineWithContext(ctx context.Context) (string, error) {
-	cmdline, err := getProcessCommandLine(ctx, p.Pid)
+func (p *Process) CmdlineWithContext(_ context.Context) (string, error) {
+	cmdline, err := getProcessCommandLine(p.Pid)
 	if err != nil {
 		return "", fmt.Errorf("could not get CommandLine: %s", err)
 	}
@@ -830,7 +852,7 @@ func is32BitProcess(procHandle syscall.Handle) bool {
 	return false
 }
 
-func getProcessCommandLine(_ context.Context, pid int32) (string, error) {
+func getProcessCommandLine(pid int32) (string, error) {
 	h, err := windows.OpenProcess(windows.PROCESS_QUERY_LIMITED_INFORMATION | windows.PROCESS_VM_READ, false, uint32(pid))
 	if err == windows.ERROR_ACCESS_DENIED || err == windows.ERROR_INVALID_PARAMETER {
 		return "", nil
@@ -840,14 +862,41 @@ func getProcessCommandLine(_ context.Context, pid int32) (string, error) {
 	}
 	defer syscall.CloseHandle(syscall.Handle(h))
 
-	procIs32Bits := is32BitProcess(syscall.Handle(h))
+	const (
+		PROCESSOR_ARCHITECTURE_INTEL = 0
+		PROCESSOR_ARCHITECTURE_ARM   = 5
+		PROCESSOR_ARCHITECTURE_ARM64 = 12
+		PROCESSOR_ARCHITECTURE_IA64  = 6
+		PROCESSOR_ARCHITECTURE_AMD64 = 9
+	)
+
+	procIs32Bits := true
+	switch processorArchitecture {
+	case PROCESSOR_ARCHITECTURE_INTEL:
+		fallthrough
+	case PROCESSOR_ARCHITECTURE_ARM:
+		procIs32Bits = true
+
+	case PROCESSOR_ARCHITECTURE_ARM64:
+		fallthrough
+	case PROCESSOR_ARCHITECTURE_IA64:
+		fallthrough
+	case PROCESSOR_ARCHITECTURE_AMD64:
+		procIs32Bits = is32BitProcess(syscall.Handle(h))
+
+	default:
+		//for other unknown platforms, we rely on process platform
+		if unsafe.Sizeof(processorArchitecture) == 8 {
+			procIs32Bits = false
+		}
+	}
 
 	pebAddress := queryPebAddress(syscall.Handle(h), procIs32Bits)
 	if pebAddress == 0 {
 		return "", errors.New("cannot locate process PEB")
 	}
 
-	if is32BitProcess(syscall.Handle(h)) {
+	if procIs32Bits {
 		buf := readProcessMemory(syscall.Handle(h), procIs32Bits, pebAddress + uint64(16), 4)
 		if len(buf) != 4 {
 			return "", errors.New("cannot locate process user parameters")
