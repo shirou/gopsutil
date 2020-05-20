@@ -577,7 +577,8 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 		m.Path = first_line[len(first_line)-1]
 
 		for _, line := range block {
-			if strings.Contains(line, "VmFlags") {
+			if strings.Contains(line, "VmFlags") ||
+			   strings.Contains(line, "THPeligible") {
 				continue
 			}
 			field := strings.Split(line, ":")
