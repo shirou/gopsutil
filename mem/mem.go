@@ -88,6 +88,7 @@ type SwapMemoryStat struct {
 	PgIn        uint64  `json:"pgin"`
 	PgOut       uint64  `json:"pgout"`
 	PgFault     uint64  `json:"pgfault"`
+	PgMajFault  uint64  `json:"pgmajfault"`
 }
 
 func (m VirtualMemoryStat) String() string {
