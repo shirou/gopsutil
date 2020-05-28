@@ -6,7 +6,7 @@ package host
 // #cgo LDFLAGS: -framework IOKit
 // #include <stdio.h>
 // #include <string.h>
-// #include "include/smc.c"
+// #include "smc_darwin.h"
 import "C"
 import "context"
 
