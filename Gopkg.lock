@@ -49,16 +49,17 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:945b127fc2488b7efd24553b270158847219fd9fa32d6fd2bece3bac81d02d7e"
+  digest = "1:7e24c282d199e1658bb17afc9a89dad6f660a7d3ba81788d5831ed76972e57ca"
   name = "golang.org/x/sys"
   packages = [
+    "internal/unsafeheader",
     "unix",
     "windows",
     "windows/svc",
     "windows/svc/mgr",
   ]
   pruneopts = "UT"
-  revision = "0732a990476f7f2f5f7200b39ba4ab730c0f09f8"
+  revision = "05986578812163b26672dabd9b425240ae2bb0ad"
 
 [solve-meta]
   analyzer-name = "dep"
