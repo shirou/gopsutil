@@ -117,13 +117,13 @@ func CgroupCPUWithContext(ctx context.Context, containerID string, base string) 
 		if fields[0] == "user" {
 			user, err := strconv.ParseFloat(fields[1], 64)
 			if err == nil {
-				ret.User = user / cpu.CPUTick
+				ret.User = user / cpu.ClocksPerSec
 			}
 		}
 		if fields[0] == "system" {
 			system, err := strconv.ParseFloat(fields[1], 64)
 			if err == nil {
-				ret.System = system / cpu.CPUTick
+				ret.System = system / cpu.ClocksPerSec
 			}
 		}
 	}
