@@ -18,6 +18,7 @@ func init() {
 
 type Process struct {
 	Pid            int32 `json:"pid"`
+	NSPid          int32 `json:"nspid"`
 	name           string
 	status         string
 	parent         int32
