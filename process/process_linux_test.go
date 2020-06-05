@@ -66,7 +66,7 @@ func TestFillNSPidFromStatus(t *testing.T) {
 	defer os.Unsetenv("HOST_PROC")
 	assert.Nil(t, err)
 
-	// Process spawned from the host
+	// Process started on the host namespace
 	// NSpid:	6320
 	p1, err := NewProcess(6320)
 	assert.Nil(t, err)
