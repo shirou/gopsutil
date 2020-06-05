@@ -33,8 +33,10 @@ type Process struct {
 }
 
 type FilledProcess struct {
-	Pid     int32
-	Ppid    int32
+	Pid  int32
+	Ppid int32
+	// process namespaced PID
+	NSPid   int32
 	Cmdline []string
 	// stat
 	CpuTime     cpu.TimesStat

@@ -708,6 +708,7 @@ func (p *Process) fillFromStatus() error {
 
 		case "NSpid":
 			values := strings.Split(value, "\t")
+			// only report process namespaced PID
 			v, err := strconv.ParseInt(values[len(values)-1], 10, 32)
 			if err != nil {
 				return err
@@ -908,6 +909,7 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 		procs[p.Pid] = &FilledProcess{
 			Pid:     pid,
 			Ppid:    ppid,
+			NSPid:   p.NSPid,
 			Cmdline: cmdline,
 			// stat
 			CpuTime:     *t1,
