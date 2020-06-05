@@ -705,6 +705,14 @@ func (p *Process) fillFromStatus() error {
 				return err
 			}
 			p.memInfo.Swap = v * 1024
+
+		case "NSpid":
+			values := strings.Split(value, "\t")
+			v, err := strconv.ParseInt(values[len(values)-1], 10, 32)
+			if err != nil {
+				return err
+			}
+			p.NSPid = int32(v)
 		}
 
 	}
