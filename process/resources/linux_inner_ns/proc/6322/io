@@ -1,0 +1,7 @@
+rchar: 0
+wchar: 37
+syscr: 0
+syscw: 1
+read_bytes: 0
+write_bytes: 0
+cancelled_write_bytes: 0
