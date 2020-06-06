@@ -1,4 +1,6 @@
-#include "smc.h"
+#include <stdio.h>
+#include <string.h>
+#include "smc_darwin.h"
 
 #define IOSERVICE_SMC "AppleSMC"
 #define IOSERVICE_MODEL "IOPlatformExpertDevice"
