@@ -1,0 +1,42 @@
+Name:	test_ns_old_lin
+State:	S (sleeping)
+Tgid:	8227
+Ngid:	0
+Pid:	8227
+PPid:	8226
+TracerPid:	0
+Uid:	0	0	0	0
+Gid:	0	0	0	0
+FDSize:	64
+Groups:	0 
+VmPeak:	    4200 kB
+VmSize:	    4200 kB
+VmLck:	       0 kB
+VmPin:	       0 kB
+VmHWM:	      88 kB
+VmRSS:	      88 kB
+VmData:	      52 kB
+VmStk:	     132 kB
+VmExe:	       4 kB
+VmLib:	    1924 kB
+VmPTE:	      28 kB
+VmSwap:	       0 kB
+Threads:	1
+SigQ:	0/63803
+SigPnd:	0000000000000000
+ShdPnd:	0000000000000000
+SigBlk:	0000000000000000
+SigIgn:	0000000000000000
+SigCgt:	0000000000000000
+CapInh:	0000000000000000
+CapPrm:	0000001fffffffff
+CapEff:	0000001fffffffff
+CapBnd:	0000001fffffffff
+Seccomp:	0
+Speculation_Store_Bypass:	vulnerable
+Cpus_allowed:	3
+Cpus_allowed_list:	0-1
+Mems_allowed:	00000000,00000001
+Mems_allowed_list:	0
+voluntary_ctxt_switches:	1
+nonvoluntary_ctxt_switches:	0
