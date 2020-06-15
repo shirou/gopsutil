@@ -176,6 +176,29 @@ func (p *Process) Username() (string, error) {
 }
 
 func (p *Process) UsernameWithContext(ctx context.Context) (string, error) {
+	if !p.isFieldRequested(Username) {
+		return "", ErrorFieldNotRequested
+	}
+
+	cacheKey := "Username"
+	v, ok := p.cache[cacheKey].(valueOrError)
+
+	if !ok {
+		tmp, err := p.usernameWithContextNoCache(ctx)
+		v = valueOrError{
+			value: tmp,
+			err:   err,
+		}
+	}
+
+	if p.cache != nil {
+		p.cache[cacheKey] = v
+	}
+
+	return v.value.(string), v.err
+}
+
+func (p *Process) usernameWithContextNoCache(ctx context.Context) (string, error) {
 	uids, err := p.Uids()
 	if err != nil {
 		return "", err
