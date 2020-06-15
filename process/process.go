@@ -17,6 +17,52 @@ var (
 	invoke                 common.Invoker = common.Invoke{}
 	ErrorNoChildren                       = errors.New("process does not have children")
 	ErrorProcessNotRunning                = errors.New("process does not exist")
+	ErrorFieldNotRequested                = errors.New("this fields was not requested")
+	ErrorRequireUpdate                    = errors.New("this method require updates and cannot be used with NewProcessWithFields")
+)
+
+type Field uint
+
+const (
+	AllFields Field = iota + 1
+	Background
+	Cmdline
+	CmdlineSlice
+	Connections
+	CPUPercent
+	CreateTime
+	Cwd
+	Exe
+	Foreground
+	Gids
+	IOCounters
+	IOnice
+	IsRunning
+	MemoryInfo
+	MemoryInfoEx
+	MemoryMaps
+	MemoryMapsGrouped
+	MemoryPercent
+	Name
+	NetIOCounters
+	NetIOCountersPerNic
+	Nice
+	NumCtxSwitches
+	NumFDs
+	NumThreads
+	OpenFiles
+	PageFaults
+	Parent
+	Ppid
+	Rlimit
+	RlimitUsage
+	Status
+	Terminal
+	Tgid
+	Threads
+	Times
+	Uids
+	Username
 )
 
 type Process struct {
@@ -32,10 +78,18 @@ type Process struct {
 	sigInfo        *SignalInfoStat
 	createTime     int64
 
+	cache             map[string]interface{}
+	prefetchCompleted bool
+
 	lastCPUTimes *cpu.TimesStat
 	lastCPUTime  time.Time
 
 	tgid int32
+}
+
+type valueOrError struct {
+	value interface{}
+	err   error
 }
 
 type OpenFilesStat struct {
@@ -167,6 +221,31 @@ func NewProcess(pid int32) (*Process, error) {
 	return p, nil
 }
 
+// NewProcessWithFields creates a new Process instance, and pre-fetch all requested
+// fields. Those fields and only those fields will be available and won't be updated
+// after creation.
+// This method may be faster if you retrive multiple fields, because unlike NewProcess where
+// files are parsed for each method call, here files are parsed once at creation.
+func NewProcessWithFields(pid int32, fields ...Field) (*Process, error) {
+	p := &Process{
+		Pid:   pid,
+		cache: make(map[string]interface{}),
+	}
+
+	exists, err := PidExists(pid)
+	if err != nil {
+		return p, err
+	}
+	if !exists {
+		return p, ErrorProcessNotRunning
+	}
+
+	p.prefetchFields(fields)
+	p.prefetchCompleted = true
+
+	return p, nil
+}
+
 func PidExists(pid int32) (bool, error) {
 	return PidExistsWithContext(context.Background(), pid)
 }
@@ -191,6 +270,10 @@ func (p *Process) Percent(interval time.Duration) (float64, error) {
 }
 
 func (p *Process) PercentWithContext(ctx context.Context, interval time.Duration) (float64, error) {
+	if p.cache != nil {
+		return 0, ErrorRequireUpdate
+	}
+
 	cpuTimes, err := p.Times()
 	if err != nil {
 		return 0, err
@@ -311,4 +394,23 @@ func (p *Process) CPUPercentWithContext(ctx context.Context) (float64, error) {
 	}
 
 	return 100 * cput.Total() / totalTime, nil
+}
+
+func (p *Process) prefetchFields(requested []Field) {
+	ctx := context.Background()
+
+	p.CreateTimeWithContext(ctx)
+
+	for _, f := range requested {
+		switch f {
+		case CreateTime:
+			// already done
+		case Ppid:
+			p.PpidWithContext(ctx)
+		case MemoryMaps:
+			p.MemoryMapsWithContext(ctx, false)
+		case MemoryMapsGrouped:
+			p.MemoryMapsWithContext(ctx, true)
+		}
+	}
 }

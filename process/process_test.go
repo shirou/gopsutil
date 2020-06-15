@@ -34,6 +34,12 @@ func testGetProcess() Process {
 	return *ret
 }
 
+func testGetProcessWithFields(fields ...Field) Process {
+	checkPid := os.Getpid() // process.test
+	ret, _ := NewProcessWithFields(int32(checkPid), fields...)
+	return *ret
+}
+
 func Test_Pids(t *testing.T) {
 	ret, err := Pids()
 	skipIfNotImplementedErr(t, err)
@@ -86,11 +92,36 @@ func Test_NewProcess(t *testing.T) {
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
-	empty := &Process{}
-	if runtime.GOOS != "windows" { // Windows pid is 0
-		if empty == ret {
-			t.Errorf("error %v", ret)
-		}
+
+	retWithFields, err := NewProcessWithFields(int32(checkPid))
+	skipIfNotImplementedErr(t, err)
+	if err != nil {
+		t.Errorf("error %v", err)
+	}
+
+	tests := []struct {
+		name string
+		proc *Process
+	}{
+		{
+			name: "NewProcess",
+			proc: ret,
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: retWithFields,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			empty := &Process{}
+			if runtime.GOOS != "windows" { // Windows pid is 0
+				if empty == tt.proc {
+					t.Errorf("error %v", tt.proc)
+				}
+			}
+		})
 	}
 
 }
@@ -104,30 +135,54 @@ func Test_Process_memory_maps(t *testing.T) {
 		t.Errorf("error %v", err)
 	}
 
-	// ungrouped memory maps
-	mmaps, err := ret.MemoryMaps(false)
+	retWithFields, err := NewProcessWithFields(int32(checkPid), MemoryMaps, MemoryMapsGrouped)
 	skipIfNotImplementedErr(t, err)
 	if err != nil {
-		t.Errorf("memory map get error %v", err)
-	}
-	empty := MemoryMapsStat{}
-	for _, m := range *mmaps {
-		if m == empty {
-			t.Errorf("memory map get error %v", m)
-		}
+		t.Errorf("error %v", err)
 	}
 
-	// grouped memory maps
-	mmaps, err = ret.MemoryMaps(true)
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("memory map get error %v", err)
+	tests := []struct {
+		name string
+		proc *Process
+	}{
+		{
+			name: "NewProcess",
+			proc: ret,
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: retWithFields,
+		},
 	}
-	if len(*mmaps) != 1 {
-		t.Errorf("grouped memory maps length (%v) is not equal to 1", len(*mmaps))
-	}
-	if (*mmaps)[0] == empty {
-		t.Errorf("memory map is empty")
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// ungrouped memory maps
+			mmaps, err := tt.proc.MemoryMaps(false)
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("memory map get error %v", err)
+			}
+			empty := MemoryMapsStat{}
+			for _, m := range *mmaps {
+				if m == empty {
+					t.Errorf("memory map get error %v", m)
+				}
+			}
+
+			// grouped memory maps
+			mmaps, err = tt.proc.MemoryMaps(true)
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("memory map get error %v", err)
+			}
+			if len(*mmaps) != 1 {
+				t.Errorf("grouped memory maps length (%v) is not equal to 1", len(*mmaps))
+			}
+			if (*mmaps)[0] == empty {
+				t.Errorf("memory map is empty")
+			}
+		})
 	}
 }
 func Test_Process_MemoryInfo(t *testing.T) {
@@ -171,16 +226,33 @@ func Test_Process_CmdLineSlice(t *testing.T) {
 }
 
 func Test_Process_Ppid(t *testing.T) {
-	p := testGetProcess()
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(Ppid),
+		},
+	}
 
-	v, err := p.Ppid()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("getting ppid error %v", err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, err := tt.proc.Ppid()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("getting ppid error %v", err)
+			}
+			if v == 0 {
+				t.Errorf("return value is 0 %v", v)
+			}
+		})
 	}
-	if v == 0 {
-		t.Errorf("return value is 0 %v", v)
-	}
+
 }
 
 func Test_Process_Status(t *testing.T) {
@@ -639,5 +711,36 @@ func Test_AllProcesses_cmdLine(t *testing.T) {
 
 			t.Logf("Process #%v: Name: %v / CmdLine: %v\n", proc.Pid, exeName, cmdLine)
 		}
+	}
+}
+
+// Benchmark_NewProcess test that NewProcessWithFields provide performance gain.
+func Benchmark_NewProcessWithFields(b *testing.B) {
+	checkPid := int32(os.Getpid())
+
+	for _, name := range []string{"NewProcess", "WithFields"} {
+		b.Run(name, func(b *testing.B) {
+			for n := 0; n < b.N; n++ {
+				var (
+					proc *Process
+					err  error
+				)
+
+				if name == "NewProcess" {
+					proc, err = NewProcess(checkPid)
+				} else {
+					proc, err = NewProcessWithFields(checkPid, CreateTime)
+				}
+
+				if err != nil {
+					b.Error(err)
+					return
+				}
+
+				proc.CreateTime()
+				proc.Ppid()
+				proc.Times()
+			}
+		})
 	}
 }

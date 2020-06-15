@@ -64,6 +64,17 @@ func (m MemoryMapsStat) String() string {
 	return string(s)
 }
 
+type procStat struct {
+	terminal   uint64
+	ppid       int32
+	cpuTimes   *cpu.TimesStat
+	createTime int64
+	rtpriority uint32
+	nice       int32
+	faults     *PageFaultsStat
+	err        error
+}
+
 // Ppid returns Parent Process ID of the process.
 func (p *Process) Ppid() (int32, error) {
 	return p.PpidWithContext(context.Background())
@@ -551,6 +562,33 @@ func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 }
 
 func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]MemoryMapsStat, error) {
+	cacheKey := "MemoryMapsWithContext"
+	if grouped {
+		cacheKey = "MemoryMapsWithContextGrouped"
+	}
+
+	v, ok := p.cache[cacheKey].(valueOrError)
+
+	if !ok && p.cache != nil && p.prefetchCompleted {
+		return nil, ErrorFieldNotRequested
+	}
+
+	if !ok {
+		tmp, err := p.memoryMapsWithContextNoCache(ctx, grouped)
+		v = valueOrError{
+			value: tmp,
+			err:   err,
+		}
+	}
+
+	if p.cache != nil {
+		p.cache[cacheKey] = v
+	}
+
+	return v.value.(*[]MemoryMapsStat), v.err
+}
+
+func (p *Process) memoryMapsWithContextNoCache(ctx context.Context, grouped bool) (*[]MemoryMapsStat, error) {
 	pid := p.Pid
 	var ret []MemoryMapsStat
 	if grouped {
@@ -610,6 +648,8 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 
 	blocks := make([]string, 16)
 	for _, line := range lines {
+		// This is a quick fix for #879
+		line = strings.ReplaceAll(line, "\t", " ")
 		field := strings.Split(line, " ")
 		if strings.HasSuffix(field[0], ":") == false {
 			// new block section
@@ -1118,6 +1158,36 @@ func (p *Process) fillFromStatusWithContext(ctx context.Context) error {
 }
 
 func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (uint64, int32, *cpu.TimesStat, int64, uint32, int32, *PageFaultsStat, error) {
+	cacheKey := "fillFromTIDStatWithContext" + strconv.FormatInt(int64(tid), 10)
+	v, ok := p.cache[cacheKey].(procStat)
+
+	if !ok && p.cache != nil && p.prefetchCompleted {
+		return 0, 0, nil, 0, 0, 0, nil, ErrorFieldNotRequested
+	}
+
+	if !ok {
+		terminal, ppid, cpuTimes, createTime, rtpriority, nice, faults, err := p.fillFromTIDStatWithContextNoCache(ctx, tid)
+		v = procStat{
+			terminal:   terminal,
+			ppid:       ppid,
+			cpuTimes:   cpuTimes,
+			createTime: createTime,
+			rtpriority: rtpriority,
+			nice:       nice,
+			faults:     faults,
+			err:        err,
+		}
+
+	}
+
+	if p.cache != nil {
+		p.cache[cacheKey] = v
+	}
+
+	return v.terminal, v.ppid, v.cpuTimes, v.createTime, v.rtpriority, v.nice, v.faults, v.err
+}
+
+func (p *Process) fillFromTIDStatWithContextNoCache(ctx context.Context, tid int32) (uint64, int32, *cpu.TimesStat, int64, uint32, int32, *PageFaultsStat, error) {
 	pid := p.Pid
 	var statPath string
 
