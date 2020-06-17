@@ -186,42 +186,90 @@ func Test_Process_memory_maps(t *testing.T) {
 	}
 }
 func Test_Process_MemoryInfo(t *testing.T) {
-	p := testGetProcess()
-
-	v, err := p.MemoryInfo()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("getting memory info error %v", err)
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(MemoryInfo),
+		},
 	}
-	empty := MemoryInfoStat{}
-	if v == nil || *v == empty {
-		t.Errorf("could not get memory info %v", v)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, err := tt.proc.MemoryInfo()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("getting memory info error %v", err)
+			}
+			empty := MemoryInfoStat{}
+			if v == nil || *v == empty {
+				t.Errorf("could not get memory info %v", v)
+			}
+		})
 	}
 }
 
 func Test_Process_CmdLine(t *testing.T) {
-	p := testGetProcess()
-
-	v, err := p.Cmdline()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("getting cmdline error %v", err)
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(Cmdline),
+		},
 	}
-	if !strings.Contains(v, "process.test") {
-		t.Errorf("invalid cmd line %v", v)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, err := tt.proc.Cmdline()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("getting cmdline error %v", err)
+			}
+			if !strings.Contains(v, "process.test") {
+				t.Errorf("invalid cmd line %v", v)
+			}
+		})
 	}
 }
 
 func Test_Process_CmdLineSlice(t *testing.T) {
-	p := testGetProcess()
-
-	v, err := p.CmdlineSlice()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Fatalf("getting cmdline slice error %v", err)
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(CmdlineSlice),
+		},
 	}
-	if !reflect.DeepEqual(v, os.Args) {
-		t.Errorf("returned cmdline slice not as expected:\nexp: %v\ngot: %v", os.Args, v)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, err := tt.proc.CmdlineSlice()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Fatalf("getting cmdline slice error %v", err)
+			}
+			if !reflect.DeepEqual(v, os.Args) {
+				t.Errorf("returned cmdline slice not as expected:\nexp: %v\ngot: %v", os.Args, v)
+			}
+		})
 	}
 }
 
@@ -256,111 +304,239 @@ func Test_Process_Ppid(t *testing.T) {
 }
 
 func Test_Process_Status(t *testing.T) {
-	p := testGetProcess()
-
-	v, err := p.Status()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("getting status error %v", err)
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(Status),
+		},
 	}
-	if v != "R" && v != "S" {
-		t.Errorf("could not get state %v", v)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, err := tt.proc.Status()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("getting status error %v", err)
+			}
+			if v != "R" && v != "S" {
+				t.Errorf("could not get state %v", v)
+			}
+		})
 	}
 }
 
 func Test_Process_Terminal(t *testing.T) {
-	p := testGetProcess()
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(Terminal),
+		},
+	}
 
-	_, err := p.Terminal()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("getting terminal error %v", err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := tt.proc.Terminal()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("getting terminal error %v", err)
+			}
+		})
 	}
 }
 
 func Test_Process_IOCounters(t *testing.T) {
-	p := testGetProcess()
-
-	v, err := p.IOCounters()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("getting iocounter error %v", err)
-		return
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(IOCounters),
+		},
 	}
-	empty := &IOCountersStat{}
-	if v == empty {
-		t.Errorf("error %v", v)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, err := tt.proc.IOCounters()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("getting iocounter error %v", err)
+				return
+			}
+			empty := &IOCountersStat{}
+			if v == empty {
+				t.Errorf("error %v", v)
+			}
+		})
 	}
 }
 
 func Test_Process_NumCtx(t *testing.T) {
-	p := testGetProcess()
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(NumCtxSwitches),
+		},
+	}
 
-	_, err := p.NumCtxSwitches()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("getting numctx error %v", err)
-		return
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := tt.proc.NumCtxSwitches()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("getting numctx error %v", err)
+				return
+			}
+		})
 	}
 }
 
 func Test_Process_Nice(t *testing.T) {
-	p := testGetProcess()
-
-	n, err := p.Nice()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("getting nice error %v", err)
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(Nice),
+		},
 	}
-	if n != 0 && n != 20 && n != 8 {
-		t.Errorf("invalid nice: %d", n)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			n, err := tt.proc.Nice()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("getting nice error %v", err)
+			}
+			if n != 0 && n != 20 && n != 8 {
+				t.Errorf("invalid nice: %d", n)
+			}
+		})
 	}
 }
 func Test_Process_NumThread(t *testing.T) {
-	p := testGetProcess()
-
-	n, err := p.NumThreads()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("getting NumThread error %v", err)
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(NumThreads),
+		},
 	}
-	if n < 0 {
-		t.Errorf("invalid NumThread: %d", n)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			n, err := tt.proc.NumThreads()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("getting NumThread error %v", err)
+			}
+			if n < 0 {
+				t.Errorf("invalid NumThread: %d", n)
+			}
+		})
 	}
 }
 
 func Test_Process_Threads(t *testing.T) {
-	p := testGetProcess()
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(NumThreads, Threads),
+		},
+	}
 
-	n, err := p.NumThreads()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("getting NumThread error %v", err)
-	}
-	if n < 0 {
-		t.Errorf("invalid NumThread: %d", n)
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			n, err := tt.proc.NumThreads()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("getting NumThread error %v", err)
+			}
+			if n < 0 {
+				t.Errorf("invalid NumThread: %d", n)
+			}
 
-	ts, err := p.Threads()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("getting Threads error %v", err)
-	}
-	if len(ts) != int(n) {
-		t.Errorf("unexpected number of threads: %v vs %v", len(ts), n)
+			ts, err := tt.proc.Threads()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("getting Threads error %v", err)
+			}
+			if len(ts) != int(n) {
+				t.Errorf("unexpected number of threads: %v vs %v", len(ts), n)
+			}
+		})
 	}
 }
 
 func Test_Process_Name(t *testing.T) {
-	p := testGetProcess()
-
-	n, err := p.Name()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("getting name error %v", err)
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(Name),
+		},
 	}
-	if !strings.Contains(n, "process.test") {
-		t.Errorf("invalid Exe %s", n)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			n, err := tt.proc.Name()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("getting name error %v", err)
+			}
+			if !strings.Contains(n, "process.test") {
+				t.Errorf("invalid Exe %s", n)
+			}
+		})
 	}
 }
 func Test_Process_Long_Name(t *testing.T) {
@@ -393,31 +569,71 @@ func Test_Process_Long_Name(t *testing.T) {
 
 	assert.Nil(t, cmd.Start())
 	time.Sleep(100 * time.Millisecond)
+
 	p, err := NewProcess(int32(cmd.Process.Pid))
 	skipIfNotImplementedErr(t, err)
 	assert.Nil(t, err)
 
-	n, err := p.Name()
+	p2, err := NewProcessWithFields(int32(cmd.Process.Pid), Name)
 	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Fatalf("getting name error %v", err)
+	assert.Nil(t, err)
+
+	tests := []struct {
+		name string
+		proc *Process
+	}{
+		{
+			name: "NewProcess",
+			proc: p,
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: p2,
+		},
 	}
-	basename := filepath.Base(tmpfile.Name() + ".exe")
-	if basename != n {
-		t.Fatalf("%s != %s", basename, n)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			n, err := tt.proc.Name()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Fatalf("getting name error %v", err)
+			}
+			basename := filepath.Base(tmpfile.Name() + ".exe")
+			if basename != n {
+				t.Fatalf("%s != %s", basename, n)
+			}
+		})
 	}
+
 	cmd.Process.Kill()
 }
 func Test_Process_Exe(t *testing.T) {
-	p := testGetProcess()
-
-	n, err := p.Exe()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("getting Exe error %v", err)
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(Exe),
+		},
 	}
-	if !strings.Contains(n, "process.test") {
-		t.Errorf("invalid Exe %s", n)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			n, err := tt.proc.Exe()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("getting Exe error %v", err)
+			}
+			if !strings.Contains(n, "process.test") {
+				t.Errorf("invalid Exe %s", n)
+			}
+		})
 	}
 }
 
@@ -465,23 +681,39 @@ func Test_Process_CreateTime(t *testing.T) {
 		t.Skip("Skip CI")
 	}
 
-	p := testGetProcess()
-
-	c, err := p.CreateTime()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("error %v", err)
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(CreateTime),
+		},
 	}
 
-	if c < 1420000000 {
-		t.Errorf("process created time is wrong.")
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c, err := tt.proc.CreateTime()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("error %v", err)
+			}
 
-	gotElapsed := time.Since(time.Unix(int64(c/1000), 0))
-	maxElapsed := time.Duration(5 * time.Second)
+			if c < 1420000000 {
+				t.Errorf("process created time is wrong.")
+			}
 
-	if gotElapsed >= maxElapsed {
-		t.Errorf("this process has not been running for %v", gotElapsed)
+			gotElapsed := time.Since(time.Unix(int64(c/1000), 0))
+			maxElapsed := time.Duration(5 * time.Second)
+
+			if gotElapsed >= maxElapsed {
+				t.Errorf("this process has not been running for %v", gotElapsed)
+			}
+		})
 	}
 }
 
@@ -502,7 +734,6 @@ func Test_Parent(t *testing.T) {
 }
 
 func Test_Connections(t *testing.T) {
-	p := testGetProcess()
 	ch0 := make(chan string)
 	ch1 := make(chan string)
 	go func() { // TCP listening goroutine
@@ -536,22 +767,41 @@ func Test_Connections(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to parse tcpServerAddr port: %v", err)
 	}
-	c, err := p.Connections()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("error %v", err)
+
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(Connections),
+		},
 	}
-	if len(c) == 0 {
-		t.Errorf("no connections found")
-	}
-	found := 0
-	for _, connection := range c {
-		if connection.Status == "ESTABLISHED" && (connection.Laddr.IP == tcpServerAddrIP && connection.Laddr.Port == uint32(tcpServerAddrPort)) || (connection.Raddr.IP == tcpServerAddrIP && connection.Raddr.Port == uint32(tcpServerAddrPort)) {
-			found++
-		}
-	}
-	if found != 2 { // two established connections, one for the server, the other for the client
-		t.Errorf(fmt.Sprintf("wrong connections: %+v", c))
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c, err := tt.proc.Connections()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("error %v", err)
+			}
+			if len(c) == 0 {
+				t.Errorf("no connections found")
+			}
+			found := 0
+			for _, connection := range c {
+				if connection.Status == "ESTABLISHED" && (connection.Laddr.IP == tcpServerAddrIP && connection.Laddr.Port == uint32(tcpServerAddrPort)) || (connection.Raddr.IP == tcpServerAddrIP && connection.Raddr.Port == uint32(tcpServerAddrPort)) {
+					found++
+				}
+			}
+			if found != 2 { // two established connections, one for the server, the other for the client
+				t.Errorf(fmt.Sprintf("wrong connections: %+v", c))
+			}
+		})
 	}
 }
 
@@ -588,16 +838,32 @@ func Test_Children(t *testing.T) {
 }
 
 func Test_Username(t *testing.T) {
-	myPid := os.Getpid()
 	currentUser, _ := user.Current()
 	myUsername := currentUser.Username
 
-	process, _ := NewProcess(int32(myPid))
-	pidUsername, err := process.Username()
-	skipIfNotImplementedErr(t, err)
-	assert.Equal(t, myUsername, pidUsername)
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(Username),
+		},
+	}
 
-	t.Log(pidUsername)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pidUsername, err := tt.proc.Username()
+			skipIfNotImplementedErr(t, err)
+			assert.Equal(t, myUsername, pidUsername)
+			t.Log(pidUsername)
+		})
+	}
+
 }
 
 func Test_CPUTimes(t *testing.T) {
@@ -633,18 +899,31 @@ func Test_CPUTimes(t *testing.T) {
 }
 
 func Test_OpenFiles(t *testing.T) {
-	pid := os.Getpid()
-	p, err := NewProcess(int32(pid))
-	skipIfNotImplementedErr(t, err)
-	assert.Nil(t, err)
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(OpenFiles),
+		},
+	}
 
-	v, err := p.OpenFiles()
-	skipIfNotImplementedErr(t, err)
-	assert.Nil(t, err)
-	assert.NotEmpty(t, v) // test always open files.
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, err := tt.proc.OpenFiles()
+			skipIfNotImplementedErr(t, err)
+			assert.Nil(t, err)
+			assert.NotEmpty(t, v) // test always open files.
 
-	for _, vv := range v {
-		assert.NotEqual(t, "", vv.Path)
+			for _, vv := range v {
+				assert.NotEqual(t, "", vv.Path)
+			}
+		})
 	}
 }
 
