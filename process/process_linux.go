@@ -17,6 +17,7 @@ import (
 
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/mem"
 	"github.com/shirou/gopsutil/net"
 	"golang.org/x/sys/unix"
 )
@@ -1776,6 +1777,35 @@ func ProcessesWithContext(ctx context.Context) ([]*Process, error) {
 
 	for _, pid := range pids {
 		p, err := NewProcess(pid)
+		if err != nil {
+			continue
+		}
+		out = append(out, p)
+	}
+
+	return out, nil
+}
+
+func ProcessesWithFields(ctx context.Context, fields ...Field) ([]*Process, error) {
+	out := []*Process{}
+
+	pids, err := PidsWithContext(ctx)
+	if err != nil {
+		return out, err
+	}
+
+	machineMemory := uint64(0)
+	for _, f := range fields {
+		if f == MemoryPercent {
+			tmp, err := mem.VirtualMemory()
+			if err == nil {
+				machineMemory = tmp.Total
+			}
+		}
+	}
+
+	for _, pid := range pids {
+		p, err := newProcessWithFields(pid, machineMemory, fields...)
 		if err != nil {
 			continue
 		}

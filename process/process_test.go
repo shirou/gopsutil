@@ -1,6 +1,7 @@
 package process
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -990,6 +991,60 @@ func Test_AllProcesses_cmdLine(t *testing.T) {
 
 			t.Logf("Process #%v: Name: %v / CmdLine: %v\n", proc.Pid, exeName, cmdLine)
 		}
+	}
+}
+
+func Test_Processes(t *testing.T) {
+	myPID := os.Getpid()
+
+	procs, err := Processes()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	procsFields, err := ProcessesWithFields(context.Background(), CmdlineSlice)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name  string
+		procs []*Process
+	}{
+		{
+			name:  "Processes",
+			procs: procs,
+		},
+		{
+			name:  "ProcessesWithFields",
+			procs: procsFields,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			found := false
+
+			for _, proc := range tt.procs {
+				if proc.Pid == int32(myPID) {
+					found = true
+					v, err := proc.CmdlineSlice()
+					skipIfNotImplementedErr(t, err)
+					if err != nil {
+						t.Fatalf("getting cmdline slice error %v", err)
+					}
+					if !reflect.DeepEqual(v, os.Args) {
+						t.Errorf("returned cmdline slice not as expected:\nexp: %v\ngot: %v", os.Args, v)
+					}
+
+					break
+				}
+			}
+
+			if !found {
+				t.Error("not found myself in Processes list")
+			}
+		})
 	}
 }
 

@@ -341,9 +341,14 @@ func NewProcess(pid int32) (*Process, error) {
 // This method may be faster if you retrive multiple fields, because unlike NewProcess where
 // files are parsed for each method call, here files are parsed once at creation.
 func NewProcessWithFields(pid int32, fields ...Field) (*Process, error) {
+	return newProcessWithFields(pid, 0, fields...)
+}
+
+func newProcessWithFields(pid int32, machineMemory uint64, fields ...Field) (*Process, error) {
 	p := &Process{
-		Pid:   pid,
-		cache: make(map[string]interface{}),
+		Pid:           pid,
+		cache:         make(map[string]interface{}),
+		machineMemory: machineMemory,
 	}
 
 	exists, err := PidExists(pid)
