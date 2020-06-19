@@ -136,7 +136,7 @@ func Test_Process_memory_maps(t *testing.T) {
 		t.Errorf("error %v", err)
 	}
 
-	retWithFields, err := NewProcessWithFields(int32(checkPid), MemoryMaps, MemoryMapsGrouped)
+	retWithFields, err := NewProcessWithFields(int32(checkPid), FieldMemoryMaps, FieldMemoryMapsGrouped)
 	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
@@ -197,7 +197,7 @@ func Test_Process_MemoryInfo(t *testing.T) {
 		},
 		{
 			name: "NewProcessWithFields",
-			proc: testGetProcessWithFields(MemoryInfo),
+			proc: testGetProcessWithFields(FieldMemoryInfo),
 		},
 	}
 
@@ -227,7 +227,7 @@ func Test_Process_CmdLine(t *testing.T) {
 		},
 		{
 			name: "NewProcessWithFields",
-			proc: testGetProcessWithFields(Cmdline),
+			proc: testGetProcessWithFields(FieldCmdline),
 		},
 	}
 
@@ -256,7 +256,7 @@ func Test_Process_CmdLineSlice(t *testing.T) {
 		},
 		{
 			name: "NewProcessWithFields",
-			proc: testGetProcessWithFields(CmdlineSlice),
+			proc: testGetProcessWithFields(FieldCmdlineSlice),
 		},
 	}
 
@@ -285,7 +285,7 @@ func Test_Process_Ppid(t *testing.T) {
 		},
 		{
 			name: "NewProcessWithFields",
-			proc: testGetProcessWithFields(Ppid),
+			proc: testGetProcessWithFields(FieldPpid),
 		},
 	}
 
@@ -315,7 +315,7 @@ func Test_Process_Status(t *testing.T) {
 		},
 		{
 			name: "NewProcessWithFields",
-			proc: testGetProcessWithFields(Status),
+			proc: testGetProcessWithFields(FieldStatus),
 		},
 	}
 
@@ -344,7 +344,7 @@ func Test_Process_Terminal(t *testing.T) {
 		},
 		{
 			name: "NewProcessWithFields",
-			proc: testGetProcessWithFields(Terminal),
+			proc: testGetProcessWithFields(FieldTerminal),
 		},
 	}
 
@@ -370,7 +370,7 @@ func Test_Process_IOCounters(t *testing.T) {
 		},
 		{
 			name: "NewProcessWithFields",
-			proc: testGetProcessWithFields(IOCounters),
+			proc: testGetProcessWithFields(FieldIOCounters),
 		},
 	}
 
@@ -401,7 +401,7 @@ func Test_Process_NumCtx(t *testing.T) {
 		},
 		{
 			name: "NewProcessWithFields",
-			proc: testGetProcessWithFields(NumCtxSwitches),
+			proc: testGetProcessWithFields(FieldNumCtxSwitches),
 		},
 	}
 
@@ -428,7 +428,7 @@ func Test_Process_Nice(t *testing.T) {
 		},
 		{
 			name: "NewProcessWithFields",
-			proc: testGetProcessWithFields(Nice),
+			proc: testGetProcessWithFields(FieldNice),
 		},
 	}
 
@@ -456,7 +456,7 @@ func Test_Process_NumThread(t *testing.T) {
 		},
 		{
 			name: "NewProcessWithFields",
-			proc: testGetProcessWithFields(NumThreads),
+			proc: testGetProcessWithFields(FieldNumThreads),
 		},
 	}
 
@@ -485,7 +485,7 @@ func Test_Process_Threads(t *testing.T) {
 		},
 		{
 			name: "NewProcessWithFields",
-			proc: testGetProcessWithFields(NumThreads, Threads),
+			proc: testGetProcessWithFields(FieldNumThreads, FieldThreads),
 		},
 	}
 
@@ -523,7 +523,7 @@ func Test_Process_Name(t *testing.T) {
 		},
 		{
 			name: "NewProcessWithFields",
-			proc: testGetProcessWithFields(Name),
+			proc: testGetProcessWithFields(FieldName),
 		},
 	}
 
@@ -575,7 +575,7 @@ func Test_Process_Long_Name(t *testing.T) {
 	skipIfNotImplementedErr(t, err)
 	assert.Nil(t, err)
 
-	p2, err := NewProcessWithFields(int32(cmd.Process.Pid), Name)
+	p2, err := NewProcessWithFields(int32(cmd.Process.Pid), FieldName)
 	skipIfNotImplementedErr(t, err)
 	assert.Nil(t, err)
 
@@ -620,7 +620,7 @@ func Test_Process_Exe(t *testing.T) {
 		},
 		{
 			name: "NewProcessWithFields",
-			proc: testGetProcessWithFields(Exe),
+			proc: testGetProcessWithFields(FieldExe),
 		},
 	}
 
@@ -692,7 +692,7 @@ func Test_Process_CreateTime(t *testing.T) {
 		},
 		{
 			name: "NewProcessWithFields",
-			proc: testGetProcessWithFields(CreateTime),
+			proc: testGetProcessWithFields(FieldCreateTime),
 		},
 	}
 
@@ -779,7 +779,7 @@ func Test_Connections(t *testing.T) {
 		},
 		{
 			name: "NewProcessWithFields",
-			proc: testGetProcessWithFields(Connections),
+			proc: testGetProcessWithFields(FieldConnections),
 		},
 	}
 
@@ -852,7 +852,7 @@ func Test_Username(t *testing.T) {
 		},
 		{
 			name: "NewProcessWithFields",
-			proc: testGetProcessWithFields(Username),
+			proc: testGetProcessWithFields(FieldUsername),
 		},
 	}
 
@@ -910,7 +910,7 @@ func Test_OpenFiles(t *testing.T) {
 		},
 		{
 			name: "NewProcessWithFields",
-			proc: testGetProcessWithFields(OpenFiles),
+			proc: testGetProcessWithFields(FieldOpenFiles),
 		},
 	}
 
@@ -1002,7 +1002,7 @@ func Test_Processes(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	procsFields, err := ProcessesWithFields(context.Background(), CmdlineSlice)
+	procsFields, err := ProcessesWithFields(context.Background(), FieldCmdlineSlice)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1056,7 +1056,7 @@ func Test_AllFields(t *testing.T) {
 		errDynamic, errField, errAllFields, errNoFields error
 	)
 
-	AllFields := []Field{RlimitUsage}
+	AllFields := []Field{FieldRlimitUsage}
 
 	for _, f := range AllFields {
 		procDynamic := testGetProcess()
@@ -1065,201 +1065,201 @@ func Test_AllFields(t *testing.T) {
 		stableValue := true
 
 		switch f {
-		case Background:
+		case FieldBackground:
 			resultDynamic, errDynamic = procDynamic.Background()
 			resultField, errField = procField.Background()
 			resultAllFields, errAllFields = procAllFields.Background()
 			_, errNoFields = procNoField.Background()
-		case Cmdline:
+		case FieldCmdline:
 			resultDynamic, errDynamic = procDynamic.Cmdline()
 			resultField, errField = procField.Cmdline()
 			resultAllFields, errAllFields = procAllFields.Cmdline()
 			_, errNoFields = procNoField.Cmdline()
-		case CmdlineSlice:
+		case FieldCmdlineSlice:
 			resultDynamic, errDynamic = procDynamic.CmdlineSlice()
 			resultField, errField = procField.CmdlineSlice()
 			resultAllFields, errAllFields = procAllFields.CmdlineSlice()
 			_, errNoFields = procNoField.CmdlineSlice()
-		case Connections:
+		case FieldConnections:
 			resultDynamic, errDynamic = procDynamic.Connections()
 			resultField, errField = procField.Connections()
 			resultAllFields, errAllFields = procAllFields.Connections()
 			_, errNoFields = procNoField.Connections()
-		case CPUPercent:
+		case FieldCPUPercent:
 			resultDynamic, errDynamic = procDynamic.CPUPercent()
 			resultField, errField = procField.CPUPercent()
 			resultAllFields, errAllFields = procAllFields.CPUPercent()
 			_, errNoFields = procNoField.CPUPercent()
 			stableValue = false
-		case CreateTime:
+		case FieldCreateTime:
 			resultDynamic, errDynamic = procDynamic.CreateTime()
 			resultField, errField = procField.CreateTime()
 			resultAllFields, errAllFields = procAllFields.CreateTime()
 			_, errNoFields = procNoField.CreateTime()
-		case Cwd:
+		case FieldCwd:
 			resultDynamic, errDynamic = procDynamic.Cwd()
 			resultField, errField = procField.Cwd()
 			resultAllFields, errAllFields = procAllFields.Cwd()
 			_, errNoFields = procNoField.Cwd()
-		case Exe:
+		case FieldExe:
 			resultDynamic, errDynamic = procDynamic.Exe()
 			resultField, errField = procField.Exe()
 			resultAllFields, errAllFields = procAllFields.Exe()
 			_, errNoFields = procNoField.Exe()
-		case Foreground:
+		case FieldForeground:
 			resultDynamic, errDynamic = procDynamic.Foreground()
 			resultField, errField = procField.Foreground()
 			resultAllFields, errAllFields = procAllFields.Foreground()
 			_, errNoFields = procNoField.Foreground()
-		case Gids:
+		case FieldGids:
 			resultDynamic, errDynamic = procDynamic.Gids()
 			resultField, errField = procField.Gids()
 			resultAllFields, errAllFields = procAllFields.Gids()
 			_, errNoFields = procNoField.Gids()
-		case IOCounters:
+		case FieldIOCounters:
 			resultDynamic, errDynamic = procDynamic.IOCounters()
 			resultField, errField = procField.IOCounters()
 			resultAllFields, errAllFields = procAllFields.IOCounters()
 			_, errNoFields = procNoField.IOCounters()
 			stableValue = false
-		case IOnice:
+		case FieldIOnice:
 			resultDynamic, errDynamic = procDynamic.IOnice()
 			resultField, errField = procField.IOnice()
 			resultAllFields, errAllFields = procAllFields.IOnice()
 			_, errNoFields = procNoField.IOnice()
-		case IsRunning:
+		case FieldIsRunning:
 			resultDynamic, errDynamic = procDynamic.IsRunning()
 			resultField, errField = procField.IsRunning()
 			resultAllFields, errAllFields = procAllFields.IsRunning()
 			_, errNoFields = procNoField.IsRunning()
-		case MemoryInfo:
+		case FieldMemoryInfo:
 			resultDynamic, errDynamic = procDynamic.MemoryInfo()
 			resultField, errField = procField.MemoryInfo()
 			resultAllFields, errAllFields = procAllFields.MemoryInfo()
 			_, errNoFields = procNoField.MemoryInfo()
 			stableValue = false
-		case MemoryInfoEx:
+		case FieldMemoryInfoEx:
 			resultDynamic, errDynamic = procDynamic.MemoryInfoEx()
 			resultField, errField = procField.MemoryInfoEx()
 			resultAllFields, errAllFields = procAllFields.MemoryInfoEx()
 			_, errNoFields = procNoField.MemoryInfoEx()
 			stableValue = false
-		case MemoryMaps:
+		case FieldMemoryMaps:
 			resultDynamic, errDynamic = procDynamic.MemoryMaps(false)
 			resultField, errField = procField.MemoryMaps(false)
 			resultAllFields, errAllFields = procAllFields.MemoryMaps(false)
 			_, errNoFields = procNoField.MemoryMaps(false)
 			stableValue = false
-		case MemoryMapsGrouped:
+		case FieldMemoryMapsGrouped:
 			resultDynamic, errDynamic = procDynamic.MemoryMaps(true)
 			resultField, errField = procField.MemoryMaps(true)
 			resultAllFields, errAllFields = procAllFields.MemoryMaps(true)
 			_, errNoFields = procNoField.MemoryMaps(true)
 			stableValue = false
-		case MemoryPercent:
+		case FieldMemoryPercent:
 			resultDynamic, errDynamic = procDynamic.MemoryPercent()
 			resultField, errField = procField.MemoryPercent()
 			resultAllFields, errAllFields = procAllFields.MemoryPercent()
 			_, errNoFields = procNoField.MemoryPercent()
 			stableValue = false
-		case Name:
+		case FieldName:
 			resultDynamic, errDynamic = procDynamic.Name()
 			resultField, errField = procField.Name()
 			resultAllFields, errAllFields = procAllFields.Name()
 			_, errNoFields = procNoField.Name()
-		case NetIOCounters:
+		case FieldNetIOCounters:
 			resultDynamic, errDynamic = procDynamic.NetIOCounters(false)
 			resultField, errField = procField.NetIOCounters(false)
 			resultAllFields, errAllFields = procAllFields.NetIOCounters(false)
 			_, errNoFields = procNoField.NetIOCounters(false)
 			stableValue = false
-		case NetIOCountersPerNic:
+		case FieldNetIOCountersPerNic:
 			resultDynamic, errDynamic = procDynamic.NetIOCounters(true)
 			resultField, errField = procField.NetIOCounters(true)
 			resultAllFields, errAllFields = procAllFields.NetIOCounters(true)
 			_, errNoFields = procNoField.NetIOCounters(true)
 			stableValue = false
-		case Nice:
+		case FieldNice:
 			resultDynamic, errDynamic = procDynamic.Nice()
 			resultField, errField = procField.Nice()
 			resultAllFields, errAllFields = procAllFields.Nice()
 			_, errNoFields = procNoField.Nice()
-		case NumCtxSwitches:
+		case FieldNumCtxSwitches:
 			resultDynamic, errDynamic = procDynamic.NumCtxSwitches()
 			resultField, errField = procField.NumCtxSwitches()
 			resultAllFields, errAllFields = procAllFields.NumCtxSwitches()
 			_, errNoFields = procNoField.NumCtxSwitches()
 			stableValue = false
-		case NumFDs:
+		case FieldNumFDs:
 			resultDynamic, errDynamic = procDynamic.NumFDs()
 			resultField, errField = procField.NumFDs()
 			resultAllFields, errAllFields = procAllFields.NumFDs()
 			_, errNoFields = procNoField.NumFDs()
-		case NumThreads:
+		case FieldNumThreads:
 			resultDynamic, errDynamic = procDynamic.NumThreads()
 			resultField, errField = procField.NumThreads()
 			resultAllFields, errAllFields = procAllFields.NumThreads()
 			_, errNoFields = procNoField.NumThreads()
-		case OpenFiles:
+		case FieldOpenFiles:
 			resultDynamic, errDynamic = procDynamic.OpenFiles()
 			resultField, errField = procField.OpenFiles()
 			resultAllFields, errAllFields = procAllFields.OpenFiles()
 			_, errNoFields = procNoField.OpenFiles()
-		case PageFaults:
+		case FieldPageFaults:
 			resultDynamic, errDynamic = procDynamic.PageFaults()
 			resultField, errField = procField.PageFaults()
 			resultAllFields, errAllFields = procAllFields.PageFaults()
 			_, errNoFields = procNoField.PageFaults()
 			stableValue = false
-		case Ppid:
+		case FieldPpid:
 			resultDynamic, errDynamic = procDynamic.Ppid()
 			resultField, errField = procField.Ppid()
 			resultAllFields, errAllFields = procAllFields.Ppid()
 			_, errNoFields = procNoField.Ppid()
-		case Rlimit:
+		case FieldRlimit:
 			resultDynamic, errDynamic = procDynamic.Rlimit()
 			resultField, errField = procField.Rlimit()
 			resultAllFields, errAllFields = procAllFields.Rlimit()
 			_, errNoFields = procNoField.Rlimit()
-		case RlimitUsage:
+		case FieldRlimitUsage:
 			resultDynamic, errDynamic = procDynamic.RlimitUsage(true)
 			resultField, errField = procField.RlimitUsage(true)
 			resultAllFields, errAllFields = procAllFields.RlimitUsage(true)
 			_, errNoFields = procNoField.RlimitUsage(true)
 			stableValue = false
-		case Status:
+		case FieldStatus:
 			resultDynamic, errDynamic = procDynamic.Status()
 			resultField, errField = procField.Status()
 			resultAllFields, errAllFields = procAllFields.Status()
 			_, errNoFields = procNoField.Status()
-		case Terminal:
+		case FieldTerminal:
 			resultDynamic, errDynamic = procDynamic.Terminal()
 			resultField, errField = procField.Terminal()
 			resultAllFields, errAllFields = procAllFields.Terminal()
 			_, errNoFields = procNoField.Terminal()
-		case Tgid:
+		case FieldTgid:
 			resultDynamic, errDynamic = procDynamic.Tgid()
 			resultField, errField = procField.Tgid()
 			resultAllFields, errAllFields = procAllFields.Tgid()
 			_, errNoFields = procNoField.Tgid()
-		case Threads:
+		case FieldThreads:
 			resultDynamic, errDynamic = procDynamic.Threads()
 			resultField, errField = procField.Threads()
 			resultAllFields, errAllFields = procAllFields.Threads()
 			_, errNoFields = procNoField.Threads()
 			stableValue = false
-		case Times:
+		case FieldTimes:
 			resultDynamic, errDynamic = procDynamic.Times()
 			resultField, errField = procField.Times()
 			resultAllFields, errAllFields = procAllFields.Times()
 			_, errNoFields = procNoField.Times()
 			stableValue = false
-		case Uids:
+		case FieldUids:
 			resultDynamic, errDynamic = procDynamic.Uids()
 			resultField, errField = procField.Uids()
 			resultAllFields, errAllFields = procAllFields.Uids()
 			_, errNoFields = procNoField.Uids()
-		case Username:
+		case FieldUsername:
 			resultDynamic, errDynamic = procDynamic.Username()
 			resultField, errField = procField.Username()
 			resultAllFields, errAllFields = procAllFields.Username()
@@ -1304,7 +1304,7 @@ func Benchmark_NewProcessWithFields(b *testing.B) {
 				if name == "NewProcess" {
 					proc, err = NewProcess(checkPid)
 				} else {
-					proc, err = NewProcessWithFields(checkPid, Username, CPUPercent, MemoryPercent, Status, MemoryInfo, Times, Cmdline)
+					proc, err = NewProcessWithFields(checkPid, FieldUsername, FieldCPUPercent, FieldMemoryPercent, FieldStatus, FieldMemoryInfo, FieldTimes, FieldCmdline)
 				}
 
 				if err != nil {

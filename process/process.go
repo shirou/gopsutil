@@ -24,122 +24,122 @@ var (
 type Field uint
 
 const (
-	// Children -- children is not pre-fetchable
-	Background Field = iota + 1
-	Cmdline
-	CmdlineSlice
-	Connections
-	CPUPercent
-	CreateTime
-	Cwd
-	Exe
-	Foreground
-	Gids
-	IOCounters
-	IOnice
-	IsRunning
-	MemoryInfo
-	MemoryInfoEx
-	MemoryMaps
-	MemoryMapsGrouped
-	MemoryPercent
-	Name
-	NetIOCounters
-	NetIOCountersPerNic
-	Nice
-	NumCtxSwitches
-	NumFDs
-	NumThreads
-	OpenFiles
-	PageFaults
-	// Parent -- parent is not pre-fetchable
-	Ppid
-	Rlimit
-	RlimitUsage
-	Status
-	Terminal
-	Tgid
-	Threads
-	Times
-	Uids
-	Username
+	// FieldChildren -- children is not pre-fetchable
+	FieldBackground Field = iota + 1
+	FieldCmdline
+	FieldCmdlineSlice
+	FieldConnections
+	FieldCPUPercent
+	FieldCreateTime
+	FieldCwd
+	FieldExe
+	FieldForeground
+	FieldGids
+	FieldIOCounters
+	FieldIOnice
+	FieldIsRunning
+	FieldMemoryInfo
+	FieldMemoryInfoEx
+	FieldMemoryMaps
+	FieldMemoryMapsGrouped
+	FieldMemoryPercent
+	FieldName
+	FieldNetIOCounters
+	FieldNetIOCountersPerNic
+	FieldNice
+	FieldNumCtxSwitches
+	FieldNumFDs
+	FieldNumThreads
+	FieldOpenFiles
+	FieldPageFaults
+	// FieldParent -- parent is not pre-fetchable
+	FieldPpid
+	FieldRlimit
+	FieldRlimitUsage
+	FieldStatus
+	FieldTerminal
+	FieldTgid
+	FieldThreads
+	FieldTimes
+	FieldUids
+	FieldUsername
 )
 
 func (f Field) String() string {
 	switch f {
-	case Background:
+	case FieldBackground:
 		return "Background"
-	case Cmdline:
+	case FieldCmdline:
 		return "Cmdline"
-	case CmdlineSlice:
+	case FieldCmdlineSlice:
 		return "CmdlineSlice"
-	case Connections:
+	case FieldConnections:
 		return "Connections"
-	case CPUPercent:
+	case FieldCPUPercent:
 		return "CPUPercent"
-	case CreateTime:
+	case FieldCreateTime:
 		return "CreateTime"
-	case Cwd:
+	case FieldCwd:
 		return "Cwd"
-	case Exe:
+	case FieldExe:
 		return "Exe"
-	case Foreground:
+	case FieldForeground:
 		return "Foreground"
-	case Gids:
+	case FieldGids:
 		return "Gids"
-	case IOCounters:
+	case FieldIOCounters:
 		return "IOCounters"
-	case IOnice:
+	case FieldIOnice:
 		return "IOnice"
-	case IsRunning:
+	case FieldIsRunning:
 		return "IsRunning"
-	case MemoryInfo:
+	case FieldMemoryInfo:
 		return "MemoryInfo"
-	case MemoryInfoEx:
+	case FieldMemoryInfoEx:
 		return "MemoryInfoEx"
-	case MemoryMaps:
+	case FieldMemoryMaps:
 		return "MemoryMaps"
-	case MemoryMapsGrouped:
+	case FieldMemoryMapsGrouped:
 		return "MemoryMapsGrouped"
-	case MemoryPercent:
+	case FieldMemoryPercent:
 		return "MemoryPercent"
-	case Name:
+	case FieldName:
 		return "Name"
-	case NetIOCounters:
+	case FieldNetIOCounters:
 		return "NetIOCounters"
-	case NetIOCountersPerNic:
+	case FieldNetIOCountersPerNic:
 		return "NetIOCountersPerNic"
-	case Nice:
+	case FieldNice:
 		return "Nice"
-	case NumCtxSwitches:
+	case FieldNumCtxSwitches:
 		return "NumCtxSwitches"
-	case NumFDs:
+	case FieldNumFDs:
 		return "NumFDs"
-	case NumThreads:
+	case FieldNumThreads:
 		return "NumThreads"
-	case OpenFiles:
+	case FieldOpenFiles:
 		return "OpenFiles"
-	case PageFaults:
+	case FieldPageFaults:
 		return "PageFaults"
-	case Ppid:
+	case FieldPpid:
 		return "Ppid"
-	case Rlimit:
+	case FieldRlimit:
 		return "Rlimit"
-	case RlimitUsage:
+	case FieldRlimitUsage:
 		return "RlimitUsage"
-	case Status:
+	case FieldStatus:
 		return "Status"
-	case Terminal:
+	case FieldTerminal:
 		return "Terminal"
-	case Tgid:
+	case FieldTgid:
 		return "Tgid"
-	case Threads:
+	case FieldThreads:
 		return "Threads"
-	case Times:
+	case FieldTimes:
 		return "Times"
-	case Uids:
+	case FieldUids:
 		return "Uids"
-	case Username:
+	case FieldUsername:
 		return "Username"
 	default:
 		return "unknown"
@@ -147,43 +147,43 @@ func (f Field) String() string {
 }
 
 var AllFields = []Field{
-	Background,
-	Cmdline,
-	CmdlineSlice,
-	Connections,
-	CPUPercent,
-	CreateTime,
-	Cwd,
-	Exe,
-	Foreground,
-	Gids,
-	IOCounters,
-	IOnice,
-	IsRunning,
-	MemoryInfo,
-	MemoryInfoEx,
-	MemoryMaps,
-	MemoryMapsGrouped,
-	MemoryPercent,
-	Name,
-	NetIOCounters,
-	NetIOCountersPerNic,
-	Nice,
-	NumCtxSwitches,
-	NumFDs,
-	NumThreads,
-	OpenFiles,
-	PageFaults,
-	Ppid,
-	Rlimit,
-	RlimitUsage,
-	Status,
-	Terminal,
-	Tgid,
-	Threads,
-	Times,
-	Uids,
-	Username,
+	FieldBackground,
+	FieldCmdline,
+	FieldCmdlineSlice,
+	FieldConnections,
+	FieldCPUPercent,
+	FieldCreateTime,
+	FieldCwd,
+	FieldExe,
+	FieldForeground,
+	FieldGids,
+	FieldIOCounters,
+	FieldIOnice,
+	FieldIsRunning,
+	FieldMemoryInfo,
+	FieldMemoryInfoEx,
+	FieldMemoryMaps,
+	FieldMemoryMapsGrouped,
+	FieldMemoryPercent,
+	FieldName,
+	FieldNetIOCounters,
+	FieldNetIOCountersPerNic,
+	FieldNice,
+	FieldNumCtxSwitches,
+	FieldNumFDs,
+	FieldNumThreads,
+	FieldOpenFiles,
+	FieldPageFaults,
+	FieldPpid,
+	FieldRlimit,
+	FieldRlimitUsage,
+	FieldStatus,
+	FieldTerminal,
+	FieldTgid,
+	FieldThreads,
+	FieldTimes,
+	FieldUids,
+	FieldUsername,
 }
 
 type Process struct {
@@ -374,7 +374,7 @@ func (p *Process) Background() (bool, error) {
 }
 
 func (p *Process) BackgroundWithContext(ctx context.Context) (bool, error) {
-	if !p.isFieldRequested(Background) {
+	if !p.isFieldRequested(FieldBackground) {
 		return false, ErrorFieldNotRequested
 	}
 
@@ -434,7 +434,7 @@ func (p *Process) IsRunning() (bool, error) {
 }
 
 func (p *Process) IsRunningWithContext(ctx context.Context) (bool, error) {
-	if !p.isFieldRequested(IsRunning) {
+	if !p.isFieldRequested(FieldIsRunning) {
 		return false, ErrorFieldNotRequested
 	}
 
@@ -478,7 +478,7 @@ func (p *Process) CreateTime() (int64, error) {
 }
 
 func (p *Process) CreateTimeWithContext(ctx context.Context) (int64, error) {
-	if !p.isFieldRequested(CreateTime) {
+	if !p.isFieldRequested(FieldCreateTime) {
 		return 0, ErrorFieldNotRequested
 	}
 
@@ -505,7 +505,7 @@ func (p *Process) MemoryPercent() (float32, error) {
 }
 
 func (p *Process) MemoryPercentWithContext(ctx context.Context) (float32, error) {
-	if !p.isFieldRequested(MemoryPercent) {
+	if !p.isFieldRequested(FieldMemoryPercent) {
 		return 0, ErrorFieldNotRequested
 	}
 
@@ -551,7 +551,7 @@ func (p *Process) CPUPercent() (float64, error) {
 }
 
 func (p *Process) CPUPercentWithContext(ctx context.Context) (float64, error) {
-	if !p.isFieldRequested(CPUPercent) {
+	if !p.isFieldRequested(FieldCPUPercent) {
 		return 0, ErrorFieldNotRequested
 	}
 
@@ -604,79 +604,79 @@ func (p *Process) prefetchFields(fields []Field) {
 		requestedFields[f] = nil
 
 		switch f {
-		case Background:
+		case FieldBackground:
 			p.BackgroundWithContext(ctx)
-		case Cmdline:
+		case FieldCmdline:
 			p.CmdlineWithContext(ctx)
-		case CmdlineSlice:
+		case FieldCmdlineSlice:
 			p.CmdlineSliceWithContext(ctx)
-		case Connections:
+		case FieldConnections:
 			p.ConnectionsWithContext(ctx)
-		case CPUPercent:
+		case FieldCPUPercent:
 			p.CPUPercentWithContext(ctx)
-		case CreateTime:
+		case FieldCreateTime:
 			// already done
-		case Cwd:
+		case FieldCwd:
 			p.CwdWithContext(ctx)
-		case Exe:
+		case FieldExe:
 			p.ExeWithContext(ctx)
-		case Foreground:
+		case FieldForeground:
 			p.ForegroundWithContext(ctx)
-		case Gids:
+		case FieldGids:
 			p.GidsWithContext(ctx)
-		case IOCounters:
+		case FieldIOCounters:
 			p.IOCountersWithContext(ctx)
-		case IOnice:
+		case FieldIOnice:
 			p.IOniceWithContext(ctx)
-		case IsRunning:
+		case FieldIsRunning:
 			p.IsRunningWithContext(ctx)
-		case MemoryInfo:
+		case FieldMemoryInfo:
 			p.MemoryInfoWithContext(ctx)
-		case MemoryInfoEx:
+		case FieldMemoryInfoEx:
 			p.MemoryInfoExWithContext(ctx)
-		case MemoryMaps:
+		case FieldMemoryMaps:
 			p.MemoryMapsWithContext(ctx, false)
-		case MemoryMapsGrouped:
+		case FieldMemoryMapsGrouped:
 			p.MemoryMapsWithContext(ctx, true)
-		case MemoryPercent:
+		case FieldMemoryPercent:
 			p.MemoryPercentWithContext(ctx)
-		case Name:
+		case FieldName:
 			p.NameWithContext(ctx)
-		case NetIOCounters:
+		case FieldNetIOCounters:
 			p.NetIOCountersWithContext(ctx, false)
-		case NetIOCountersPerNic:
+		case FieldNetIOCountersPerNic:
 			p.NetIOCountersWithContext(ctx, true)
-		case Nice:
+		case FieldNice:
 			p.NiceWithContext(ctx)
-		case NumCtxSwitches:
+		case FieldNumCtxSwitches:
 			p.NumCtxSwitchesWithContext(ctx)
-		case NumFDs:
+		case FieldNumFDs:
 			p.NumFDsWithContext(ctx)
-		case NumThreads:
+		case FieldNumThreads:
 			p.NumThreadsWithContext(ctx)
-		case OpenFiles:
+		case FieldOpenFiles:
 			p.OpenFilesWithContext(ctx)
-		case PageFaults:
+		case FieldPageFaults:
 			p.PageFaultsWithContext(ctx)
-		case Ppid:
+		case FieldPpid:
 			p.PpidWithContext(ctx)
-		case Rlimit:
+		case FieldRlimit:
 			p.RlimitWithContext(ctx)
-		case RlimitUsage:
+		case FieldRlimitUsage:
 			p.RlimitUsageWithContext(ctx, true)
-		case Status:
+		case FieldStatus:
 			p.StatusWithContext(ctx)
-		case Terminal:
+		case FieldTerminal:
 			p.TerminalWithContext(ctx)
-		case Tgid:
+		case FieldTgid:
 			p.Tgid()
-		case Threads:
+		case FieldThreads:
 			p.ThreadsWithContext(ctx)
-		case Times:
+		case FieldTimes:
 			p.TimesWithContext(ctx)
-		case Uids:
+		case FieldUids:
 			p.UidsWithContext(ctx)
-		case Username:
+		case FieldUsername:
 			p.UsernameWithContext(ctx)
 		}
 	}

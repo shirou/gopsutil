@@ -116,7 +116,7 @@ func (p *Process) Ppid() (int32, error) {
 }
 
 func (p *Process) PpidWithContext(ctx context.Context) (int32, error) {
-	if !p.isFieldRequested(Ppid) {
+	if !p.isFieldRequested(FieldPpid) {
 		return -1, ErrorFieldNotRequested
 	}
 
@@ -133,7 +133,7 @@ func (p *Process) Name() (string, error) {
 }
 
 func (p *Process) NameWithContext(ctx context.Context) (string, error) {
-	if !p.isFieldRequested(Name) {
+	if !p.isFieldRequested(FieldName) {
 		return "", ErrorFieldNotRequested
 	}
 
@@ -150,7 +150,7 @@ func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 
 // Tgid returns tgid, a Linux-synonym for user-space Pid
 func (p *Process) Tgid() (int32, error) {
-	if !p.isFieldRequested(Tgid) {
+	if !p.isFieldRequested(FieldTgid) {
 		return 0, ErrorFieldNotRequested
 	}
 
@@ -171,7 +171,7 @@ func (p *Process) Exe() (string, error) {
 }
 
 func (p *Process) ExeWithContext(ctx context.Context) (string, error) {
-	if !p.isFieldRequested(Exe) {
+	if !p.isFieldRequested(FieldExe) {
 		return "", ErrorFieldNotRequested
 	}
 
@@ -185,7 +185,7 @@ func (p *Process) Cmdline() (string, error) {
 }
 
 func (p *Process) CmdlineWithContext(ctx context.Context) (string, error) {
-	if !p.isFieldRequested(Cmdline) {
+	if !p.isFieldRequested(FieldCmdline) {
 		return "", ErrorFieldNotRequested
 	}
 
@@ -199,7 +199,7 @@ func (p *Process) CmdlineSlice() ([]string, error) {
 }
 
 func (p *Process) CmdlineSliceWithContext(ctx context.Context) ([]string, error) {
-	if !p.isFieldRequested(CmdlineSlice) {
+	if !p.isFieldRequested(FieldCmdlineSlice) {
 		return nil, ErrorFieldNotRequested
 	}
 
@@ -220,7 +220,7 @@ func (p *Process) Cwd() (string, error) {
 }
 
 func (p *Process) CwdWithContext(ctx context.Context) (string, error) {
-	if !p.isFieldRequested(Cwd) {
+	if !p.isFieldRequested(FieldCwd) {
 		return "", ErrorFieldNotRequested
 	}
 
@@ -263,7 +263,7 @@ func (p *Process) Status() (string, error) {
 }
 
 func (p *Process) StatusWithContext(ctx context.Context) (string, error) {
-	if !p.isFieldRequested(Status) {
+	if !p.isFieldRequested(FieldStatus) {
 		return "", ErrorFieldNotRequested
 	}
 
@@ -280,7 +280,7 @@ func (p *Process) Foreground() (bool, error) {
 }
 
 func (p *Process) ForegroundWithContext(ctx context.Context) (bool, error) {
-	if !p.isFieldRequested(Foreground) {
+	if !p.isFieldRequested(FieldForeground) {
 		return false, ErrorFieldNotRequested
 	}
 
@@ -299,7 +299,7 @@ func (p *Process) Uids() ([]int32, error) {
 }
 
 func (p *Process) UidsWithContext(ctx context.Context) ([]int32, error) {
-	if !p.isFieldRequested(Uids) {
+	if !p.isFieldRequested(FieldUids) {
 		return nil, ErrorFieldNotRequested
 	}
 
@@ -316,7 +316,7 @@ func (p *Process) Gids() ([]int32, error) {
 }
 
 func (p *Process) GidsWithContext(ctx context.Context) ([]int32, error) {
-	if !p.isFieldRequested(Gids) {
+	if !p.isFieldRequested(FieldGids) {
 		return nil, ErrorFieldNotRequested
 	}
 
@@ -333,7 +333,7 @@ func (p *Process) Terminal() (string, error) {
 }
 
 func (p *Process) TerminalWithContext(ctx context.Context) (string, error) {
-	if !p.isFieldRequested(Terminal) {
+	if !p.isFieldRequested(FieldTerminal) {
 		return "", ErrorFieldNotRequested
 	}
 
@@ -375,7 +375,7 @@ func (p *Process) Nice() (int32, error) {
 }
 
 func (p *Process) NiceWithContext(ctx context.Context) (int32, error) {
-	if !p.isFieldRequested(Nice) {
+	if !p.isFieldRequested(FieldNice) {
 		return 0, ErrorFieldNotRequested
 	}
 
@@ -412,9 +412,9 @@ func (p *Process) RlimitUsage(gatherUsed bool) ([]RlimitStat, error) {
 }
 
 func (p *Process) RlimitUsageWithContext(ctx context.Context, gatherUsed bool) ([]RlimitStat, error) {
-	f := Rlimit
+	f := FieldRlimit
 	if gatherUsed {
-		f = RlimitUsage
+		f = FieldRlimitUsage
 	}
 
 	if !p.isFieldRequested(f) {
@@ -493,7 +493,7 @@ func (p *Process) IOCounters() (*IOCountersStat, error) {
 }
 
 func (p *Process) IOCountersWithContext(ctx context.Context) (*IOCountersStat, error) {
-	if !p.isFieldRequested(IOCounters) {
+	if !p.isFieldRequested(FieldIOCounters) {
 		return nil, ErrorFieldNotRequested
 	}
 
@@ -506,7 +506,7 @@ func (p *Process) NumCtxSwitches() (*NumCtxSwitchesStat, error) {
 }
 
 func (p *Process) NumCtxSwitchesWithContext(ctx context.Context) (*NumCtxSwitchesStat, error) {
-	if !p.isFieldRequested(NumCtxSwitches) {
+	if !p.isFieldRequested(FieldNumCtxSwitches) {
 		return nil, ErrorFieldNotRequested
 	}
 
@@ -523,7 +523,7 @@ func (p *Process) NumFDs() (int32, error) {
 }
 
 func (p *Process) NumFDsWithContext(ctx context.Context) (int32, error) {
-	if !p.isFieldRequested(NumFDs) {
+	if !p.isFieldRequested(FieldNumFDs) {
 		return 0, ErrorFieldNotRequested
 	}
 	return p.numFDsWithContext(ctx)
@@ -540,7 +540,7 @@ func (p *Process) NumThreads() (int32, error) {
 }
 
 func (p *Process) NumThreadsWithContext(ctx context.Context) (int32, error) {
-	if !p.isFieldRequested(NumThreads) {
+	if !p.isFieldRequested(FieldNumThreads) {
 		return 0, ErrorFieldNotRequested
 	}
 
@@ -556,7 +556,7 @@ func (p *Process) Threads() (map[int32]*cpu.TimesStat, error) {
 }
 
 func (p *Process) ThreadsWithContext(ctx context.Context) (map[int32]*cpu.TimesStat, error) {
-	if !p.isFieldRequested(Threads) {
+	if !p.isFieldRequested(FieldThreads) {
 		return nil, ErrorFieldNotRequested
 	}
 
@@ -604,7 +604,7 @@ func (p *Process) Times() (*cpu.TimesStat, error) {
 }
 
 func (p *Process) TimesWithContext(ctx context.Context) (*cpu.TimesStat, error) {
-	if !p.isFieldRequested(Times) {
+	if !p.isFieldRequested(FieldTimes) {
 		return nil, ErrorFieldNotRequested
 	}
 	return p.timesWithContext(ctx)
@@ -635,7 +635,7 @@ func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
 }
 
 func (p *Process) MemoryInfoWithContext(ctx context.Context) (*MemoryInfoStat, error) {
-	if !p.isFieldRequested(MemoryInfo) {
+	if !p.isFieldRequested(FieldMemoryInfo) {
 		return nil, ErrorFieldNotRequested
 	}
 
@@ -652,7 +652,7 @@ func (p *Process) MemoryInfoEx() (*MemoryInfoExStat, error) {
 }
 
 func (p *Process) MemoryInfoExWithContext(ctx context.Context) (*MemoryInfoExStat, error) {
-	if !p.isFieldRequested(MemoryInfoEx) {
+	if !p.isFieldRequested(FieldMemoryInfoEx) {
 		return nil, ErrorFieldNotRequested
 	}
 
@@ -669,7 +669,7 @@ func (p *Process) PageFaults() (*PageFaultsStat, error) {
 }
 
 func (p *Process) PageFaultsWithContext(ctx context.Context) (*PageFaultsStat, error) {
-	if !p.isFieldRequested(PageFaults) {
+	if !p.isFieldRequested(FieldPageFaults) {
 		return nil, ErrorFieldNotRequested
 	}
 
@@ -727,7 +727,7 @@ func (p *Process) OpenFiles() ([]OpenFilesStat, error) {
 }
 
 func (p *Process) OpenFilesWithContext(ctx context.Context) ([]OpenFilesStat, error) {
-	if !p.isFieldRequested(OpenFiles) {
+	if !p.isFieldRequested(FieldOpenFiles) {
 		return nil, ErrorFieldNotRequested
 	}
 
@@ -750,7 +750,7 @@ func (p *Process) Connections() ([]net.ConnectionStat, error) {
 }
 
 func (p *Process) ConnectionsWithContext(ctx context.Context) ([]net.ConnectionStat, error) {
-	if !p.isFieldRequested(Connections) {
+	if !p.isFieldRequested(FieldConnections) {
 		return nil, ErrorFieldNotRequested
 	}
 
@@ -791,10 +791,10 @@ func (p *Process) NetIOCounters(pernic bool) ([]net.IOCountersStat, error) {
 }
 
 func (p *Process) NetIOCountersWithContext(ctx context.Context, pernic bool) ([]net.IOCountersStat, error) {
-	field := NetIOCounters
+	field := FieldNetIOCounters
 	cacheKey := "NetIOCounters"
 	if pernic {
-		field = NetIOCountersPerNic
+		field = FieldNetIOCountersPerNic
 		cacheKey = "NetIOCountersPerNic"
 	}
 
@@ -827,11 +827,11 @@ func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 }
 
 func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]MemoryMapsStat, error) {
-	field := MemoryMaps
+	field := FieldMemoryMaps
 	cacheKey := "MemoryMaps"
 	if grouped {
 		cacheKey = "MemoryMapsGrouped"
-		field = MemoryMapsGrouped
+		field = FieldMemoryMapsGrouped
 	}
 
 	if !p.isFieldRequested(field) {
@@ -1796,7 +1796,7 @@ func ProcessesWithFields(ctx context.Context, fields ...Field) ([]*Process, erro
 
 	machineMemory := uint64(0)
 	for _, f := range fields {
-		if f == MemoryPercent {
+		if f == FieldMemoryPercent {
 			tmp, err := mem.VirtualMemory()
 			if err == nil {
 				machineMemory = tmp.Total

@@ -244,7 +244,7 @@ func (p *Process) Ppid() (int32, error) {
 }
 
 func (p *Process) PpidWithContext(ctx context.Context) (int32, error) {
-	if !p.isFieldRequested(Ppid) {
+	if !p.isFieldRequested(FieldPpid) {
 		return -1, ErrorFieldNotRequested
 	}
 
@@ -260,7 +260,7 @@ func (p *Process) Name() (string, error) {
 }
 
 func (p *Process) NameWithContext(ctx context.Context) (string, error) {
-	if !p.isFieldRequested(Name) {
+	if !p.isFieldRequested(FieldName) {
 		return "", ErrorFieldNotRequested
 	}
 
@@ -280,7 +280,7 @@ func (p *Process) Exe() (string, error) {
 }
 
 func (p *Process) ExeWithContext(ctx context.Context) (string, error) {
-	if !p.isFieldRequested(Exe) {
+	if !p.isFieldRequested(FieldExe) {
 		return "", ErrorFieldNotRequested
 	}
 
@@ -337,7 +337,7 @@ func (p *Process) Cmdline() (string, error) {
 }
 
 func (p *Process) CmdlineWithContext(ctx context.Context) (string, error) {
-	if !p.isFieldRequested(Cmdline) {
+	if !p.isFieldRequested(FieldCmdline) {
 		return "", ErrorFieldNotRequested
 	}
 
@@ -374,7 +374,7 @@ func (p *Process) CmdlineSlice() ([]string, error) {
 }
 
 func (p *Process) CmdlineSliceWithContext(ctx context.Context) ([]string, error) {
-	if !p.isFieldRequested(CmdlineSlice) {
+	if !p.isFieldRequested(FieldCmdlineSlice) {
 		return nil, ErrorFieldNotRequested
 	}
 
@@ -447,7 +447,7 @@ func (p *Process) Username() (string, error) {
 }
 
 func (p *Process) UsernameWithContext(ctx context.Context) (string, error) {
-	if !p.isFieldRequested(Username) {
+	if !p.isFieldRequested(FieldUsername) {
 		return "", ErrorFieldNotRequested
 	}
 
@@ -536,7 +536,7 @@ func (p *Process) Nice() (int32, error) {
 }
 
 func (p *Process) NiceWithContext(ctx context.Context) (int32, error) {
-	if !p.isFieldRequested(Nice) {
+	if !p.isFieldRequested(FieldNice) {
 		return 0, ErrorFieldNotRequested
 	}
 
@@ -608,7 +608,7 @@ func (p *Process) IOCounters() (*IOCountersStat, error) {
 }
 
 func (p *Process) IOCountersWithContext(ctx context.Context) (*IOCountersStat, error) {
-	if !p.isFieldRequested(IOCounters) {
+	if !p.isFieldRequested(FieldIOCounters) {
 		return nil, ErrorFieldNotRequested
 	}
 
@@ -672,7 +672,7 @@ func (p *Process) NumThreads() (int32, error) {
 }
 
 func (p *Process) NumThreadsWithContext(ctx context.Context) (int32, error) {
-	if !p.isFieldRequested(NumThreads) {
+	if !p.isFieldRequested(FieldNumThreads) {
 		return 0, ErrorFieldNotRequested
 	}
 
@@ -695,7 +695,7 @@ func (p *Process) Times() (*cpu.TimesStat, error) {
 }
 
 func (p *Process) TimesWithContext(ctx context.Context) (*cpu.TimesStat, error) {
-	if !p.isFieldRequested(Times) {
+	if !p.isFieldRequested(FieldTimes) {
 		return nil, ErrorFieldNotRequested
 	}
 
@@ -733,7 +733,7 @@ func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
 }
 
 func (p *Process) MemoryInfoWithContext(ctx context.Context) (*MemoryInfoStat, error) {
-	if !p.isFieldRequested(MemoryInfo) {
+	if !p.isFieldRequested(FieldMemoryInfo) {
 		return nil, ErrorFieldNotRequested
 	}
 
@@ -825,7 +825,7 @@ func (p *Process) Connections() ([]net.ConnectionStat, error) {
 }
 
 func (p *Process) ConnectionsWithContext(ctx context.Context) ([]net.ConnectionStat, error) {
-	if !p.isFieldRequested(Connections) {
+	if !p.isFieldRequested(FieldConnections) {
 		return nil, ErrorFieldNotRequested
 	}
 
@@ -1016,7 +1016,7 @@ func ProcessesWithFields(ctx context.Context, fields ...Field) ([]*Process, erro
 
 	machineMemory := uint64(0)
 	for _, f := range fields {
-		if f == MemoryPercent {
+		if f == FieldMemoryPercent {
 			tmp, err := mem.VirtualMemory()
 			if err == nil {
 				machineMemory = tmp.Total

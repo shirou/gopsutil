@@ -186,6 +186,10 @@ func (p *Process) Foreground() (bool, error) {
 }
 
 func (p *Process) ForegroundWithContext(ctx context.Context) (bool, error) {
+	return p.foregroundWithContext(ctx)
+}
+
+func (p *Process) foregroundWithContext(ctx context.Context) (bool, error) {
 	// see https://github.com/shirou/gopsutil/issues/596#issuecomment-432707831 for implementation details
 	pid := p.Pid
 	ps, err := exec.LookPath("ps")
@@ -475,6 +479,36 @@ func ProcessesWithContext(ctx context.Context) ([]*Process, error) {
 			continue
 		}
 		p, err := NewProcess(int32(k.Pid))
+		if err != nil {
+			continue
+		}
+
+		results = append(results, p)
+	}
+
+	return results, nil
+}
+
+func ProcessesWithFields(ctx context.Context, fields ...Field) ([]*Process, error) {
+	results := []*Process{}
+
+	mib := []int32{CTLKern, KernProc, KernProcProc, 0}
+	buf, length, err := common.CallSyscall(mib)
+	if err != nil {
+		return results, err
+	}
+
+	// get kinfo_proc size
+	count := int(length / uint64(sizeOfKinfoProc))
+
+	// parse buf to procs
+	for i := 0; i < count; i++ {
+		b := buf[i*sizeOfKinfoProc : (i+1)*sizeOfKinfoProc]
+		k, err := parseKinfoProc(b)
+		if err != nil {
+			continue
+		}
+		p, err := NewProcessWithFields(int32(k.Pid), fields...)
 		if err != nil {
 			continue
 		}

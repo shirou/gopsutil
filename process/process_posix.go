@@ -176,7 +176,7 @@ func (p *Process) Username() (string, error) {
 }
 
 func (p *Process) UsernameWithContext(ctx context.Context) (string, error) {
-	if !p.isFieldRequested(Username) {
+	if !p.isFieldRequested(FieldUsername) {
 		return "", ErrorFieldNotRequested
 	}
 
