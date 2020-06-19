@@ -713,7 +713,7 @@ func (p *Process) fillFromStatus() error {
 			if err != nil {
 				return err
 			}
-			p.NSPid = int32(v)
+			p.NsPid = int32(v)
 		}
 
 	}
@@ -909,7 +909,7 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 		procs[p.Pid] = &FilledProcess{
 			Pid:     pid,
 			Ppid:    ppid,
-			NSPid:   p.NSPid,
+			NsPid:   p.NsPid,
 			Cmdline: cmdline,
 			// stat
 			CpuTime:     *t1,
