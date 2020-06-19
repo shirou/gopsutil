@@ -1005,6 +1005,16 @@ func ProcessesWithContext(ctx context.Context) ([]*Process, error) {
 	return out, nil
 }
 
+func (p *Process) prefetchFieldsPlatformSpecific(fields []Field) {
+	cacheKey := "openProcess"
+	v, ok := p.cache[cacheKey].(valueOrError)
+
+	if ok && v.err != nil {
+		h := v.value.(windows.Handle)
+		windows.CloseHandle(h)
+	}
+}
+
 func (p *Process) getRusage() (*windows.Rusage, error) {
 	cacheKey := "getRusage"
 	v, ok := p.cache[cacheKey].(valueOrError)

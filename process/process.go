@@ -676,6 +676,8 @@ func (p *Process) prefetchFields(fields []Field) {
 		}
 	}
 
+	p.prefetchFieldsPlatformSpecific(fields)
+
 	p.requestedFields = requestedFields
 }
 

@@ -212,3 +212,6 @@ func (p *Process) usernameWithContextNoCache(ctx context.Context) (string, error
 	}
 	return "", nil
 }
+
+func (p *Process) prefetchFieldsPlatformSpecific(fields []Field) {
+}
