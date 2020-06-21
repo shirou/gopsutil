@@ -194,6 +194,17 @@ func VirtualizationWithContext(ctx context.Context) (string, string, error) {
 		}
 	}
 
+	if PathExists(filepath.Join(filename, "1", "environ")) {
+		contents, err := ReadFile(filepath.Join(filename, "1", "environ"))
+
+		if err == nil {
+			if strings.Contains(contents, "container=lxc") {
+				system = "lxc"
+				role = "guest"
+			}
+		}
+	}
+
 	if PathExists(filepath.Join(filename, "self", "cgroup")) {
 		contents, err := ReadLines(filepath.Join(filename, "self", "cgroup"))
 		if err == nil {
