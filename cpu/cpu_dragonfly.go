@@ -89,7 +89,7 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 	return []TimesStat{*timeStat("cpu-total", times)}, nil
 }
 
-// Returns only one InfoStat on FreeBSD.  The information regarding core
+// Returns only one InfoStat on DragonflyBSD.  The information regarding core
 // count, however is accurate and it is assumed that all InfoStat attributes
 // are the same across CPUs.
 func Info() ([]InfoStat, error) {
