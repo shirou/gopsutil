@@ -951,6 +951,11 @@ func (p *Process) prefetchFields(fields []Field) error {
 				value: tmp,
 				err:   err,
 			}
+		case "command":
+			p.cache["CmdlineSlice"] = valueOrError{
+				value: r[0][i:],
+				err:   nil,
+			}
 		}
 	}
 
