@@ -735,6 +735,7 @@ func Test_Parent(t *testing.T) {
 }
 
 func Test_Connections(t *testing.T) {
+	testTerminated := make(chan interface{})
 	ch0 := make(chan string)
 	ch1 := make(chan string)
 	go func() { // TCP listening goroutine
@@ -759,7 +760,9 @@ func Test_Connections(t *testing.T) {
 	}()
 	go func() { // TCP client goroutine
 		tcpServerAddr := <-ch0
-		net.Dial("tcp", tcpServerAddr)
+		conn, _ := net.Dial("tcp", tcpServerAddr)
+		<-testTerminated
+		conn.Close()
 	}()
 
 	tcpServerAddr := <-ch1
@@ -804,6 +807,8 @@ func Test_Connections(t *testing.T) {
 			}
 		})
 	}
+
+	close(testTerminated)
 }
 
 func Test_Children(t *testing.T) {
