@@ -21,7 +21,6 @@ var originMatch = regexp.MustCompile(`Origin\s*=\s*"(.+)"\s+Id\s*=\s*(.+)\s+Fami
 var featuresMatch = regexp.MustCompile(`Features=.+<(.+)>`)
 var featuresMatch2 = regexp.MustCompile(`Features2=[a-f\dx]+<(.+)>`)
 var cpuEnd = regexp.MustCompile(`^Trying to mount root`)
-var cpuCores = regexp.MustCompile(`FreeBSD/SMP: (\d*) package\(s\) x (\d*) core\(s\)`)
 var cpuTimesSize int
 var emptyTimes cpuTimes
 
@@ -99,7 +98,7 @@ func Info() ([]InfoStat, error) {
 func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 	const dmesgBoot = "/var/run/dmesg.boot"
 
-	c, num, err := parseDmesgBoot(dmesgBoot)
+	c, err := parseDmesgBoot(dmesgBoot)
 	if err != nil {
 		return nil, err
 	}
@@ -110,10 +109,13 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 	}
 	c.Mhz = float64(u32)
 
-	if u32, err = unix.SysctlUint32("hw.ncpu"); err != nil {
+	var num int
+	var buf []byte
+	if buf, err = unix.SysctlRaw("hw.hw.cpu_topology.tree"); err != nil {
 		return nil, err
 	}
-	c.Cores = int32(u32)
+	num = strings.Count(string(buf), "CHIP")
+	c.Cores = int32(strings.Count(string(buf), "CORE") / num)
 
 	if c.ModelName, err = unix.Sysctl("hw.model"); err != nil {
 		return nil, err
@@ -127,10 +129,9 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 	return ret, nil
 }
 
-func parseDmesgBoot(fileName string) (InfoStat, int, error) {
+func parseDmesgBoot(fileName string) (InfoStat, error) {
 	c := InfoStat{}
 	lines, _ := common.ReadLines(fileName)
-	cpuNum := 1 // default cpu num is 1
 	for _, line := range lines {
 		if matches := cpuEnd.FindStringSubmatch(line); matches != nil {
 			break
@@ -151,21 +152,10 @@ func parseDmesgBoot(fileName string) (InfoStat, int, error) {
 			for _, v := range strings.Split(matches[1], ",") {
 				c.Flags = append(c.Flags, strings.ToLower(v))
 			}
-		} else if matches := cpuCores.FindStringSubmatch(line); matches != nil {
-			t, err := strconv.ParseInt(matches[1], 10, 32)
-			if err != nil {
-				return c, 0, fmt.Errorf("unable to parse FreeBSD CPU Nums from %q: %v", line, err)
-			}
-			cpuNum = int(t)
-			t2, err := strconv.ParseInt(matches[2], 10, 32)
-			if err != nil {
-				return c, 0, fmt.Errorf("unable to parse FreeBSD CPU cores from %q: %v", line, err)
-			}
-			c.Cores = int32(t2)
 		}
 	}
 
-	return c, cpuNum, nil
+	return c, nil
 }
 
 func CountsWithContext(ctx context.Context, logical bool) (int, error) {
