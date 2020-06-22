@@ -919,7 +919,7 @@ func (p *Process) memoryMapsWithContextNoCache(ctx context.Context, grouped bool
 	blocks := make([]string, 16)
 	for _, line := range lines {
 		// This is a quick fix for #879
-		line = strings.ReplaceAll(line, "\t", " ")
+		line = strings.Replace(line, "\t", " ", -1)
 		field := strings.Split(line, " ")
 		if strings.HasSuffix(field[0], ":") == false {
 			// new block section
