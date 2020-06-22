@@ -17,7 +17,7 @@ import (
 
 var ClocksPerSec = float64(128)
 var cpuMatch = regexp.MustCompile(`^CPU:`)
-var originMatch = regexp.MustCompile(`Origin\s*=\s*"(.+)"\s+Id\s*=\s*(.+)\s+Family\s*=\s*(.+)\s+Model\s*=\s*(.+)\s+Stepping\s*=\s*(.+)`)
+var originMatch = regexp.MustCompile(`Origin\s*=\s*"(.+)"\s+Id\s*=\s*(.+)\s+Stepping\s*=\s*(.+)`)
 var featuresMatch = regexp.MustCompile(`Features=.+<(.+)>`)
 var featuresMatch2 = regexp.MustCompile(`Features2=[a-f\dx]+<(.+)>`)
 var cpuEnd = regexp.MustCompile(`^Trying to mount root`)
@@ -110,11 +110,11 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 	c.Mhz = float64(u32)
 
 	var num int
-	var buf []byte
-	if buf, err = unix.SysctlRaw("hw.cpu_topology.tree"); err != nil {
+	var buf string
+	if buf, err = unix.Sysctl("hw.cpu_topology.tree"); err != nil {
 		return nil, err
 	}
-	num = strings.Count(string(buf), "CHIP")
+	num = strings.Count(buf, "CHIP")
 	c.Cores = int32(strings.Count(string(buf), "CORE") / num)
 
 	if c.ModelName, err = unix.Sysctl("hw.model"); err != nil {
@@ -137,11 +137,9 @@ func parseDmesgBoot(fileName string) (InfoStat, error) {
 			break
 		} else if matches := originMatch.FindStringSubmatch(line); matches != nil {
 			c.VendorID = matches[1]
-			c.Family = matches[3]
-			c.Model = matches[4]
-			t, err := strconv.ParseInt(matches[5], 10, 32)
+			t, err := strconv.ParseInt(matches[2], 10, 32)
 			if err != nil {
-				return c, fmt.Errorf("unable to parse FreeBSD CPU stepping information from %q: %v", line, err)
+				return c, fmt.Errorf("unable to parse DragonflyBSD CPU stepping information from %q: %v", line, err)
 			}
 			c.Stepping = int32(t)
 		} else if matches := featuresMatch.FindStringSubmatch(line); matches != nil {
