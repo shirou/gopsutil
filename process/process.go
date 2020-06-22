@@ -187,10 +187,9 @@ var AllFields = []Field{
 }
 
 type Process struct {
-	Pid           int32 `json:"pid"`
-	name          string
-	createTime    int64
-	machineMemory uint64
+	Pid        int32 `json:"pid"`
+	name       string
+	createTime int64
 
 	cache           map[string]interface{}
 	requestedFields map[Field]interface{}
@@ -341,14 +340,17 @@ func NewProcess(pid int32) (*Process, error) {
 // This method may be faster if you retrive multiple fields, because unlike NewProcess where
 // files are parsed for each method call, here files are parsed once at creation.
 func NewProcessWithFields(pid int32, fields ...Field) (*Process, error) {
-	return newProcessWithFields(pid, 0, fields...)
+	return newProcessWithFields(pid, nil, fields...)
 }
 
-func newProcessWithFields(pid int32, machineMemory uint64, fields ...Field) (*Process, error) {
+func newProcessWithFields(pid int32, initialCache map[string]interface{}, fields ...Field) (*Process, error) {
+	if initialCache == nil {
+		initialCache = make(map[string]interface{})
+	}
+
 	p := &Process{
-		Pid:           pid,
-		cache:         make(map[string]interface{}),
-		machineMemory: machineMemory,
+		Pid:   pid,
+		cache: initialCache,
 	}
 
 	exists, err := PidExists(pid)
@@ -538,12 +540,14 @@ func (p *Process) MemoryPercentWithContext(ctx context.Context) (float32, error)
 }
 
 func (p *Process) memoryPercentWithContextNoCache(ctx context.Context) (float32, error) {
-	if p.machineMemory == 0 || p.cache == nil {
-		machineMemory, err := mem.VirtualMemory()
+	machineMemory, ok := p.cache["VirtualMemory"].(uint64)
+
+	if !ok {
+		tmp, err := mem.VirtualMemory()
 		if err != nil {
 			return 0, err
 		}
-		p.machineMemory = machineMemory.Total
+		machineMemory = tmp.Total
 	}
 
 	processMemory, err := p.MemoryInfo()
@@ -552,7 +556,7 @@ func (p *Process) memoryPercentWithContextNoCache(ctx context.Context) (float32,
 	}
 	used := processMemory.RSS
 
-	return (100 * float32(used) / float32(p.machineMemory)), nil
+	return (100 * float32(used) / float32(machineMemory)), nil
 }
 
 // CPU_Percent returns how many percent of the CPU time this process uses

@@ -1025,7 +1025,7 @@ func ProcessesWithFields(ctx context.Context, fields ...Field) ([]*Process, erro
 	}
 
 	for _, pid := range pids {
-		p, err := newProcessWithFields(pid, machineMemory, fields...)
+		p, err := newProcessWithFields(pid, map[string]interface{}{"VirtualMemory": machineMemory}, fields...)
 		if err != nil {
 			continue
 		}

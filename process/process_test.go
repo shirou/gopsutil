@@ -1056,8 +1056,6 @@ func Test_AllFields(t *testing.T) {
 		errDynamic, errField, errAllFields, errNoFields error
 	)
 
-	AllFields := []Field{FieldRlimitUsage}
-
 	for _, f := range AllFields {
 		procDynamic := testGetProcess()
 		procField := testGetProcessWithFields(f)
