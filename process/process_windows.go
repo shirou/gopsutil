@@ -1322,3 +1322,10 @@ func convertUTF16ToString(src []byte) string {
 	}
 	return syscall.UTF16ToString(codePoints)
 }
+
+func (p *Process) prefetchFields(fields []Field) error {
+	ctx := context.Background()
+	p.genericPrefetchFields(ctx, fields)
+
+	return nil
+}

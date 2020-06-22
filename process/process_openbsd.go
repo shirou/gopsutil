@@ -573,3 +573,10 @@ func CallKernProcSyscallWithContext(ctx context.Context, op int32, arg int32) ([
 
 	return buf, length, nil
 }
+
+func (p *Process) prefetchFields(fields []Field) error {
+	ctx := context.Background()
+	p.genericPrefetchFields(ctx, fields)
+
+	return nil
+}

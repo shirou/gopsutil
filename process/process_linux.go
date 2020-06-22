@@ -1440,7 +1440,7 @@ func (p *Process) fillFromStatusWithContextNoCache(ctx context.Context) statusIn
 		case "Name":
 			result.name = strings.Trim(value, " \t")
 			if len(result.name) >= 15 {
-				cmdlineSlice, err := p.CmdlineSlice()
+				cmdlineSlice, err := p.fillSliceFromCmdlineWithContext(ctx)
 				if err != nil {
 					result.err = err
 					return result
@@ -1755,6 +1755,13 @@ func (p *Process) fillFromTIDStatWithContextNoCache(ctx context.Context, tid int
 
 func (p *Process) fillFromStatWithContext(ctx context.Context) statInfo {
 	return p.fillFromTIDStatWithContext(ctx, -1)
+}
+
+func (p *Process) prefetchFields(fields []Field) error {
+	ctx := context.Background()
+	p.genericPrefetchFields(ctx, fields)
+
+	return nil
 }
 
 func pidsWithContext(ctx context.Context) ([]int32, error) {

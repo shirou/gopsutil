@@ -70,12 +70,25 @@ func (p *Process) Ppid() (int32, error) {
 }
 
 func (p *Process) PpidWithContext(ctx context.Context) (int32, error) {
-	r, err := callPsWithContext(ctx, "ppid", p.Pid, false)
-	if err != nil {
-		return 0, err
+	if !p.isFieldRequested(FieldPpid) {
+		return -1, ErrorFieldNotRequested
 	}
 
-	v, err := strconv.Atoi(r[0][0])
+	v, ok := p.cache["Ppid"].(valueOrError)
+	if !ok {
+		r, err := callPsWithContext(ctx, "ppid", p.Pid, false)
+		if err != nil {
+			return 0, err
+		}
+
+		return ppidFromPS(r[0], 0)
+	}
+
+	return v.value.(int32), v.err
+}
+
+func ppidFromPS(psLine []string, index int) (int32, error) {
+	v, err := strconv.Atoi(psLine[index])
 	if err != nil {
 		return 0, err
 	}
@@ -87,6 +100,10 @@ func (p *Process) Name() (string, error) {
 }
 
 func (p *Process) NameWithContext(ctx context.Context) (string, error) {
+	if !p.isFieldRequested(FieldName) {
+		return "", ErrorFieldNotRequested
+	}
+
 	k, err := p.getKProc()
 	if err != nil {
 		return "", err
@@ -94,7 +111,7 @@ func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 	name := common.IntToString(k.Proc.P_comm[:])
 
 	if len(name) >= 15 {
-		cmdlineSlice, err := p.CmdlineSliceWithContext(ctx)
+		cmdlineSlice, err := p.cmdlineSliceWithContext(ctx)
 		if err != nil {
 			return "", err
 		}
@@ -124,11 +141,12 @@ func (p *Process) Cmdline() (string, error) {
 }
 
 func (p *Process) CmdlineWithContext(ctx context.Context) (string, error) {
-	r, err := callPsWithContext(ctx, "command", p.Pid, false)
-	if err != nil {
-		return "", err
+	if !p.isFieldRequested(FieldCmdline) {
+		return "", ErrorFieldNotRequested
 	}
-	return strings.Join(r[0], " "), err
+
+	ret, err := p.cmdlineSliceWithContext(ctx)
+	return strings.Join(ret, " "), err
 }
 
 // CmdlineSlice returns the command line arguments of the process as a slice with each
@@ -141,20 +159,41 @@ func (p *Process) CmdlineSlice() ([]string, error) {
 }
 
 func (p *Process) CmdlineSliceWithContext(ctx context.Context) ([]string, error) {
-	r, err := callPsWithContext(ctx, "command", p.Pid, false)
-	if err != nil {
-		return nil, err
+	if !p.isFieldRequested(FieldCmdlineSlice) {
+		return nil, ErrorFieldNotRequested
 	}
-	return r[0], err
+
+	return p.cmdlineSliceWithContext(ctx)
 }
 
-func (p *Process) createTimeWithContext(ctx context.Context) (int64, error) {
-	r, err := callPsWithContext(ctx, "etime", p.Pid, false)
-	if err != nil {
-		return 0, err
+func (p *Process) cmdlineSliceWithContext(ctx context.Context) ([]string, error) {
+	v, ok := p.cache["CmdlineSlice"].(valueOrError)
+	if !ok {
+		r, err := callPsWithContext(ctx, "command", p.Pid, false)
+		if err != nil {
+			return nil, err
+		}
+		return r[0], err
 	}
 
-	elapsedSegments := strings.Split(strings.Replace(r[0][0], "-", ":", 1), ":")
+	return v.value.([]string), v.err
+}
+func (p *Process) createTimeWithContext(ctx context.Context) (int64, error) {
+	v, ok := p.cache["createTime"].(valueOrError)
+	if !ok {
+		r, err := callPsWithContext(ctx, "etime", p.Pid, false)
+		if err != nil {
+			return 0, err
+		}
+
+		return createTimeFromPS(r[0], 0)
+	}
+
+	return v.value.(int64), v.err
+}
+
+func createTimeFromPS(psLine []string, index int) (int64, error) {
+	elapsedSegments := strings.Split(strings.Replace(psLine[index], "-", ":", 1), ":")
 	var elapsedDurations []time.Duration
 	for i := len(elapsedSegments) - 1; i >= 0; i-- {
 		p, err := strconv.ParseInt(elapsedSegments[i], 10, 0)
@@ -203,6 +242,16 @@ func (p *Process) ParentWithContext(ctx context.Context) (*Process, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		fields := make([]Field, 0, len(p.requestedFields))
+		for f := range p.requestedFields {
+			fields = append(fields, f)
+		}
+
+		if p.requestedFields != nil {
+			return NewProcessWithFields(int32(v), fields...)
+		}
+
 		return NewProcess(int32(v))
 	}
 	return nil, fmt.Errorf("could not find parent line")
@@ -212,12 +261,26 @@ func (p *Process) Status() (string, error) {
 }
 
 func (p *Process) StatusWithContext(ctx context.Context) (string, error) {
-	r, err := callPsWithContext(ctx, "state", p.Pid, false)
-	if err != nil {
-		return "", err
+	if !p.isFieldRequested(FieldStatus) {
+		return "", ErrorFieldNotRequested
 	}
 
-	return r[0][0][0:1], err
+	v, ok := p.cache["Status"].(valueOrError)
+
+	if !ok {
+		r, err := callPsWithContext(ctx, "state", p.Pid, false)
+		if err != nil {
+			return "", err
+		}
+
+		return statusFromPS(r[0], 0)
+	}
+
+	return v.value.(string), v.err
+}
+
+func statusFromPS(psLine []string, index int) (string, error) {
+	return psLine[index][0:1], nil
 }
 
 func (p *Process) Foreground() (bool, error) {
@@ -225,21 +288,30 @@ func (p *Process) Foreground() (bool, error) {
 }
 
 func (p *Process) ForegroundWithContext(ctx context.Context) (bool, error) {
+	if !p.isFieldRequested(FieldForeground) {
+		return false, ErrorFieldNotRequested
+	}
+
 	return p.foregroundWithContext(ctx)
 }
 
 func (p *Process) foregroundWithContext(ctx context.Context) (bool, error) {
 	// see https://github.com/shirou/gopsutil/issues/596#issuecomment-432707831 for implementation details
-	pid := p.Pid
-	ps, err := exec.LookPath("ps")
-	if err != nil {
-		return false, err
+	v, ok := p.cache["foreground"].(valueOrError)
+	if !ok {
+		r, err := callPsWithContext(ctx, "stat", p.Pid, false)
+		if err != nil {
+			return false, err
+		}
+
+		return foregroundFromPS(r[0], 0)
 	}
-	out, err := invoke.CommandWithContext(ctx, ps, "-o", "stat=", "-p", strconv.Itoa(int(pid)))
-	if err != nil {
-		return false, err
-	}
-	return strings.IndexByte(string(out), '+') != -1, nil
+
+	return v.value.(bool), v.err
+}
+
+func foregroundFromPS(psLine []string, index int) (bool, error) {
+	return strings.IndexByte(psLine[index], '+') != -1, nil
 }
 
 func (p *Process) Uids() ([]int32, error) {
@@ -247,6 +319,10 @@ func (p *Process) Uids() ([]int32, error) {
 }
 
 func (p *Process) UidsWithContext(ctx context.Context) ([]int32, error) {
+	if !p.isFieldRequested(FieldUids) {
+		return nil, ErrorFieldNotRequested
+	}
+
 	k, err := p.getKProc()
 	if err != nil {
 		return nil, err
@@ -262,6 +338,10 @@ func (p *Process) Gids() ([]int32, error) {
 }
 
 func (p *Process) GidsWithContext(ctx context.Context) ([]int32, error) {
+	if !p.isFieldRequested(FieldGids) {
+		return nil, ErrorFieldNotRequested
+	}
+
 	k, err := p.getKProc()
 	if err != nil {
 		return nil, err
@@ -298,6 +378,10 @@ func (p *Process) Nice() (int32, error) {
 }
 
 func (p *Process) NiceWithContext(ctx context.Context) (int32, error) {
+	if !p.isFieldRequested(FieldNice) {
+		return 0, ErrorFieldNotRequested
+	}
+
 	k, err := p.getKProc()
 	if err != nil {
 		return 0, err
@@ -353,11 +437,26 @@ func (p *Process) NumThreads() (int32, error) {
 }
 
 func (p *Process) NumThreadsWithContext(ctx context.Context) (int32, error) {
-	r, err := callPsWithContext(ctx, "utime,stime", p.Pid, true)
-	if err != nil {
-		return 0, err
+	if !p.isFieldRequested(FieldNumThreads) {
+		return 0, ErrorFieldNotRequested
 	}
-	return int32(len(r)), nil
+
+	cacheKey := "NumThreads"
+	v, ok := p.cache[cacheKey].(valueOrError)
+
+	if !ok {
+		r, err := callPsWithContext(ctx, "utime,stime", p.Pid, true)
+		v = valueOrError{
+			value: int32(len(r)),
+			err:   err,
+		}
+	}
+
+	if p.cache != nil {
+		p.cache[cacheKey] = v
+	}
+
+	return v.value.(int32), v.err
 }
 func (p *Process) Threads() (map[int32]*cpu.TimesStat, error) {
 	return p.ThreadsWithContext(context.Background())
@@ -418,17 +517,31 @@ func (p *Process) Times() (*cpu.TimesStat, error) {
 }
 
 func (p *Process) TimesWithContext(ctx context.Context) (*cpu.TimesStat, error) {
-	r, err := callPsWithContext(ctx, "utime,stime", p.Pid, false)
+	if p.isFieldRequested(FieldTimes) {
+		return nil, ErrorFieldNotRequested
+	}
 
+	v, ok := p.cache["Times"].(valueOrError)
+
+	if !ok {
+		r, err := callPsWithContext(ctx, "utime,stime", p.Pid, false)
+
+		if err != nil {
+			return nil, err
+		}
+
+		return timesFromPS(r[0], 0)
+	}
+
+	return v.value.(*cpu.TimesStat), v.err
+}
+
+func timesFromPS(psLine []string, index int) (*cpu.TimesStat, error) {
+	utime, err := convertCPUTimes(psLine[index])
 	if err != nil {
 		return nil, err
 	}
-
-	utime, err := convertCPUTimes(r[0][0])
-	if err != nil {
-		return nil, err
-	}
-	stime, err := convertCPUTimes(r[0][1])
+	stime, err := convertCPUTimes(psLine[index+1])
 	if err != nil {
 		return nil, err
 	}
@@ -452,19 +565,34 @@ func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
 }
 
 func (p *Process) MemoryInfoWithContext(ctx context.Context) (*MemoryInfoStat, error) {
-	r, err := callPsWithContext(ctx, "rss,vsize,pagein", p.Pid, false)
+	if !p.isFieldRequested(FieldMemoryInfo) {
+		return nil, ErrorFieldNotRequested
+	}
+
+	v, ok := p.cache["MemoryInfo"].(valueOrError)
+
+	if !ok {
+		r, err := callPsWithContext(ctx, "rss,vsize,pagein", p.Pid, false)
+		if err != nil {
+			return nil, err
+		}
+
+		return memoryInfoFromPS(r[0], 0)
+	}
+
+	return v.value.(*MemoryInfoStat), v.err
+}
+
+func memoryInfoFromPS(psLine []string, index int) (*MemoryInfoStat, error) {
+	rss, err := strconv.Atoi(psLine[index])
 	if err != nil {
 		return nil, err
 	}
-	rss, err := strconv.Atoi(r[0][0])
+	vms, err := strconv.Atoi(psLine[index+1])
 	if err != nil {
 		return nil, err
 	}
-	vms, err := strconv.Atoi(r[0][1])
-	if err != nil {
-		return nil, err
-	}
-	pagein, err := strconv.Atoi(r[0][2])
+	pagein, err := strconv.Atoi(psLine[index+2])
 	if err != nil {
 		return nil, err
 	}
@@ -502,9 +630,24 @@ func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	fields := make([]Field, 0, len(p.requestedFields))
+	for f := range p.requestedFields {
+		fields = append(fields, f)
+	}
+
 	ret := make([]*Process, 0, len(pids))
 	for _, pid := range pids {
-		np, err := NewProcess(pid)
+		var (
+			np  *Process
+			err error
+		)
+
+		if p.requestedFields != nil {
+			np, err = NewProcessWithFields(pid, fields...)
+		} else {
+			np, err = NewProcess(pid)
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -526,7 +669,26 @@ func (p *Process) Connections() ([]net.ConnectionStat, error) {
 }
 
 func (p *Process) ConnectionsWithContext(ctx context.Context) ([]net.ConnectionStat, error) {
-	return net.ConnectionsPid("all", p.Pid)
+	if !p.isFieldRequested(FieldConnections) {
+		return nil, ErrorFieldNotRequested
+	}
+
+	cacheKey := "Connections"
+	v, ok := p.cache[cacheKey].(valueOrError)
+
+	if !ok {
+		tmp, err := net.ConnectionsPid("all", p.Pid)
+		v = valueOrError{
+			value: tmp,
+			err:   err,
+		}
+	}
+
+	if p.cache != nil {
+		p.cache[cacheKey] = v
+	}
+
+	return v.value.([]net.ConnectionStat), v.err
 }
 
 // Connections returns a slice of net.ConnectionStat used by the process at most `max`
@@ -535,6 +697,10 @@ func (p *Process) ConnectionsMax(max int) ([]net.ConnectionStat, error) {
 }
 
 func (p *Process) ConnectionsMaxWithContext(ctx context.Context, max int) ([]net.ConnectionStat, error) {
+	if p.requestedFields != nil {
+		return nil, ErrorFieldNotRequested
+	}
+
 	return net.ConnectionsPidMax("all", p.Pid, max)
 }
 
@@ -626,6 +792,25 @@ func (p *Process) getKProc() (*KinfoProc, error) {
 }
 
 func (p *Process) getKProcWithContext(ctx context.Context) (*KinfoProc, error) {
+	cacheKey := "getKProc"
+	v, ok := p.cache[cacheKey].(valueOrError)
+
+	if !ok {
+		tmp, err := p.getKProcWithContextNoCache(ctx)
+		v = valueOrError{
+			value: tmp,
+			err:   err,
+		}
+	}
+
+	if p.cache != nil {
+		p.cache[cacheKey] = v
+	}
+
+	return v.value.(*KinfoProc), v.err
+}
+
+func (p *Process) getKProcWithContextNoCache(ctx context.Context) (*KinfoProc, error) {
 	mib := []int32{CTLKern, KernProc, KernProcPID, p.Pid}
 	procK := KinfoProc{}
 	length := uint64(unsafe.Sizeof(procK))
@@ -688,4 +873,88 @@ func callPsWithContext(ctx context.Context, arg string, pid int32, threadOption 
 	}
 
 	return ret, nil
+}
+
+func (p *Process) prefetchFields(fields []Field) error {
+	ctx := context.Background()
+
+	fieldsNeedGeneric := make([]Field, 0, len(fields))
+	psmultiFields := []string{"etime"}
+	doCmdline := false
+
+	for _, f := range fields {
+		switch f {
+		case FieldPpid:
+			psmultiFields = append(psmultiFields, "ppid")
+		case FieldCmdline, FieldCmdlineSlice:
+			doCmdline = true
+		case FieldCreateTime:
+			// already done
+		case FieldStatus:
+			psmultiFields = append(psmultiFields, "state")
+		case FieldForeground, FieldBackground:
+			psmultiFields = append(psmultiFields, "stat")
+		case FieldTimes:
+			psmultiFields = append(psmultiFields, "utime,stime")
+		case FieldMemoryInfo:
+			psmultiFields = append(psmultiFields, "rss,vsize,pagein")
+		default:
+			fieldsNeedGeneric = append(fieldsNeedGeneric, f)
+		}
+	}
+
+	if doCmdline {
+		psmultiFields = append(psmultiFields, "command")
+	}
+
+	arg := strings.Join(psmultiFields, ",")
+	r, err := callPsWithContext(ctx, arg, p.Pid, false)
+	if err != nil {
+		return err
+	}
+
+	for i, v := range strings.Split(arg, ",") {
+		switch v {
+		case "ppid":
+			tmp, err := ppidFromPS(r[0], i)
+			p.cache["Ppid"] = valueOrError{
+				value: tmp,
+				err:   err,
+			}
+		case "etime":
+			tmp, err := createTimeFromPS(r[0], i)
+			p.cache["createTime"] = valueOrError{
+				value: tmp,
+				err:   err,
+			}
+		case "state":
+			tmp, err := statusFromPS(r[0], i)
+			p.cache["Status"] = valueOrError{
+				value: tmp,
+				err:   err,
+			}
+		case "stat":
+			tmp, err := foregroundFromPS(r[0], i)
+			p.cache["foreground"] = valueOrError{
+				value: tmp,
+				err:   err,
+			}
+		case "utime":
+			tmp, err := timesFromPS(r[0], i)
+			p.cache["Times"] = valueOrError{
+				value: tmp,
+				err:   err,
+			}
+		case "rss":
+			tmp, err := memoryInfoFromPS(r[0], i)
+			p.cache["MemoryInfo"] = valueOrError{
+				value: tmp,
+				err:   err,
+			}
+		}
+	}
+
+	p.genericPrefetchFields(ctx, fieldsNeedGeneric)
+
+	return nil
 }

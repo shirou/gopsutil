@@ -547,3 +547,10 @@ func (p *Process) getKProcWithContext(ctx context.Context) (*KinfoProc, error) {
 	}
 	return &k, nil
 }
+
+func (p *Process) prefetchFields(fields []Field) error {
+	ctx := context.Background()
+	p.genericPrefetchFields(ctx, fields)
+
+	return nil
+}

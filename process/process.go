@@ -359,7 +359,17 @@ func newProcessWithFields(pid int32, machineMemory uint64, fields ...Field) (*Pr
 		return p, ErrorProcessNotRunning
 	}
 
-	p.prefetchFields(fields)
+	requestedFields := make(map[Field]interface{}, len(fields))
+	for _, f := range fields {
+		requestedFields[f] = nil
+	}
+
+	err = p.prefetchFields(fields)
+	if err != nil {
+		return nil, err
+	}
+
+	p.requestedFields = requestedFields
 
 	return p, nil
 }
@@ -593,16 +603,10 @@ func (p *Process) cpuPercentWithContextNoCache(ctx context.Context) (float64, er
 	return 100 * cput.Total() / totalTime, nil
 }
 
-func (p *Process) prefetchFields(fields []Field) {
-	ctx := context.Background()
-
-	requestedFields := make(map[Field]interface{}, len(fields))
-
+func (p *Process) genericPrefetchFields(ctx context.Context, fields []Field) {
 	p.CreateTimeWithContext(ctx)
 
 	for _, f := range fields {
-		requestedFields[f] = nil
-
 		switch f {
 		case FieldBackground:
 			p.BackgroundWithContext(ctx)
@@ -680,10 +684,6 @@ func (p *Process) prefetchFields(fields []Field) {
 			p.UsernameWithContext(ctx)
 		}
 	}
-
-	p.prefetchFieldsPlatformSpecific(fields)
-
-	p.requestedFields = requestedFields
 }
 
 func (p *Process) isFieldRequested(f Field) bool {
