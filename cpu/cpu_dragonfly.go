@@ -111,7 +111,7 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 
 	var num int
 	var buf []byte
-	if buf, err = unix.SysctlRaw("hw.hw.cpu_topology.tree"); err != nil {
+	if buf, err = unix.SysctlRaw("hw.cpu_topology.tree"); err != nil {
 		return nil, err
 	}
 	num = strings.Count(string(buf), "CHIP")
