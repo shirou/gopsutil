@@ -141,7 +141,7 @@ func parseDmesgBoot(fileName string) (InfoStat, error) {
 			c.Model = matches[4]
 			t, err := strconv.ParseInt(matches[5], 10, 32)
 			if err != nil {
-				return c, 0, fmt.Errorf("unable to parse FreeBSD CPU stepping information from %q: %v", line, err)
+				return c, fmt.Errorf("unable to parse FreeBSD CPU stepping information from %q: %v", line, err)
 			}
 			c.Stepping = int32(t)
 		} else if matches := featuresMatch.FindStringSubmatch(line); matches != nil {
