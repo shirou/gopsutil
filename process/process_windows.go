@@ -417,7 +417,7 @@ func (p *Process) ParentWithContext(ctx context.Context) (*Process, error) {
 	}
 
 	if p.requestedFields != nil {
-		return NewProcessWithFields(ret.ppid, fields...)
+		return NewProcessWithFields(ctx, ret.ppid, fields...)
 	}
 
 	return NewProcess(ret.ppid)
@@ -796,7 +796,7 @@ func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
 		if pe32.ParentProcessID == uint32(p.Pid) {
 			pid := int32(pe32.ProcessID)
 			if p.requestedFields != nil {
-				np, err = NewProcessWithFields(pid, fields...)
+				np, err = NewProcessWithFields(ctx, pid, fields...)
 			} else {
 				np, err = NewProcess(pid)
 			}
@@ -1025,7 +1025,7 @@ func ProcessesWithFields(ctx context.Context, fields ...Field) ([]*Process, erro
 	}
 
 	for _, pid := range pids {
-		p, err := newProcessWithFields(pid, map[string]interface{}{"VirtualMemory": machineMemory}, fields...)
+		p, err := newProcessWithFields(ctx, pid, map[string]interface{}{"VirtualMemory": machineMemory}, fields...)
 		if err != nil {
 			continue
 		}

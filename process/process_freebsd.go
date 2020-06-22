@@ -542,7 +542,7 @@ func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
 		)
 
 		if p.requestedFields != nil {
-			np, err = NewProcessWithFields(pid, fields...)
+			np, err = NewProcessWithFields(ctx, pid, fields...)
 		} else {
 			np, err = NewProcess(pid)
 		}
@@ -660,6 +660,7 @@ func ProcessesWithFields(ctx context.Context, fields ...Field) ([]*Process, erro
 			continue
 		}
 		p, err := newProcessWithFields(
+			ctx,
 			int32(k.Pid),
 			map[string]interface{}{"VirtualMemory": machineMemory, "getKProc": valueOrError{value: &k, err: nil}},
 			fields...,

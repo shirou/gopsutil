@@ -37,7 +37,7 @@ func testGetProcess() Process {
 
 func testGetProcessWithFields(fields ...Field) Process {
 	checkPid := os.Getpid() // process.test
-	ret, _ := NewProcessWithFields(int32(checkPid), fields...)
+	ret, _ := NewProcessWithFields(context.Background(), int32(checkPid), fields...)
 	return *ret
 }
 
@@ -94,7 +94,7 @@ func Test_NewProcess(t *testing.T) {
 		t.Errorf("error %v", err)
 	}
 
-	retWithFields, err := NewProcessWithFields(int32(checkPid))
+	retWithFields, err := NewProcessWithFields(context.Background(), int32(checkPid))
 	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
@@ -136,7 +136,7 @@ func Test_Process_memory_maps(t *testing.T) {
 		t.Errorf("error %v", err)
 	}
 
-	retWithFields, err := NewProcessWithFields(int32(checkPid), FieldMemoryMaps, FieldMemoryMapsGrouped)
+	retWithFields, err := NewProcessWithFields(context.Background(), int32(checkPid), FieldMemoryMaps, FieldMemoryMapsGrouped)
 	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
@@ -575,7 +575,7 @@ func Test_Process_Long_Name(t *testing.T) {
 	skipIfNotImplementedErr(t, err)
 	assert.Nil(t, err)
 
-	p2, err := NewProcessWithFields(int32(cmd.Process.Pid), FieldName)
+	p2, err := NewProcessWithFields(context.Background(), int32(cmd.Process.Pid), FieldName)
 	skipIfNotImplementedErr(t, err)
 	assert.Nil(t, err)
 
@@ -1302,7 +1302,7 @@ func Benchmark_NewProcessWithFields(b *testing.B) {
 				if name == "NewProcess" {
 					proc, err = NewProcess(checkPid)
 				} else {
-					proc, err = NewProcessWithFields(checkPid, FieldUsername, FieldCPUPercent, FieldMemoryPercent, FieldStatus, FieldMemoryInfo, FieldTimes, FieldCmdline)
+					proc, err = NewProcessWithFields(context.Background(), checkPid, FieldUsername, FieldCPUPercent, FieldMemoryPercent, FieldStatus, FieldMemoryInfo, FieldTimes, FieldCmdline)
 				}
 
 				if err != nil {

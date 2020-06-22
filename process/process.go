@@ -339,11 +339,11 @@ func NewProcess(pid int32) (*Process, error) {
 // after creation.
 // This method may be faster if you retrive multiple fields, because unlike NewProcess where
 // files are parsed for each method call, here files are parsed once at creation.
-func NewProcessWithFields(pid int32, fields ...Field) (*Process, error) {
-	return newProcessWithFields(pid, nil, fields...)
+func NewProcessWithFields(ctx context.Context, pid int32, fields ...Field) (*Process, error) {
+	return newProcessWithFields(ctx, pid, nil, fields...)
 }
 
-func newProcessWithFields(pid int32, initialCache map[string]interface{}, fields ...Field) (*Process, error) {
+func newProcessWithFields(ctx context.Context, pid int32, initialCache map[string]interface{}, fields ...Field) (*Process, error) {
 	if initialCache == nil {
 		initialCache = make(map[string]interface{})
 	}
