@@ -18,6 +18,7 @@ func init() {
 
 type Process struct {
 	Pid            int32 `json:"pid"`
+	NsPid          int32 `json:"nspid"`
 	name           string
 	status         string
 	parent         int32
@@ -32,8 +33,10 @@ type Process struct {
 }
 
 type FilledProcess struct {
-	Pid     int32
-	Ppid    int32
+	Pid  int32
+	Ppid int32
+	// process namespaced PID
+	NsPid   int32
 	Cmdline []string
 	// stat
 	CpuTime     cpu.TimesStat

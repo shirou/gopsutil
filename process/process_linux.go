@@ -705,6 +705,15 @@ func (p *Process) fillFromStatus() error {
 				return err
 			}
 			p.memInfo.Swap = v * 1024
+
+		case "NSpid":
+			values := strings.Split(value, "\t")
+			// only report process namespaced PID
+			v, err := strconv.ParseInt(values[len(values)-1], 10, 32)
+			if err != nil {
+				return err
+			}
+			p.NsPid = int32(v)
 		}
 
 	}
@@ -900,6 +909,7 @@ func AllProcesses() (map[int32]*FilledProcess, error) {
 		procs[p.Pid] = &FilledProcess{
 			Pid:     pid,
 			Ppid:    ppid,
+			NsPid:   p.NsPid,
 			Cmdline: cmdline,
 			// stat
 			CpuTime:     *t1,
