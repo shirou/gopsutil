@@ -14,12 +14,6 @@ This is a port of psutil (https://github.com/giampaolo/psutil). The challenge is
 psutil functions on some architectures.
 
 
-Breaking Changes! golang 1.8 is required
--------------------------------------------
-
-After v2.17.04, golang 1.8 is required to build.
-
-
 Tag semantics
 -------------------------
 
@@ -45,6 +39,11 @@ Available Architectures
 - Darwin i386/amd64
 - OpenBSD amd64 (Thank you @mpfz0r!)
 - Solaris amd64 (developed and tested on SmartOS/Illumos, Thank you @jen20!)
+
+These are partial support:
+
+- CPU on DragonFly BSD (#893, Thank you @gballet!)
+- host on Linux RISC-V (#896, Thank you @tklauser!)
 
 All works are implemented without cgo by porting c struct to golang struct.
 
