@@ -48,16 +48,18 @@
   version = "v1.6.0"
 
 [[projects]]
-  digest = "1:63d8236278940f9c63816950fb4ed7fa389307c0b6367484b748f5b08dee9299"
+  branch = "master"
+  digest = "1:c33af8636b2c5128b62b5bacd6fbdf6bf65a76e95b5b0111bfa134cb8ad5676d"
   name = "golang.org/x/sys"
   packages = [
+    "internal/unsafeheader",
     "unix",
     "windows",
     "windows/svc",
     "windows/svc/mgr",
   ]
   pruneopts = "UT"
-  revision = "a7d97aace0b03bedead413ec782269d62e032341"
+  revision = "ed371f2e16b4b305ee99df548828de367527b76b"
 
 [[projects]]
   branch = "v3"

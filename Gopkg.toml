@@ -34,8 +34,8 @@
   version = "1.2.2"
 
 [[constraint]]
+  branch = "master"
   name = "golang.org/x/sys"
-  revision = "a7d97aace0b03bedead413ec782269d62e032341"
 
 [prune]
   go-tests = true
