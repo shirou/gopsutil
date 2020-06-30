@@ -17,6 +17,7 @@ build_test:  ## test only buildable
 	GOOS=linux GOARCH=386 go test ./... | $(BUILD_FAIL_PATTERN)
 	GOOS=linux GOARCH=arm go test ./... | $(BUILD_FAIL_PATTERN)
 	GOOS=linux GOARCH=arm64 go test ./... | $(BUILD_FAIL_PATTERN)
+	GOOS=linux GOARCH=riscv64 go test ./... | $(BUILD_FAIL_PATTERN)
 	GOOS=freebsd go test ./... | $(BUILD_FAIL_PATTERN)
 	GOOS=freebsd GOARCH=arm go test ./... | $(BUILD_FAIL_PATTERN)
 	CGO_ENABLED=0 GOOS=darwin go test ./... | $(BUILD_FAIL_PATTERN)
