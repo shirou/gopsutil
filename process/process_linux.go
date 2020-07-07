@@ -612,7 +612,7 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 	blocks := make([]string, 16)
 	for _, line := range lines {
 		fields := strings.Fields(line)
-		if len(fields) > 0 && strings.HasSuffix(fields[0], ":") == false {
+		if len(fields) > 0 && !strings.HasSuffix(fields[0], ":") {
 			// new block section
 			if len(blocks) > 0 {
 				g, err := getBlock(fields, blocks)
