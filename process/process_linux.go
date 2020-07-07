@@ -576,7 +576,8 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 			if len(field) < 2 {
 				continue
 			}
-			v := strings.Trim(field[1], " kB") // remove last "kB"
+			v := strings.Trim(field[1], "kB") // remove last "kB"
+			v = strings.TrimSpace(v)
 			t, err := strconv.ParseUint(v, 10, 64)
 			if err != nil {
 				return m, err
@@ -610,11 +611,11 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 
 	blocks := make([]string, 16)
 	for _, line := range lines {
-		field := strings.Split(line, " ")
-		if strings.HasSuffix(field[0], ":") == false {
+		fields := strings.Fields(line)
+		if len(fields) > 0 && strings.HasSuffix(fields[0], ":") == false {
 			// new block section
 			if len(blocks) > 0 {
-				g, err := getBlock(field, blocks)
+				g, err := getBlock(fields, blocks)
 				if err != nil {
 					return &ret, err
 				}
