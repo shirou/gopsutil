@@ -40,6 +40,10 @@ func ProcessesWithContext(ctx context.Context) ([]*Process, error) {
 	return nil, common.ErrNotImplementedError
 }
 
+func ProcessesWithFields(ctx context.Context, f ...Field) ([]*Process, error) {
+	return nil, common.ErrNotImplementedError
+}
+
 func PidExistsWithContext(ctx context.Context, pid int32) (bool, error) {
 	pids, err := PidsWithContext(ctx)
 	if err != nil {
@@ -123,6 +127,9 @@ func (p *Process) Foreground() (bool, error) {
 }
 
 func (p *Process) ForegroundWithContext(ctx context.Context) (bool, error) {
+	return p.foregroundWithContext(ctx)
+}
+func (p *Process) foregroundWithContext(ctx context.Context) (bool, error) {
 	return false, common.ErrNotImplementedError
 }
 func (p *Process) Uids() ([]int32, error) {
@@ -329,4 +336,11 @@ func (p *Process) Username() (string, error) {
 
 func (p *Process) UsernameWithContext(ctx context.Context) (string, error) {
 	return "", common.ErrNotImplementedError
+}
+
+func (p *Process) prefetchFields(fields []Field) error {
+	ctx := context.Background()
+	p.genericPrefetchFields(ctx, fields)
+
+	return nil
 }

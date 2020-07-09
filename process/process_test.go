@@ -1,6 +1,7 @@
 package process
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -31,6 +32,12 @@ func skipIfNotImplementedErr(t *testing.T, err error) {
 func testGetProcess() Process {
 	checkPid := os.Getpid() // process.test
 	ret, _ := NewProcess(int32(checkPid))
+	return *ret
+}
+
+func testGetProcessWithFields(fields ...Field) Process {
+	checkPid := os.Getpid() // process.test
+	ret, _ := NewProcessWithFields(context.Background(), int32(checkPid), fields...)
 	return *ret
 }
 
@@ -86,11 +93,36 @@ func Test_NewProcess(t *testing.T) {
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
-	empty := &Process{}
-	if runtime.GOOS != "windows" { // Windows pid is 0
-		if empty == ret {
-			t.Errorf("error %v", ret)
-		}
+
+	retWithFields, err := NewProcessWithFields(context.Background(), int32(checkPid))
+	skipIfNotImplementedErr(t, err)
+	if err != nil {
+		t.Errorf("error %v", err)
+	}
+
+	tests := []struct {
+		name string
+		proc *Process
+	}{
+		{
+			name: "NewProcess",
+			proc: ret,
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: retWithFields,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			empty := &Process{}
+			if runtime.GOOS != "windows" { // Windows pid is 0
+				if empty == tt.proc {
+					t.Errorf("error %v", tt.proc)
+				}
+			}
+		})
 	}
 
 }
@@ -104,191 +136,408 @@ func Test_Process_memory_maps(t *testing.T) {
 		t.Errorf("error %v", err)
 	}
 
-	// ungrouped memory maps
-	mmaps, err := ret.MemoryMaps(false)
+	retWithFields, err := NewProcessWithFields(context.Background(), int32(checkPid), FieldMemoryMaps, FieldMemoryMapsGrouped)
 	skipIfNotImplementedErr(t, err)
 	if err != nil {
-		t.Errorf("memory map get error %v", err)
-	}
-	empty := MemoryMapsStat{}
-	for _, m := range *mmaps {
-		if m == empty {
-			t.Errorf("memory map get error %v", m)
-		}
+		t.Errorf("error %v", err)
 	}
 
-	// grouped memory maps
-	mmaps, err = ret.MemoryMaps(true)
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("memory map get error %v", err)
+	tests := []struct {
+		name string
+		proc *Process
+	}{
+		{
+			name: "NewProcess",
+			proc: ret,
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: retWithFields,
+		},
 	}
-	if len(*mmaps) != 1 {
-		t.Errorf("grouped memory maps length (%v) is not equal to 1", len(*mmaps))
-	}
-	if (*mmaps)[0] == empty {
-		t.Errorf("memory map is empty")
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// ungrouped memory maps
+			mmaps, err := tt.proc.MemoryMaps(false)
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("memory map get error %v", err)
+			}
+			empty := MemoryMapsStat{}
+			for _, m := range *mmaps {
+				if m == empty {
+					t.Errorf("memory map get error %v", m)
+				}
+			}
+
+			// grouped memory maps
+			mmaps, err = tt.proc.MemoryMaps(true)
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("memory map get error %v", err)
+			}
+			if len(*mmaps) != 1 {
+				t.Errorf("grouped memory maps length (%v) is not equal to 1", len(*mmaps))
+			}
+			if (*mmaps)[0] == empty {
+				t.Errorf("memory map is empty")
+			}
+		})
 	}
 }
 func Test_Process_MemoryInfo(t *testing.T) {
-	p := testGetProcess()
-
-	v, err := p.MemoryInfo()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("getting memory info error %v", err)
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(FieldMemoryInfo),
+		},
 	}
-	empty := MemoryInfoStat{}
-	if v == nil || *v == empty {
-		t.Errorf("could not get memory info %v", v)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, err := tt.proc.MemoryInfo()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("getting memory info error %v", err)
+			}
+			empty := MemoryInfoStat{}
+			if v == nil || *v == empty {
+				t.Errorf("could not get memory info %v", v)
+			}
+		})
 	}
 }
 
 func Test_Process_CmdLine(t *testing.T) {
-	p := testGetProcess()
-
-	v, err := p.Cmdline()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("getting cmdline error %v", err)
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(FieldCmdline),
+		},
 	}
-	if !strings.Contains(v, "process.test") {
-		t.Errorf("invalid cmd line %v", v)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, err := tt.proc.Cmdline()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("getting cmdline error %v", err)
+			}
+			if !strings.Contains(v, "process.test") {
+				t.Errorf("invalid cmd line %v", v)
+			}
+		})
 	}
 }
 
 func Test_Process_CmdLineSlice(t *testing.T) {
-	p := testGetProcess()
-
-	v, err := p.CmdlineSlice()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Fatalf("getting cmdline slice error %v", err)
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(FieldCmdlineSlice),
+		},
 	}
-	if !reflect.DeepEqual(v, os.Args) {
-		t.Errorf("returned cmdline slice not as expected:\nexp: %v\ngot: %v", os.Args, v)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, err := tt.proc.CmdlineSlice()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Fatalf("getting cmdline slice error %v", err)
+			}
+			if !reflect.DeepEqual(v, os.Args) {
+				t.Errorf("returned cmdline slice not as expected:\nexp: %v\ngot: %v", os.Args, v)
+			}
+		})
 	}
 }
 
 func Test_Process_Ppid(t *testing.T) {
-	p := testGetProcess()
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(FieldPpid),
+		},
+	}
 
-	v, err := p.Ppid()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("getting ppid error %v", err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, err := tt.proc.Ppid()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("getting ppid error %v", err)
+			}
+			if v == 0 {
+				t.Errorf("return value is 0 %v", v)
+			}
+		})
 	}
-	if v == 0 {
-		t.Errorf("return value is 0 %v", v)
-	}
+
 }
 
 func Test_Process_Status(t *testing.T) {
-	p := testGetProcess()
-
-	v, err := p.Status()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("getting status error %v", err)
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(FieldStatus),
+		},
 	}
-	if v != "R" && v != "S" {
-		t.Errorf("could not get state %v", v)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, err := tt.proc.Status()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("getting status error %v", err)
+			}
+			if v != "R" && v != "S" {
+				t.Errorf("could not get state %v", v)
+			}
+		})
 	}
 }
 
 func Test_Process_Terminal(t *testing.T) {
-	p := testGetProcess()
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(FieldTerminal),
+		},
+	}
 
-	_, err := p.Terminal()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("getting terminal error %v", err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := tt.proc.Terminal()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("getting terminal error %v", err)
+			}
+		})
 	}
 }
 
 func Test_Process_IOCounters(t *testing.T) {
-	p := testGetProcess()
-
-	v, err := p.IOCounters()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("getting iocounter error %v", err)
-		return
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(FieldIOCounters),
+		},
 	}
-	empty := &IOCountersStat{}
-	if v == empty {
-		t.Errorf("error %v", v)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, err := tt.proc.IOCounters()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("getting iocounter error %v", err)
+				return
+			}
+			empty := &IOCountersStat{}
+			if v == empty {
+				t.Errorf("error %v", v)
+			}
+		})
 	}
 }
 
 func Test_Process_NumCtx(t *testing.T) {
-	p := testGetProcess()
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(FieldNumCtxSwitches),
+		},
+	}
 
-	_, err := p.NumCtxSwitches()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("getting numctx error %v", err)
-		return
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := tt.proc.NumCtxSwitches()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("getting numctx error %v", err)
+				return
+			}
+		})
 	}
 }
 
 func Test_Process_Nice(t *testing.T) {
-	p := testGetProcess()
-
-	n, err := p.Nice()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("getting nice error %v", err)
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(FieldNice),
+		},
 	}
-	if n != 0 && n != 20 && n != 8 {
-		t.Errorf("invalid nice: %d", n)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			n, err := tt.proc.Nice()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("getting nice error %v", err)
+			}
+			if n != 0 && n != 20 && n != 8 {
+				t.Errorf("invalid nice: %d", n)
+			}
+		})
 	}
 }
 func Test_Process_NumThread(t *testing.T) {
-	p := testGetProcess()
-
-	n, err := p.NumThreads()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("getting NumThread error %v", err)
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(FieldNumThreads),
+		},
 	}
-	if n < 0 {
-		t.Errorf("invalid NumThread: %d", n)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			n, err := tt.proc.NumThreads()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("getting NumThread error %v", err)
+			}
+			if n < 0 {
+				t.Errorf("invalid NumThread: %d", n)
+			}
+		})
 	}
 }
 
 func Test_Process_Threads(t *testing.T) {
-	p := testGetProcess()
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(FieldNumThreads, FieldThreads),
+		},
+	}
 
-	n, err := p.NumThreads()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("getting NumThread error %v", err)
-	}
-	if n < 0 {
-		t.Errorf("invalid NumThread: %d", n)
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			n, err := tt.proc.NumThreads()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("getting NumThread error %v", err)
+			}
+			if n < 0 {
+				t.Errorf("invalid NumThread: %d", n)
+			}
 
-	ts, err := p.Threads()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("getting Threads error %v", err)
-	}
-	if len(ts) != int(n) {
-		t.Errorf("unexpected number of threads: %v vs %v", len(ts), n)
+			ts, err := tt.proc.Threads()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("getting Threads error %v", err)
+			}
+			if len(ts) != int(n) {
+				t.Errorf("unexpected number of threads: %v vs %v", len(ts), n)
+			}
+		})
 	}
 }
 
 func Test_Process_Name(t *testing.T) {
-	p := testGetProcess()
-
-	n, err := p.Name()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("getting name error %v", err)
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(FieldName),
+		},
 	}
-	if !strings.Contains(n, "process.test") {
-		t.Errorf("invalid Exe %s", n)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			n, err := tt.proc.Name()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("getting name error %v", err)
+			}
+			if !strings.Contains(n, "process.test") {
+				t.Errorf("invalid Exe %s", n)
+			}
+		})
 	}
 }
 func Test_Process_Long_Name(t *testing.T) {
@@ -321,31 +570,71 @@ func Test_Process_Long_Name(t *testing.T) {
 
 	assert.Nil(t, cmd.Start())
 	time.Sleep(100 * time.Millisecond)
+
 	p, err := NewProcess(int32(cmd.Process.Pid))
 	skipIfNotImplementedErr(t, err)
 	assert.Nil(t, err)
 
-	n, err := p.Name()
+	p2, err := NewProcessWithFields(context.Background(), int32(cmd.Process.Pid), FieldName)
 	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Fatalf("getting name error %v", err)
+	assert.Nil(t, err)
+
+	tests := []struct {
+		name string
+		proc *Process
+	}{
+		{
+			name: "NewProcess",
+			proc: p,
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: p2,
+		},
 	}
-	basename := filepath.Base(tmpfile.Name() + ".exe")
-	if basename != n {
-		t.Fatalf("%s != %s", basename, n)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			n, err := tt.proc.Name()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Fatalf("getting name error %v", err)
+			}
+			basename := filepath.Base(tmpfile.Name() + ".exe")
+			if basename != n {
+				t.Fatalf("%s != %s", basename, n)
+			}
+		})
 	}
+
 	cmd.Process.Kill()
 }
 func Test_Process_Exe(t *testing.T) {
-	p := testGetProcess()
-
-	n, err := p.Exe()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("getting Exe error %v", err)
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(FieldExe),
+		},
 	}
-	if !strings.Contains(n, "process.test") {
-		t.Errorf("invalid Exe %s", n)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			n, err := tt.proc.Exe()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("getting Exe error %v", err)
+			}
+			if !strings.Contains(n, "process.test") {
+				t.Errorf("invalid Exe %s", n)
+			}
+		})
 	}
 }
 
@@ -393,23 +682,39 @@ func Test_Process_CreateTime(t *testing.T) {
 		t.Skip("Skip CI")
 	}
 
-	p := testGetProcess()
-
-	c, err := p.CreateTime()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("error %v", err)
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(FieldCreateTime),
+		},
 	}
 
-	if c < 1420000000 {
-		t.Errorf("process created time is wrong.")
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c, err := tt.proc.CreateTime()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("error %v", err)
+			}
 
-	gotElapsed := time.Since(time.Unix(int64(c/1000), 0))
-	maxElapsed := time.Duration(5 * time.Second)
+			if c < 1420000000 {
+				t.Errorf("process created time is wrong.")
+			}
 
-	if gotElapsed >= maxElapsed {
-		t.Errorf("this process has not been running for %v", gotElapsed)
+			gotElapsed := time.Since(time.Unix(int64(c/1000), 0))
+			maxElapsed := time.Duration(5 * time.Second)
+
+			if gotElapsed >= maxElapsed {
+				t.Errorf("this process has not been running for %v", gotElapsed)
+			}
+		})
 	}
 }
 
@@ -430,7 +735,7 @@ func Test_Parent(t *testing.T) {
 }
 
 func Test_Connections(t *testing.T) {
-	p := testGetProcess()
+	testTerminated := make(chan interface{})
 	ch0 := make(chan string)
 	ch1 := make(chan string)
 	go func() { // TCP listening goroutine
@@ -455,7 +760,9 @@ func Test_Connections(t *testing.T) {
 	}()
 	go func() { // TCP client goroutine
 		tcpServerAddr := <-ch0
-		net.Dial("tcp", tcpServerAddr)
+		conn, _ := net.Dial("tcp", tcpServerAddr)
+		<-testTerminated
+		conn.Close()
 	}()
 
 	tcpServerAddr := <-ch1
@@ -464,23 +771,44 @@ func Test_Connections(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to parse tcpServerAddr port: %v", err)
 	}
-	c, err := p.Connections()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("error %v", err)
+
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(FieldConnections),
+		},
 	}
-	if len(c) == 0 {
-		t.Errorf("no connections found")
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c, err := tt.proc.Connections()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("error %v", err)
+			}
+			if len(c) == 0 {
+				t.Errorf("no connections found")
+			}
+			found := 0
+			for _, connection := range c {
+				if connection.Status == "ESTABLISHED" && (connection.Laddr.IP == tcpServerAddrIP && connection.Laddr.Port == uint32(tcpServerAddrPort)) || (connection.Raddr.IP == tcpServerAddrIP && connection.Raddr.Port == uint32(tcpServerAddrPort)) {
+					found++
+				}
+			}
+			if found != 2 { // two established connections, one for the server, the other for the client
+				t.Errorf(fmt.Sprintf("wrong connections: %+v", c))
+			}
+		})
 	}
-	found := 0
-	for _, connection := range c {
-		if connection.Status == "ESTABLISHED" && (connection.Laddr.IP == tcpServerAddrIP && connection.Laddr.Port == uint32(tcpServerAddrPort)) || (connection.Raddr.IP == tcpServerAddrIP && connection.Raddr.Port == uint32(tcpServerAddrPort)) {
-			found++
-		}
-	}
-	if found != 2 { // two established connections, one for the server, the other for the client
-		t.Errorf(fmt.Sprintf("wrong connections: %+v", c))
-	}
+
+	close(testTerminated)
 }
 
 func Test_Children(t *testing.T) {
@@ -516,16 +844,32 @@ func Test_Children(t *testing.T) {
 }
 
 func Test_Username(t *testing.T) {
-	myPid := os.Getpid()
 	currentUser, _ := user.Current()
 	myUsername := currentUser.Username
 
-	process, _ := NewProcess(int32(myPid))
-	pidUsername, err := process.Username()
-	skipIfNotImplementedErr(t, err)
-	assert.Equal(t, myUsername, pidUsername)
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(FieldUsername),
+		},
+	}
 
-	t.Log(pidUsername)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pidUsername, err := tt.proc.Username()
+			skipIfNotImplementedErr(t, err)
+			assert.Equal(t, myUsername, pidUsername)
+			t.Log(pidUsername)
+		})
+	}
+
 }
 
 func Test_CPUTimes(t *testing.T) {
@@ -561,18 +905,31 @@ func Test_CPUTimes(t *testing.T) {
 }
 
 func Test_OpenFiles(t *testing.T) {
-	pid := os.Getpid()
-	p, err := NewProcess(int32(pid))
-	skipIfNotImplementedErr(t, err)
-	assert.Nil(t, err)
+	tests := []struct {
+		name string
+		proc Process
+	}{
+		{
+			name: "NewProcess",
+			proc: testGetProcess(),
+		},
+		{
+			name: "NewProcessWithFields",
+			proc: testGetProcessWithFields(FieldOpenFiles),
+		},
+	}
 
-	v, err := p.OpenFiles()
-	skipIfNotImplementedErr(t, err)
-	assert.Nil(t, err)
-	assert.NotEmpty(t, v) // test always open files.
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, err := tt.proc.OpenFiles()
+			skipIfNotImplementedErr(t, err)
+			assert.Nil(t, err)
+			assert.NotEmpty(t, v) // test always open files.
 
-	for _, vv := range v {
-		assert.NotEqual(t, "", vv.Path)
+			for _, vv := range v {
+				assert.NotEqual(t, "", vv.Path)
+			}
+		})
 	}
 }
 
@@ -639,5 +996,363 @@ func Test_AllProcesses_cmdLine(t *testing.T) {
 
 			t.Logf("Process #%v: Name: %v / CmdLine: %v\n", proc.Pid, exeName, cmdLine)
 		}
+	}
+}
+
+func Test_Processes(t *testing.T) {
+	myPID := os.Getpid()
+
+	procs, err := Processes()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	procsFields, err := ProcessesWithFields(context.Background(), FieldCmdlineSlice)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name  string
+		procs []*Process
+	}{
+		{
+			name:  "Processes",
+			procs: procs,
+		},
+		{
+			name:  "ProcessesWithFields",
+			procs: procsFields,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			found := false
+
+			for _, proc := range tt.procs {
+				if proc.Pid == int32(myPID) {
+					found = true
+					v, err := proc.CmdlineSlice()
+					skipIfNotImplementedErr(t, err)
+					if err != nil {
+						t.Fatalf("getting cmdline slice error %v", err)
+					}
+					if !reflect.DeepEqual(v, os.Args) {
+						t.Errorf("returned cmdline slice not as expected:\nexp: %v\ngot: %v", os.Args, v)
+					}
+
+					break
+				}
+			}
+
+			if !found {
+				t.Error("not found myself in Processes list")
+			}
+		})
+	}
+}
+
+func Test_AllFields(t *testing.T) {
+	procAllFields := testGetProcessWithFields(AllFields...)
+
+	var (
+		resultDynamic, resultField, resultAllFields     interface{}
+		errDynamic, errField, errAllFields, errNoFields error
+	)
+
+	for _, f := range AllFields {
+		procDynamic := testGetProcess()
+		procField := testGetProcessWithFields(f)
+		procNoField := testGetProcessWithFields()
+		stableValue := true
+
+		switch f {
+		case FieldBackground:
+			resultDynamic, errDynamic = procDynamic.Background()
+			resultField, errField = procField.Background()
+			resultAllFields, errAllFields = procAllFields.Background()
+			_, errNoFields = procNoField.Background()
+		case FieldCmdline:
+			resultDynamic, errDynamic = procDynamic.Cmdline()
+			resultField, errField = procField.Cmdline()
+			resultAllFields, errAllFields = procAllFields.Cmdline()
+			_, errNoFields = procNoField.Cmdline()
+		case FieldCmdlineSlice:
+			resultDynamic, errDynamic = procDynamic.CmdlineSlice()
+			resultField, errField = procField.CmdlineSlice()
+			resultAllFields, errAllFields = procAllFields.CmdlineSlice()
+			_, errNoFields = procNoField.CmdlineSlice()
+		case FieldConnections:
+			resultDynamic, errDynamic = procDynamic.Connections()
+			resultField, errField = procField.Connections()
+			resultAllFields, errAllFields = procAllFields.Connections()
+			_, errNoFields = procNoField.Connections()
+		case FieldCPUPercent:
+			resultDynamic, errDynamic = procDynamic.CPUPercent()
+			resultField, errField = procField.CPUPercent()
+			resultAllFields, errAllFields = procAllFields.CPUPercent()
+			_, errNoFields = procNoField.CPUPercent()
+			stableValue = false
+		case FieldCreateTime:
+			resultDynamic, errDynamic = procDynamic.CreateTime()
+			resultField, errField = procField.CreateTime()
+			resultAllFields, errAllFields = procAllFields.CreateTime()
+			_, errNoFields = procNoField.CreateTime()
+		case FieldCwd:
+			resultDynamic, errDynamic = procDynamic.Cwd()
+			resultField, errField = procField.Cwd()
+			resultAllFields, errAllFields = procAllFields.Cwd()
+			_, errNoFields = procNoField.Cwd()
+		case FieldExe:
+			resultDynamic, errDynamic = procDynamic.Exe()
+			resultField, errField = procField.Exe()
+			resultAllFields, errAllFields = procAllFields.Exe()
+			_, errNoFields = procNoField.Exe()
+		case FieldForeground:
+			resultDynamic, errDynamic = procDynamic.Foreground()
+			resultField, errField = procField.Foreground()
+			resultAllFields, errAllFields = procAllFields.Foreground()
+			_, errNoFields = procNoField.Foreground()
+		case FieldGids:
+			resultDynamic, errDynamic = procDynamic.Gids()
+			resultField, errField = procField.Gids()
+			resultAllFields, errAllFields = procAllFields.Gids()
+			_, errNoFields = procNoField.Gids()
+		case FieldIOCounters:
+			resultDynamic, errDynamic = procDynamic.IOCounters()
+			resultField, errField = procField.IOCounters()
+			resultAllFields, errAllFields = procAllFields.IOCounters()
+			_, errNoFields = procNoField.IOCounters()
+			stableValue = false
+		case FieldIOnice:
+			resultDynamic, errDynamic = procDynamic.IOnice()
+			resultField, errField = procField.IOnice()
+			resultAllFields, errAllFields = procAllFields.IOnice()
+			_, errNoFields = procNoField.IOnice()
+		case FieldIsRunning:
+			resultDynamic, errDynamic = procDynamic.IsRunning()
+			resultField, errField = procField.IsRunning()
+			resultAllFields, errAllFields = procAllFields.IsRunning()
+			_, errNoFields = procNoField.IsRunning()
+		case FieldMemoryInfo:
+			resultDynamic, errDynamic = procDynamic.MemoryInfo()
+			resultField, errField = procField.MemoryInfo()
+			resultAllFields, errAllFields = procAllFields.MemoryInfo()
+			_, errNoFields = procNoField.MemoryInfo()
+			stableValue = false
+		case FieldMemoryInfoEx:
+			resultDynamic, errDynamic = procDynamic.MemoryInfoEx()
+			resultField, errField = procField.MemoryInfoEx()
+			resultAllFields, errAllFields = procAllFields.MemoryInfoEx()
+			_, errNoFields = procNoField.MemoryInfoEx()
+			stableValue = false
+		case FieldMemoryMaps:
+			resultDynamic, errDynamic = procDynamic.MemoryMaps(false)
+			resultField, errField = procField.MemoryMaps(false)
+			resultAllFields, errAllFields = procAllFields.MemoryMaps(false)
+			_, errNoFields = procNoField.MemoryMaps(false)
+			stableValue = false
+		case FieldMemoryMapsGrouped:
+			resultDynamic, errDynamic = procDynamic.MemoryMaps(true)
+			resultField, errField = procField.MemoryMaps(true)
+			resultAllFields, errAllFields = procAllFields.MemoryMaps(true)
+			_, errNoFields = procNoField.MemoryMaps(true)
+			stableValue = false
+		case FieldMemoryPercent:
+			resultDynamic, errDynamic = procDynamic.MemoryPercent()
+			resultField, errField = procField.MemoryPercent()
+			resultAllFields, errAllFields = procAllFields.MemoryPercent()
+			_, errNoFields = procNoField.MemoryPercent()
+			stableValue = false
+		case FieldName:
+			resultDynamic, errDynamic = procDynamic.Name()
+			resultField, errField = procField.Name()
+			resultAllFields, errAllFields = procAllFields.Name()
+			_, errNoFields = procNoField.Name()
+		case FieldNetIOCounters:
+			resultDynamic, errDynamic = procDynamic.NetIOCounters(false)
+			resultField, errField = procField.NetIOCounters(false)
+			resultAllFields, errAllFields = procAllFields.NetIOCounters(false)
+			_, errNoFields = procNoField.NetIOCounters(false)
+			stableValue = false
+		case FieldNetIOCountersPerNic:
+			resultDynamic, errDynamic = procDynamic.NetIOCounters(true)
+			resultField, errField = procField.NetIOCounters(true)
+			resultAllFields, errAllFields = procAllFields.NetIOCounters(true)
+			_, errNoFields = procNoField.NetIOCounters(true)
+			stableValue = false
+		case FieldNice:
+			resultDynamic, errDynamic = procDynamic.Nice()
+			resultField, errField = procField.Nice()
+			resultAllFields, errAllFields = procAllFields.Nice()
+			_, errNoFields = procNoField.Nice()
+		case FieldNumCtxSwitches:
+			resultDynamic, errDynamic = procDynamic.NumCtxSwitches()
+			resultField, errField = procField.NumCtxSwitches()
+			resultAllFields, errAllFields = procAllFields.NumCtxSwitches()
+			_, errNoFields = procNoField.NumCtxSwitches()
+			stableValue = false
+		case FieldNumFDs:
+			resultDynamic, errDynamic = procDynamic.NumFDs()
+			resultField, errField = procField.NumFDs()
+			resultAllFields, errAllFields = procAllFields.NumFDs()
+			_, errNoFields = procNoField.NumFDs()
+		case FieldNumThreads:
+			resultDynamic, errDynamic = procDynamic.NumThreads()
+			resultField, errField = procField.NumThreads()
+			resultAllFields, errAllFields = procAllFields.NumThreads()
+			_, errNoFields = procNoField.NumThreads()
+		case FieldOpenFiles:
+			resultDynamic, errDynamic = procDynamic.OpenFiles()
+			resultField, errField = procField.OpenFiles()
+			resultAllFields, errAllFields = procAllFields.OpenFiles()
+			_, errNoFields = procNoField.OpenFiles()
+		case FieldPageFaults:
+			resultDynamic, errDynamic = procDynamic.PageFaults()
+			resultField, errField = procField.PageFaults()
+			resultAllFields, errAllFields = procAllFields.PageFaults()
+			_, errNoFields = procNoField.PageFaults()
+			stableValue = false
+		case FieldPpid:
+			resultDynamic, errDynamic = procDynamic.Ppid()
+			resultField, errField = procField.Ppid()
+			resultAllFields, errAllFields = procAllFields.Ppid()
+			_, errNoFields = procNoField.Ppid()
+		case FieldRlimit:
+			resultDynamic, errDynamic = procDynamic.Rlimit()
+			resultField, errField = procField.Rlimit()
+			resultAllFields, errAllFields = procAllFields.Rlimit()
+			_, errNoFields = procNoField.Rlimit()
+		case FieldRlimitUsage:
+			resultDynamic, errDynamic = procDynamic.RlimitUsage(true)
+			resultField, errField = procField.RlimitUsage(true)
+			resultAllFields, errAllFields = procAllFields.RlimitUsage(true)
+			_, errNoFields = procNoField.RlimitUsage(true)
+			stableValue = false
+		case FieldStatus:
+			resultDynamic, errDynamic = procDynamic.Status()
+			resultField, errField = procField.Status()
+			resultAllFields, errAllFields = procAllFields.Status()
+			_, errNoFields = procNoField.Status()
+		case FieldTerminal:
+			resultDynamic, errDynamic = procDynamic.Terminal()
+			resultField, errField = procField.Terminal()
+			resultAllFields, errAllFields = procAllFields.Terminal()
+			_, errNoFields = procNoField.Terminal()
+		case FieldTgid:
+			resultDynamic, errDynamic = procDynamic.Tgid()
+			resultField, errField = procField.Tgid()
+			resultAllFields, errAllFields = procAllFields.Tgid()
+			_, errNoFields = procNoField.Tgid()
+		case FieldThreads:
+			resultDynamic, errDynamic = procDynamic.Threads()
+			resultField, errField = procField.Threads()
+			resultAllFields, errAllFields = procAllFields.Threads()
+			_, errNoFields = procNoField.Threads()
+			stableValue = false
+		case FieldTimes:
+			resultDynamic, errDynamic = procDynamic.Times()
+			resultField, errField = procField.Times()
+			resultAllFields, errAllFields = procAllFields.Times()
+			_, errNoFields = procNoField.Times()
+			stableValue = false
+		case FieldUids:
+			resultDynamic, errDynamic = procDynamic.Uids()
+			resultField, errField = procField.Uids()
+			resultAllFields, errAllFields = procAllFields.Uids()
+			_, errNoFields = procNoField.Uids()
+		case FieldUsername:
+			resultDynamic, errDynamic = procDynamic.Username()
+			resultField, errField = procField.Username()
+			resultAllFields, errAllFields = procAllFields.Username()
+			_, errNoFields = procNoField.Username()
+		}
+
+		if errNoFields != ErrorFieldNotRequested && errNoFields != common.ErrNotImplementedError {
+			t.Errorf("Field %v: procNoField err = %v, want %v", f, errNoFields, ErrorFieldNotRequested)
+		}
+
+		if f.String() == "unknown" {
+			t.Errorf("Field #%d don't have a String() value", f)
+		}
+
+		if stableValue && !reflect.DeepEqual(resultField, resultDynamic) {
+			t.Errorf("procField.%v() = %v, want %v", f, resultField, resultDynamic)
+		}
+		if stableValue && !reflect.DeepEqual(resultAllFields, resultDynamic) {
+			t.Errorf("procAllFields.%v() = %v, want %v", f, resultAllFields, resultDynamic)
+		}
+		if errField != errDynamic {
+			t.Errorf("procField.%v() error = %v, want %v", f, errField, errDynamic)
+		}
+		if errAllFields != errDynamic {
+			t.Errorf("procAllFields.%v() error = %v, want %v", f, errAllFields, errDynamic)
+		}
+	}
+}
+
+// Benchmark_NewProcess test that NewProcessWithFields provide performance gain.
+func Benchmark_NewProcessWithFields(b *testing.B) {
+	checkPid := int32(os.Getpid())
+
+	for _, name := range []string{"NewProcess", "WithFields"} {
+		b.Run(name, func(b *testing.B) {
+			for n := 0; n < b.N; n++ {
+				var (
+					proc *Process
+					err  error
+				)
+
+				if name == "NewProcess" {
+					proc, err = NewProcess(checkPid)
+				} else {
+					proc, err = NewProcessWithFields(context.Background(), checkPid, FieldUsername, FieldCPUPercent, FieldMemoryPercent, FieldStatus, FieldMemoryInfo, FieldTimes, FieldCmdline)
+				}
+
+				if err != nil {
+					b.Error(err)
+					return
+				}
+
+				_, err = proc.Username()
+				if err != nil {
+					b.Error(err)
+					return
+				}
+
+				_, err = proc.CPUPercent()
+				if err != nil {
+					b.Error(err)
+					return
+				}
+
+				_, err = proc.MemoryPercent()
+				if err != nil {
+					b.Error(err)
+					return
+				}
+				_, err = proc.Status()
+				if err != nil {
+					b.Error(err)
+					return
+				}
+				_, err = proc.MemoryInfo()
+				if err != nil {
+					b.Error(err)
+					return
+				}
+				_, err = proc.Times()
+				if err != nil {
+					b.Error(err)
+					return
+				}
+				_, err = proc.Cmdline()
+				if err != nil {
+					b.Error(err)
+					return
+				}
+			}
+		})
 	}
 }

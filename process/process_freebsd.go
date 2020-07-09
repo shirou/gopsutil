@@ -13,6 +13,7 @@ import (
 
 	cpu "github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/mem"
 	net "github.com/shirou/gopsutil/net"
 	"golang.org/x/sys/unix"
 )
@@ -43,6 +44,10 @@ func (p *Process) Ppid() (int32, error) {
 }
 
 func (p *Process) PpidWithContext(ctx context.Context) (int32, error) {
+	if !p.isFieldRequested(FieldPpid) {
+		return 0, ErrorFieldNotRequested
+	}
+
 	k, err := p.getKProc()
 	if err != nil {
 		return 0, err
@@ -55,6 +60,10 @@ func (p *Process) Name() (string, error) {
 }
 
 func (p *Process) NameWithContext(ctx context.Context) (string, error) {
+	if !p.isFieldRequested(FieldName) {
+		return "", ErrorFieldNotRequested
+	}
+
 	k, err := p.getKProc()
 	if err != nil {
 		return "", err
@@ -62,7 +71,7 @@ func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 	name := common.IntToString(k.Comm[:])
 
 	if len(name) >= 15 {
-		cmdlineSlice, err := p.CmdlineSliceWithContext(ctx)
+		cmdlineSlice, err := p.cmdlineSliceWithContext(ctx)
 		if err != nil {
 			return "", err
 		}
@@ -94,19 +103,12 @@ func (p *Process) Cmdline() (string, error) {
 }
 
 func (p *Process) CmdlineWithContext(ctx context.Context) (string, error) {
-	mib := []int32{CTLKern, KernProc, KernProcArgs, p.Pid}
-	buf, _, err := common.CallSyscall(mib)
-	if err != nil {
-		return "", err
+	if !p.isFieldRequested(FieldCmdline) {
+		return "", ErrorFieldNotRequested
 	}
-	ret := strings.FieldsFunc(string(buf), func(r rune) bool {
-		if r == '\u0000' {
-			return true
-		}
-		return false
-	})
 
-	return strings.Join(ret, " "), nil
+	ret, err := p.cmdlineSliceWithContext(ctx)
+	return strings.Join(ret, " "), err
 }
 
 func (p *Process) CmdlineSlice() ([]string, error) {
@@ -114,6 +116,33 @@ func (p *Process) CmdlineSlice() ([]string, error) {
 }
 
 func (p *Process) CmdlineSliceWithContext(ctx context.Context) ([]string, error) {
+	if !p.isFieldRequested(FieldCmdlineSlice) {
+		return nil, ErrorFieldNotRequested
+	}
+
+	return p.cmdlineSliceWithContext(ctx)
+}
+
+func (p *Process) cmdlineSliceWithContext(ctx context.Context) ([]string, error) {
+	cacheKey := "cmdlineSlice"
+	v, ok := p.cache[cacheKey].(valueOrError)
+
+	if !ok {
+		tmp, err := p.cmdlineSliceWithContextNoCache(ctx)
+		v = valueOrError{
+			value: tmp,
+			err:   err,
+		}
+	}
+
+	if p.cache != nil {
+		p.cache[cacheKey] = v
+	}
+
+	return v.value.([]string), v.err
+}
+
+func (p *Process) cmdlineSliceWithContextNoCache(ctx context.Context) ([]string, error) {
 	mib := []int32{CTLKern, KernProc, KernProcArgs, p.Pid}
 	buf, _, err := common.CallSyscall(mib)
 	if err != nil {
@@ -156,6 +185,10 @@ func (p *Process) Status() (string, error) {
 }
 
 func (p *Process) StatusWithContext(ctx context.Context) (string, error) {
+	if !p.isFieldRequested(FieldStatus) {
+		return "", ErrorFieldNotRequested
+	}
+
 	k, err := p.getKProc()
 	if err != nil {
 		return "", err
@@ -186,6 +219,33 @@ func (p *Process) Foreground() (bool, error) {
 }
 
 func (p *Process) ForegroundWithContext(ctx context.Context) (bool, error) {
+	if !p.isFieldRequested(FieldForeground) {
+		return false, ErrorFieldNotRequested
+	}
+
+	return p.foregroundWithContext(ctx)
+}
+
+func (p *Process) foregroundWithContext(ctx context.Context) (bool, error) {
+	cacheKey := "foreground"
+	v, ok := p.cache[cacheKey].(valueOrError)
+
+	if !ok {
+		tmp, err := p.foregroundWithContextNoCache(ctx)
+		v = valueOrError{
+			value: tmp,
+			err:   err,
+		}
+	}
+
+	if p.cache != nil {
+		p.cache[cacheKey] = v
+	}
+
+	return v.value.(bool), v.err
+}
+
+func (p *Process) foregroundWithContextNoCache(ctx context.Context) (bool, error) {
 	// see https://github.com/shirou/gopsutil/issues/596#issuecomment-432707831 for implementation details
 	pid := p.Pid
 	ps, err := exec.LookPath("ps")
@@ -204,6 +264,10 @@ func (p *Process) Uids() ([]int32, error) {
 }
 
 func (p *Process) UidsWithContext(ctx context.Context) ([]int32, error) {
+	if !p.isFieldRequested(FieldUids) {
+		return nil, ErrorFieldNotRequested
+	}
+
 	k, err := p.getKProc()
 	if err != nil {
 		return nil, err
@@ -220,6 +284,10 @@ func (p *Process) Gids() ([]int32, error) {
 }
 
 func (p *Process) GidsWithContext(ctx context.Context) ([]int32, error) {
+	if !p.isFieldRequested(FieldGids) {
+		return nil, ErrorFieldNotRequested
+	}
+
 	k, err := p.getKProc()
 	if err != nil {
 		return nil, err
@@ -235,6 +303,29 @@ func (p *Process) Terminal() (string, error) {
 }
 
 func (p *Process) TerminalWithContext(ctx context.Context) (string, error) {
+	if !p.isFieldRequested(FieldTerminal) {
+		return "", ErrorFieldNotRequested
+	}
+
+	cacheKey := "Terminal"
+	v, ok := p.cache[cacheKey].(valueOrError)
+
+	if !ok {
+		tmp, err := p.terminalWithContextNoCache(ctx)
+		v = valueOrError{
+			value: tmp,
+			err:   err,
+		}
+	}
+
+	if p.cache != nil {
+		p.cache[cacheKey] = v
+	}
+
+	return v.value.(string), v.err
+}
+
+func (p *Process) terminalWithContextNoCache(ctx context.Context) (string, error) {
 	k, err := p.getKProc()
 	if err != nil {
 		return "", err
@@ -254,6 +345,10 @@ func (p *Process) Nice() (int32, error) {
 }
 
 func (p *Process) NiceWithContext(ctx context.Context) (int32, error) {
+	if !p.isFieldRequested(FieldNice) {
+		return 0, ErrorFieldNotRequested
+	}
+
 	k, err := p.getKProc()
 	if err != nil {
 		return 0, err
@@ -288,6 +383,10 @@ func (p *Process) IOCounters() (*IOCountersStat, error) {
 }
 
 func (p *Process) IOCountersWithContext(ctx context.Context) (*IOCountersStat, error) {
+	if !p.isFieldRequested(FieldIOCounters) {
+		return nil, ErrorFieldNotRequested
+	}
+
 	k, err := p.getKProc()
 	if err != nil {
 		return nil, err
@@ -316,6 +415,10 @@ func (p *Process) NumThreads() (int32, error) {
 }
 
 func (p *Process) NumThreadsWithContext(ctx context.Context) (int32, error) {
+	if !p.isFieldRequested(FieldNumThreads) {
+		return 0, ErrorFieldNotRequested
+	}
+
 	k, err := p.getKProc()
 	if err != nil {
 		return 0, err
@@ -336,6 +439,10 @@ func (p *Process) Times() (*cpu.TimesStat, error) {
 }
 
 func (p *Process) TimesWithContext(ctx context.Context) (*cpu.TimesStat, error) {
+	if !p.isFieldRequested(FieldTimes) {
+		return nil, ErrorFieldNotRequested
+	}
+
 	k, err := p.getKProc()
 	if err != nil {
 		return nil, err
@@ -358,6 +465,29 @@ func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
 }
 
 func (p *Process) MemoryInfoWithContext(ctx context.Context) (*MemoryInfoStat, error) {
+	if !p.isFieldRequested(FieldMemoryInfo) {
+		return nil, ErrorFieldNotRequested
+	}
+
+	cacheKey := "MemoryInfo"
+	v, ok := p.cache[cacheKey].(valueOrError)
+
+	if !ok {
+		tmp, err := p.memoryInfoWithContextNoCache(ctx)
+		v = valueOrError{
+			value: tmp,
+			err:   err,
+		}
+	}
+
+	if p.cache != nil {
+		p.cache[cacheKey] = v
+	}
+
+	return v.value.(*MemoryInfoStat), v.err
+}
+
+func (p *Process) memoryInfoWithContextNoCache(ctx context.Context) (*MemoryInfoStat, error) {
 	k, err := p.getKProc()
 	if err != nil {
 		return nil, err
@@ -398,9 +528,24 @@ func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	fields := make([]Field, 0, len(p.requestedFields))
+	for f := range p.requestedFields {
+		fields = append(fields, f)
+	}
+
 	ret := make([]*Process, 0, len(pids))
 	for _, pid := range pids {
-		np, err := NewProcess(pid)
+		var (
+			np  *Process
+			err error
+		)
+
+		if p.requestedFields != nil {
+			np, err = NewProcessWithFields(ctx, pid, fields...)
+		} else {
+			np, err = NewProcess(pid)
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -485,6 +630,51 @@ func ProcessesWithContext(ctx context.Context) ([]*Process, error) {
 	return results, nil
 }
 
+func ProcessesWithFields(ctx context.Context, fields ...Field) ([]*Process, error) {
+	results := []*Process{}
+
+	mib := []int32{CTLKern, KernProc, KernProcProc, 0}
+	buf, length, err := common.CallSyscall(mib)
+	if err != nil {
+		return results, err
+	}
+
+	machineMemory := uint64(0)
+	for _, f := range fields {
+		if f == FieldMemoryPercent {
+			tmp, err := mem.VirtualMemory()
+			if err == nil {
+				machineMemory = tmp.Total
+			}
+		}
+	}
+
+	// get kinfo_proc size
+	count := int(length / uint64(sizeOfKinfoProc))
+
+	// parse buf to procs
+	for i := 0; i < count; i++ {
+		b := buf[i*sizeOfKinfoProc : (i+1)*sizeOfKinfoProc]
+		k, err := parseKinfoProc(b)
+		if err != nil {
+			continue
+		}
+		p, err := newProcessWithFields(
+			ctx,
+			int32(k.Pid),
+			map[string]interface{}{"VirtualMemory": machineMemory, "getKProc": valueOrError{value: &k, err: nil}},
+			fields...,
+		)
+		if err != nil {
+			continue
+		}
+
+		results = append(results, p)
+	}
+
+	return results, nil
+}
+
 func parseKinfoProc(buf []byte) (KinfoProc, error) {
 	var k KinfoProc
 	br := bytes.NewReader(buf)
@@ -497,6 +687,25 @@ func (p *Process) getKProc() (*KinfoProc, error) {
 }
 
 func (p *Process) getKProcWithContext(ctx context.Context) (*KinfoProc, error) {
+	cacheKey := "getKProc"
+	v, ok := p.cache[cacheKey].(valueOrError)
+
+	if !ok {
+		tmp, err := p.getKProcWithContextNoCache(ctx)
+		v = valueOrError{
+			value: tmp,
+			err:   err,
+		}
+	}
+
+	if p.cache != nil {
+		p.cache[cacheKey] = v
+	}
+
+	return v.value.(*KinfoProc), v.err
+}
+
+func (p *Process) getKProcWithContextNoCache(ctx context.Context) (*KinfoProc, error) {
 	mib := []int32{CTLKern, KernProc, KernProcPID, p.Pid}
 
 	buf, length, err := common.CallSyscall(mib)
@@ -512,4 +721,11 @@ func (p *Process) getKProcWithContext(ctx context.Context) (*KinfoProc, error) {
 		return nil, err
 	}
 	return &k, nil
+}
+
+func (p *Process) prefetchFields(fields []Field) error {
+	ctx := context.Background()
+	p.genericPrefetchFields(ctx, fields)
+
+	return nil
 }

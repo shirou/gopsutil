@@ -17,25 +17,192 @@ var (
 	invoke                 common.Invoker = common.Invoke{}
 	ErrorNoChildren                       = errors.New("process does not have children")
 	ErrorProcessNotRunning                = errors.New("process does not exist")
+	ErrorFieldNotRequested                = errors.New("this fields was not requested")
+	ErrorRequireUpdate                    = errors.New("this method require updates and cannot be used with NewProcessWithFields")
 )
 
+type Field uint
+
+const (
+	// FieldChildren -- children is not pre-fetchable
+	FieldBackground Field = iota + 1
+	FieldCmdline
+	FieldCmdlineSlice
+	FieldConnections
+	FieldCPUPercent
+	FieldCreateTime
+	FieldCwd
+	FieldExe
+	FieldForeground
+	FieldGids
+	FieldIOCounters
+	FieldIOnice
+	FieldIsRunning
+	FieldMemoryInfo
+	FieldMemoryInfoEx
+	FieldMemoryMaps
+	FieldMemoryMapsGrouped
+	FieldMemoryPercent
+	FieldName
+	FieldNetIOCounters
+	FieldNetIOCountersPerNic
+	FieldNice
+	FieldNumCtxSwitches
+	FieldNumFDs
+	FieldNumThreads
+	FieldOpenFiles
+	FieldPageFaults
+	// FieldParent -- parent is not pre-fetchable
+	FieldPpid
+	FieldRlimit
+	FieldRlimitUsage
+	FieldStatus
+	FieldTerminal
+	FieldTgid
+	FieldThreads
+	FieldTimes
+	FieldUids
+	FieldUsername
+)
+
+func (f Field) String() string {
+	switch f {
+	case FieldBackground:
+		return "Background"
+	case FieldCmdline:
+		return "Cmdline"
+	case FieldCmdlineSlice:
+		return "CmdlineSlice"
+	case FieldConnections:
+		return "Connections"
+	case FieldCPUPercent:
+		return "CPUPercent"
+	case FieldCreateTime:
+		return "CreateTime"
+	case FieldCwd:
+		return "Cwd"
+	case FieldExe:
+		return "Exe"
+	case FieldForeground:
+		return "Foreground"
+	case FieldGids:
+		return "Gids"
+	case FieldIOCounters:
+		return "IOCounters"
+	case FieldIOnice:
+		return "IOnice"
+	case FieldIsRunning:
+		return "IsRunning"
+	case FieldMemoryInfo:
+		return "MemoryInfo"
+	case FieldMemoryInfoEx:
+		return "MemoryInfoEx"
+	case FieldMemoryMaps:
+		return "MemoryMaps"
+	case FieldMemoryMapsGrouped:
+		return "MemoryMapsGrouped"
+	case FieldMemoryPercent:
+		return "MemoryPercent"
+	case FieldName:
+		return "Name"
+	case FieldNetIOCounters:
+		return "NetIOCounters"
+	case FieldNetIOCountersPerNic:
+		return "NetIOCountersPerNic"
+	case FieldNice:
+		return "Nice"
+	case FieldNumCtxSwitches:
+		return "NumCtxSwitches"
+	case FieldNumFDs:
+		return "NumFDs"
+	case FieldNumThreads:
+		return "NumThreads"
+	case FieldOpenFiles:
+		return "OpenFiles"
+	case FieldPageFaults:
+		return "PageFaults"
+	case FieldPpid:
+		return "Ppid"
+	case FieldRlimit:
+		return "Rlimit"
+	case FieldRlimitUsage:
+		return "RlimitUsage"
+	case FieldStatus:
+		return "Status"
+	case FieldTerminal:
+		return "Terminal"
+	case FieldTgid:
+		return "Tgid"
+	case FieldThreads:
+		return "Threads"
+	case FieldTimes:
+		return "Times"
+	case FieldUids:
+		return "Uids"
+	case FieldUsername:
+		return "Username"
+	default:
+		return "unknown"
+	}
+}
+
+var AllFields = []Field{
+	FieldBackground,
+	FieldCmdline,
+	FieldCmdlineSlice,
+	FieldConnections,
+	FieldCPUPercent,
+	FieldCreateTime,
+	FieldCwd,
+	FieldExe,
+	FieldForeground,
+	FieldGids,
+	FieldIOCounters,
+	FieldIOnice,
+	FieldIsRunning,
+	FieldMemoryInfo,
+	FieldMemoryInfoEx,
+	FieldMemoryMaps,
+	FieldMemoryMapsGrouped,
+	FieldMemoryPercent,
+	FieldName,
+	FieldNetIOCounters,
+	FieldNetIOCountersPerNic,
+	FieldNice,
+	FieldNumCtxSwitches,
+	FieldNumFDs,
+	FieldNumThreads,
+	FieldOpenFiles,
+	FieldPageFaults,
+	FieldPpid,
+	FieldRlimit,
+	FieldRlimitUsage,
+	FieldStatus,
+	FieldTerminal,
+	FieldTgid,
+	FieldThreads,
+	FieldTimes,
+	FieldUids,
+	FieldUsername,
+}
+
 type Process struct {
-	Pid            int32 `json:"pid"`
-	name           string
-	status         string
-	parent         int32
-	numCtxSwitches *NumCtxSwitchesStat
-	uids           []int32
-	gids           []int32
-	numThreads     int32
-	memInfo        *MemoryInfoStat
-	sigInfo        *SignalInfoStat
-	createTime     int64
+	Pid        int32 `json:"pid"`
+	name       string
+	createTime int64
+
+	cache           map[string]interface{}
+	requestedFields map[Field]interface{}
 
 	lastCPUTimes *cpu.TimesStat
 	lastCPUTime  time.Time
 
 	tgid int32
+}
+
+type valueOrError struct {
+	value interface{}
+	err   error
 }
 
 type OpenFilesStat struct {
@@ -167,6 +334,48 @@ func NewProcess(pid int32) (*Process, error) {
 	return p, nil
 }
 
+// NewProcessWithFields creates a new Process instance, and pre-fetch all requested
+// fields. Those fields and only those fields will be available and won't be updated
+// after creation.
+// This method may be faster if you retrive multiple fields, because unlike NewProcess where
+// files are parsed for each method call, here files are parsed once at creation.
+func NewProcessWithFields(ctx context.Context, pid int32, fields ...Field) (*Process, error) {
+	return newProcessWithFields(ctx, pid, nil, fields...)
+}
+
+func newProcessWithFields(ctx context.Context, pid int32, initialCache map[string]interface{}, fields ...Field) (*Process, error) {
+	if initialCache == nil {
+		initialCache = make(map[string]interface{})
+	}
+
+	p := &Process{
+		Pid:   pid,
+		cache: initialCache,
+	}
+
+	exists, err := PidExists(pid)
+	if err != nil {
+		return p, err
+	}
+	if !exists {
+		return p, ErrorProcessNotRunning
+	}
+
+	requestedFields := make(map[Field]interface{}, len(fields))
+	for _, f := range fields {
+		requestedFields[f] = nil
+	}
+
+	err = p.prefetchFields(fields)
+	if err != nil {
+		return nil, err
+	}
+
+	p.requestedFields = requestedFields
+
+	return p, nil
+}
+
 func PidExists(pid int32) (bool, error) {
 	return PidExistsWithContext(context.Background(), pid)
 }
@@ -177,7 +386,11 @@ func (p *Process) Background() (bool, error) {
 }
 
 func (p *Process) BackgroundWithContext(ctx context.Context) (bool, error) {
-	fg, err := p.ForegroundWithContext(ctx)
+	if !p.isFieldRequested(FieldBackground) {
+		return false, ErrorFieldNotRequested
+	}
+
+	fg, err := p.foregroundWithContext(ctx)
 	if err != nil {
 		return false, err
 	}
@@ -191,6 +404,10 @@ func (p *Process) Percent(interval time.Duration) (float64, error) {
 }
 
 func (p *Process) PercentWithContext(ctx context.Context, interval time.Duration) (float64, error) {
+	if p.cache != nil {
+		return 0, ErrorRequireUpdate
+	}
+
 	cpuTimes, err := p.Times()
 	if err != nil {
 		return 0, err
@@ -229,6 +446,29 @@ func (p *Process) IsRunning() (bool, error) {
 }
 
 func (p *Process) IsRunningWithContext(ctx context.Context) (bool, error) {
+	if !p.isFieldRequested(FieldIsRunning) {
+		return false, ErrorFieldNotRequested
+	}
+
+	cacheKey := "IsRunning"
+	v, ok := p.cache[cacheKey].(valueOrError)
+
+	if !ok {
+		tmp, err := p.isRunningWithContextNoCache(ctx)
+		v = valueOrError{
+			value: tmp,
+			err:   err,
+		}
+	}
+
+	if p.cache != nil {
+		p.cache[cacheKey] = v
+	}
+
+	return v.value.(bool), v.err
+}
+
+func (p *Process) isRunningWithContextNoCache(ctx context.Context) (bool, error) {
 	createTime, err := p.CreateTimeWithContext(ctx)
 	if err != nil {
 		return false, err
@@ -250,6 +490,10 @@ func (p *Process) CreateTime() (int64, error) {
 }
 
 func (p *Process) CreateTimeWithContext(ctx context.Context) (int64, error) {
+	if !p.isFieldRequested(FieldCreateTime) {
+		return 0, ErrorFieldNotRequested
+	}
+
 	if p.createTime != 0 {
 		return p.createTime, nil
 	}
@@ -273,11 +517,38 @@ func (p *Process) MemoryPercent() (float32, error) {
 }
 
 func (p *Process) MemoryPercentWithContext(ctx context.Context) (float32, error) {
-	machineMemory, err := mem.VirtualMemory()
-	if err != nil {
-		return 0, err
+	if !p.isFieldRequested(FieldMemoryPercent) {
+		return 0, ErrorFieldNotRequested
 	}
-	total := machineMemory.Total
+
+	cacheKey := "MemoryPercent"
+	v, ok := p.cache[cacheKey].(valueOrError)
+
+	if !ok {
+		tmp, err := p.memoryPercentWithContextNoCache(ctx)
+		v = valueOrError{
+			value: tmp,
+			err:   err,
+		}
+	}
+
+	if p.cache != nil {
+		p.cache[cacheKey] = v
+	}
+
+	return v.value.(float32), v.err
+}
+
+func (p *Process) memoryPercentWithContextNoCache(ctx context.Context) (float32, error) {
+	machineMemory, ok := p.cache["VirtualMemory"].(uint64)
+
+	if !ok {
+		tmp, err := mem.VirtualMemory()
+		if err != nil {
+			return 0, err
+		}
+		machineMemory = tmp.Total
+	}
 
 	processMemory, err := p.MemoryInfo()
 	if err != nil {
@@ -285,7 +556,7 @@ func (p *Process) MemoryPercentWithContext(ctx context.Context) (float32, error)
 	}
 	used := processMemory.RSS
 
-	return (100 * float32(used) / float32(total)), nil
+	return (100 * float32(used) / float32(machineMemory)), nil
 }
 
 // CPU_Percent returns how many percent of the CPU time this process uses
@@ -294,6 +565,29 @@ func (p *Process) CPUPercent() (float64, error) {
 }
 
 func (p *Process) CPUPercentWithContext(ctx context.Context) (float64, error) {
+	if !p.isFieldRequested(FieldCPUPercent) {
+		return 0, ErrorFieldNotRequested
+	}
+
+	cacheKey := "CPUPercent"
+	v, ok := p.cache[cacheKey].(valueOrError)
+
+	if !ok {
+		tmp, err := p.cpuPercentWithContextNoCache(ctx)
+		v = valueOrError{
+			value: tmp,
+			err:   err,
+		}
+	}
+
+	if p.cache != nil {
+		p.cache[cacheKey] = v
+	}
+
+	return v.value.(float64), v.err
+}
+
+func (p *Process) cpuPercentWithContextNoCache(ctx context.Context) (float64, error) {
 	crt_time, err := p.CreateTime()
 	if err != nil {
 		return 0, err
@@ -311,4 +605,97 @@ func (p *Process) CPUPercentWithContext(ctx context.Context) (float64, error) {
 	}
 
 	return 100 * cput.Total() / totalTime, nil
+}
+
+func (p *Process) genericPrefetchFields(ctx context.Context, fields []Field) {
+	p.CreateTimeWithContext(ctx)
+
+	for _, f := range fields {
+		switch f {
+		case FieldBackground:
+			p.BackgroundWithContext(ctx)
+		case FieldCmdline:
+			p.CmdlineWithContext(ctx)
+		case FieldCmdlineSlice:
+			p.CmdlineSliceWithContext(ctx)
+		case FieldConnections:
+			p.ConnectionsWithContext(ctx)
+		case FieldCPUPercent:
+			p.CPUPercentWithContext(ctx)
+		case FieldCreateTime:
+			// already done
+		case FieldCwd:
+			p.CwdWithContext(ctx)
+		case FieldExe:
+			p.ExeWithContext(ctx)
+		case FieldForeground:
+			p.ForegroundWithContext(ctx)
+		case FieldGids:
+			p.GidsWithContext(ctx)
+		case FieldIOCounters:
+			p.IOCountersWithContext(ctx)
+		case FieldIOnice:
+			p.IOniceWithContext(ctx)
+		case FieldIsRunning:
+			p.IsRunningWithContext(ctx)
+		case FieldMemoryInfo:
+			p.MemoryInfoWithContext(ctx)
+		case FieldMemoryInfoEx:
+			p.MemoryInfoExWithContext(ctx)
+		case FieldMemoryMaps:
+			p.MemoryMapsWithContext(ctx, false)
+		case FieldMemoryMapsGrouped:
+			p.MemoryMapsWithContext(ctx, true)
+		case FieldMemoryPercent:
+			p.MemoryPercentWithContext(ctx)
+		case FieldName:
+			p.NameWithContext(ctx)
+		case FieldNetIOCounters:
+			p.NetIOCountersWithContext(ctx, false)
+		case FieldNetIOCountersPerNic:
+			p.NetIOCountersWithContext(ctx, true)
+		case FieldNice:
+			p.NiceWithContext(ctx)
+		case FieldNumCtxSwitches:
+			p.NumCtxSwitchesWithContext(ctx)
+		case FieldNumFDs:
+			p.NumFDsWithContext(ctx)
+		case FieldNumThreads:
+			p.NumThreadsWithContext(ctx)
+		case FieldOpenFiles:
+			p.OpenFilesWithContext(ctx)
+		case FieldPageFaults:
+			p.PageFaultsWithContext(ctx)
+		case FieldPpid:
+			p.PpidWithContext(ctx)
+		case FieldRlimit:
+			p.RlimitWithContext(ctx)
+		case FieldRlimitUsage:
+			p.RlimitUsageWithContext(ctx, true)
+		case FieldStatus:
+			p.StatusWithContext(ctx)
+		case FieldTerminal:
+			p.TerminalWithContext(ctx)
+		case FieldTgid:
+			p.Tgid()
+		case FieldThreads:
+			p.ThreadsWithContext(ctx)
+		case FieldTimes:
+			p.TimesWithContext(ctx)
+		case FieldUids:
+			p.UidsWithContext(ctx)
+		case FieldUsername:
+			p.UsernameWithContext(ctx)
+		}
+	}
+}
+
+func (p *Process) isFieldRequested(f Field) bool {
+	if p.requestedFields == nil {
+		return true
+	}
+
+	_, ok := p.requestedFields[f]
+
+	return ok
 }
