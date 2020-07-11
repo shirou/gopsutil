@@ -540,3 +540,81 @@ func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, err
 	}
 	return temperatures, warns.Reference()
 }
+
+// SensorsFans returns hardware fans speed.
+// Each entry is representing a certain hardware sensor fan.
+// Fan speed is expressed in RPM (rounds per minute).
+func SensorsFans() ([]FanStat, error) {
+	return SensorsFansWithContext(context.Background())
+}
+
+// SensorsFansWithContext returns hardware fans speed.
+// Each entry is representing a certain hardware sensor fan.
+// Fan speed is expressed in RPM (rounds per minute).
+func SensorsFansWithContext(ctx context.Context) ([]FanStat, error) {
+	fans := make([]FanStat, 0)
+
+	// Only the fan*_input file provides current fan rotation
+	// value in RPM as reported by the fan to the device:
+	// https://www.kernel.org/doc/Documentation/hwmon/g762
+	files, err := filepath.Glob(common.HostSys("/class/hwmon/hwmon*/fan*_input"))
+
+	if err != nil {
+		return fans, err
+	}
+
+	if len(files) == 0 {
+		// CentOS has an intermediate /device directory:
+		// https://github.com/giampaolo/psutil/issues/971
+		files, err = filepath.Glob(common.HostSys("/class/hwmon/hwmon*/device/fan*_input"))
+
+		if err != nil {
+			return fans, err
+		}
+	}
+
+	var warns Warnings
+
+	// Allocate some memory for list appending
+	fans = make([]FanStat, 0, len(files))
+
+	// example directory: /sys/class/hwmon/hwmon*/fan*
+	//
+	// fan1_alarm  fan1_beep  fan1_input  fan1_min  fan1_pulses  fan1_target  fan1_tolerance
+	// fan2_alarm  fan2_beep  fan2_input  fan2_min  fan2_pulses  fan2_target  fan2_tolerance
+	for _, file := range files {
+		directory := filepath.Dir(file)
+
+		// Get the name of the fan sensor you are reading
+		name, err := ioutil.ReadFile(filepath.Join(directory, "name"))
+
+		if err != nil {
+			warns.Add(err)
+			continue
+		}
+
+		// Get the current fan speed reading
+		current, err := ioutil.ReadFile(file)
+
+		if err != nil {
+			warns.Add(err)
+			continue
+		}
+
+		// Convert fan speed from a string type into a number type
+		speed, err := strconv.ParseFloat(strings.TrimSpace(string(current)), 64)
+
+		if err != nil {
+			warns.Add(err)
+			continue
+		}
+
+		// Add discovered fan sensor to the list
+		fans = append(fans, FanStat{
+			SensorKey: strings.TrimSpace(string(name)),
+			Speed:     speed,
+		})
+	}
+
+	return fans, warns.Reference()
+}

@@ -347,3 +347,17 @@ func kernelArch() (string, error) {
 	}
 	return "", nil
 }
+
+// SensorsFans returns hardware fans speed.
+// Each entry is representing a certain hardware sensor fan.
+// Fan speed is expressed in RPM (rounds per minute).
+func SensorsFans() ([]FanStat, error) {
+	return SensorsFansWithContext(context.Background())
+}
+
+// SensorsFansWithContext returns hardware fans speed.
+// Each entry is representing a certain hardware sensor fan.
+// Fan speed is expressed in RPM (rounds per minute).
+func SensorsFansWithContext(ctx context.Context) ([]FanStat, error) {
+	return []FanStat{}, common.ErrNotImplementedError
+}
