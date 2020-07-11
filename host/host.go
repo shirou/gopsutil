@@ -36,6 +36,8 @@ type UserStat struct {
 type TemperatureStat struct {
 	SensorKey   string  `json:"sensorKey"`
 	Temperature float64 `json:"sensorTemperature"`
+	High        float64 `json:"sensorHigh"`
+	Critical    float64 `json:"sensorCritical"`
 }
 
 func (h InfoStat) String() string {
