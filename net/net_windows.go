@@ -396,7 +396,7 @@ func getTableInfo(filename string, table interface{}) (index, step, length int) 
 	return
 }
 
-func getTCPConnections(family uint32) ([]ConnectionStat, error) {
+func GetTCPConnections(family uint32) ([]ConnectionStat, error) {
 	var (
 		p    uintptr
 		buf  []byte
@@ -575,7 +575,7 @@ var tcpStatuses = map[mibTCPState]string{
 	12: "DELETE",
 }
 
-func getExtendedTcpTable(pTcpTable uintptr, pdwSize *uint32, bOrder bool, ulAf uint32, tableClass tcpTableClass, reserved uint32) (errcode error) {
+func GetExtendedTcpTable(pTcpTable uintptr, pdwSize *uint32, bOrder bool, ulAf uint32, tableClass tcpTableClass, reserved uint32) (errcode error) {
 	r1, _, _ := syscall.Syscall6(procGetExtendedTCPTable.Addr(), 6, pTcpTable, uintptr(unsafe.Pointer(pdwSize)), getUintptrFromBool(bOrder), uintptr(ulAf), uintptr(tableClass), uintptr(reserved))
 	if r1 != 0 {
 		errcode = syscall.Errno(r1)
