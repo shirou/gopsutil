@@ -1,4 +1,5 @@
 // +build openbsd
+// +build amd64 386
 
 package disk
 
