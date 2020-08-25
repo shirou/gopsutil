@@ -1002,7 +1002,7 @@ func convertUTF16ToString(src []byte) string {
 
 	srcIdx := 0
 	for i := 0; i < srcLen; i++ {
-		codePoints[i] = uint16(src[srcIdx]) | uint16(src[srcIdx+1]<<8)
+		codePoints[i] = uint16(src[srcIdx]) | uint16(src[srcIdx+1])<<8
 		srcIdx += 2
 	}
 	return syscall.UTF16ToString(codePoints)
