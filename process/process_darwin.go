@@ -611,7 +611,7 @@ func (p *Process) getKProcWithContext(ctx context.Context) (*KinfoProc, error) {
 	length := uint64(unsafe.Sizeof(procK))
 	buf := make([]byte, length)
 	_, _, syserr := unix.Syscall6(
-		unix.SYS___SYSCTL,
+		unix.SYS_SYSCTL,
 		uintptr(unsafe.Pointer(&mib[0])),
 		uintptr(len(mib)),
 		uintptr(unsafe.Pointer(&buf[0])),

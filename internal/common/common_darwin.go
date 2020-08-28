@@ -36,7 +36,7 @@ func CallSyscall(mib []int32) ([]byte, uint64, error) {
 	// get required buffer size
 	length := uint64(0)
 	_, _, err := unix.Syscall6(
-		unix.SYS___SYSCTL,
+		unix.SYS_SYSCTL,
 		uintptr(unsafe.Pointer(&mib[0])),
 		uintptr(miblen),
 		0,
@@ -54,7 +54,7 @@ func CallSyscall(mib []int32) ([]byte, uint64, error) {
 	// get proc info itself
 	buf := make([]byte, length)
 	_, _, err = unix.Syscall6(
-		unix.SYS___SYSCTL,
+		unix.SYS_SYSCTL,
 		uintptr(unsafe.Pointer(&mib[0])),
 		uintptr(miblen),
 		uintptr(unsafe.Pointer(&buf[0])),
