@@ -3,10 +3,19 @@ package load
 import (
 	"fmt"
 	"testing"
+
+	"github.com/shirou/gopsutil/internal/common"
 )
+
+func skipIfNotImplementedErr(t *testing.T, err error) {
+	if err == common.ErrNotImplementedError {
+		t.Skip("not implemented")
+	}
+}
 
 func TestLoad(t *testing.T) {
 	v, err := Avg()
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -33,6 +42,7 @@ func TestLoadAvgStat_String(t *testing.T) {
 
 func TestMisc(t *testing.T) {
 	v, err := Misc()
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
