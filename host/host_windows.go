@@ -265,7 +265,7 @@ func Users() ([]UserStat, error) {
 func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 	var ret []UserStat
 
-	return ret, nil
+	return ret, common.ErrNotImplementedError
 }
 
 func SensorsTemperatures() ([]TemperatureStat, error) {
