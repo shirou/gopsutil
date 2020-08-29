@@ -7,11 +7,19 @@ import (
 	"testing"
 	"time"
 
+	"github.com/shirou/gopsutil/internal/common"
 	"github.com/stretchr/testify/assert"
 )
 
+func skipIfNotImplementedErr(t *testing.T, err error) {
+	if err == common.ErrNotImplementedError {
+		t.Skip("not implemented")
+	}
+}
+
 func TestCpu_times(t *testing.T) {
 	v, err := Times(false)
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -27,6 +35,7 @@ func TestCpu_times(t *testing.T) {
 
 	// test sum of per cpu stats is within margin of error for cpu total stats
 	cpuTotal, err := Times(false)
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -34,6 +43,7 @@ func TestCpu_times(t *testing.T) {
 		t.Error("could not get CPUs ", err)
 	}
 	perCPU, err := Times(true)
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -56,6 +66,7 @@ func TestCpu_times(t *testing.T) {
 
 func TestCpu_counts(t *testing.T) {
 	v, err := Counts(true)
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -79,6 +90,7 @@ func TestCPUTimeStat_String(t *testing.T) {
 
 func TestCpuInfo(t *testing.T) {
 	v, err := Info()
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -99,6 +111,7 @@ func testCPUPercent(t *testing.T, percpu bool) {
 	if runtime.GOOS != "windows" {
 		testCount = 100
 		v, err := Percent(time.Millisecond, percpu)
+		skipIfNotImplementedErr(t, err)
 		if err != nil {
 			t.Errorf("error %v", err)
 		}
@@ -112,6 +125,7 @@ func testCPUPercent(t *testing.T, percpu bool) {
 	for i := 0; i < testCount; i++ {
 		duration := time.Duration(10) * time.Microsecond
 		v, err := Percent(duration, percpu)
+		skipIfNotImplementedErr(t, err)
 		if err != nil {
 			t.Errorf("error %v", err)
 		}
@@ -132,6 +146,7 @@ func testCPUPercentLastUsed(t *testing.T, percpu bool) {
 	if runtime.GOOS != "windows" {
 		testCount = 2
 		v, err := Percent(time.Millisecond, percpu)
+		skipIfNotImplementedErr(t, err)
 		if err != nil {
 			t.Errorf("error %v", err)
 		}
@@ -144,6 +159,7 @@ func testCPUPercentLastUsed(t *testing.T, percpu bool) {
 	}
 	for i := 0; i < testCount; i++ {
 		v, err := Percent(0, percpu)
+		skipIfNotImplementedErr(t, err)
 		if err != nil {
 			t.Errorf("error %v", err)
 		}
