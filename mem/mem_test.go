@@ -33,7 +33,7 @@ func TestVirtual_memory(t *testing.T) {
 	case "windows":
 		total = v.Used + v.Available
 		totalStr = "used + available"
-	case "darwin":
+	case "darwin", "openbsd":
 		total = v.Used + v.Free + v.Cached + v.Inactive
 		totalStr = "used + free + cached + inactive"
 	case "freebsd":
