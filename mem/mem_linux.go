@@ -75,7 +75,7 @@ func fillFromMeminfoWithContext(ctx context.Context) (*VirtualMemoryStat, *Virtu
 
 		t, err := strconv.ParseUint(value, 10, 64)
 		if err != nil {
-			return ret, retEx,err
+			return ret, retEx, err
 		}
 		switch key {
 		case "MemTotal":
@@ -148,6 +148,8 @@ func fillFromMeminfoWithContext(ctx context.Context) (*VirtualMemoryStat, *Virtu
 			ret.VMallocUsed = t * 1024
 		case "VmallocChunk":
 			ret.VMallocChunk = t * 1024
+		case "HardwareCorrupted":
+			ret.HardwareCorrupted = t * 1024
 		case "HugePages_Total":
 			ret.HugePagesTotal = t
 		case "HugePages_Free":
