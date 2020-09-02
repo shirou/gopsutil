@@ -3,6 +3,7 @@ package net
 import (
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"strings"
 	"syscall"
@@ -77,9 +78,27 @@ func TestIOCountersByFileParsing(t *testing.T) {
 }
 
 func TestGetProcInodesAll(t *testing.T) {
-	if os.Getenv("CIRCLECI") == "true" {
-		t.Skip("Skip CI")
-	}
+	waitForServer := make(chan bool)
+	go func() { // TCP listening goroutine to have some opened inodes even in CI
+		addr, err := net.ResolveTCPAddr("tcp", "localhost:0") // dynamically get a random open port from OS
+		if err != nil {
+			t.Skip("unable to resolve localhost:", err)
+		}
+		l, err := net.ListenTCP(addr.Network(), addr)
+		if err != nil {
+			t.Skip(fmt.Sprintf("unable to listen on %v: %v", addr, err))
+		}
+		defer l.Close()
+		waitForServer <- true
+		for {
+			conn, err := l.Accept()
+			if err != nil {
+				t.Skip("unable to accept connection:", err)
+			}
+			defer conn.Close()
+		}
+	}()
+	<-waitForServer
 
 	root := common.HostProc("")
 	v, err := getProcInodesAll(root, 0)
@@ -88,7 +107,7 @@ func TestGetProcInodesAll(t *testing.T) {
 }
 
 func TestConnectionsMax(t *testing.T) {
-	if os.Getenv("CIRCLECI") == "true" {
+	if os.Getenv("CI") != "" {
 		t.Skip("Skip CI")
 	}
 
