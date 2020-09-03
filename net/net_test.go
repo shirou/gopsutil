@@ -189,17 +189,19 @@ func TestNetConnections(t *testing.T) {
 		return
 	}
 
-	v, err := Connections("inet")
+	v, err := Connections("all")
 	if err != nil {
 		t.Errorf("could not get NetConnections: %v", err)
 	}
 	if len(v) == 0 {
 		t.Errorf("could not get NetConnections: %v", v)
 	}
+
 	for _, vv := range v {
 		if vv.Family == 0 {
 			t.Errorf("invalid NetConnections: %v", vv)
 		}
+		t.Log(vv)
 	}
 
 }
