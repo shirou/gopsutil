@@ -5,7 +5,15 @@ import (
 	"runtime"
 	"sync"
 	"testing"
+
+	"github.com/shirou/gopsutil/internal/common"
 )
+
+func skipIfNotImplementedErr(t *testing.T, err error) {
+	if err == common.ErrNotImplementedError {
+		t.Skip("not implemented")
+	}
+}
 
 func TestDisk_usage(t *testing.T) {
 	path := "/"
@@ -13,6 +21,7 @@ func TestDisk_usage(t *testing.T) {
 		path = "C:"
 	}
 	v, err := Usage(path)
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -23,6 +32,7 @@ func TestDisk_usage(t *testing.T) {
 
 func TestDisk_partitions(t *testing.T) {
 	ret, err := Partitions(false)
+	skipIfNotImplementedErr(t, err)
 	if err != nil || len(ret) == 0 {
 		t.Errorf("error %v", err)
 	}
@@ -41,6 +51,7 @@ func TestDisk_partitions(t *testing.T) {
 
 func TestDisk_io_counters(t *testing.T) {
 	ret, err := IOCounters()
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}

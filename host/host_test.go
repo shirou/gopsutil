@@ -4,10 +4,19 @@ import (
 	"fmt"
 	"os"
 	"testing"
+
+	"github.com/shirou/gopsutil/internal/common"
 )
+
+func skipIfNotImplementedErr(t *testing.T, err error) {
+	if err == common.ErrNotImplementedError {
+		t.Skip("not implemented")
+	}
+}
 
 func TestHostInfo(t *testing.T) {
 	v, err := Info()
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -26,6 +35,7 @@ func TestUptime(t *testing.T) {
 	}
 
 	v, err := Uptime()
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -39,6 +49,7 @@ func TestBoot_time(t *testing.T) {
 		t.Skip("Skip CI")
 	}
 	v, err := BootTime()
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -51,6 +62,7 @@ func TestBoot_time(t *testing.T) {
 	t.Logf("first boot time: %d", v)
 
 	v2, err := BootTime()
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -62,6 +74,7 @@ func TestBoot_time(t *testing.T) {
 
 func TestUsers(t *testing.T) {
 	v, err := Users()
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -85,8 +98,9 @@ func TestHostInfoStat_String(t *testing.T) {
 		Platform: "ubuntu",
 		BootTime: 1447040000,
 		HostID:   "edfd25ff-3c9c-b1a4-e660-bd826495ad35",
+		KernelArch: "x86_64",
 	}
-	e := `{"hostname":"test","uptime":3000,"bootTime":1447040000,"procs":100,"os":"linux","platform":"ubuntu","platformFamily":"","platformVersion":"","kernelVersion":"","kernelArch":"","virtualizationSystem":"","virtualizationRole":"","hostid":"edfd25ff-3c9c-b1a4-e660-bd826495ad35"}`
+	e := `{"hostname":"test","uptime":3000,"bootTime":1447040000,"procs":100,"os":"linux","platform":"ubuntu","platformFamily":"","platformVersion":"","kernelVersion":"","kernelArch":"x86_64","virtualizationSystem":"","virtualizationRole":"","hostid":"edfd25ff-3c9c-b1a4-e660-bd826495ad35"}`
 	if e != fmt.Sprintf("%v", v) {
 		t.Errorf("HostInfoStat string is invalid:\ngot  %v\nwant %v", v, e)
 	}
@@ -107,6 +121,7 @@ func TestUserStat_String(t *testing.T) {
 
 func TestHostGuid(t *testing.T) {
 	hi, err := Info()
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Error(err)
 	}
@@ -130,6 +145,7 @@ func TestTemperatureStat_String(t *testing.T) {
 
 func TestVirtualization(t *testing.T) {
 	system, role, err := Virtualization()
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("Virtualization() failed, %v", err)
 	}
@@ -139,6 +155,7 @@ func TestVirtualization(t *testing.T) {
 
 func TestKernelVersion(t *testing.T) {
 	version, err := KernelVersion()
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("KernelVersion() failed, %v", err)
 	}
@@ -151,6 +168,7 @@ func TestKernelVersion(t *testing.T) {
 
 func TestPlatformInformation(t *testing.T) {
 	platform, family, version, err := PlatformInformation()
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("PlatformInformation() failed, %v", err)
 	}
