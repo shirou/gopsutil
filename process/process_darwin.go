@@ -611,7 +611,7 @@ func (p *Process) getKProcWithContext(ctx context.Context) (*KinfoProc, error) {
 	length := uint64(unsafe.Sizeof(procK))
 	buf := make([]byte, length)
 	_, _, syserr := unix.Syscall6(
-		unix.SYS___SYSCTL,
+		202, // unix.SYS___SYSCTL https://github.com/golang/sys/blob/76b94024e4b621e672466e8db3d7f084e7ddcad2/unix/zsysnum_darwin_amd64.go#L146
 		uintptr(unsafe.Pointer(&mib[0])),
 		uintptr(len(mib)),
 		uintptr(unsafe.Pointer(&buf[0])),
