@@ -21,6 +21,7 @@ package process
 #define __DARWIN_UNIX03 0
 #define KERNEL
 #define _DARWIN_USE_64_BIT_INODE
+#include <stdint.h>
 #include <dirent.h>
 #include <fcntl.h>
 #include <signal.h>
