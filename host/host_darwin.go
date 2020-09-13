@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"runtime"
 	"strings"
 	"unsafe"
 
@@ -21,65 +20,20 @@ import (
 // from utmpx.h
 const USER_PROCESS = 7
 
-func Info() (*InfoStat, error) {
-	return InfoWithContext(context.Background())
-}
-
-func InfoWithContext(ctx context.Context) (*InfoStat, error) {
-	ret := &InfoStat{
-		OS:             runtime.GOOS,
-		PlatformFamily: "darwin",
-	}
-
-	hostname, err := os.Hostname()
-	if err == nil {
-		ret.Hostname = hostname
-	}
-
-	kernelVersion, err := KernelVersionWithContext(ctx)
-	if err == nil {
-		ret.KernelVersion = kernelVersion
-	}
-
-	kernelArch, err := kernelArch()
-	if err == nil {
-		ret.KernelArch = kernelArch
-	}
-
-	platform, family, pver, err := PlatformInformation()
-	if err == nil {
-		ret.Platform = platform
-		ret.PlatformFamily = family
-		ret.PlatformVersion = pver
-	}
-
-	system, role, err := Virtualization()
-	if err == nil {
-		ret.VirtualizationSystem = system
-		ret.VirtualizationRole = role
-	}
-
-	boot, err := BootTime()
-	if err == nil {
-		ret.BootTime = boot
-		ret.Uptime = uptime(boot)
-	}
-
-	procs, err := process.Pids()
-	if err == nil {
-		ret.Procs = uint64(len(procs))
-	}
-
+func HostIDWithContext(ctx context.Context) (string, error) {
 	uuid, err := unix.Sysctl("kern.uuid")
-	if err == nil && uuid != "" {
-		ret.HostID = strings.ToLower(uuid)
+	if err != nil {
+		return "", err
 	}
-
-	return ret, nil
+	return strings.ToLower(uuid), err
 }
 
-func Users() ([]UserStat, error) {
-	return UsersWithContext(context.Background())
+func numProcs(ctx context.Context) (uint64, error) {
+	procs, err := process.PidsWithContext(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return uint64(len(procs)), nil
 }
 
 func UsersWithContext(ctx context.Context) ([]UserStat, error) {
@@ -126,10 +80,6 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 
 }
 
-func PlatformInformation() (string, string, string, error) {
-	return PlatformInformationWithContext(context.Background())
-}
-
 func PlatformInformationWithContext(ctx context.Context) (string, string, string, error) {
 	platform := ""
 	family := ""
@@ -163,16 +113,8 @@ func PlatformInformationWithContext(ctx context.Context) (string, string, string
 	return platform, family, pver, nil
 }
 
-func Virtualization() (string, string, error) {
-	return VirtualizationWithContext(context.Background())
-}
-
 func VirtualizationWithContext(ctx context.Context) (string, string, error) {
 	return "", "", common.ErrNotImplementedError
-}
-
-func KernelVersion() (string, error) {
-	return KernelVersionWithContext(context.Background())
 }
 
 func KernelVersionWithContext(ctx context.Context) (string, error) {

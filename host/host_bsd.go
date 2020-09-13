@@ -5,17 +5,12 @@ package host
 import (
 	"context"
 	"sync/atomic"
-	"time"
 
 	"golang.org/x/sys/unix"
 )
 
 // cachedBootTime must be accessed via atomic.Load/StoreUint64
 var cachedBootTime uint64
-
-func BootTime() (uint64, error) {
-	return BootTimeWithContext(context.Background())
-}
 
 func BootTimeWithContext(ctx context.Context) (uint64, error) {
 	t := atomic.LoadUint64(&cachedBootTime)
@@ -32,18 +27,10 @@ func BootTimeWithContext(ctx context.Context) (uint64, error) {
 	return uint64(tv.Sec), nil
 }
 
-func uptime(boot uint64) uint64 {
-	return uint64(time.Now().Unix()) - boot
-}
-
-func Uptime() (uint64, error) {
-	return UptimeWithContext(context.Background())
-}
-
 func UptimeWithContext(ctx context.Context) (uint64, error) {
 	boot, err := BootTimeWithContext(ctx)
 	if err != nil {
 		return 0, err
 	}
-	return uptime(boot), nil
+	return timeSince(boot), nil
 }
