@@ -71,8 +71,18 @@ func TestCpu_counts(t *testing.T) {
 		t.Errorf("error %v", err)
 	}
 	if v == 0 {
-		t.Errorf("could not get CPU counts: %v", v)
+		t.Errorf("could not get logical CPU counts: %v", v)
 	}
+	t.Logf("logical cores: %d", v)
+	v, err = Counts(false)
+	skipIfNotImplementedErr(t, err)
+	if err != nil {
+		t.Errorf("error %v", err)
+	}
+	if v == 0 {
+		t.Errorf("could not get physical CPU counts: %v", v)
+	}
+	t.Logf("physical cores: %d", v)
 }
 
 func TestCPUTimeStat_String(t *testing.T) {
