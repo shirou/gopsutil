@@ -23,6 +23,7 @@ type UsageStat struct {
 
 type PartitionStat struct {
 	Device     string `json:"device"`
+	Source     string `json:"source,omitempty"`
 	Mountpoint string `json:"mountpoint"`
 	Fstype     string `json:"fstype"`
 	Opts       string `json:"opts"`
