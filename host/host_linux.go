@@ -70,11 +70,11 @@ func BootTimeWithContext(ctx context.Context) (uint64, error) {
 }
 
 func UptimeWithContext(ctx context.Context) (uint64, error) {
-	boot, err := BootTime()
-	if err != nil {
+	sysinfo := &unix.Sysinfo_t{}
+	if err := unix.Sysinfo(sysinfo); err != nil {
 		return 0, err
 	}
-	return timeSince(boot), nil
+	return uint64(sysinfo.Uptime), nil
 }
 
 func UsersWithContext(ctx context.Context) ([]UserStat, error) {
