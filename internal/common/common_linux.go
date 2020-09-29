@@ -110,7 +110,7 @@ func Virtualization() (string, string, error) {
 	return VirtualizationWithContext(context.Background())
 }
 
-var virtualizationCache map[string]string = nil
+var virtualizationCache map[string]string
 
 func VirtualizationWithContext(ctx context.Context) (string, string, error) {
 	// if cached already, return from cache
