@@ -12,7 +12,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"unsafe"
 
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/internal/common"
@@ -602,24 +601,9 @@ func parseKinfoProc(buf []byte) (KinfoProc, error) {
 // Returns a proc as defined here:
 // http://unix.superglobalmegacorp.com/Net2/newsrc/sys/kinfo_proc.h.html
 func (p *Process) getKProc() (*KinfoProc, error) {
-	return p.getKProcWithContext(context.Background())
-}
-
-func (p *Process) getKProcWithContext(ctx context.Context) (*KinfoProc, error) {
-	mib := []int32{CTLKern, KernProc, KernProcPID, p.Pid}
-	procK := KinfoProc{}
-	length := uint64(unsafe.Sizeof(procK))
-	buf := make([]byte, length)
-	_, _, syserr := unix.Syscall6(
-		202, // unix.SYS___SYSCTL https://github.com/golang/sys/blob/76b94024e4b621e672466e8db3d7f084e7ddcad2/unix/zsysnum_darwin_amd64.go#L146
-		uintptr(unsafe.Pointer(&mib[0])),
-		uintptr(len(mib)),
-		uintptr(unsafe.Pointer(&buf[0])),
-		uintptr(unsafe.Pointer(&length)),
-		0,
-		0)
-	if syserr != 0 {
-		return nil, syserr
+	buf, err := unix.SysctlRaw("kern.proc.pid", int(p.Pid))
+	if err != nil {
+		return nil, err
 	}
 	k, err := parseKinfoProc(buf)
 	if err != nil {
