@@ -181,6 +181,10 @@ func Test_Process_Ppid(t *testing.T) {
 	if v == 0 {
 		t.Errorf("return value is 0 %v", v)
 	}
+	expected := os.Getppid()
+	if v != int32(expected) {
+		t.Errorf("return value is %v, expected %v", v, expected)
+	}
 }
 
 func Test_Process_Status(t *testing.T) {
