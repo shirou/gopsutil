@@ -662,3 +662,24 @@ func Test_AllProcesses_cmdLine(t *testing.T) {
 		}
 	}
 }
+
+func BenchmarkNewProcess(b *testing.B) {
+	checkPid := os.Getpid()
+	for i := 0; i < b.N; i++ {
+		NewProcess(int32(checkPid))
+	}
+}
+
+func BenchmarkProcessName(b *testing.B) {
+	p := testGetProcess()
+	for i := 0; i < b.N; i++ {
+		p.Name()
+	}
+}
+
+func BenchmarkProcessPpid(b *testing.B) {
+	p := testGetProcess()
+	for i := 0; i < b.N; i++ {
+		p.Ppid()
+	}
+}
