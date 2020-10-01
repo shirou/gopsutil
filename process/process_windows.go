@@ -240,10 +240,19 @@ func (p *Process) Ppid() (int32, error) {
 }
 
 func (p *Process) PpidWithContext(ctx context.Context) (int32, error) {
+	// if cached already, return from cache
+	if p.parent != 0 {
+		return p.parent, nil
+	}
+
 	ppid, _, _, err := getFromSnapProcess(p.Pid)
 	if err != nil {
 		return 0, err
 	}
+
+	// if no errors, cache it
+	p.parent = ppid
+
 	return ppid, nil
 }
 
@@ -252,10 +261,14 @@ func (p *Process) Name() (string, error) {
 }
 
 func (p *Process) NameWithContext(ctx context.Context) (string, error) {
-	_, _, name, err := getFromSnapProcess(p.Pid)
+	ppid, _, name, err := getFromSnapProcess(p.Pid)
 	if err != nil {
 		return "", fmt.Errorf("could not get Name: %s", err)
 	}
+
+	// if no errors, cache ppid
+	p.parent = ppid
+
 	return name, nil
 }
 
@@ -524,10 +537,14 @@ func (p *Process) NumThreads() (int32, error) {
 }
 
 func (p *Process) NumThreadsWithContext(ctx context.Context) (int32, error) {
-	_, ret, _, err := getFromSnapProcess(p.Pid)
+	ppid, ret, _, err := getFromSnapProcess(p.Pid)
 	if err != nil {
 		return 0, err
 	}
+
+	// if no errors, cache ppid
+	p.parent = ppid
+
 	return ret, nil
 }
 func (p *Process) Threads() (map[int32]*cpu.TimesStat, error) {
