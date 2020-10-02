@@ -181,6 +181,10 @@ func Test_Process_Ppid(t *testing.T) {
 	if v == 0 {
 		t.Errorf("return value is 0 %v", v)
 	}
+	expected := os.Getppid()
+	if v != int32(expected) {
+		t.Errorf("return value is %v, expected %v", v, expected)
+	}
 }
 
 func Test_Process_Status(t *testing.T) {
@@ -656,5 +660,26 @@ func Test_AllProcesses_cmdLine(t *testing.T) {
 
 			t.Logf("Process #%v: Name: %v / CmdLine: %v\n", proc.Pid, exeName, cmdLine)
 		}
+	}
+}
+
+func BenchmarkNewProcess(b *testing.B) {
+	checkPid := os.Getpid()
+	for i := 0; i < b.N; i++ {
+		NewProcess(int32(checkPid))
+	}
+}
+
+func BenchmarkProcessName(b *testing.B) {
+	p := testGetProcess()
+	for i := 0; i < b.N; i++ {
+		p.Name()
+	}
+}
+
+func BenchmarkProcessPpid(b *testing.B) {
+	p := testGetProcess()
+	for i := 0; i < b.N; i++ {
+		p.Ppid()
 	}
 }
