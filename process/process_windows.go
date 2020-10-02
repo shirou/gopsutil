@@ -695,7 +695,7 @@ func (p *Process) SuspendWithContext(ctx context.Context) error {
 	}
 	defer windows.CloseHandle(c)
 
-	r1, _, _ := procNtSuspendProcess.Call(uintptr(unsafe.Pointer(c)))
+	r1, _, _ := procNtSuspendProcess.Call(uintptr(c))
 	if r1 != 0 {
 		// See https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/596a1078-e883-4972-9bbc-49e60bebca55
 		return fmt.Errorf("NtStatus='0x%.8X'", r1)
@@ -715,7 +715,7 @@ func (p *Process) ResumeWithContext(ctx context.Context) error {
 	}
 	defer windows.CloseHandle(c)
 
-	r1, _, _ := procNtResumeProcess.Call(uintptr(unsafe.Pointer(c)))
+	r1, _, _ := procNtResumeProcess.Call(uintptr(c))
 	if r1 != 0 {
 		// See https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/596a1078-e883-4972-9bbc-49e60bebca55
 		return fmt.Errorf("NtStatus='0x%.8X'", r1)

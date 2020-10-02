@@ -57,19 +57,19 @@ func TestHexToUint32(t *testing.T) {
 	}
 }
 
-func TestmustParseInt32(t *testing.T) {
+func TestMustParseInt32(t *testing.T) {
 	ret := mustParseInt32("11111")
 	if ret != int32(11111) {
 		t.Error("could not parse")
 	}
 }
-func TestmustParseUint64(t *testing.T) {
+func TestMustParseUint64(t *testing.T) {
 	ret := mustParseUint64("11111")
 	if ret != uint64(11111) {
 		t.Error("could not parse")
 	}
 }
-func TestmustParseFloat64(t *testing.T) {
+func TestMustParseFloat64(t *testing.T) {
 	ret := mustParseFloat64("11111.11")
 	if ret != float64(11111.11) {
 		t.Error("could not parse")

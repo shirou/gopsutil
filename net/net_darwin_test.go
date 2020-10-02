@@ -30,7 +30,7 @@ en0   1500  <Link#4>    a8:66:7f:dd:ee:ff  5708989     0 7295722068  3494252    
 en0   1500  fe80::aa66: fe80:4::aa66:7fff  5708989     - 7295722068  3494252     -  379533492     -   -`
 )
 
-func TestparseNetstatLineHeader(t *testing.T) {
+func TestParseNetstatLineHeader(t *testing.T) {
 	stat, linkIkd, err := parseNetstatLine(`Name  Mtu   Network       Address            Ipkts Ierrs     Ibytes    Opkts Oerrs     Obytes  Coll Drop`)
 	assert.Nil(t, linkIkd)
 	assert.Nil(t, stat)
@@ -48,7 +48,7 @@ func assertLoopbackStat(t *testing.T, err error, stat *IOCountersStat) {
 	assert.Equal(t, 169411756, stat.BytesSent)
 }
 
-func TestparseNetstatLineLink(t *testing.T) {
+func TestParseNetstatLineLink(t *testing.T) {
 	stat, linkID, err := parseNetstatLine(
 		`lo0   16384 <Link#1>                        869107     0  169411755   869108     1  169411756     0   0`,
 	)
@@ -57,7 +57,7 @@ func TestparseNetstatLineLink(t *testing.T) {
 	assert.Equal(t, uint(1), *linkID)
 }
 
-func TestparseNetstatLineIPv6(t *testing.T) {
+func TestParseNetstatLineIPv6(t *testing.T) {
 	stat, linkID, err := parseNetstatLine(
 		`lo0   16384 ::1/128     ::1                 869107     -  169411755   869108     1  169411756     -   -`,
 	)
@@ -65,7 +65,7 @@ func TestparseNetstatLineIPv6(t *testing.T) {
 	assert.Nil(t, linkID)
 }
 
-func TestparseNetstatLineIPv4(t *testing.T) {
+func TestParseNetstatLineIPv4(t *testing.T) {
 	stat, linkID, err := parseNetstatLine(
 		`lo0   16384 127           127.0.0.1         869107     -  169411755   869108     1  169411756     -   -`,
 	)
