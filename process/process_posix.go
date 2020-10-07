@@ -140,7 +140,7 @@ func (p *Process) Suspend() error {
 }
 
 func (p *Process) SuspendWithContext(ctx context.Context) error {
-	return p.SendSignal(unix.SIGSTOP)
+	return p.SendSignalWithContext(ctx, unix.SIGSTOP)
 }
 
 // Resume sends SIGCONT to the process.
@@ -149,7 +149,7 @@ func (p *Process) Resume() error {
 }
 
 func (p *Process) ResumeWithContext(ctx context.Context) error {
-	return p.SendSignal(unix.SIGCONT)
+	return p.SendSignalWithContext(ctx, unix.SIGCONT)
 }
 
 // Terminate sends SIGTERM to the process.
@@ -158,7 +158,7 @@ func (p *Process) Terminate() error {
 }
 
 func (p *Process) TerminateWithContext(ctx context.Context) error {
-	return p.SendSignal(unix.SIGTERM)
+	return p.SendSignalWithContext(ctx, unix.SIGTERM)
 }
 
 // Kill sends SIGKILL to the process.
@@ -167,7 +167,7 @@ func (p *Process) Kill() error {
 }
 
 func (p *Process) KillWithContext(ctx context.Context) error {
-	return p.SendSignal(unix.SIGKILL)
+	return p.SendSignalWithContext(ctx, unix.SIGKILL)
 }
 
 // Username returns a username of the process.
