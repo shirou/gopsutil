@@ -283,6 +283,14 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 			mountPoint := fields[4]
 			mountOpts := fields[5]
 
+			if rootDir := fields[3]; rootDir != "" && rootDir != "/" {
+				if len(mountOpts) == 0 {
+					mountOpts = "bind"
+				} else {
+					mountOpts = "bind," + mountOpts
+				}
+			}
+
 			fields = strings.Fields(parts[1])
 			fstype := fields[0]
 			device := fields[1]
