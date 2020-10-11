@@ -3,6 +3,7 @@ package host
 import (
 	"fmt"
 	"os"
+	"sync"
 	"testing"
 
 	"github.com/shirou/gopsutil/internal/common"
@@ -144,13 +145,24 @@ func TestTemperatureStat_String(t *testing.T) {
 }
 
 func TestVirtualization(t *testing.T) {
-	system, role, err := Virtualization()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("Virtualization() failed, %v", err)
-	}
+	wg := sync.WaitGroup{}
+	testCount := 10
+	wg.Add(testCount)
+	for i := 0; i < testCount; i++ {
+		go func(j int) {
+			system, role, err := Virtualization()
+			wg.Done()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("Virtualization() failed, %v", err)
+			}
 
-	t.Logf("Virtualization(): %s, %s", system, role)
+			if j == 9 {
+				t.Logf("Virtualization(): %s, %s", system, role)
+			}
+		}(i)
+	}
+	wg.Wait()
 }
 
 func TestKernelVersion(t *testing.T) {

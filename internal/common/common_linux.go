@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -110,16 +111,49 @@ func Virtualization() (string, string, error) {
 	return VirtualizationWithContext(context.Background())
 }
 
-var virtualizationCache map[string]string
+type virtCache struct {
+	cache map[string]string
+	lock sync.Mutex
+	ok bool
+}
+
+func (v *virtCache) setValue(system, role string) {
+	v.lock.Lock()
+	defer v.lock.Unlock()
+	v.cache["system"] = system
+	v.cache["role"] = role
+	v.ok = true
+}
+
+func (v *virtCache) getValue() (string, string, bool) {
+	v.lock.Lock()
+	defer v.lock.Unlock()
+	return v.cache["system"], v.cache["role"], v.ok
+}
+
+var (
+	once sync.Once
+	virtualization *virtCache
+)
+
+func virtualizationCache() *virtCache {
+	once.Do(func() {
+		virtualization = &virtCache{
+			cache: make(map[string]string),
+			lock: sync.Mutex{},
+			ok: false,
+		}
+	})
+
+	return virtualization
+}
 
 func VirtualizationWithContext(ctx context.Context) (string, string, error) {
 	// if cached already, return from cache
-	if virtualizationCache != nil {
-		return virtualizationCache["system"], virtualizationCache["role"], nil
+	system, role, ok := virtualizationCache().getValue()
+	if ok {
+		return system, role, nil
 	}
-	
-	var system string
-	var role string
 
 	filename := HostProc("xen")
 	if PathExists(filename) {
@@ -240,11 +274,7 @@ func VirtualizationWithContext(ctx context.Context) (string, string, error) {
 	}
 	
 	// before returning for the first time, cache the system and role
-	virtualizationCache = map[string]string{
-		"system":	system,
-		"role": 	role,
-	}
-	
+	virtualizationCache().setValue(system, role)
 	return system, role, nil
 }
 
