@@ -155,7 +155,7 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 	}
 	for _, v := range lpBuffer[:lpBufferLen] {
 		if 'A' <= v && v <= 'Z' {
-			path := string(v) + ":"
+			path := string(rune(v)) + ":"
 			typepath, _ := windows.UTF16PtrFromString(path)
 			typeret := windows.GetDriveType(typepath)
 			if typeret == 0 {

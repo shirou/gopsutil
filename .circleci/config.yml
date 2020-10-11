@@ -4,7 +4,7 @@ version: 2.1
 jobs:
   test:
     docker:
-      - image: circleci/golang:1.11
+      - image: circleci/golang:1.14
     working_directory: /home/circleci/go/src/github.com/shirou/gopsutil
     environment:
       GOPATH: /home/circleci/go
@@ -19,7 +19,7 @@ jobs:
       - run:
           command: dep ensure
       - run:
-          command: go build -v
+          command: make vet
       - run:
           command: make build_test
   macos:
