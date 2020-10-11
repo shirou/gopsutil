@@ -121,15 +121,15 @@ func TestUserStat_String(t *testing.T) {
 }
 
 func TestHostGuid(t *testing.T) {
-	hi, err := Info()
+	id, err := HostID()
 	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Error(err)
 	}
-	if hi.HostID == "" {
+	if id == "" {
 		t.Error("Host id is empty")
 	} else {
-		t.Logf("Host id value: %v", hi.HostID)
+		t.Logf("Host id value: %v", id)
 	}
 }
 

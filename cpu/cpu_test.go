@@ -59,9 +59,15 @@ func TestCpu_times(t *testing.T) {
 		perCPUIdleTimeSum += pc.Idle
 	}
 	margin := 2.0
-	assert.InEpsilon(t, cpuTotal[0].User, perCPUUserTimeSum, margin)
-	assert.InEpsilon(t, cpuTotal[0].System, perCPUSystemTimeSum, margin)
-	assert.InEpsilon(t, cpuTotal[0].Idle, perCPUIdleTimeSum, margin)
+	if cpuTotal[0].User != 0 {
+		assert.InEpsilon(t, cpuTotal[0].User, perCPUUserTimeSum, margin)
+	}
+	if cpuTotal[0].System != 0 {
+		assert.InEpsilon(t, cpuTotal[0].System, perCPUSystemTimeSum, margin)
+	}
+	if cpuTotal[0].Idle != 0 {
+		assert.InEpsilon(t, cpuTotal[0].Idle, perCPUIdleTimeSum, margin)
+	}
 }
 
 func TestCpu_counts(t *testing.T) {
