@@ -111,49 +111,24 @@ func Virtualization() (string, string, error) {
 	return VirtualizationWithContext(context.Background())
 }
 
-type virtCache struct {
-	cache map[string]string
-	lock sync.Mutex
-	ok bool
-}
-
-func (v *virtCache) setValue(system, role string) {
-	v.lock.Lock()
-	defer v.lock.Unlock()
-	v.cache["system"] = system
-	v.cache["role"] = role
-	v.ok = true
-}
-
-func (v *virtCache) getValue() (string, string, bool) {
-	v.lock.Lock()
-	defer v.lock.Unlock()
-	return v.cache["system"], v.cache["role"], v.ok
-}
-
+// required variables for concurrency safe virtualization caching
 var (
-	once sync.Once
-	virtualization *virtCache
+	cachedVirtMap   map[string]string
+	cachedVirtMutex sync.RWMutex
+	cachedVirtOnce  sync.Once
 )
 
-func virtualizationCache() *virtCache {
-	once.Do(func() {
-		virtualization = &virtCache{
-			cache: make(map[string]string),
-			lock: sync.Mutex{},
-			ok: false,
-		}
-	})
-
-	return virtualization
-}
-
 func VirtualizationWithContext(ctx context.Context) (string, string, error) {
+	var system, role string
+
 	// if cached already, return from cache
-	system, role, ok := virtualizationCache().getValue()
-	if ok {
-		return system, role, nil
+	cachedVirtMutex.RLock() // unlock won't be deferred so concurrent reads don't wait for long
+	if cachedVirtMap != nil {
+		cachedSystem, cachedRole := cachedVirtMap["system"], cachedVirtMap["role"]
+		cachedVirtMutex.RUnlock()
+		return cachedSystem, cachedRole, nil
 	}
+	cachedVirtMutex.RUnlock()
 
 	filename := HostProc("xen")
 	if PathExists(filename) {
@@ -272,9 +247,17 @@ func VirtualizationWithContext(ctx context.Context) (string, string, error) {
 			role = "host"
 		}
 	}
-	
+
 	// before returning for the first time, cache the system and role
-	virtualizationCache().setValue(system, role)
+	cachedVirtOnce.Do(func() {
+		cachedVirtMutex.Lock()
+		defer cachedVirtMutex.Unlock()
+		cachedVirtMap = map[string]string{
+			"system": system,
+			"role":   role,
+		}
+	})
+
 	return system, role, nil
 }
 
