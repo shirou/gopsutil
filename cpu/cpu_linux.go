@@ -114,12 +114,14 @@ func Info() ([]InfoStat, error) {
 }
 
 func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
-	filename := common.HostProc("cpuinfo")
-	lines, _ := common.ReadLines(filename)
-
 	var ret []InfoStat
-	var processorName string
+	filename := common.HostProc("cpuinfo")
+	lines, err := common.ReadLines(filename)
+	if err != nil {
+		return ret, err
+	}
 
+	var processorName string
 	c := InfoStat{CPU: -1, Cores: 1}
 	for _, line := range lines {
 		fields := strings.Split(line, ":")
