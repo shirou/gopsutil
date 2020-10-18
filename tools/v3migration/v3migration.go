@@ -45,6 +45,37 @@ func issue429() error {
 	return nil
 }
 
+func issueRemoveUnusedValue() error {
+	f := func(filename string) error {
+		fset := token.NewFileSet()
+		expr, err := parser.ParseFile(fset, filename, nil, parser.ParseComments)
+		if err != nil {
+			return err
+		}
+		n := astutil.Apply(expr, func(cr *astutil.Cursor) bool {
+			if cr.Name() == "Decls" {
+				switch n := cr.Node().(type) {
+				case *ast.GenDecl:
+					if n.Tok != token.TYPE {
+						break
+					}
+					ts := n.Specs[0].(*ast.TypeSpec)
+					if ts.Name.Name == "SystemProcessInformation" {
+						cr.Delete()
+					}
+				}
+			}
+			return true
+		}, nil)
+		return replace(filename, fset, n)
+	}
+
+	if err := f("process/process_windows.go"); err != nil {
+		log.Fatalln("run 429:", err)
+	}
+	return nil
+}
+
 func replace(filename string, fset *token.FileSet, n ast.Node) error {
 	if err := os.Remove(filename); err != nil {
 		return err
@@ -68,6 +99,8 @@ func main() {
 		switch n {
 		case "429":
 			issue429()
+		case "issueRemoveUnusedValue":
+			issueRemoveUnusedValue()
 		}
 	}
 

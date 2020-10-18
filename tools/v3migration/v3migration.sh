@@ -111,8 +111,6 @@ sed -i 's|expect_new|expectNew|g' net/*.go
 
 
 
-
-
 # fix no more public API/types/constants defined only for some platforms
 
 sed -i 's|CTLKern|ctlKern|g' cpu/*.go
@@ -165,6 +163,10 @@ sed -i 's|CT_SEARCH_RESTART|ctSEARCH_RESTART|g' net/net_linux.go
 sed -i 's|PageSize|pageSize|g' process/process_*.go
 sed -i 's|PrioProcess|prioProcess|g' process/process_*.go
 sed -i 's|ClockTicks|clockTicks|g' process/process_*.go
+
+
+./v3migration `pwd` issueRemoveUnusedValue
+
 
 ############ SHOULD BE FIXED BY HAND
 
