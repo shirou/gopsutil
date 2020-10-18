@@ -59,27 +59,59 @@ sed -i 's|return int32(res), nil|return uint64(res), nil|' process/process_*.go
 sed -i 's|math.MaxInt32|math.MaxUint64|' process/process_*.go
 
 # fix #545
-for F in mem.go mem_test.go
-do
-  sed -i 's|writeback|writeBack|g' mem/${F}
-  sed -i 's|writeBacktmp|writeBackTmp|g' mem/${F}
-  sed -i 's|pagetables|pageTables|g' mem/${F}
-  sed -i 's|swapcached|swapCached|g' mem/${F}
-  sed -i 's|commitlimit|commitLimit|g' mem/${F}
-  sed -i 's|committedas|committedAS|g' mem/${F}
-  sed -i 's|hightotal|highTotal|g' mem/${F}
-  sed -i 's|highfree|highFree|g' mem/${F}
-  sed -i 's|lowtotal|lowTotal|g' mem/${F}
-  sed -i 's|lowfree|lowFree|g' mem/${F}
-  sed -i 's|swaptotal|swapTotal|g' mem/${F}
-  sed -i 's|swapfree|swapFree|g' mem/${F}
-  sed -i 's|vmalloctotal|vmallocTotal|g' mem/${F}
-  sed -i 's|vmallocused|vmallocUsed|g' mem/${F}
-  sed -i 's|vmallocchunk|vmallocChunk|g' mem/${F}
-  sed -i 's|hugepagestotal|hugePagesTotal|g' mem/${F}
-  sed -i 's|hugepagesfree|hugePagesFree|g' mem/${F}
-  sed -i 's|hugepagesize|hugePageSize|g' mem/${F}
-done
+# variable names
+sed -i 's|WritebackTmp|WriteBackTmp|g' mem/*.go
+sed -i 's|Writeback|WriteBack|g' mem/*.go
+sed -i 's|SReclaimable|Sreclaimable|g' mem/*.go
+sed -i 's|SUnreclaim|Sunreclaim|g' mem/*.go
+sed -i 's|VMallocTotal|VmallocTotal|g' mem/*.go
+sed -i 's|VMallocUsed|VmallocUsed|g' mem/*.go
+sed -i 's|VMallocChunk|VmallocChunk|g' mem/*.go
+
+# json field name
+sed -i 's|hostid|hostId|g' host/host.go
+sed -i 's|hostid|hostId|g' host/host_test.go
+sed -i 's|sensorTemperature|temperature|g' host/host.go
+sed -i 's|sensorTemperature|temperature|g' host/host_test.go
+
+sed -i 's|writeback|writeBack|g' mem/*.go
+sed -i 's|writeBacktmp|writeBackTmp|g' mem/*.go
+sed -i 's|pagetables|pageTables|g' mem/*.go
+sed -i 's|swapcached|swapCached|g' mem/*.go
+sed -i 's|commitlimit|commitLimit|g' mem/*.go
+sed -i 's|committedas|committedAS|g' mem/*.go
+sed -i 's|hightotal|highTotal|g' mem/*.go
+sed -i 's|highfree|highFree|g' mem/*.go
+sed -i 's|lowtotal|lowTotal|g' mem/*.go
+sed -i 's|lowfree|lowFree|g' mem/*.go
+sed -i 's|swaptotal|swapTotal|g' mem/*.go
+sed -i 's|swapfree|swapFree|g' mem/*.go
+sed -i 's|vmalloctotal|vmallocTotal|g' mem/*.go
+sed -i 's|vmallocused|vmallocUsed|g' mem/*.go
+sed -i 's|vmallocchunk|vmallocChunk|g' mem/*.go
+sed -i 's|hugepagestotal|hugePagesTotal|g' mem/*.go
+sed -i 's|hugepagesfree|hugePagesFree|g' mem/*.go
+sed -i 's|hugepagesize|hugePageSize|g' mem/*.go
+sed -i 's|pgin|pgIn|g' mem/*.go
+sed -i 's|pgout|pgOut|g' mem/*.go
+sed -i 's|pgfault|pgFault|g' mem/*.go
+sed -i 's|pgmajfault|pgMajFault|g' mem/*.go
+
+sed -i 's|hardwareaddr|hardwareAddr|g' net/*.go
+sed -i 's|conntrackCount|connTrackCount|g' net/*.go
+sed -i 's|conntrackMax|connTrackMax|g' net/*.go
+sed -i 's|delete_list|deleteList|g' net/*.go
+sed -i 's|insert_failed|insertFailed|g' net/*.go
+sed -i 's|early_drop|earlyDrop|g' net/*.go
+sed -i 's|expect_create|expectCreate|g' net/*.go
+sed -i 's|expect_delete|expectDelete|g' net/*.go
+sed -i 's|search_restart|searchRestart|g' net/*.go
+sed -i 's|icmp_error|icmpError|g' net/*.go
+sed -i 's|expect_new|expectNew|g' net/*.go
+
+
+
+
 
 # fix no more public API/types/constants defined only for some platforms
 
