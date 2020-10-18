@@ -35,8 +35,8 @@ func issue429() error {
 		return replace(filename, fset, n)
 	}
 
-	root := "process/process_"
-	fnames := []string{"darwin.go", "fallback.go", "freebsd.go", "linux.go", "openbsd.go", "posix.go", "windows.go", "test.go"}
+	root := "process/"
+	fnames := []string{"process.go", "process_darwin.go", "process_fallback.go", "process_freebsd.go", "process_linux.go", "process_openbsd.go", "process_bsd.go", "process_posix.go", "process_windows.go", "process_test.go"}
 	for _, fname := range fnames {
 		if err := f(root + fname); err != nil {
 			log.Fatalln("run 429:", err)

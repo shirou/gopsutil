@@ -20,6 +20,7 @@ cd ${ROOT}
 # docker is removed, #464 will be fixed
 mkdir -p v3
 cp -rp cpu disk docker host internal load mem net process winservices v3
+cp Makefile v3
 
 # build migartion tool
 go build -o v3/v3migration ${DIR}/v3migration.go
@@ -38,12 +39,14 @@ find . -name "*.go" | xargs -I@ sed -i 's|"github.com/shirou/gopsutil/|"github.c
 
 # #429 process.NetIOCounters is pointless on Linux
 ./v3migration `pwd` 429
+sed -i '/NetIOCounters/d' process/process.go
+sed -i "/github.com\/shirou\/gopsutil\/v3\/net/d" process/process_bsd.go
 
 
 # #464 CgroupMem : fix typo and wrong file names
 sed -i 's|memoryLimitInBbytes|memoryLimitInBytes|g' docker/docker.go
 sed -i 's|memoryLimitInBbytes|memory.limit_in_bytes|g' docker/docker_linux.go
-sed -i 's|memoryFailcnt|"memory.failcnt|g' docker/docker_linux.go
+sed -i 's|memoryFailcnt|memory.failcnt|g' docker/docker_linux.go
 
 
 # fix #346
@@ -78,7 +81,58 @@ do
   sed -i 's|hugepagesize|hugePageSize|g' mem/${F}
 done
 
+# fix no more public API/types/constants defined only for some platforms
 
+sed -i 's|CTLKern|ctlKern|g' cpu/*.go
+sed -i 's|CPNice|cpNice|g' cpu/*.go
+sed -i 's|CPSys|cpSys|g' cpu/*.go
+sed -i 's|CPIntr|cpIntr|g' cpu/*.go
+sed -i 's|CPIdle|cpIdle|g' cpu/*.go
+sed -i 's|CPUStates|cpUStates|g' cpu/*.go
+sed -i 's|CTLKern|ctlKern|g' cpu/cpu_openbsd.go
+sed -i 's|CTLHw|ctlHw|g' cpu/cpu_openbsd.go
+sed -i 's|SMT|sMT|g' cpu/cpu_openbsd.go
+sed -i 's|KernCptime|kernCptime|g' cpu/cpu_openbsd.go
+sed -i 's|KernCptime2|kernCptime2|g' cpu/cpu_openbsd.go
+sed -i 's|Win32_Processor|win32Processor|g' cpu/cpu_windows.go
+
+sed -i 's|DEVSTAT_NO_DATA|devstat_NO_DATA|g' disk/*.go
+sed -i 's|DEVSTAT_READ|devstat_READ|g' disk/*.go
+sed -i 's|DEVSTAT_WRITE|devstat_WRITE|g' disk/*.go
+sed -i 's|DEVSTAT_FREE|devstat_FREE|g' disk/*.go
+sed -i 's|Devstat|devstat|g' disk/*.go
+sed -i 's|Bintime|bintime|g' disk/*.go
+sed -i 's|SectorSize|sectorSize|g' disk/disk_linux.go
+sed -i 's|FileFileCompression|fileFileCompression|g' disk/disk_windows.go
+sed -i 's|FileReadOnlyVolume|fileReadOnlyVolume|g' disk/disk_windows.go
+
+sed -i 's|USER_PROCESS|user_PROCESS|g' host/host_*.go
+sed -i 's|LSB|lsbStruct|g' host/host_linux*
+
+sed -i 's| BcacheStats | bcacheStats |g' mem/*.go
+
+sed -i 's|TCPStatuses|tcpStatuses|g' net/*.go
+sed -i 's|CT_ENTRIES|ctENTRIES|g' net/net_linux.go
+sed -i 's|CT_SEARCHED|ctSEARCHED|g' net/net_linux.go
+sed -i 's|CT_FOUND|ctFOUND|g' net/net_linux.go
+sed -i 's|CT_NEW|ctNEW|g' net/net_linux.go
+sed -i 's|CT_INVALID|ctINVALID|g' net/net_linux.go
+sed -i 's|CT_IGNORE|ctIGNORE|g' net/net_linux.go
+sed -i 's|CT_DELETE|ctDELETE|g' net/net_linux.go
+sed -i 's|CT_DELETE_LIST|ctDELETE_LIST|g' net/net_linux.go
+sed -i 's|CT_INSERT|ctINSERT|g' net/net_linux.go
+sed -i 's|CT_INSERT_FAILED|ctINSERT_FAILED|g' net/net_linux.go
+sed -i 's|CT_DROP|ctDROP|g' net/net_linux.go
+sed -i 's|CT_EARLY_DROP|ctEARLY_DROP|g' net/net_linux.go
+sed -i 's|CT_ICMP_ERROR|ctICMP_ERROR|g' net/net_linux.go
+sed -i 's|CT_EXPECT_NEW|ctEXPECT_NEW|g' net/net_linux.go
+sed -i 's|CT_EXPECT_CREATE|ctEXPECT_CREATE|g' net/net_linux.go
+sed -i 's|CT_EXPECT_DELETE|ctEXPECT_DELETE|g' net/net_linux.go
+sed -i 's|CT_SEARCH_RESTART|ctSEARCH_RESTART|g' net/net_linux.go
+
+sed -i 's|PageSize|pageSize|g' process/process_*.go
+sed -i 's|PrioProcess|prioProcess|g' process/process_*.go
+sed -i 's|ClockTicks|clockTicks|g' process/process_*.go
 
 ############ SHOULD BE FIXED BY HAND
 
