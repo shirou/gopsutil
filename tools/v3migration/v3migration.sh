@@ -55,6 +55,29 @@ sed -i 's|limitToInt|limitToUint|' process/process_*.go
 sed -i 's|return int32(res), nil|return uint64(res), nil|' process/process_*.go
 sed -i 's|math.MaxInt32|math.MaxUint64|' process/process_*.go
 
+# fix #545
+for F in mem.go mem_test.go
+do
+  sed -i 's|writeback|writeBack|g' mem/${F}
+  sed -i 's|writeBacktmp|writeBackTmp|g' mem/${F}
+  sed -i 's|pagetables|pageTables|g' mem/${F}
+  sed -i 's|swapcached|swapCached|g' mem/${F}
+  sed -i 's|commitlimit|commitLimit|g' mem/${F}
+  sed -i 's|committedas|committedAS|g' mem/${F}
+  sed -i 's|hightotal|highTotal|g' mem/${F}
+  sed -i 's|highfree|highFree|g' mem/${F}
+  sed -i 's|lowtotal|lowTotal|g' mem/${F}
+  sed -i 's|lowfree|lowFree|g' mem/${F}
+  sed -i 's|swaptotal|swapTotal|g' mem/${F}
+  sed -i 's|swapfree|swapFree|g' mem/${F}
+  sed -i 's|vmalloctotal|vmallocTotal|g' mem/${F}
+  sed -i 's|vmallocused|vmallocUsed|g' mem/${F}
+  sed -i 's|vmallocchunk|vmallocChunk|g' mem/${F}
+  sed -i 's|hugepagestotal|hugePagesTotal|g' mem/${F}
+  sed -i 's|hugepagesfree|hugePagesFree|g' mem/${F}
+  sed -i 's|hugepagesize|hugePageSize|g' mem/${F}
+done
+
 
 
 ############ SHOULD BE FIXED BY HAND
