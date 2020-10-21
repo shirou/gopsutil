@@ -237,8 +237,9 @@ func PidExistsWithContext(ctx context.Context, pid int32) (bool, error) {
 
 func (p *Process) PpidWithContext(ctx context.Context) (int32, error) {
 	// if cached already, return from cache
-	if p.parent != 0 {
-		return p.parent, nil
+	cachedPpid := p.getPpid()
+	if cachedPpid != 0 {
+		return cachedPpid, nil
 	}
 
 	ppid, _, _, err := getFromSnapProcess(p.Pid)
@@ -246,8 +247,8 @@ func (p *Process) PpidWithContext(ctx context.Context) (int32, error) {
 		return 0, err
 	}
 
-	// if no errors, cache it
-	p.parent = ppid
+	// no errors and not cached already, so cache it
+	p.setPpid(ppid)
 
 	return ppid, nil
 }
@@ -258,8 +259,11 @@ func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("could not get Name: %s", err)
 	}
 
-	// if no errors, cache ppid
+	// if no errors and not cached already, cache ppid
 	p.parent = ppid
+	if 0 == p.getPpid() {
+		p.setPpid(ppid)
+	}
 
 	return name, nil
 }
@@ -456,8 +460,11 @@ func (p *Process) NumThreadsWithContext(ctx context.Context) (int32, error) {
 		return 0, err
 	}
 
-	// if no errors, cache ppid
+	// if no errors and not cached already, cache ppid
 	p.parent = ppid
+	if 0 == p.getPpid() {
+		p.setPpid(ppid)
+	}
 
 	return ret, nil
 }
@@ -611,6 +618,21 @@ func (p *Process) TerminateWithContext(ctx context.Context) error {
 func (p *Process) KillWithContext(ctx context.Context) error {
 	process := os.Process{Pid: int(p.Pid)}
 	return process.Kill()
+}
+
+// retrieve Ppid in a thread-safe manner
+func (p *Process) getPpid() int32 {
+	p.parentMutex.RLock()
+	defer p.parentMutex.RUnlock()
+	return p.parent
+}
+
+// cache Ppid in a thread-safe manner (WINDOWS ONLY)
+// see https://psutil.readthedocs.io/en/latest/#psutil.Process.ppid
+func (p *Process) setPpid(ppid int32) {
+	p.parentMutex.Lock()
+	defer p.parentMutex.Unlock()
+	p.parent = ppid
 }
 
 func getFromSnapProcess(pid int32) (int32, int32, string, error) {
