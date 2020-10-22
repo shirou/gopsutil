@@ -4,6 +4,7 @@ package common
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -69,13 +70,13 @@ var (
 	ProcNtWow64QueryInformationProcess64 = ModNt.NewProc("NtWow64QueryInformationProcess64")
 	ProcNtWow64ReadVirtualMemory64       = ModNt.NewProc("NtWow64ReadVirtualMemory64")
 
-	PdhOpenQuery                         = ModPdh.NewProc("PdhOpenQuery")
-	PdhAddCounter                        = ModPdh.NewProc("PdhAddCounterW")
-	PdhCollectQueryData                  = ModPdh.NewProc("PdhCollectQueryData")
-	PdhGetFormattedCounterValue          = ModPdh.NewProc("PdhGetFormattedCounterValue")
-	PdhCloseQuery                        = ModPdh.NewProc("PdhCloseQuery")
+	PdhOpenQuery                = ModPdh.NewProc("PdhOpenQuery")
+	PdhAddCounter               = ModPdh.NewProc("PdhAddCounterW")
+	PdhCollectQueryData         = ModPdh.NewProc("PdhCollectQueryData")
+	PdhGetFormattedCounterValue = ModPdh.NewProc("PdhGetFormattedCounterValue")
+	PdhCloseQuery               = ModPdh.NewProc("PdhCloseQuery")
 
-	procQueryDosDeviceW                  = Modkernel32.NewProc("QueryDosDeviceW")
+	procQueryDosDeviceW = Modkernel32.NewProc("QueryDosDeviceW")
 )
 
 type FILETIME struct {
@@ -93,7 +94,7 @@ func BytePtrToString(p *uint8) string {
 	return string(a[:i])
 }
 
-// CounterInfo
+// CounterInfo XXX
 // copied from https://github.com/mackerelio/mackerel-agent/
 type CounterInfo struct {
 	PostName    string
@@ -128,6 +129,57 @@ func CreateCounter(query windows.Handle, pname, cname string) (*CounterInfo, err
 		CounterName: cname,
 		Counter:     counter,
 	}, nil
+}
+
+// GetCounterValue get counter value from handle
+// adapted from https://github.com/mackerelio/mackerel-agent/
+func GetCounterValue(counter windows.Handle) (float64, error) {
+	var value PDH_FMT_COUNTERVALUE_DOUBLE
+	r, _, err := PdhGetFormattedCounterValue.Call(uintptr(counter), PDH_FMT_DOUBLE, uintptr(0), uintptr(unsafe.Pointer(&value)))
+	if r != 0 && r != PDH_INVALID_DATA {
+		return 0.0, err
+	}
+	return value.DoubleValue, nil
+}
+
+// ProcessorQueueLengthGenerator is struct of windows api
+// adapted from https://github.com/mackerelio/mackerel-agent/
+type ProcessorQueueLengthGenerator struct {
+	query   windows.Handle
+	counter *CounterInfo
+}
+
+// NewProcessorQueueLengthGenerator is set up windows api
+// adapted from https://github.com/mackerelio/mackerel-agent/
+func NewProcessorQueueLengthGenerator() (*ProcessorQueueLengthGenerator, error) {
+	g := &ProcessorQueueLengthGenerator{0, nil}
+
+	var err error
+	g.query, err = CreateQuery()
+	if err != nil {
+		return nil, err
+	}
+
+	counter, err := CreateCounter(g.query, "processor_queue_length", `\System\Processor Queue Length`)
+	if err != nil {
+		return nil, err
+	}
+	g.counter = counter
+	return g, nil
+}
+
+// Generate XXX
+// adapted from https://github.com/mackerelio/mackerel-agent/
+func (g *ProcessorQueueLengthGenerator) Generate() (float64, error) {
+	r, _, err := PdhCollectQueryData.Call(uintptr(g.query))
+	if r != 0 && err != nil {
+		if r == PDH_NO_DATA {
+			return 0.0, fmt.Errorf("%w: this metric has not data", err)
+		}
+		return 0.0, err
+	}
+
+	return GetCounterValue(g.counter.Counter)
 }
 
 // WMIQueryWithContext - wraps wmi.Query with a timed-out context to avoid hanging

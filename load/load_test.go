@@ -27,6 +27,23 @@ func TestLoad(t *testing.T) {
 	t.Log(v)
 }
 
+// Commented out to not to slow down CI
+// Do conduct heavy cpu load on he computer to observe change
+// func TestLoadWithInterval(t *testing.T) {
+// 	interval := 5
+// 	iteration := 110 / interval
+
+// 	for i := 0; i < iteration; i++ {
+// 		v, err := Avg()
+// 		skipIfNotImplementedErr(t, err)
+// 		if err != nil {
+// 			t.Errorf("error %v", err)
+// 		}
+// 		t.Log(v)
+// 		time.Sleep(time.Duration(interval) * time.Second)
+// 	}
+// }
+
 func TestLoadAvgStat_String(t *testing.T) {
 	v := AvgStat{
 		Load1:  10.1,
