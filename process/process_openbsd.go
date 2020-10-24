@@ -176,7 +176,12 @@ func (p *Process) GroupsWithContext(ctx context.Context) ([]int32, error) {
 		return nil, err
 	}
 
-	return k.Groups, nil
+	groups := make([]int32, k.Ngroups)
+	for i := int16(0); i < k.Ngroups; i++ {
+		groups[i] = int32(k.Groups[i])
+	}
+
+	return groups, nil
 }
 
 func (p *Process) TerminalWithContext(ctx context.Context) (string, error) {
