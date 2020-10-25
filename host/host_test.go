@@ -92,13 +92,13 @@ func TestUsers(t *testing.T) {
 
 func TestHostInfoStat_String(t *testing.T) {
 	v := InfoStat{
-		Hostname: "test",
-		Uptime:   3000,
-		Procs:    100,
-		OS:       "linux",
-		Platform: "ubuntu",
-		BootTime: 1447040000,
-		HostID:   "edfd25ff-3c9c-b1a4-e660-bd826495ad35",
+		Hostname:   "test",
+		Uptime:     3000,
+		Procs:      100,
+		OS:         "linux",
+		Platform:   "ubuntu",
+		BootTime:   1447040000,
+		HostID:     "edfd25ff-3c9c-b1a4-e660-bd826495ad35",
 		KernelArch: "x86_64",
 	}
 	e := `{"hostname":"test","uptime":3000,"bootTime":1447040000,"procs":100,"os":"linux","platform":"ubuntu","platformFamily":"","platformVersion":"","kernelVersion":"","kernelArch":"x86_64","virtualizationSystem":"","virtualizationRole":"","hostid":"edfd25ff-3c9c-b1a4-e660-bd826495ad35"}`
@@ -121,15 +121,15 @@ func TestUserStat_String(t *testing.T) {
 }
 
 func TestHostGuid(t *testing.T) {
-	hi, err := Info()
+	id, err := HostID()
 	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Error(err)
 	}
-	if hi.HostID == "" {
+	if id == "" {
 		t.Error("Host id is empty")
 	} else {
-		t.Logf("Host id value: %v", hi.HostID)
+		t.Logf("Host id value: %v", id)
 	}
 }
 
