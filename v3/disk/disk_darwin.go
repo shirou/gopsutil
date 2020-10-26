@@ -76,3 +76,11 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 func getFsType(stat unix.Statfs_t) string {
 	return common.ByteToString(stat.Fstypename[:])
 }
+
+func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
+	return "", common.ErrNotImplementedError
+}
+
+func LabelWithContext(ctx context.Context, name string) (string, error) {
+	return "", common.ErrNotImplementedError
+}

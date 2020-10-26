@@ -19,3 +19,11 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 	return nil, common.ErrNotImplementedError
 }
+
+func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
+	return "", common.ErrNotImplementedError
+}
+
+func LabelWithContext(ctx context.Context, name string) (string, error) {
+	return "", common.ErrNotImplementedError
+}

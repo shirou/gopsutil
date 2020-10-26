@@ -148,3 +148,11 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 func getFsType(stat unix.Statfs_t) string {
 	return common.IntToString(stat.F_fstypename[:])
 }
+
+func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
+	return "", common.ErrNotImplementedError
+}
+
+func LabelWithContext(ctx context.Context, name string) (string, error) {
+	return "", common.ErrNotImplementedError
+}

@@ -113,3 +113,10 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 
 	return usageStat, nil
 }
+func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
+	return "", common.ErrNotImplementedError
+}
+
+func LabelWithContext(ctx context.Context, name string) (string, error) {
+	return "", common.ErrNotImplementedError
+}

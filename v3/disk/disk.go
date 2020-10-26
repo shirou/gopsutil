@@ -80,3 +80,17 @@ func Partitions(all bool) ([]PartitionStat, error) {
 func IOCounters(names ...string) (map[string]IOCountersStat, error) {
 	return IOCountersWithContext(context.Background(), names...)
 }
+
+// SerialNumber returns Serial Number of given device or empty string
+// on error. Name of device is expected, eg. /dev/sda
+func SerialNumber(name string) (string, error) {
+	return SerialNumberWithContext(context.Background(), name)
+}
+
+// Label returns label of given device or empty string on error.
+// Name of device is expected, eg. /dev/sda
+// Supports label based on devicemapper name
+// See https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-block-dm
+func Label(name string) (string, error) {
+	return LabelWithContext(context.Background(), name)
+}
