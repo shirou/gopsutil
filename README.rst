@@ -13,6 +13,10 @@ gopsutil: psutil for golang
 This is a port of psutil (https://github.com/giampaolo/psutil). The challenge is porting all
 psutil functions on some architectures.
 
+v3 migration
+---------------
+
+from v3.20.10, gopsutil becomes v3 which breaks backawards compatiblity. See [v3Changes.md](_tools/v3migration/v3Changes.md) more detail changes.
 
 Tag semantics
 -------------------------
@@ -51,7 +55,6 @@ All works are implemented without cgo by porting c struct to golang struct.
 Usage
 ---------
 
-Note: gopsutil v2 breaks compatibility. If you want to stay with compatibility, please use v1 branch and vendoring.
 
 .. code:: go
 
@@ -101,7 +104,7 @@ see http://godoc.org/github.com/shirou/gopsutil
 Requirements
 -----------------
 
-- go1.7 or above is required.
+- go1.11 or above is required.
 
 
 More Info
