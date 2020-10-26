@@ -109,26 +109,26 @@ func (p *Process) ParentWithContext(ctx context.Context) (*Process, error) {
 	return nil, common.ErrNotImplementedError
 }
 
-func (p *Process) StatusWithContext(ctx context.Context) (string, error) {
+func (p *Process) StatusWithContext(ctx context.Context) ([]string, error) {
 	k, err := p.getKProc()
 	if err != nil {
-		return "", err
+		return []string{""}, err
 	}
 	var s string
 	switch k.Stat {
 	case SIDL:
 	case SRUN:
 	case SONPROC:
-		s = "R"
+		s = Running
 	case SSLEEP:
-		s = "S"
+		s = Sleep
 	case SSTOP:
-		s = "T"
+		s = Stop
 	case SDEAD:
-		s = "Z"
+		s = Zombie
 	}
 
-	return s, nil
+	return []string{s}, nil
 }
 
 func (p *Process) ForegroundWithContext(ctx context.Context) (bool, error) {
@@ -360,4 +360,3 @@ func callKernProcSyscall(op int32, arg int32) ([]byte, uint64, error) {
 
 	return buf, length, nil
 }
-

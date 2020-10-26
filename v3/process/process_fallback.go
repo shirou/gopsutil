@@ -76,8 +76,8 @@ func (p *Process) ParentWithContext(ctx context.Context) (*Process, error) {
 	return nil, common.ErrNotImplementedError
 }
 
-func (p *Process) StatusWithContext(ctx context.Context) (string, error) {
-	return "", common.ErrNotImplementedError
+func (p *Process) StatusWithContext(ctx context.Context) ([]string, error) {
+	return []string{""}, common.ErrNotImplementedError
 }
 
 func (p *Process) ForegroundWithContext(ctx context.Context) (bool, error) {
@@ -199,4 +199,3 @@ func (p *Process) KillWithContext(ctx context.Context) error {
 func (p *Process) UsernameWithContext(ctx context.Context) (string, error) {
 	return "", common.ErrNotImplementedError
 }
-

@@ -41,6 +41,17 @@ type Process struct {
 	tgid int32
 }
 
+// Process status
+const (
+	Running = "running"
+	Sleep   = "sleep"
+	Stop    = "stop"
+	Idle    = "idle"
+	Zombie  = "zombie"
+	Wait    = "wait"
+	Lock    = "lock"
+)
+
 type OpenFilesStat struct {
 	Path string `json:"path"`
 	Fd   uint64 `json:"fd"`
@@ -66,8 +77,8 @@ type SignalInfoStat struct {
 
 type RlimitStat struct {
 	Resource int32  `json:"resource"`
-	Soft     uint64  `json:"soft"`
-	Hard     uint64  `json:"hard"`
+	Soft     uint64 `json:"soft"`
+	Hard     uint64 `json:"hard"`
 	Used     uint64 `json:"used"`
 }
 
@@ -375,7 +386,7 @@ func (p *Process) Parent() (*Process, error) {
 // R: Running S: Sleep T: Stop I: Idle
 // Z: Zombie W: Wait L: Lock
 // The character is same within all supported platforms.
-func (p *Process) Status() (string, error) {
+func (p *Process) Status() ([]string, error) {
 	return p.StatusWithContext(context.Background())
 }
 
@@ -493,7 +504,6 @@ func (p *Process) ConnectionsMax(max int) ([]net.ConnectionStat, error) {
 	return p.ConnectionsMaxWithContext(context.Background(), max)
 }
 
-
 // MemoryMaps get memory maps from /proc/(pid)/smaps
 func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 	return p.MemoryMapsWithContext(context.Background(), grouped)
@@ -534,3 +544,23 @@ func (p *Process) Username() (string, error) {
 	return p.UsernameWithContext(context.Background())
 }
 
+func convertStatusChar(letter string) string {
+	switch letter {
+	case "R":
+		return Running
+	case "S":
+		return Sleep
+	case "T":
+		return Stop
+	case "I":
+		return Idle
+	case "Z":
+		return Zombie
+	case "W":
+		return Wait
+	case "L":
+		return Lock
+	default:
+		return ""
+	}
+}

@@ -125,12 +125,12 @@ func (p *Process) ParentWithContext(ctx context.Context) (*Process, error) {
 	return NewProcessWithContext(ctx, p.parent)
 }
 
-func (p *Process) StatusWithContext(ctx context.Context) (string, error) {
+func (p *Process) StatusWithContext(ctx context.Context) ([]string, error) {
 	err := p.fillFromStatusWithContext(ctx)
 	if err != nil {
-		return "", err
+		return []string{""}, err
 	}
-	return p.status, nil
+	return []string{p.status}, nil
 }
 
 func (p *Process) ForegroundWithContext(ctx context.Context) (bool, error) {
@@ -814,7 +814,7 @@ func (p *Process) fillFromStatusWithContext(ctx context.Context) error {
 				}
 			}
 		case "State":
-			p.status = value[0:1]
+			p.status = convertStatusChar(value[0:1])
 		case "PPid", "Ppid":
 			pval, err := strconv.ParseInt(value, 10, 32)
 			if err != nil {
@@ -1114,4 +1114,3 @@ func readPidsFromDir(path string) ([]int32, error) {
 
 	return ret, nil
 }
-

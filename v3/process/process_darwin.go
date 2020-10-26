@@ -164,13 +164,13 @@ func (p *Process) ParentWithContext(ctx context.Context) (*Process, error) {
 	return nil, fmt.Errorf("could not find parent line")
 }
 
-func (p *Process) StatusWithContext(ctx context.Context) (string, error) {
+func (p *Process) StatusWithContext(ctx context.Context) ([]string, error) {
 	r, err := callPsWithContext(ctx, "state", p.Pid, false)
 	if err != nil {
-		return "", err
+		return []string{""}, err
 	}
-
-	return r[0][0][0:1], err
+	status := convertStatusChar(r[0][0][0:1])
+	return []string{status}, err
 }
 
 func (p *Process) ForegroundWithContext(ctx context.Context) (bool, error) {
@@ -458,4 +458,3 @@ func callPsWithContext(ctx context.Context, arg string, pid int32, threadOption 
 
 	return ret, nil
 }
-

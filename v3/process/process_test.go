@@ -195,8 +195,11 @@ func Test_Process_Status(t *testing.T) {
 	if err != nil {
 		t.Errorf("getting status error %v", err)
 	}
-	if v != "R" && v != "S" {
-		t.Errorf("could not get state %v", v)
+	if len(v) == 0 {
+		t.Errorf("could not get state")
+	}
+	if v[0] != "R" && v[0] != "S" {
+		t.Errorf("get wrong state, %v", v)
 	}
 }
 
@@ -683,4 +686,3 @@ func BenchmarkProcessPpid(b *testing.B) {
 		p.Ppid()
 	}
 }
-

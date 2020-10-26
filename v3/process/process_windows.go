@@ -318,8 +318,8 @@ func (p *Process) ParentWithContext(ctx context.Context) (*Process, error) {
 	return NewProcessWithContext(ctx, ppid)
 }
 
-func (p *Process) StatusWithContext(ctx context.Context) (string, error) {
-	return "", common.ErrNotImplementedError
+func (p *Process) StatusWithContext(ctx context.Context) ([]string, error) {
+	return []string{""}, common.ErrNotImplementedError
 }
 
 func (p *Process) ForegroundWithContext(ctx context.Context) (bool, error) {
@@ -849,4 +849,3 @@ func convertUTF16ToString(src []byte) string {
 	}
 	return syscall.UTF16ToString(codePoints)
 }
-
