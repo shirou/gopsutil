@@ -40,7 +40,7 @@ func TestCpu_times(t *testing.T) {
 		t.Errorf("error %v", err)
 	}
 	if len(cpuTotal) == 0 {
-		t.Error("could not get CPUs ", err)
+		t.Error("could not get CPUs", err)
 	}
 	perCPU, err := Times(true)
 	skipIfNotImplementedErr(t, err)
@@ -48,7 +48,7 @@ func TestCpu_times(t *testing.T) {
 		t.Errorf("error %v", err)
 	}
 	if len(perCPU) == 0 {
-		t.Error("could not get CPUs ", err)
+		t.Error("could not get CPUs", err)
 	}
 	var perCPUUserTimeSum float64
 	var perCPUSystemTimeSum float64
@@ -59,9 +59,21 @@ func TestCpu_times(t *testing.T) {
 		perCPUIdleTimeSum += pc.Idle
 	}
 	margin := 2.0
-	assert.InEpsilon(t, cpuTotal[0].User, perCPUUserTimeSum, margin)
-	assert.InEpsilon(t, cpuTotal[0].System, perCPUSystemTimeSum, margin)
-	assert.InEpsilon(t, cpuTotal[0].Idle, perCPUIdleTimeSum, margin)
+	t.Log(cpuTotal[0])
+
+	if cpuTotal[0].User == 0 && cpuTotal[0].System == 0 && cpuTotal[0].Idle == 0 {
+		t.Error("could not get cpu values")
+	}
+	if cpuTotal[0].User != 0 {
+		assert.InEpsilon(t, cpuTotal[0].User, perCPUUserTimeSum, margin)
+	}
+	if cpuTotal[0].System != 0 {
+		assert.InEpsilon(t, cpuTotal[0].System, perCPUSystemTimeSum, margin)
+	}
+	if cpuTotal[0].Idle != 0 {
+		assert.InEpsilon(t, cpuTotal[0].Idle, perCPUIdleTimeSum, margin)
+	}
+
 }
 
 func TestCpu_counts(t *testing.T) {
