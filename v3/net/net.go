@@ -53,14 +53,20 @@ type InterfaceAddr struct {
 	Addr string `json:"addr"`
 }
 
+// InterfaceAddrList is a list of InterfaceAddr
+type InterfaceAddrList []InterfaceAddr
+
 type InterfaceStat struct {
-	Index        int             `json:"index"`
-	MTU          int             `json:"mtu"`          // maximum transmission unit
-	Name         string          `json:"name"`         // e.g., "en0", "lo0", "eth0.100"
-	HardwareAddr string          `json:"hardwareAddr"` // IEEE MAC-48, EUI-48 and EUI-64 form
-	Flags        []string        `json:"flags"`        // e.g., FlagUp, FlagLoopback, FlagMulticast
-	Addrs        []InterfaceAddr `json:"addrs"`
+	Index        int               `json:"index"`
+	MTU          int               `json:"mtu"`          // maximum transmission unit
+	Name         string            `json:"name"`         // e.g., "en0", "lo0", "eth0.100"
+	HardwareAddr string            `json:"hardwareAddr"` // IEEE MAC-48, EUI-48 and EUI-64 form
+	Flags        []string          `json:"flags"`        // e.g., FlagUp, FlagLoopback, FlagMulticast
+	Addrs        InterfaceAddrList `json:"addrs"`
 }
+
+// InterfaceStatList is a list of InterfaceStat
+type InterfaceStatList []InterfaceStat
 
 type FilterStat struct {
 	ConnTrackCount int64 `json:"connTrackCount"`
@@ -69,17 +75,17 @@ type FilterStat struct {
 
 // ConntrackStat has conntrack summary info
 type ConntrackStat struct {
-	Entries       uint32 `json:"entries"`        // Number of entries in the conntrack table
-	Searched      uint32 `json:"searched"`       // Number of conntrack table lookups performed
-	Found         uint32 `json:"found"`          // Number of searched entries which were successful
-	New           uint32 `json:"new"`            // Number of entries added which were not expected before
-	Invalid       uint32 `json:"invalid"`        // Number of packets seen which can not be tracked
-	Ignore        uint32 `json:"ignore"`         // Packets seen which are already connected to an entry
-	Delete        uint32 `json:"delete"`         // Number of entries which were removed
+	Entries       uint32 `json:"entries"`       // Number of entries in the conntrack table
+	Searched      uint32 `json:"searched"`      // Number of conntrack table lookups performed
+	Found         uint32 `json:"found"`         // Number of searched entries which were successful
+	New           uint32 `json:"new"`           // Number of entries added which were not expected before
+	Invalid       uint32 `json:"invalid"`       // Number of packets seen which can not be tracked
+	Ignore        uint32 `json:"ignore"`        // Packets seen which are already connected to an entry
+	Delete        uint32 `json:"delete"`        // Number of entries which were removed
 	DeleteList    uint32 `json:"deleteList"`    // Number of entries which were put to dying list
-	Insert        uint32 `json:"insert"`         // Number of entries inserted into the list
+	Insert        uint32 `json:"insert"`        // Number of entries inserted into the list
 	InsertFailed  uint32 `json:"insertFailed"`  // # insertion attempted but failed (same entry exists)
-	Drop          uint32 `json:"drop"`           // Number of packets dropped due to conntrack failure.
+	Drop          uint32 `json:"drop"`          // Number of packets dropped due to conntrack failure.
 	EarlyDrop     uint32 `json:"earlyDrop"`     // Dropped entries to make room for new ones, if maxsize reached
 	IcmpError     uint32 `json:"icmpError"`     // Subset of invalid. Packets that can't be tracked d/t error
 	ExpectNew     uint32 `json:"expectNew"`     // Entries added after an expectation was already present
@@ -182,6 +188,11 @@ func (n InterfaceStat) String() string {
 	return string(s)
 }
 
+func (l InterfaceStatList) String() string {
+	s, _ := json.Marshal(l)
+	return string(s)
+}
+
 func (n InterfaceAddr) String() string {
 	s, _ := json.Marshal(n)
 	return string(s)
@@ -192,16 +203,16 @@ func (n ConntrackStat) String() string {
 	return string(s)
 }
 
-func Interfaces() ([]InterfaceStat, error) {
+func Interfaces() (InterfaceStatList, error) {
 	return InterfacesWithContext(context.Background())
 }
 
-func InterfacesWithContext(ctx context.Context) ([]InterfaceStat, error) {
+func InterfacesWithContext(ctx context.Context) (InterfaceStatList, error) {
 	is, err := net.Interfaces()
 	if err != nil {
 		return nil, err
 	}
-	ret := make([]InterfaceStat, 0, len(is))
+	ret := make(InterfaceStatList, 0, len(is))
 	for _, ifi := range is {
 
 		var flags []string
@@ -230,7 +241,7 @@ func InterfacesWithContext(ctx context.Context) ([]InterfaceStat, error) {
 		}
 		addrs, err := ifi.Addrs()
 		if err == nil {
-			r.Addrs = make([]InterfaceAddr, 0, len(addrs))
+			r.Addrs = make(InterfaceAddrList, 0, len(addrs))
 			for _, addr := range addrs {
 				r.Addrs = append(r.Addrs, InterfaceAddr{
 					Addr: addr.String(),
