@@ -11,12 +11,6 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func Partitions(all bool) ([]PartitionStat, error) {
-	return PartitionsWithContext(context.Background(), all)
-}
-
-// PartitionsWithContext returns disk partition.
-// 'all' argument is ignored, see: https://github.com/giampaolo/psutil/issues/906
 func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {
 	var ret []PartitionStat
 
@@ -74,10 +68,6 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 	return ret, nil
 }
 
-func IOCounters(names ...string) (map[string]IOCountersStat, error) {
-	return IOCountersWithContext(context.Background(), names...)
-}
-
 func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOCountersStat, error) {
 	ret := make(map[string]IOCountersStat)
 
@@ -128,10 +118,6 @@ func parseDiskstats(buf []byte) (Diskstats, error) {
 	}
 
 	return ds, nil
-}
-
-func Usage(path string) (*UsageStat, error) {
-	return UsageWithContext(context.Background(), path)
 }
 
 func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
