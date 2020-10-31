@@ -63,7 +63,8 @@ Usage
    import (
        "fmt"
 
-       "github.com/shirou/gopsutil/mem"
+       "github.com/shirou/gopsutil/v3/mem"
+       // "github.com/shirou/gopsutil/mem"  // to use v2
    )
 
    func main() {
