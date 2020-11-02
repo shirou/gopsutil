@@ -4,9 +4,11 @@ package load
 
 import (
 	"context"
+	"log"
 	"sync"
 	"time"
 
+	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/internal/common"
 )
 
@@ -31,30 +33,51 @@ func loadAvgGoroutine() {
 	)
 
 	var (
-		interval = 5 * time.Second
+		sleepInterval time.Duration = 5 * time.Second
+		currentLoad   float64
 	)
 
-	generator, err := common.NewProcessorQueueLengthGenerator()
-	if err != nil {
-		loadAvgMutex.Lock()
-		loadErr = err
+	counter, err := common.ProcessorQueueLengthCounter()
+	loadErr = err
+	if err != nil || counter == nil {
 		loadAvgMutex.Unlock()
+		log.Println("unexpected processor queue length counter error, please file an issue on github")
 		return
 	}
+
 	for {
-		time.Sleep(interval)
-		if generator == nil {
-			return
+		currentLoad, loadErr = counter.GetValue()
+		if loadErr != nil {
+			goto SKIP
 		}
-		currentLoad, err := generator.Generate()
-		loadAvgMutex.Lock()
-		loadErr = err
-		if err == nil {
-			loadAvg1M = loadAvg1M*loadAvgFactor1F + currentLoad*(1.0-loadAvgFactor1F)
-			loadAvg5M = loadAvg5M*loadAvgFactor5F + currentLoad*(1.0-loadAvgFactor5F)
-			loadAvg15M = loadAvg15M*loadAvgFactor15F + currentLoad*(1.0-loadAvgFactor15F)
+		// comment following block if you want load to be 0 as long as process queue is zero
+		{
+			if currentLoad == 0.0 {
+				percent, err := cpu.Percent(0, false)
+				if err == nil {
+					currentLoad = percent[0] / 100
+					// load averages are also given some amount of the currentLoad
+					// maybe they shouldnt?
+					if loadAvg1M == 0 {
+						loadAvg1M = currentLoad
+					}
+					if loadAvg5M == 0 {
+						loadAvg5M = currentLoad / 2
+					}
+					if loadAvg15M == 0 {
+						loadAvg15M = currentLoad / 3
+					}
+				}
+			}
 		}
+		loadAvg1M = loadAvg1M*loadAvgFactor1F + currentLoad*(1.0-loadAvgFactor1F)
+		loadAvg5M = loadAvg5M*loadAvgFactor5F + currentLoad*(1.0-loadAvgFactor5F)
+		loadAvg15M = loadAvg15M*loadAvgFactor15F + currentLoad*(1.0-loadAvgFactor15F)
+
+	SKIP:
 		loadAvgMutex.Unlock()
+		time.Sleep(sleepInterval)
+		loadAvgMutex.Lock()
 	}
 }
 
@@ -63,7 +86,10 @@ func Avg() (*AvgStat, error) {
 }
 
 func AvgWithContext(ctx context.Context) (*AvgStat, error) {
-	loadAvgGoroutineOnce.Do(func() { go loadAvgGoroutine() })
+	loadAvgGoroutineOnce.Do(func() {
+		loadAvgMutex.Lock()
+		go loadAvgGoroutine()
+	})
 	loadAvgMutex.RLock()
 	defer loadAvgMutex.RUnlock()
 	ret := AvgStat{

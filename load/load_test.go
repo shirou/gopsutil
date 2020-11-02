@@ -7,7 +7,7 @@ import (
 	"github.com/shirou/gopsutil/internal/common"
 )
 
-func skipIfNotImplementedErr(t *testing.T, err error) {
+func skipIfNotImplementedErr(t testing.TB, err error) {
 	if err == common.ErrNotImplementedError {
 		t.Skip("not implemented")
 	}
@@ -26,23 +26,6 @@ func TestLoad(t *testing.T) {
 	}
 	t.Log(v)
 }
-
-// Commented out to not to slow down CI
-// Do conduct heavy cpu load on he computer to observe change
-// func TestLoadWithInterval(t *testing.T) {
-// 	interval := 5
-// 	iteration := 110 / interval
-
-// 	for i := 0; i < iteration; i++ {
-// 		v, err := Avg()
-// 		skipIfNotImplementedErr(t, err)
-// 		if err != nil {
-// 			t.Errorf("error %v", err)
-// 		}
-// 		t.Log(v)
-// 		time.Sleep(time.Duration(interval) * time.Second)
-// 	}
-// }
 
 func TestLoadAvgStat_String(t *testing.T) {
 	v := AvgStat{
@@ -83,4 +66,29 @@ func TestMiscStatString(t *testing.T) {
 		t.Errorf("TestMiscString string is invalid: %v", v)
 	}
 	t.Log(e)
+}
+
+func BenchmarkLoad(b *testing.B) {
+
+	loadAvg := func(t testing.TB) {
+		v, err := Avg()
+		skipIfNotImplementedErr(t, err)
+		if err != nil {
+			t.Errorf("error %v", err)
+		}
+		empty := &AvgStat{}
+		if v == empty {
+			t.Errorf("error load: %v", v)
+		}
+	}
+
+	b.Run("FirstCall", func(b *testing.B) {
+		loadAvg(b)
+	})
+
+	b.Run("SubsequentCalls", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			loadAvg(b)
+		}
+	})
 }

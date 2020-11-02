@@ -142,44 +142,49 @@ func GetCounterValue(counter windows.Handle) (float64, error) {
 	return value.DoubleValue, nil
 }
 
-// ProcessorQueueLengthGenerator is struct of windows api
-// adapted from https://github.com/mackerelio/mackerel-agent/
-type ProcessorQueueLengthGenerator struct {
-	query   windows.Handle
-	counter *CounterInfo
+type Win32PerformanceCounter struct {
+	PostName    string
+	CounterName string
+	Query       windows.Handle
+	Counter     windows.Handle
 }
 
-// NewProcessorQueueLengthGenerator is set up windows api
-// adapted from https://github.com/mackerelio/mackerel-agent/
-func NewProcessorQueueLengthGenerator() (*ProcessorQueueLengthGenerator, error) {
-	g := &ProcessorQueueLengthGenerator{0, nil}
-
-	var err error
-	g.query, err = CreateQuery()
+func NewWin32PerformanceCounter(postName, counterName string) (*Win32PerformanceCounter, error) {
+	query, err := CreateQuery()
 	if err != nil {
 		return nil, err
 	}
-
-	counter, err := CreateCounter(g.query, "processor_queue_length", `\System\Processor Queue Length`)
-	if err != nil {
+	var counter = Win32PerformanceCounter{
+		Query:       query,
+		PostName:    postName,
+		CounterName: counterName,
+	}
+	r, _, err := PdhAddCounter.Call(
+		uintptr(counter.Query),
+		uintptr(unsafe.Pointer(windows.StringToUTF16Ptr(counter.CounterName))),
+		0,
+		uintptr(unsafe.Pointer(&counter.Counter)),
+	)
+	if r != 0 {
 		return nil, err
 	}
-	g.counter = counter
-	return g, nil
+	return &counter, nil
 }
 
-// Generate XXX
-// adapted from https://github.com/mackerelio/mackerel-agent/
-func (g *ProcessorQueueLengthGenerator) Generate() (float64, error) {
-	r, _, err := PdhCollectQueryData.Call(uintptr(g.query))
+func (w *Win32PerformanceCounter) GetValue() (float64, error) {
+	r, _, err := PdhCollectQueryData.Call(uintptr(w.Query))
 	if r != 0 && err != nil {
 		if r == PDH_NO_DATA {
-			return 0.0, fmt.Errorf("%w: this metric has not data", err)
+			return 0.0, fmt.Errorf("%w: this counter has not data", err)
 		}
 		return 0.0, err
 	}
 
-	return GetCounterValue(g.counter.Counter)
+	return GetCounterValue(w.Counter)
+}
+
+func ProcessorQueueLengthCounter() (*Win32PerformanceCounter, error) {
+	return NewWin32PerformanceCounter("processor_queue_length", `\System\Processor Queue Length`)
 }
 
 // WMIQueryWithContext - wraps wmi.Query with a timed-out context to avoid hanging
