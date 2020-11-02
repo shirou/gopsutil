@@ -17,7 +17,7 @@ var (
 	procGetNativeSystemInfo     = common.Modkernel32.NewProc("GetNativeSystemInfo")
 )
 
-type win32Processor struct {
+type win32_Processor struct {
 	LoadPercentage            *uint16
 	Family                    uint16
 	Manufacturer              string
@@ -104,7 +104,7 @@ func Info() ([]InfoStat, error) {
 
 func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 	var ret []InfoStat
-	var dst []win32Processor
+	var dst []win32_Processor
 	q := wmi.CreateQuery(&dst, "")
 	if err := common.WMIQueryWithContext(ctx, q, &dst); err != nil {
 		return ret, err
@@ -242,7 +242,7 @@ func CountsWithContext(ctx context.Context, logical bool) (int, error) {
 	}
 	// physical cores https://github.com/giampaolo/psutil/blob/d01a9eaa35a8aadf6c519839e987a49d8be2d891/psutil/_psutil_windows.c#L499
 	// for the time being, try with unreliable and slow WMI call…
-	var dst []win32Processor
+	var dst []win32_Processor
 	q := wmi.CreateQuery(&dst, "")
 	if err := common.WMIQueryWithContext(ctx, q, &dst); err != nil {
 		return 0, err
