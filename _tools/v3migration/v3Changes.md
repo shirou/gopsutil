@@ -15,3 +15,4 @@
 - [disk] `GetDiskSerialNumber()` is now `SerialNumber()` and spread to all platform
 - [disk] `GetLabel ()` is now `Label()` and spread to all platform
 - [net] Change net.InterfaceStat.Addrs to InterfaceAddrList (#226)
+- [cpu] Removed windows-specific `ProcInfo()`
