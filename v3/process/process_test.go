@@ -198,8 +198,8 @@ func Test_Process_Status(t *testing.T) {
 	if len(v) == 0 {
 		t.Errorf("could not get state")
 	}
-	if v[0] != "R" && v[0] != "S" {
-		t.Errorf("get wrong state, %v", v)
+	if v[0] != Running && v[0] != Sleep {
+		t.Errorf("got wrong state, %v", v)
 	}
 }
 
