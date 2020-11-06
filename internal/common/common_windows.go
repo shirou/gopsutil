@@ -94,7 +94,7 @@ func BytePtrToString(p *uint8) string {
 	return string(a[:i])
 }
 
-// CounterInfo XXX
+// CounterInfo struct is used to track a windows performance counter
 // copied from https://github.com/mackerelio/mackerel-agent/
 type CounterInfo struct {
 	PostName    string
@@ -102,7 +102,7 @@ type CounterInfo struct {
 	Counter     windows.Handle
 }
 
-// CreateQuery XXX
+// CreateQuery with a PdhOpenQuery call
 // copied from https://github.com/mackerelio/mackerel-agent/
 func CreateQuery() (windows.Handle, error) {
 	var query windows.Handle
@@ -113,7 +113,7 @@ func CreateQuery() (windows.Handle, error) {
 	return query, nil
 }
 
-// CreateCounter XXX
+// CreateCounter with a PdhAddCounter call
 func CreateCounter(query windows.Handle, pname, cname string) (*CounterInfo, error) {
 	var counter windows.Handle
 	r, _, err := PdhAddCounter.Call(

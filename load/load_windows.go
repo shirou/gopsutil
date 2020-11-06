@@ -22,9 +22,9 @@ var (
 )
 
 // loadAvgGoroutine updates avg data by fetching current load by interval
-// TODO register callback rather than this
+// TODO instead of this goroutine, we can register a Win32 counter just as psutil does
 // see https://psutil.readthedocs.io/en/latest/#psutil.getloadavg
-// code https://github.com/giampaolo/psutil/blob/master/psutil/arch/windows/wmi.c
+// code https://github.com/giampaolo/psutil/blob/8415355c8badc9c94418b19bdf26e622f06f0cce/psutil/arch/windows/wmi.c
 func loadAvgGoroutine() {
 	const (
 		loadAvgFactor1F  = 0.9200444146293232478931553241
