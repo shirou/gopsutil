@@ -40,12 +40,12 @@ func TestParseNetstatLineHeader(t *testing.T) {
 
 func assertLoopbackStat(t *testing.T, err error, stat *IOCountersStat) {
 	assert.NoError(t, err)
-	assert.Equal(t, 869107, stat.PacketsRecv)
-	assert.Equal(t, 0, stat.Errin)
-	assert.Equal(t, 169411755, stat.BytesRecv)
-	assert.Equal(t, 869108, stat.PacketsSent)
-	assert.Equal(t, 1, stat.Errout)
-	assert.Equal(t, 169411756, stat.BytesSent)
+	assert.Equal(t, uint64(869107), stat.PacketsRecv)
+	assert.Equal(t, uint64(0), stat.Errin)
+	assert.Equal(t, uint64(169411755), stat.BytesRecv)
+	assert.Equal(t, uint64(869108), stat.PacketsSent)
+	assert.Equal(t, uint64(1), stat.Errout)
+	assert.Equal(t, uint64(169411756), stat.BytesSent)
 }
 
 func TestParseNetstatLineLink(t *testing.T) {
