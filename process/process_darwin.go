@@ -212,17 +212,18 @@ func (p *Process) GidsWithContext(ctx context.Context) ([]int32, error) {
 }
 
 func (p *Process) GroupsWithContext(ctx context.Context) ([]int32, error) {
-	k, err := p.getKProc()
-	if err != nil {
-		return nil, err
-	}
+	return nil, common.ErrNotImplementedError
+	// k, err := p.getKProc()
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	groups := make([]int32, k.Eproc.Ucred.Ngroups)
-	for i := int16(0); i < k.Eproc.Ucred.Ngroups; i++ {
-		groups[i] = int32(k.Eproc.Ucred.Groups[i])
-	}
+	// groups := make([]int32, k.Eproc.Ucred.Ngroups)
+	// for i := int16(0); i < k.Eproc.Ucred.Ngroups; i++ {
+	// 	groups[i] = int32(k.Eproc.Ucred.Groups[i])
+	// }
 
-	return groups, nil
+	// return groups, nil
 }
 
 func (p *Process) TerminalWithContext(ctx context.Context) (string, error) {
