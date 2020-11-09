@@ -178,6 +178,18 @@ func VirtualizationWithContext(ctx context.Context) (string, string, error) {
 		}
 	}
 
+	filename = HostProc("sys/kernel/osrelease")
+	if PathExists(filename) {
+		contents, err := ReadLines(filename)
+		if err == nil {
+			if StringsContains(contents, "Microsoft") ||
+				StringsContains(contents, "WSL") {
+				system = "wsl"
+				role = "guest"
+			}
+		}
+	}
+
 	filename = HostProc("bus/pci/devices")
 	if PathExists(filename) {
 		contents, err := ReadLines(filename)
