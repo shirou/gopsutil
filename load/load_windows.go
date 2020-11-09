@@ -5,6 +5,7 @@ package load
 import (
 	"context"
 	"log"
+	"math"
 	"sync"
 	"time"
 
@@ -26,15 +27,12 @@ var (
 // see https://psutil.readthedocs.io/en/latest/#psutil.getloadavg
 // code https://github.com/giampaolo/psutil/blob/8415355c8badc9c94418b19bdf26e622f06f0cce/psutil/arch/windows/wmi.c
 func loadAvgGoroutine() {
-	const (
-		loadAvgFactor1F  = 0.9200444146293232478931553241
-		loadAvgFactor5F  = 0.9834714538216174894737477501
-		loadAvgFactor15F = 0.9944598480048967508795473394
-	)
-
 	var (
-		sleepInterval time.Duration = 5 * time.Second
-		currentLoad   float64
+		samplingFrequency time.Duration = 5 * time.Second
+		loadAvgFactor1M   float64       = 1 / math.Exp(samplingFrequency.Seconds()/time.Minute.Seconds())
+		loadAvgFactor5M   float64       = 1 / math.Exp(samplingFrequency.Seconds()/(5*time.Minute).Seconds())
+		loadAvgFactor15M  float64       = 1 / math.Exp(samplingFrequency.Seconds()/(15*time.Minute).Seconds())
+		currentLoad       float64
 	)
 
 	counter, err := common.ProcessorQueueLengthCounter()
@@ -45,6 +43,7 @@ func loadAvgGoroutine() {
 		return
 	}
 
+	tick := time.NewTicker(samplingFrequency).C
 	for {
 		currentLoad, loadErr = counter.GetValue()
 		if loadErr != nil {
@@ -70,13 +69,13 @@ func loadAvgGoroutine() {
 				}
 			}
 		}
-		loadAvg1M = loadAvg1M*loadAvgFactor1F + currentLoad*(1.0-loadAvgFactor1F)
-		loadAvg5M = loadAvg5M*loadAvgFactor5F + currentLoad*(1.0-loadAvgFactor5F)
-		loadAvg15M = loadAvg15M*loadAvgFactor15F + currentLoad*(1.0-loadAvgFactor15F)
+		loadAvg1M = loadAvg1M*loadAvgFactor1M + currentLoad*(1-loadAvgFactor1M)
+		loadAvg5M = loadAvg5M*loadAvgFactor5M + currentLoad*(1-loadAvgFactor5M)
+		loadAvg15M = loadAvg15M*loadAvgFactor15M + currentLoad*(1-loadAvgFactor15M)
 
 	SKIP:
 		loadAvgMutex.Unlock()
-		time.Sleep(sleepInterval)
+		<-tick
 		loadAvgMutex.Lock()
 	}
 }
