@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/internal/common"
 )
 
@@ -49,26 +48,7 @@ func loadAvgGoroutine() {
 		if loadErr != nil {
 			goto SKIP
 		}
-		// comment following block if you want load to be 0 as long as process queue is zero
-		{
-			if currentLoad == 0.0 {
-				percent, err := cpu.Percent(0, false)
-				if err == nil {
-					currentLoad = percent[0] / 100
-					// load averages are also given some amount of the currentLoad
-					// maybe they shouldnt?
-					if loadAvg1M == 0 {
-						loadAvg1M = currentLoad
-					}
-					if loadAvg5M == 0 {
-						loadAvg5M = currentLoad / 2
-					}
-					if loadAvg15M == 0 {
-						loadAvg15M = currentLoad / 3
-					}
-				}
-			}
-		}
+
 		loadAvg1M = loadAvg1M*loadAvgFactor1M + currentLoad*(1-loadAvgFactor1M)
 		loadAvg5M = loadAvg5M*loadAvgFactor5M + currentLoad*(1-loadAvgFactor5M)
 		loadAvg15M = loadAvg15M*loadAvgFactor15M + currentLoad*(1-loadAvgFactor15M)
@@ -80,13 +60,14 @@ func loadAvgGoroutine() {
 	}
 }
 
+// Avg for Windows may return 0 values for the first few 5 second intervals
 func Avg() (*AvgStat, error) {
 	return AvgWithContext(context.Background())
 }
 
 func AvgWithContext(ctx context.Context) (*AvgStat, error) {
 	loadAvgGoroutineOnce.Do(func() {
-		loadAvgMutex.Lock()
+		loadAvgMutex.Lock() // lock to be unlocked by loadAvgGoroutine
 		go loadAvgGoroutine()
 	})
 	loadAvgMutex.RLock()
