@@ -6,11 +6,15 @@ GOOS=$(go env GOOS)
 GOARCH=$(go env GOARCH)
 GOARCH=$(go env GOARCH)
 
-for PKG in $PKGS
+for DIR in . v3
 do
-        if [ -e "${PKG}/types_${GOOS}.go" ]; then
-                (echo "// +build $GOOS"
-                echo "// +build $GOARCH"
-                go tool cgo -godefs "${PKG}/types_${GOOS}.go") | gofmt > "${PKG}/${PKG}_${GOOS}_${GOARCH}.go"
-        fi
+        (cd "$DIR" || exit
+        for PKG in $PKGS
+        do
+                if [ -e "${PKG}/types_${GOOS}.go" ]; then
+                        (echo "// +build $GOOS"
+                        echo "// +build $GOARCH"
+                        go tool cgo -godefs "${PKG}/types_${GOOS}.go") | gofmt > "${PKG}/${PKG}_${GOOS}_${GOARCH}.go"
+                fi
+        done)
 done
