@@ -7,12 +7,12 @@ set -eu
 
 
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-ROOT=$(cd ${DIR}/../.. && pwd)
+DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd)"
+ROOT=$(cd "${DIR}"/../.. && pwd)
 
 
 ## 1. refresh
-cd ${ROOT}
+cd "${ROOT}"
 
 /bin/rm -rf v3
 
@@ -23,22 +23,22 @@ cp -rp cpu disk docker host internal load mem net process winservices v3
 cp Makefile v3
 
 # build migartion tool
-go build -o v3/v3migration ${DIR}/v3migration.go
+go build -o v3/v3migration "${DIR}"/v3migration.go
 
 
-V3DIR=$(cd ${ROOT}/v3 && pwd)
-cd ${V3DIR}
+V3DIR=$(cd "${ROOT}"/v3 && pwd)
+cd "${V3DIR}"
 
 ## 3. mod
 go mod init
 
 ###  change import path
-find . -name "*.go" | xargs -I@ sed -i 's|"github.com/shirou/gopsutil/|"github.com/shirou/gopsutil/v3/|g' @
+find . -name "*.go" -print0 | xargs -0 -I@ sed -i 's|"github.com/shirou/gopsutil/|"github.com/shirou/gopsutil/v3/|g' @
 
 ############ Issues
 
 # #429 process.NetIOCounters is pointless on Linux
-./v3migration `pwd` 429
+./v3migration "$(pwd)" 429
 sed -i '/NetIOCounters/d' process/process.go
 sed -i "/github.com\/shirou\/gopsutil\/v3\/net/d" process/process_bsd.go
 
@@ -165,10 +165,7 @@ sed -i 's|PrioProcess|prioProcess|g' process/process_*.go
 sed -i 's|ClockTicks|clockTicks|g' process/process_*.go
 
 
-./v3migration `pwd` issueRemoveUnusedValue
+./v3migration "$(pwd)" issueRemoveUnusedValue
 
 
 ############ SHOULD BE FIXED BY HAND
-
-
-
