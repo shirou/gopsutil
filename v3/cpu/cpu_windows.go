@@ -43,12 +43,6 @@ type win32_SystemProcessorPerformanceInformation struct {
 	InterruptCount uint32
 }
 
-// Win32_PerfFormattedData_PerfOS_System struct to have count of processes and processor queue length
-type Win32_PerfFormattedData_PerfOS_System struct {
-	Processes            uint32
-	ProcessorQueueLength uint32
-}
-
 const (
 	ClocksPerSec = 10000000.0
 
@@ -131,22 +125,6 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 	}
 
 	return ret, nil
-}
-
-// ProcInfo returns processes count and processor queue length in the system.
-// There is a single queue for processor even on multiprocessors systems.
-func ProcInfo() ([]Win32_PerfFormattedData_PerfOS_System, error) {
-	return ProcInfoWithContext(context.Background())
-}
-
-func ProcInfoWithContext(ctx context.Context) ([]Win32_PerfFormattedData_PerfOS_System, error) {
-	var ret []Win32_PerfFormattedData_PerfOS_System
-	q := wmi.CreateQuery(&ret, "")
-	err := common.WMIQueryWithContext(ctx, q, &ret)
-	if err != nil {
-		return []Win32_PerfFormattedData_PerfOS_System{}, err
-	}
-	return ret, err
 }
 
 // perCPUTimes returns times stat per cpu, per core and overall for all CPUs
