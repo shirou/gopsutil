@@ -2,7 +2,6 @@ package cgroup
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"path"
 	"strconv"
@@ -16,7 +15,7 @@ func CgroupMem() (*CgroupMemStat, error) {
 }
 
 func asUInt(value string) uint64 {
-	v, _ := strconv.ParseUint(value, 10, 64)
+	v, _ := strconv.ParseUint(strings.TrimSpace(value), 10, 64)
 	return v
 }
 
@@ -28,6 +27,7 @@ func CgroupMemWithContext(ctx context.Context, statfile string) (*CgroupMemStat,
 	ret := &CgroupMemStat{}
 	for _, line := range lines {
 		fields := strings.Split(line, " ")
+		// fmt.Println(fields[0], " = ", fields[1])
 		switch fields[0] {
 		case "docker":
 			ret.ContainerID = fields[1]
@@ -85,11 +85,19 @@ func CgroupMemWithContext(ctx context.Context, statfile string) (*CgroupMemStat,
 			ret.TotalActiveFile = asUInt(fields[1])
 		case "totalUnevictable", "total_unevictable":
 			ret.TotalUnevictable = asUInt(fields[1])
-		default:
-			fmt.Println(fields[0], " = ", fields[1])
+		case "swap":
+			ret.Swap = asUInt(fields[1])
+		// default:
+		// 	fmt.Println(fields[0], " = ", fields[1])
 		}
 	}
 
+	// fileNames, _ := ioutil.ReadDir(path.Dir(statfile))
+	// for _, fn := range fileNames {
+	// 	r, _ := ioutil.ReadFile(path.Join(path.Dir(statfile), fn.Name()))
+	// 	fmt.Println("====", fn.Name(), "====")
+	// 	fmt.Println(string(r))
+	// }
 	r, err := ioutil.ReadFile(path.Join(path.Dir(statfile), "memory.usage_in_bytes"))
 	if err == nil {
 		ret.MemUsageInBytes = asUInt(string(r))
@@ -107,5 +115,17 @@ func CgroupMemWithContext(ctx context.Context, statfile string) (*CgroupMemStat,
 		ret.MemFailCnt = asUInt(string(r))
 	}
 
+	calcuateVals(ret)
+
 	return ret, nil
+}
+
+func calcuateVals(ret *CgroupMemStat) {
+	ret.Total = ret.MemLimitInBytes + ret.Swap
+	ret.Used = ret.MemUsageInBytes
+	ret.Available = ret.MemLimitInBytes - ret.TotalRSS
+	ret.Free = ret.Total - ret.Used
+	ret.UsedPercent = (float64(ret.Used) / float64(ret.Total)) * 100
+	ret.Active = ret.TotalActiveAnon + ret.TotalActiveFile
+	ret.Inactive = ret.TotalInactiveAnon + ret.TotalInactiveFile
 }
