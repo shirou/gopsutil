@@ -244,7 +244,7 @@ func Test_Process_Nice(t *testing.T) {
 	if err != nil {
 		t.Errorf("getting nice error %v", err)
 	}
-	if n != 0 && n != 20 && n != 8 {
+	if runtime.GOOS != "windows" && n != 0 && n != 20 && n != 8 {
 		t.Errorf("invalid nice: %d", n)
 	}
 }

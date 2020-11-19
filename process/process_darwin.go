@@ -146,20 +146,18 @@ func (p *Process) createTimeWithContext(ctx context.Context) (int64, error) {
 }
 
 func (p *Process) ParentWithContext(ctx context.Context) (*Process, error) {
-	rr, err := common.CallLsofWithContext(ctx, invoke, p.Pid, "-FR")
+	out, err := common.CallLsofWithContext(ctx, invoke, p.Pid, "-FR")
 	if err != nil {
 		return nil, err
 	}
-	for _, r := range rr {
-		if strings.HasPrefix(r, "p") { // skip if process
-			continue
+	for _, line := range out {
+		if len(line) >= 1 && line[0] == 'R' {
+			v, err := strconv.Atoi(line[1:])
+			if err != nil {
+				return nil, err
+			}
+			return NewProcessWithContext(ctx, int32(v))
 		}
-		l := string(r)
-		v, err := strconv.Atoi(strings.Replace(l, "R", "", 1))
-		if err != nil {
-			return nil, err
-		}
-		return NewProcessWithContext(ctx, int32(v))
 	}
 	return nil, fmt.Errorf("could not find parent line")
 }
@@ -212,17 +210,18 @@ func (p *Process) GidsWithContext(ctx context.Context) ([]int32, error) {
 }
 
 func (p *Process) GroupsWithContext(ctx context.Context) ([]int32, error) {
-	k, err := p.getKProc()
-	if err != nil {
-		return nil, err
-	}
+	return nil, common.ErrNotImplementedError
+	// k, err := p.getKProc()
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	groups := make([]int32, k.Eproc.Ucred.Ngroups)
-	for i := int16(0); i < k.Eproc.Ucred.Ngroups; i++ {
-		groups[i] = int32(k.Eproc.Ucred.Groups[i])
-	}
+	// groups := make([]int32, k.Eproc.Ucred.Ngroups)
+	// for i := int16(0); i < k.Eproc.Ucred.Ngroups; i++ {
+	// 	groups[i] = int32(k.Eproc.Ucred.Groups[i])
+	// }
 
-	return groups, nil
+	// return groups, nil
 }
 
 func (p *Process) TerminalWithContext(ctx context.Context) (string, error) {
