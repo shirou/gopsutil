@@ -93,13 +93,33 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 
 	// Use the rated frequency of the CPU. This is a static value and does not
 	// account for low power or Turbo Boost modes.
-	cpuFrequency, err := unix.SysctlUint64("hw.cpufrequency")
+	cpuFrequency, err := getFrequency()
 	if err != nil {
 		return ret, err
 	}
 	c.Mhz = float64(cpuFrequency) / 1000000.0
 
 	return append(ret, c), nil
+}
+
+func getFrequency() (uint64, error) {
+	// This works for Intel macs.
+	if cpuFrequency, err := unix.SysctlUint64("hw.cpufrequency"); err == nil {
+		return cpuFrequency, nil
+	}
+
+	// On Apple Silicon fallback to hw.tbfrequency and kern.clockrate[hz]
+	tbFreq, err := unix.SysctlUint64("hw.tbfrequency")
+	if err != nil {
+		return 0, err
+	}
+
+	kernClockrate, err := unix.SysctlClockinfo("kern.clockrate")
+	if err != nil {
+		return 0, err
+	}
+
+	return uint64(kernClockrate.Hz) * tbFreq, nil
 }
 
 func CountsWithContext(ctx context.Context, logical bool) (int, error) {
