@@ -8,8 +8,8 @@ gopsutil: psutil for golang
 .. image:: https://coveralls.io/repos/shirou/gopsutil/badge.svg?branch=master
         :target: https://coveralls.io/r/shirou/gopsutil?branch=master
 
-.. image:: https://godoc.org/github.com/shirou/gopsutil?status.svg
-        :target: http://godoc.org/github.com/shirou/gopsutil
+.. image:: https://pkg.go.dev/badge/github.com/shirou/gopsutil
+        :target: https://pkg.go.dev/github.com/shirou/gopsutil
 
 This is a port of psutil (https://github.com/giampaolo/psutil). The challenge is porting all
 psutil functions on some architectures.
@@ -101,7 +101,7 @@ You can set an alternative location to :code:`/dev` by setting the :code:`HOST_D
 Documentation
 ------------------------
 
-see http://godoc.org/github.com/shirou/gopsutil
+see https://pkg.go.dev/github.com/shirou/gopsutil
 
 Requirements
 -----------------
