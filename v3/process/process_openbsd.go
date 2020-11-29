@@ -241,7 +241,7 @@ func (p *Process) MemoryInfoWithContext(ctx context.Context) (*MemoryInfoStat, e
 	if err != nil {
 		return nil, err
 	}
-	pageSize, err := mem.GetpageSizeWithContext(ctx)
+	pageSize, err := mem.GetPageSizeWithContext(ctx)
 	if err != nil {
 		return nil, err
 	}
