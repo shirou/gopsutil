@@ -115,10 +115,10 @@ func fillFromMeminfoWithContext(ctx context.Context) (*VirtualMemoryStat, *Virtu
 			ret.Shared = t * 1024
 		case "Slab":
 			ret.Slab = t * 1024
-		case "Sreclaimable":
+		case "SReclaimable":
 			sReclaimable = true
 			ret.Sreclaimable = t * 1024
-		case "Sunreclaim":
+		case "SUnreclaim":
 			ret.Sunreclaim = t * 1024
 		case "PageTables":
 			ret.PageTables = t * 1024
