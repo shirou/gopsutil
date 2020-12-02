@@ -37,6 +37,12 @@ func AvgWithContext(ctx context.Context) (*AvgStat, error) {
 	return ret, nil
 }
 
+type forkstat struct {
+	forks    int
+	vforks   int
+	__tforks int
+}
+
 // Misc returns miscellaneous host-wide statistics.
 // darwin use ps command to get process running/blocked count.
 // Almost same as Darwin implementation, but state is different.
@@ -63,6 +69,12 @@ func MiscWithContext(ctx context.Context) (*MiscStat, error) {
 			ret.ProcsBlocked++
 		}
 	}
+
+	f, err := getForkStat()
+	if err != nil {
+		return nil, err
+	}
+	ret.ProcsCreated = f.forks
 
 	return &ret, nil
 }
