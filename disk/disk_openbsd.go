@@ -87,7 +87,11 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 		if err != nil {
 			continue
 		}
-		name := common.IntToString(d.Name[:])
+		uint8Name := make([]uint8, len(d.Name))
+		for i, v := range d.Name {
+			uint8Name[i] = uint8(v)
+		}
+		name := common.UintToString(uint8Name)
 
 		if len(names) > 0 && !common.StringsHas(names, name) {
 			continue

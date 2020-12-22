@@ -46,7 +46,11 @@ func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	name := common.IntToString(k.Comm[:])
+	uint8Name := make([]uint8, len(k.Comm))
+	for i, v := range d.Name {
+		uint8Name[i] = uint8(v)
+	}
+	name := common.UintToString(uint8Name)
 
 	if len(name) >= 15 {
 		cmdlineSlice, err := p.CmdlineSliceWithContext(ctx)
