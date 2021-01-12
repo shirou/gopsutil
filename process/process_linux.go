@@ -404,7 +404,8 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 		m.Path = first_line[len(first_line)-1]
 
 		for _, line := range block {
-			if strings.Contains(line, "VmFlags") {
+			if strings.Contains(line, "VmFlags") ||
+			   strings.Contains(line, "THPeligible") {
 				continue
 			}
 			field := strings.Split(line, ":")
@@ -444,13 +445,16 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 		return m, nil
 	}
 
-	blocks := make([]string, 16)
-	for _, line := range lines {
+	blockname := []string{}
+	blocks := make([]string, 0, 16)
+	for i, line := range lines {
 		fields := strings.Fields(line)
-		if len(fields) > 0 && !strings.HasSuffix(fields[0], ":") {
-			// new block section
-			if len(blocks) > 0 {
-				g, err := getBlock(fields, blocks)
+
+		if i == len(lines) || len(fields) == 0 ||
+		   !strings.HasSuffix(fields[0], ":") {
+			// finished previous block section
+			if len(blockname) > 0 && len(blocks) > 0 {
+				g, err := getBlock(blockname, blocks)
 				if err != nil {
 					return &ret, err
 				}
@@ -470,7 +474,8 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 				}
 			}
 			// starts new block
-			blocks = make([]string, 16)
+			blockname = fields
+			blocks = make([]string, 0, 16)
 		} else {
 			blocks = append(blocks, line)
 		}
