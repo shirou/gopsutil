@@ -461,7 +461,7 @@ func (p *Process) CPUAffinity() ([]int32, error) {
 }
 
 // MemoryInfo returns generic process memory information,
-// such as RSS, VMS and Swap
+// such as RSS and VMS.
 func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
 	return p.MemoryInfoWithContext(context.Background())
 }
