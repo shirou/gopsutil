@@ -72,6 +72,7 @@ var (
 
 	PdhOpenQuery                = ModPdh.NewProc("PdhOpenQuery")
 	PdhAddCounter               = ModPdh.NewProc("PdhAddCounterW")
+	PdhAddEnglishCounterW       = ModPdh.NewProc("PdhAddEnglishCounterW")
 	PdhCollectQueryData         = ModPdh.NewProc("PdhCollectQueryData")
 	PdhGetFormattedCounterValue = ModPdh.NewProc("PdhGetFormattedCounterValue")
 	PdhCloseQuery               = ModPdh.NewProc("PdhCloseQuery")
@@ -113,10 +114,10 @@ func CreateQuery() (windows.Handle, error) {
 	return query, nil
 }
 
-// CreateCounter with a PdhAddCounter call
+// CreateCounter with a PdhAddEnglishCounterW call
 func CreateCounter(query windows.Handle, pname, cname string) (*CounterInfo, error) {
 	var counter windows.Handle
-	r, _, err := PdhAddCounter.Call(
+	r, _, err := PdhAddEnglishCounterW.Call(
 		uintptr(query),
 		uintptr(unsafe.Pointer(windows.StringToUTF16Ptr(cname))),
 		0,
@@ -159,7 +160,7 @@ func NewWin32PerformanceCounter(postName, counterName string) (*Win32Performance
 		PostName:    postName,
 		CounterName: counterName,
 	}
-	r, _, err := PdhAddCounter.Call(
+	r, _, err := PdhAddEnglishCounterW.Call(
 		uintptr(counter.Query),
 		uintptr(unsafe.Pointer(windows.StringToUTF16Ptr(counter.CounterName))),
 		0,
