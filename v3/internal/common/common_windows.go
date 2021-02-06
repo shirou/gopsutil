@@ -71,7 +71,6 @@ var (
 	ProcNtWow64ReadVirtualMemory64       = ModNt.NewProc("NtWow64ReadVirtualMemory64")
 
 	PdhOpenQuery                = ModPdh.NewProc("PdhOpenQuery")
-	PdhAddCounter               = ModPdh.NewProc("PdhAddCounterW")
 	PdhAddEnglishCounterW       = ModPdh.NewProc("PdhAddEnglishCounterW")
 	PdhCollectQueryData         = ModPdh.NewProc("PdhCollectQueryData")
 	PdhGetFormattedCounterValue = ModPdh.NewProc("PdhGetFormattedCounterValue")
