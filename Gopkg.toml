@@ -34,6 +34,10 @@
   version = "1.2.2"
 
 [[constraint]]
+  name = "github.com/tklauser/go-sysconf"
+  version = "0.3.4"
+
+[[constraint]]
   branch = "master"
   name = "golang.org/x/sys"
 

@@ -48,6 +48,22 @@
   version = "v1.6.0"
 
 [[projects]]
+  digest = "1:935df8a10a215392af270f19b14ef39efd151d598cf96e4851e73ba678cdf290"
+  name = "github.com/tklauser/go-sysconf"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "6c733a705a84e0dfcaf092758e3cef627dc03034"
+  version = "v0.3.4"
+
+[[projects]]
+  digest = "1:e7bf47a37e6d0fb2f4bd0f65f574f8a92922f048cab3f106b0a7a413cbb14714"
+  name = "github.com/tklauser/numcpus"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "c03481b99a3f0b56b010e938559fddce19d3cf53"
+  version = "v0.1.0"
+
+[[projects]]
   branch = "master"
   digest = "1:0afe79d034c63eea8c5977401f5fc135394751c1213ee6c991b0c6bec44f8f60"
   name = "golang.org/x/sys"
@@ -76,6 +92,7 @@
     "github.com/StackExchange/wmi",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/require",
+    "github.com/tklauser/go-sysconf",
     "golang.org/x/sys/unix",
     "golang.org/x/sys/windows",
     "golang.org/x/sys/windows/svc",

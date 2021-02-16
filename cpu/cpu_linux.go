@@ -6,28 +6,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/shirou/gopsutil/internal/common"
+	"github.com/tklauser/go-sysconf"
 )
 
 var ClocksPerSec = float64(100)
 
 func init() {
-	getconf, err := exec.LookPath("getconf")
-	if err != nil {
-		return
-	}
-	out, err := invoke.CommandWithContext(context.Background(), getconf, "CLK_TCK")
+	clkTck, err := sysconf.Sysconf(sysconf.SC_CLK_TCK)
 	// ignore errors
 	if err == nil {
-		i, err := strconv.ParseFloat(strings.TrimSpace(string(out)), 64)
-		if err == nil {
-			ClocksPerSec = i
-		}
+		ClocksPerSec = float64(clkTck)
 	}
 }
 
