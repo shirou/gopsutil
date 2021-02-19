@@ -43,6 +43,32 @@ type Process struct {
 	tgid int32
 }
 
+type _process interface {
+	PpidWithContext(context.Context) (int32, error)
+	NameWithContext(context.Context) (string, error)
+	CmdlineWithContext(context.Context) (string, error)
+	CmdlineSliceWithContext(context.Context) ([]string, error)
+	createTimeWithContext(context.Context) (int64, error)
+	ParentWithContext(context.Context) (*Process, error)
+	StatusWithContext(context.Context) ([]string, error)
+	ForegroundWithContext(context.Context) (bool, error)
+	UidsWithContext(context.Context) ([]int32, error)
+	GidsWithContext(context.Context) ([]int32, error)
+	GroupsWithContext(context.Context) ([]int32, error)
+	TerminalWithContext(context.Context) (string, error)
+	NiceWithContext(context.Context) (int32, error)
+	IOCountersWithContext(context.Context) (*IOCountersStat, error)
+	NumThreadsWithContext(context.Context) (int32, error)
+	TimesWithContext(context.Context) (*cpu.TimesStat, error)
+	MemoryInfoWithContext(context.Context) (*MemoryInfoStat, error)
+	ChildrenWithContext(context.Context) ([]*Process, error)
+	ConnectionsWithContext(context.Context) ([]net.ConnectionStat, error)
+	ConnectionsMaxWithContext(context.Context, int) ([]net.ConnectionStat, error)
+	getKProc() (*KinfoProc, error)
+}
+
+var _ _process = (*Process)(nil)
+
 // Process status
 const (
 	Running = "running"
