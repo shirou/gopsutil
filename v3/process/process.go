@@ -64,7 +64,6 @@ type _process interface {
 	ChildrenWithContext(context.Context) ([]*Process, error)
 	ConnectionsWithContext(context.Context) ([]net.ConnectionStat, error)
 	ConnectionsMaxWithContext(context.Context, int) ([]net.ConnectionStat, error)
-	getKProc() (*KinfoProc, error)
 }
 
 var _ _process = (*Process)(nil)
