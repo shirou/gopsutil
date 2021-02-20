@@ -88,7 +88,7 @@ func TestNetIOCountersAll(t *testing.T) {
 		pr += p.PacketsRecv
 	}
 	// small diff is ok
-	if math.Abs(float64(v[0].PacketsRecv-pr)) > 5 {
+	if math.Abs(float64(int64(v[0].PacketsRecv-pr))) > 5 {
 		t.Errorf("invalid sum value: %v, %v", v[0].PacketsRecv, pr)
 	}
 }
