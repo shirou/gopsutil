@@ -821,8 +821,12 @@ func (p *Process) fillFromStatusWithContext(ctx context.Context) error {
 					}
 				}
 			}
+			// Ensure we have a copy and not reference into slice
+			p.name = string([]byte(p.name))
 		case "State":
 			p.status = value[0:1]
+			// Ensure we have a copy and not reference into slice
+			p.status = string([]byte(p.status))
 		case "PPid", "Ppid":
 			pval, err := strconv.ParseInt(value, 10, 32)
 			if err != nil {
