@@ -76,7 +76,7 @@ func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 	name := common.IntToString(k.Proc.P_comm[:])
 
 	if len(name) >= 15 {
-		cmdName, err := p.CmdNameWithContext(ctx)
+		cmdName, err := p.cmdNameWithContext(ctx)
 		if err != nil {
 			return "", err
 		}
@@ -101,8 +101,8 @@ func (p *Process) CmdlineWithContext(ctx context.Context) (string, error) {
 	return strings.Join(r[0], " "), err
 }
 
-// CmdNameWithContext returns the command name (including spaces) without any arguments
-func (p *Process) CmdNameWithContext(ctx context.Context) ([]string, error) {
+// cmdNameWithContext returns the command name (including spaces) without any arguments
+func (p *Process) cmdNameWithContext(ctx context.Context) ([]string, error) {
 	r, err := callPsWithContext(ctx, "command", p.Pid, false, true)
 	if err != nil {
 		return nil, err
