@@ -333,12 +333,12 @@ func Test_Process_splitProcStat(t *testing.T) {
 			parsedStatLine := splitProcStat([]byte(statLine))
 			assert.Equal(t, expectedName, parsedStatLine[commandNameIndex])
 			for _, idx := range consideredFields {
-				idxByProcMan := idx + 1
-				expected := statLineContent[idx]
-				parsed := parsedStatLine[idxByProcMan]
+				expected := strconv.Itoa(idx)
+				parsed := parsedStatLine[idx]
 				assert.Equal(
 					t, expected, parsed,
-					"field %d (index from 1 as in man proc) must have index %s", idxByProcMan, expected,
+					"field %d (index from 1 as in man proc) must be %q but %q is received",
+					idx, expected, parsed,
 				)
 			}
 		})
