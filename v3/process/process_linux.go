@@ -979,28 +979,24 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
-	fields := strings.Fields(string(contents))
+	// Indexing from one, as described in `man proc` about the file /proc/[pid]/stat
+	fields := splitProcStat(contents)
 
-	i := 1
-	for !strings.HasSuffix(fields[i], ")") {
-		i++
-	}
-
-	terminal, err := strconv.ParseUint(fields[i+5], 10, 64)
+	terminal, err := strconv.ParseUint(fields[7], 10, 64)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
 
-	ppid, err := strconv.ParseInt(fields[i+2], 10, 32)
+	ppid, err := strconv.ParseInt(fields[4], 10, 32)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
-	utime, err := strconv.ParseFloat(fields[i+12], 64)
+	utime, err := strconv.ParseFloat(fields[14], 64)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
 
-	stime, err := strconv.ParseFloat(fields[i+13], 64)
+	stime, err := strconv.ParseFloat(fields[15], 64)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
@@ -1008,7 +1004,7 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 	// There is no such thing as iotime in stat file.  As an approximation, we
 	// will use delayacct_blkio_ticks (aggregated block I/O delays, as per Linux
 	// docs).  Note: I am assuming at least Linux 2.6.18
-	iotime, err := strconv.ParseFloat(fields[i+40], 64)
+	iotime, err := strconv.ParseFloat(fields[42], 64)
 	if err != nil {
 		iotime = 0 // Ancient linux version, most likely
 	}
@@ -1021,14 +1017,14 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 	}
 
 	bootTime, _ := common.BootTimeWithContext(ctx)
-	t, err := strconv.ParseUint(fields[i+20], 10, 64)
+	t, err := strconv.ParseUint(fields[22], 10, 64)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
 	ctime := (t / uint64(clockTicks)) + uint64(bootTime)
 	createTime := int64(ctime * 1000)
 
-	rtpriority, err := strconv.ParseInt(fields[i+16], 10, 32)
+	rtpriority, err := strconv.ParseInt(fields[18], 10, 32)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
@@ -1043,19 +1039,19 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 	snice, _ := unix.Getpriority(prioProcess, int(pid))
 	nice := int32(snice) // FIXME: is this true?
 
-	minFault, err := strconv.ParseUint(fields[i+8], 10, 64)
+	minFault, err := strconv.ParseUint(fields[10], 10, 64)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
-	cMinFault, err := strconv.ParseUint(fields[i+9], 10, 64)
+	cMinFault, err := strconv.ParseUint(fields[11], 10, 64)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
-	majFault, err := strconv.ParseUint(fields[i+10], 10, 64)
+	majFault, err := strconv.ParseUint(fields[12], 10, 64)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
-	cMajFault, err := strconv.ParseUint(fields[i+11], 10, 64)
+	cMajFault, err := strconv.ParseUint(fields[13], 10, 64)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
@@ -1120,4 +1116,17 @@ func readPidsFromDir(path string) ([]int32, error) {
 	}
 
 	return ret, nil
+}
+
+func splitProcStat(content []byte) []string {
+	nameStart := bytes.IndexByte(content, '(')
+	nameEnd := bytes.LastIndexByte(content, ')')
+	restFields := strings.Fields(string(content[nameEnd+2:])) // +2 skip ') '
+	name := content[nameStart+1 : nameEnd]
+	pid := strings.TrimSpace(string(content[:nameStart]))
+	fields := make([]string, 3, len(restFields)+3)
+	fields[1] = string(pid)
+	fields[2] = string(name)
+	fields = append(fields, restFields...)
+	return fields
 }
