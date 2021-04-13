@@ -91,3 +91,18 @@ func TestCPUCountsAgainstLscpu(t *testing.T) {
 		t.Errorf("expected %v, got %v", expectedLogical, logical)
 	}
 }
+
+func TestCPUCountsLogicalAndroid_1037(t *testing.T) { // https://github.com/shirou/gopsutil/issues/1037
+	orig := os.Getenv("HOST_PROC")
+	os.Setenv("HOST_PROC", "testdata/linux/1037/proc")
+	defer os.Setenv("HOST_PROC", orig)
+
+	count, err := Counts(true)
+	if err != nil {
+		t.Errorf("error %v", err)
+	}
+	expected := 8
+	if count != expected {
+		t.Errorf("expected %v, got %v", expected, count)
+	}
+}
