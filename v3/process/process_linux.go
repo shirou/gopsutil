@@ -485,11 +485,11 @@ func limitToUint(val string) (uint64, error) {
 	if val == "unlimited" {
 		return math.MaxUint64, nil
 	} else {
-		res, err := strconv.ParseInt(val, 10, 32)
+		res, err := strconv.ParseUint(val, 10, 64)
 		if err != nil {
 			return 0, err
 		}
-		return uint64(res), nil
+		return res, nil
 	}
 }
 
