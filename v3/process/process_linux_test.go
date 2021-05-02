@@ -4,6 +4,7 @@ package process
 
 import (
 	"fmt"
+	"io/ioutil"
 	"strconv"
 	"strings"
 	"testing"
@@ -51,4 +52,23 @@ func Test_Process_splitProcStat(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_Process_splitProcStat_fromFile(t *testing.T) {
+	pid := "68927"
+	ppid := "68044"
+	statFile := "testdata/linux/proc/" + pid + "/stat"
+	contents, err := ioutil.ReadFile(statFile)
+	assert.NoError(t, err)
+	fields := splitProcStat(contents)
+	assert.Equal(t, fields[1], pid)
+	assert.Equal(t, fields[2], "test(cmd).sh")
+	assert.Equal(t, fields[3], "S")
+	assert.Equal(t, fields[4], ppid)
+	assert.Equal(t, fields[5], pid)   // pgrp
+	assert.Equal(t, fields[6], ppid)  // session
+	assert.Equal(t, fields[8], pid)   // tpgrp
+	assert.Equal(t, fields[18], "20") // priority
+	assert.Equal(t, fields[20], "1")  // num threads
+	assert.Equal(t, fields[52], "0")  // exit code
 }
