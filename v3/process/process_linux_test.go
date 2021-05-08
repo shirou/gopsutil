@@ -5,9 +5,10 @@ package process
 import (
 	"context"
 	"io/ioutil"
-	"os"
 	"strconv"
 	"testing"
+
+	"github.com/shirou/gopsutil/v3/internal/common"
 )
 
 func Test_fillFromStatusWithContext(t *testing.T) {
@@ -15,10 +16,8 @@ func Test_fillFromStatusWithContext(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	original := os.Getenv("HOST_PROC")
-	os.Setenv("HOST_PROC", "testdata/linux")
-	defer os.Setenv("HOST_PROC", original)
-
+	f := common.MockEnv("HOST_PROC", "testdata/linux")
+	defer f()
 	for _, pid := range pids {
 		pid, _ := strconv.ParseInt(pid.Name(), 0, 32)
 		p, _ := NewProcess(int32(pid))
