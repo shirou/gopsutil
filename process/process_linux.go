@@ -935,30 +935,45 @@ func (p *Process) fillFromStatusWithContext(ctx context.Context) error {
 			}
 			p.memInfo.Locked = v * 1024
 		case "SigPnd":
+			if len(value) > 16 {
+				value = value[len(value)-16:]
+			}
 			v, err := strconv.ParseUint(value, 16, 64)
 			if err != nil {
 				return err
 			}
 			p.sigInfo.PendingThread = v
 		case "ShdPnd":
+			if len(value) > 16 {
+				value = value[len(value)-16:]
+			}
 			v, err := strconv.ParseUint(value, 16, 64)
 			if err != nil {
 				return err
 			}
 			p.sigInfo.PendingProcess = v
 		case "SigBlk":
+			if len(value) > 16 {
+				value = value[len(value)-16:]
+			}
 			v, err := strconv.ParseUint(value, 16, 64)
 			if err != nil {
 				return err
 			}
 			p.sigInfo.Blocked = v
 		case "SigIgn":
+			if len(value) > 16 {
+				value = value[len(value)-16:]
+			}
 			v, err := strconv.ParseUint(value, 16, 64)
 			if err != nil {
 				return err
 			}
 			p.sigInfo.Ignored = v
 		case "SigCgt":
+			if len(value) > 16 {
+				value = value[len(value)-16:]
+			}
 			v, err := strconv.ParseUint(value, 16, 64)
 			if err != nil {
 				return err
