@@ -33,6 +33,11 @@ func TestParseISAInfo(t *testing.T) {
 				"tscp", "cx16", "sse3", "sse2", "sse", "fxsr", "mmx", "cmov", "amd_sysc", "cx8",
 				"tsc", "fpu"},
 		},
+		{
+			"2cpu_12core_isainfo.txt",
+			[]string{"amd_svm", "amd_lzcnt", "popcnt", "amd_sse4a", "tscp", "ahf", "cx16", "sse3", "sse2",
+				"sse", "fxsr", "amd_3dnowx", "amd_3dnow", "amd_mmx", "mmx", "cmov", "amd_sysc", "cx8", "tsc", "fpu"},
+		},
 	}
 
 	for _, tc := range cases {
@@ -91,6 +96,35 @@ func TestParseProcessorInfo(t *testing.T) {
 				{CPU: 13, VendorID: "GenuineIntel", Family: "6", Model: "45", Stepping: 7, PhysicalID: "1", CoreID: "5", Cores: 2, ModelName: "Intel(r) Xeon(r) CPU E5-2670 0 @ 2.60GHz", Mhz: 2600},
 				{CPU: 14, VendorID: "GenuineIntel", Family: "6", Model: "45", Stepping: 7, PhysicalID: "1", CoreID: "6", Cores: 2, ModelName: "Intel(r) Xeon(r) CPU E5-2670 0 @ 2.60GHz", Mhz: 2600},
 				{CPU: 15, VendorID: "GenuineIntel", Family: "6", Model: "45", Stepping: 7, PhysicalID: "1", CoreID: "7", Cores: 2, ModelName: "Intel(r) Xeon(r) CPU E5-2670 0 @ 2.60GHz", Mhz: 2600},
+			},
+		},
+		{
+			"2cpu_12core_psrinfo.txt",
+			[]InfoStat{
+				{CPU: 0, VendorID: "AuthenticAMD", Family: "16", Model: "9", Stepping: 1, PhysicalID: "0", CoreID: "0", Cores: 1, ModelName: "AMD Opteron(tm) Processor 6176\t[ Socket: G34 ]", Mhz: 2300},
+				{CPU: 1, VendorID: "AuthenticAMD", Family: "16", Model: "9", Stepping: 1, PhysicalID: "0", CoreID: "1", Cores: 1, ModelName: "AMD Opteron(tm) Processor 6176\t[ Socket: G34 ]", Mhz: 2300},
+				{CPU: 2, VendorID: "AuthenticAMD", Family: "16", Model: "9", Stepping: 1, PhysicalID: "0", CoreID: "2", Cores: 1, ModelName: "AMD Opteron(tm) Processor 6176\t[ Socket: G34 ]", Mhz: 2300},
+				{CPU: 3, VendorID: "AuthenticAMD", Family: "16", Model: "9", Stepping: 1, PhysicalID: "0", CoreID: "3", Cores: 1, ModelName: "AMD Opteron(tm) Processor 6176\t[ Socket: G34 ]", Mhz: 2300},
+				{CPU: 4, VendorID: "AuthenticAMD", Family: "16", Model: "9", Stepping: 1, PhysicalID: "0", CoreID: "4", Cores: 1, ModelName: "AMD Opteron(tm) Processor 6176\t[ Socket: G34 ]", Mhz: 2300},
+				{CPU: 5, VendorID: "AuthenticAMD", Family: "16", Model: "9", Stepping: 1, PhysicalID: "0", CoreID: "5", Cores: 1, ModelName: "AMD Opteron(tm) Processor 6176\t[ Socket: G34 ]", Mhz: 2300},
+				{CPU: 6, VendorID: "AuthenticAMD", Family: "16", Model: "9", Stepping: 1, PhysicalID: "0", CoreID: "6", Cores: 1, ModelName: "AMD Opteron(tm) Processor 6176\t[ Socket: G34 ]", Mhz: 2300},
+				{CPU: 7, VendorID: "AuthenticAMD", Family: "16", Model: "9", Stepping: 1, PhysicalID: "0", CoreID: "7", Cores: 1, ModelName: "AMD Opteron(tm) Processor 6176\t[ Socket: G34 ]", Mhz: 2300},
+				{CPU: 8, VendorID: "AuthenticAMD", Family: "16", Model: "9", Stepping: 1, PhysicalID: "0", CoreID: "8", Cores: 1, ModelName: "AMD Opteron(tm) Processor 6176\t[ Socket: G34 ]", Mhz: 2300},
+				{CPU: 9, VendorID: "AuthenticAMD", Family: "16", Model: "9", Stepping: 1, PhysicalID: "0", CoreID: "9", Cores: 1, ModelName: "AMD Opteron(tm) Processor 6176\t[ Socket: G34 ]", Mhz: 2300},
+				{CPU: 10, VendorID: "AuthenticAMD", Family: "16", Model: "9", Stepping: 1, PhysicalID: "0", CoreID: "10", Cores: 1, ModelName: "AMD Opteron(tm) Processor 6176\t[ Socket: G34 ]", Mhz: 2300},
+				{CPU: 11, VendorID: "AuthenticAMD", Family: "16", Model: "9", Stepping: 1, PhysicalID: "0", CoreID: "11", Cores: 1, ModelName: "AMD Opteron(tm) Processor 6176\t[ Socket: G34 ]", Mhz: 2300},
+				{CPU: 12, VendorID: "AuthenticAMD", Family: "16", Model: "9", Stepping: 1, PhysicalID: "1", CoreID: "0", Cores: 1, ModelName: "AMD Opteron(tm) Processor 6176\t[ Socket: G34 ]", Mhz: 2300},
+				{CPU: 13, VendorID: "AuthenticAMD", Family: "16", Model: "9", Stepping: 1, PhysicalID: "1", CoreID: "1", Cores: 1, ModelName: "AMD Opteron(tm) Processor 6176\t[ Socket: G34 ]", Mhz: 2300},
+				{CPU: 14, VendorID: "AuthenticAMD", Family: "16", Model: "9", Stepping: 1, PhysicalID: "1", CoreID: "2", Cores: 1, ModelName: "AMD Opteron(tm) Processor 6176\t[ Socket: G34 ]", Mhz: 2300},
+				{CPU: 15, VendorID: "AuthenticAMD", Family: "16", Model: "9", Stepping: 1, PhysicalID: "1", CoreID: "3", Cores: 1, ModelName: "AMD Opteron(tm) Processor 6176\t[ Socket: G34 ]", Mhz: 2300},
+				{CPU: 16, VendorID: "AuthenticAMD", Family: "16", Model: "9", Stepping: 1, PhysicalID: "1", CoreID: "4", Cores: 1, ModelName: "AMD Opteron(tm) Processor 6176\t[ Socket: G34 ]", Mhz: 2300},
+				{CPU: 17, VendorID: "AuthenticAMD", Family: "16", Model: "9", Stepping: 1, PhysicalID: "1", CoreID: "5", Cores: 1, ModelName: "AMD Opteron(tm) Processor 6176\t[ Socket: G34 ]", Mhz: 2300},
+				{CPU: 18, VendorID: "AuthenticAMD", Family: "16", Model: "9", Stepping: 1, PhysicalID: "1", CoreID: "6", Cores: 1, ModelName: "AMD Opteron(tm) Processor 6176\t[ Socket: G34 ]", Mhz: 2300},
+				{CPU: 19, VendorID: "AuthenticAMD", Family: "16", Model: "9", Stepping: 1, PhysicalID: "1", CoreID: "7", Cores: 1, ModelName: "AMD Opteron(tm) Processor 6176\t[ Socket: G34 ]", Mhz: 2300},
+				{CPU: 20, VendorID: "AuthenticAMD", Family: "16", Model: "9", Stepping: 1, PhysicalID: "1", CoreID: "8", Cores: 1, ModelName: "AMD Opteron(tm) Processor 6176\t[ Socket: G34 ]", Mhz: 2300},
+				{CPU: 21, VendorID: "AuthenticAMD", Family: "16", Model: "9", Stepping: 1, PhysicalID: "1", CoreID: "9", Cores: 1, ModelName: "AMD Opteron(tm) Processor 6176\t[ Socket: G34 ]", Mhz: 2300},
+				{CPU: 22, VendorID: "AuthenticAMD", Family: "16", Model: "9", Stepping: 1, PhysicalID: "1", CoreID: "10", Cores: 1, ModelName: "AMD Opteron(tm) Processor 6176\t[ Socket: G34 ]", Mhz: 2300},
+				{CPU: 23, VendorID: "AuthenticAMD", Family: "16", Model: "9", Stepping: 1, PhysicalID: "1", CoreID: "11", Cores: 1, ModelName: "AMD Opteron(tm) Processor 6176\t[ Socket: G34 ]", Mhz: 2300},
 			},
 		},
 	}
