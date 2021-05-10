@@ -218,7 +218,7 @@ name                x     x      x       x       x
 cmdline             x     x              x       x
 create_time         x                    x       x
 status              x     x      x       x
-cwd                 x
+cwd                 x                    x
 exe                 x     x      x               x
 uids                x     x      x       x
 gids                x     x      x       x
