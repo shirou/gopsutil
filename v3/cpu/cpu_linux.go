@@ -287,7 +287,10 @@ func CountsWithContext(ctx context.Context, logical bool) (int, error) {
 			for _, line := range lines {
 				line = strings.ToLower(line)
 				if strings.HasPrefix(line, "processor") {
-					ret++
+					_, err = strconv.Atoi(strings.TrimSpace(line[strings.IndexByte(line, ':')+1:]))
+					if err == nil {
+						ret++
+					}
 				}
 			}
 		}
