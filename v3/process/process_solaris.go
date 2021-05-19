@@ -66,7 +66,11 @@ func (p *Process) TgidWithContext(ctx context.Context) (int32, error) {
 }
 
 func (p *Process) ExeWithContext(ctx context.Context) (string, error) {
-	return p.fillFromExecnameWithContext(ctx)
+	exe, err := p.fillFromPathAOutWithContext(ctx)
+	if os.IsNotExist(err) {
+		exe, err = p.fillFromExecnameWithContext(ctx)
+	}
+	return exe, err
 }
 
 func (p *Process) CmdlineWithContext(ctx context.Context) (string, error) {
@@ -214,6 +218,16 @@ func (p *Process) fillFromPathCwdWithContext(ctx context.Context) (string, error
 		return "", err
 	}
 	return cwd, nil
+}
+
+func (p *Process) fillFromPathAOutWithContext(ctx context.Context) (string, error) {
+	pid := p.Pid
+	cwdPath := common.HostProc(strconv.Itoa(int(pid)), "path", "a.out")
+	exe, err := os.Readlink(cwdPath)
+	if err != nil {
+		return "", err
+	}
+	return exe, nil
 }
 
 func (p *Process) fillFromExecnameWithContext(ctx context.Context) (string, error) {
