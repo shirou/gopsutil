@@ -1,4 +1,4 @@
-// +build linux freebsd openbsd darwin
+// +build linux freebsd openbsd darwin solaris
 
 package process
 
@@ -75,11 +75,16 @@ func getTerminalMap() (map[uint64]string, error) {
 // https://github.com/python/cpython/blob/08ff4369afca84587b1c82034af4e9f64caddbf2/Lib/posixpath.py#L186-L216
 // https://docs.python.org/3/library/os.path.html#os.path.ismount
 func isMount(path string) bool {
-	var stat1 unix.Stat_t
-	if err := unix.Lstat(path, &stat1); err != nil {
+	// Check symlinkness with os.Lstat; unix.DT_LNK is not portable
+	fileInfo, err := os.Lstat(path)
+	if err != nil {
 		return false
 	}
-	if stat1.Mode == unix.DT_LNK {
+	if fileInfo.Mode() & os.ModeSymlink != 0 {
+		return false
+	}
+	var stat1 unix.Stat_t
+	if err := unix.Lstat(path, &stat1); err != nil {
 		return false
 	}
 	parent := filepath.Join(path, "..")
