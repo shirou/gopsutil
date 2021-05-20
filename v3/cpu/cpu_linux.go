@@ -141,9 +141,13 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 			c.CPU = int32(t)
 		case "vendorId", "vendor_id":
 			c.VendorID = value
+		case "CPU implementer":
+			if value == "0x41" {
+				c.VendorID = "ARM"
+			}
 		case "cpu family":
 			c.Family = value
-		case "model":
+		case "model", "CPU part":
 			c.Model = value
 		case "model name", "cpu":
 			c.ModelName = value
@@ -153,7 +157,7 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 				c.Family = "POWER"
 				c.VendorID = "IBM"
 			}
-		case "stepping", "revision":
+		case "stepping", "revision", "CPU revision":
 			val := value
 
 			if key == "revision" {
