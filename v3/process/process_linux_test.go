@@ -3,6 +3,7 @@
 package process
 
 import (
+	"os"
   "context"
 	"fmt"
 	"io/ioutil"
@@ -57,22 +58,40 @@ func Test_Process_splitProcStat(t *testing.T) {
 }
 
 func Test_Process_splitProcStat_fromFile(t *testing.T) {
-	pid := "68927"
-	ppid := "68044"
-	statFile := "testdata/linux/proc/" + pid + "/stat"
-	contents, err := ioutil.ReadFile(statFile)
-	assert.NoError(t, err)
-	fields := splitProcStat(contents)
-	assert.Equal(t, fields[1], pid)
-	assert.Equal(t, fields[2], "test(cmd).sh")
-	assert.Equal(t, fields[3], "S")
-	assert.Equal(t, fields[4], ppid)
-	assert.Equal(t, fields[5], pid)   // pgrp
-	assert.Equal(t, fields[6], ppid)  // session
-	assert.Equal(t, fields[8], pid)   // tpgrp
-	assert.Equal(t, fields[18], "20") // priority
-	assert.Equal(t, fields[20], "1")  // num threads
-	assert.Equal(t, fields[52], "0")  // exit code
+	pids, err := ioutil.ReadDir("testdata/linux/")
+	if err != nil {
+		t.Error(err)
+	}
+	f := common.MockEnv("HOST_PROC", "testdata/linux")
+	defer f()
+	for _, pid := range pids {
+		pid, err := strconv.ParseInt(pid.Name(), 0, 32)
+		if err != nil{
+			continue
+		}
+		statFile := fmt.Sprintf("testdata/linux/%d/stat", pid)
+		if _, err := os.Stat(statFile); err != nil{
+			continue
+		}
+		contents, err := ioutil.ReadFile(statFile)
+		assert.NoError(t, err)
+
+		pidStr := strconv.Itoa(int(pid))
+
+		ppid := "68044" // TODO: how to pass ppid to test?
+
+		fields := splitProcStat(contents)
+		assert.Equal(t, fields[1], pidStr)
+		assert.Equal(t, fields[2], "test(cmd).sh")
+		assert.Equal(t, fields[3], "S")
+		assert.Equal(t, fields[4], ppid)
+		assert.Equal(t, fields[5], pidStr)   // pgrp
+		assert.Equal(t, fields[6], ppid)  // session
+		assert.Equal(t, fields[8], pidStr)   // tpgrp
+		assert.Equal(t, fields[18], "20") // priority
+		assert.Equal(t, fields[20], "1")  // num threads
+		assert.Equal(t, fields[52], "0")  // exit code
+	}
 }
 
 func Test_fillFromStatusWithContext(t *testing.T) {
@@ -83,9 +102,14 @@ func Test_fillFromStatusWithContext(t *testing.T) {
 	f := common.MockEnv("HOST_PROC", "testdata/linux")
 	defer f()
 	for _, pid := range pids {
-		pid, _ := strconv.ParseInt(pid.Name(), 0, 32)
+		pid, err := strconv.ParseInt(pid.Name(), 0, 32)
+		if err != nil{
+			continue
+		}
+		if _, err := os.Stat(fmt.Sprintf("testdata/linux/%d/status", pid)); err != nil{
+			continue
+		}
 		p, _ := NewProcess(int32(pid))
-
 		if err := p.fillFromStatusWithContext(context.Background()); err != nil {
 			t.Error(err)
 		}
