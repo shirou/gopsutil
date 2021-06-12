@@ -18,15 +18,23 @@ import (
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/internal/common"
 	"github.com/shirou/gopsutil/v3/net"
+	"github.com/tklauser/go-sysconf"
 	"golang.org/x/sys/unix"
 )
 
 var pageSize = uint64(os.Getpagesize())
 
-const (
-	prioProcess = 0   // linux/resource.h
-	clockTicks  = 100 // C.sysconf(C._SC_CLK_TCK)
-)
+const prioProcess = 0 // linux/resource.h
+
+var clockTicks = 100 // default value
+
+func init() {
+	clkTck, err := sysconf.Sysconf(sysconf.SC_CLK_TCK)
+	// ignore errors
+	if err == nil {
+		clockTicks = int(clkTck)
+	}
+}
 
 // MemoryInfoExStat is different between OSes
 type MemoryInfoExStat struct {
@@ -1026,9 +1034,9 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 
 	cpuTimes := &cpu.TimesStat{
 		CPU:    "cpu",
-		User:   float64(utime / clockTicks),
-		System: float64(stime / clockTicks),
-		Iowait: float64(iotime / clockTicks),
+		User:   utime / float64(clockTicks),
+		System: stime / float64(clockTicks),
+		Iowait: iotime / float64(clockTicks),
 	}
 
 	bootTime, _ := common.BootTimeWithContext(ctx)
