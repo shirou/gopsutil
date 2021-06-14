@@ -115,3 +115,27 @@ func Test_fillFromStatusWithContext(t *testing.T) {
 		}
 	}
 }
+
+func Test_fillFromTIDStatWithContext_lx_brandz(t *testing.T) {
+	pids, err := ioutil.ReadDir("testdata/lx_brandz/")
+	if err != nil {
+		t.Error(err)
+	}
+	f := common.MockEnv("HOST_PROC", "testdata/lx_brandz")
+	defer f()
+	for _, pid := range pids {
+		pid, err := strconv.ParseInt(pid.Name(), 0, 32)
+		if err != nil {
+			continue
+		}
+		if _, err := os.Stat(fmt.Sprintf("testdata/lx_brandz/%d/stat", pid)); err != nil {
+			continue
+		}
+		p, _ := NewProcess(int32(pid))
+		_, _, cpuTimes, _, _, _, _, err := p.fillFromTIDStatWithContext(context.Background(), -1)
+		if err != nil {
+			t.Error(err)
+		}
+		assert.Equal(t, float64(0), cpuTimes.Iowait)
+	}
+}
