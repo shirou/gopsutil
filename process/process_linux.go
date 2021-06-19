@@ -1032,9 +1032,14 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 	// There is no such thing as iotime in stat file.  As an approximation, we
 	// will use delayacct_blkio_ticks (aggregated block I/O delays, as per Linux
 	// docs).  Note: I am assuming at least Linux 2.6.18
-	iotime, err := strconv.ParseFloat(fields[42], 64)
-	if err != nil {
-		iotime = 0 // Ancient linux version, most likely
+	var iotime float64
+	if len(fields) > 42 {
+		iotime, err = strconv.ParseFloat(fields[42], 64)
+		if err != nil {
+			iotime = 0 // Ancient linux version, most likely
+		}
+	} else {
+		iotime = 0 // e.g. SmartOS containers
 	}
 
 	cpuTimes := &cpu.TimesStat{
