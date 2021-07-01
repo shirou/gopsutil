@@ -6,9 +6,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Get shellCheck
-      run: |
-        curl -Lf https://github.com/koalaman/shellcheck/releases/download/stable/shellcheck-stable.linux.x86_64.tar.xz | tar xJfv - --strip-components=1 shellcheck-stable/shellcheck -C /bin
-    - name: Run shellcheck
-      run: |
-        git ls-files --exclude='*.sh' --ignored | xargs shellcheck
+    - name: Run ShellCheck
+      uses: ludeeus/action-shellcheck@master
