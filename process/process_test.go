@@ -691,6 +691,60 @@ func Test_IsRunning(t *testing.T) {
 	}
 }
 
+func Test_Process_Environ(t *testing.T) {
+	tmpdir, err := ioutil.TempDir("", "")
+	if err != nil {
+		t.Fatalf("unable to create temp dir %v", err)
+	}
+	defer os.RemoveAll(tmpdir) // clean up
+	tmpfilepath := filepath.Join(tmpdir, "test.go")
+	tmpfile, err := os.Create(tmpfilepath)
+	if err != nil {
+		t.Fatalf("unable to create temp file %v", err)
+	}
+
+	tmpfilecontent := []byte("package main\nimport(\n\"time\"\n)\nfunc main(){\nfor range time.Tick(time.Second) {}\n}")
+	if _, err := tmpfile.Write(tmpfilecontent); err != nil {
+		tmpfile.Close()
+		t.Fatalf("unable to write temp file %v", err)
+	}
+	if err := tmpfile.Close(); err != nil {
+		t.Fatalf("unable to close temp file %v", err)
+	}
+
+	err = exec.Command("go", "build", "-o", tmpfile.Name()+".exe", tmpfile.Name()).Run()
+	if err != nil {
+		t.Fatalf("unable to build temp file %v", err)
+	}
+
+	cmd := exec.Command(tmpfile.Name() + ".exe")
+
+	cmd.Env = []string{"testkey=envvalue"}
+
+	assert.Nil(t, cmd.Start())
+	defer cmd.Process.Kill()
+	time.Sleep(100 * time.Millisecond)
+	p, err := NewProcess(int32(cmd.Process.Pid))
+	skipIfNotImplementedErr(t, err)
+	assert.Nil(t, err)
+
+	envs, err := p.Environ()
+	skipIfNotImplementedErr(t, err)
+	if err != nil {
+		t.Errorf("getting environ error %v", err)
+	}
+	var envvarFound bool
+	for _, envvar := range envs {
+		if envvar == "testkey=envvalue" {
+			envvarFound = true
+			break
+		}
+	}
+	if !envvarFound {
+		t.Error("environment variable not found")
+	}
+}
+
 func Test_AllProcesses_cmdLine(t *testing.T) {
 	procs, err := Processes()
 	if err == nil {
