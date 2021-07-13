@@ -1,7 +1,7 @@
 version: 2
 updates:
 - package-ecosystem: gomod
-  directory: /
+  directory: /v3
   schedule:
     interval: daily
 - package-ecosystem: github-actions
