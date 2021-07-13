@@ -709,6 +709,21 @@ func Test_AllProcesses_cmdLine(t *testing.T) {
 	}
 }
 
+func Test_AllProcesses_environ(t *testing.T) {
+	procs, err := Processes()
+	if err == nil {
+		for _, proc := range procs {
+			exeName, _ := proc.Exe()
+			environ, err := proc.Environ()
+			if err != nil {
+				environ = []string{"Error: " + err.Error() }
+			}
+
+			t.Logf("Process #%v: Name: %v / Environment Variables: %v\n", proc.Pid, exeName, environ)
+		}
+	}
+}
+
 func BenchmarkNewProcess(b *testing.B) {
 	checkPid := os.Getpid()
 	for i := 0; i < b.N; i++ {

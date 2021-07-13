@@ -203,3 +203,7 @@ func (p *Process) KillWithContext(ctx context.Context) error {
 func (p *Process) UsernameWithContext(ctx context.Context) (string, error) {
 	return "", common.ErrNotImplementedError
 }
+
+func (p *Process) EnvironWithContext(ctx context.Context) ([]string, error) {
+	return nil, common.ErrNotImplementedError
+}
