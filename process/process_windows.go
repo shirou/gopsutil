@@ -152,11 +152,13 @@ type rtlUserProcessParameters32 struct {
 type rtlUserProcessParameters64 struct {
 	Reserved1 [16]uint8
 	Reserved2 [10]uint64
-	ImagePathNameLength uint32
-	_ uint32
+	ImagePathNameLength uint16
+	_ uint16 // Max Length
+	_ uint32 // Padding
 	ImagePathAddress uint64
-	CommandLineLength uint32
-	_ uint32
+	CommandLineLength uint16
+	_ uint16 // Max Length
+	_ uint32 // Padding
 	CommandLineAddress uint64
 	EnvironmentAddress uint64
 	// More fields which we don't use so far
