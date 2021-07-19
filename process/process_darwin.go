@@ -399,10 +399,6 @@ func (p *Process) ConnectionsMaxWithContext(ctx context.Context, max int) ([]net
 	return net.ConnectionsPidMaxWithContext(ctx, "all", p.Pid, max)
 }
 
-func (p *Process) EnvironWithContext(ctx context.Context) ([]string, error) {
-	return nil, common.ErrNotImplementedError
-}
-
 func ProcessesWithContext(ctx context.Context) ([]*Process, error) {
 	out := []*Process{}
 

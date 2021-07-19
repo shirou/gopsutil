@@ -14,10 +14,10 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/shirou/gopsutil/v3/cpu"
+	cpu "github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/internal/common"
-	"github.com/shirou/gopsutil/v3/mem"
-	"github.com/shirou/gopsutil/v3/net"
+	mem "github.com/shirou/gopsutil/v3/mem"
+	net "github.com/shirou/gopsutil/v3/net"
 	"golang.org/x/sys/unix"
 )
 
@@ -307,10 +307,6 @@ func (p *Process) ConnectionsWithContext(ctx context.Context) ([]net.ConnectionS
 }
 
 func (p *Process) ConnectionsMaxWithContext(ctx context.Context, max int) ([]net.ConnectionStat, error) {
-	return nil, common.ErrNotImplementedError
-}
-
-func (p *Process) EnvironWithContext(ctx context.Context) ([]string, error) {
 	return nil, common.ErrNotImplementedError
 }
 
