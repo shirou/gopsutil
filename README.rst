@@ -32,7 +32,7 @@ for example, `v2.17.04` means
 
 gopsutil aims to keep backwards-compatiblity until major version change.
 
-Taged at every end of month, but there are only a few commits, it can be skipped.
+Tagged at every end of month, but if there are only a few commits, it can be skipped.
 
 
 Available Architectures
@@ -45,12 +45,12 @@ Available Architectures
 - OpenBSD amd64 (Thank you @mpfz0r!)
 - Solaris amd64 (developed and tested on SmartOS/Illumos, Thank you @jen20!)
 
-These are partial support:
+These are partially support:
 
 - CPU on DragonFly BSD (#893, Thank you @gballet!)
 - host on Linux RISC-V (#896, Thank you @tklauser!)
 
-All works are implemented without cgo by porting c struct to golang struct.
+All works are implemented without cgo by porting C structs to golang structs.
 
 
 Usage
@@ -175,7 +175,7 @@ Several methods have been added which are not present in psutil, but will provid
   - system wide stats on netfilter conntrack module
   - sourced from /proc/sys/net/netfilter/nf_conntrack_count
 
-Some codes are ported from Ohai. many thanks.
+Some code is ported from Ohai. many thanks.
 
 
 Current Status
@@ -328,5 +328,5 @@ How to Contribute
 4. Push to the branch (git push origin my-new-feature)
 5. Create new Pull Request
 
-My English is terrible, so documentation or correcting comments are also
-welcome.
+English is not my native tongue, so PRs correcting grammer or spelling are
+welcome and appreciated.
