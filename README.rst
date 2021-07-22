@@ -17,7 +17,7 @@ psutil functions on some architectures.
 v3 migration
 ---------------
 
-from v3.20.10, gopsutil becomes v3 which breaks backawards compatiblity. See `v3Changes.md <_tools/v3migration/v3Changes.md>`_ more detail changes.
+from v3.20.10, gopsutil becomes v3 which breaks backwards compatiblity. See `v3Changes.md <_tools/v3migration/v3Changes.md>`_ more detail changes.
 
 Tag semantics
 -------------------------
