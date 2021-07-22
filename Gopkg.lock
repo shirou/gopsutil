@@ -65,7 +65,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:0afe79d034c63eea8c5977401f5fc135394751c1213ee6c991b0c6bec44f8f60"
+  digest = "1:1672d2eb5799465379f6016fa509eadd72c69e3eb2bf3cdfea9222e64e163b94"
   name = "golang.org/x/sys"
   packages = [
     "internal/unsafeheader",
@@ -75,7 +75,7 @@
     "windows/svc/mgr",
   ]
   pruneopts = "UT"
-  revision = "e3ed0017c21142d3345308d92dcc7ad7020040c6"
+  revision = "134d130e1a049f4194ae9920ac9f96455cde360d"
 
 [[projects]]
   branch = "v3"
