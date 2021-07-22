@@ -45,7 +45,7 @@ Available Architectures
 - OpenBSD amd64 (Thank you @mpfz0r!)
 - Solaris amd64 (developed and tested on SmartOS/Illumos, Thank you @jen20!)
 
-These are partially support:
+These have partial support:
 
 - CPU on DragonFly BSD (#893, Thank you @gballet!)
 - host on Linux RISC-V (#896, Thank you @tklauser!)
