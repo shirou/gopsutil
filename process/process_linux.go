@@ -490,6 +490,17 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 	return &ret, nil
 }
 
+func (p *Process) EnvironWithContext(ctx context.Context) ([]string, error) {
+	environPath := common.HostProc(strconv.Itoa(int(p.Pid)), "environ")
+
+	environContent, err := ioutil.ReadFile(environPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return strings.Split(string(environContent), "\000"), nil
+}
+
 /**
 ** Internal functions
 **/

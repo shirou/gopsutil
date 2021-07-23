@@ -549,6 +549,11 @@ func (p *Process) Username() (string, error) {
 	return p.UsernameWithContext(context.Background())
 }
 
+// Environ returns the environment variables of the process.
+func (p *Process) Environ() ([]string, error) {
+	return p.EnvironWithContext(context.Background())
+}
+
 func convertStatusChar(letter string) string {
 	switch letter {
 	case "R":
