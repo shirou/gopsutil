@@ -328,5 +328,5 @@ How to Contribute
 4. Push to the branch (git push origin my-new-feature)
 5. Create new Pull Request
 
-English is not my native tongue, so PRs correcting grammer or spelling are
+English is not my native language, so PRs correcting grammer or spelling are
 welcome and appreciated.
