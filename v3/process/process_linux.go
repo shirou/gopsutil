@@ -82,7 +82,7 @@ func (p *Process) PpidWithContext(ctx context.Context) (int32, error) {
 
 func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 	if p.name == "" {
-		if err := p.fillFromStatusWithContext(ctx); err != nil {
+		if err := p.fillNameWithContext(ctx); err != nil {
 			return "", err
 		}
 	}
@@ -798,6 +798,28 @@ func (p *Process) fillFromStatmWithContext(ctx context.Context) (*MemoryInfoStat
 	}
 
 	return memInfo, memInfoEx, nil
+}
+
+// Get name from /proc/(pid)/comm or /proc/(pid)/status
+func (p *Process) fillNameWithContext(ctx context.Context) error {
+	err := p.fillFromCommWithContext(ctx)
+	if err == nil && p.name != "" && len(p.name) < 15 {
+		return nil
+	}
+	return p.fillFromStatusWithContext(ctx)
+}
+
+// Get name from /proc/(pid)/comm
+func (p *Process) fillFromCommWithContext(ctx context.Context) error {
+	pid := p.Pid
+	statPath := common.HostProc(strconv.Itoa(int(pid)), "comm")
+	contents, err := ioutil.ReadFile(statPath)
+	if err != nil {
+		return err
+	}
+
+	p.name = strings.TrimRight(string(contents), "\n")
+	return nil
 }
 
 // Get various status from /proc/(pid)/status

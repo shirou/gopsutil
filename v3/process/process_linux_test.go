@@ -3,14 +3,14 @@
 package process
 
 import (
-	"os"
-  "context"
+	"context"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
-  
+
 	"github.com/shirou/gopsutil/v3/internal/common"
 	"github.com/stretchr/testify/assert"
 )
@@ -91,6 +91,28 @@ func Test_Process_splitProcStat_fromFile(t *testing.T) {
 		assert.Equal(t, fields[18], "20") // priority
 		assert.Equal(t, fields[20], "1")  // num threads
 		assert.Equal(t, fields[52], "0")  // exit code
+	}
+}
+
+func Test_fillFromCommWithContext(t *testing.T) {
+	pids, err := ioutil.ReadDir("testdata/linux/")
+	if err != nil {
+		t.Error(err)
+	}
+	f := common.MockEnv("HOST_PROC", "testdata/linux")
+	defer f()
+	for _, pid := range pids {
+		pid, err := strconv.ParseInt(pid.Name(), 0, 32)
+		if err != nil {
+			continue
+		}
+		if _, err := os.Stat(fmt.Sprintf("testdata/linux/%d/status", pid)); err != nil {
+			continue
+		}
+		p, _ := NewProcess(int32(pid))
+		if err := p.fillFromCommWithContext(context.Background()); err != nil {
+			t.Error(err)
+		}
 	}
 }
 
