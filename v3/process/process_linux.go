@@ -818,7 +818,7 @@ func (p *Process) fillFromCommWithContext(ctx context.Context) error {
 		return err
 	}
 
-	p.name = strings.TrimRight(string(contents), "\n")
+	p.name = strings.TrimSuffix(string(contents), "\n")
 	return nil
 }
 
