@@ -142,8 +142,8 @@ func Benchmark_fillFromCommWithContext(b *testing.B) {
 	f := common.MockEnv("HOST_PROC", "testdata/linux")
 	defer f()
 	pid := 1060
+	p, _ := NewProcess(int32(pid))
 	for i := 0; i < b.N; i++ {
-		p, _ := NewProcess(int32(pid))
 		p.fillFromCommWithContext(context.Background())
 	}
 }
@@ -152,8 +152,8 @@ func Benchmark_fillFromStatusWithContext(b *testing.B) {
 	f := common.MockEnv("HOST_PROC", "testdata/linux")
 	defer f()
 	pid := 1060
+	p, _ := NewProcess(int32(pid))
 	for i := 0; i < b.N; i++ {
-		p, _ := NewProcess(int32(pid))
 		p.fillFromStatusWithContext(context.Background())
 	}
 }
