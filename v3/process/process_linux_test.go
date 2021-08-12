@@ -66,11 +66,11 @@ func Test_Process_splitProcStat_fromFile(t *testing.T) {
 	defer f()
 	for _, pid := range pids {
 		pid, err := strconv.ParseInt(pid.Name(), 0, 32)
-		if err != nil{
+		if err != nil {
 			continue
 		}
 		statFile := fmt.Sprintf("testdata/linux/%d/stat", pid)
-		if _, err := os.Stat(statFile); err != nil{
+		if _, err := os.Stat(statFile); err != nil {
 			continue
 		}
 		contents, err := ioutil.ReadFile(statFile)
@@ -85,12 +85,12 @@ func Test_Process_splitProcStat_fromFile(t *testing.T) {
 		assert.Equal(t, fields[2], "test(cmd).sh")
 		assert.Equal(t, fields[3], "S")
 		assert.Equal(t, fields[4], ppid)
-		assert.Equal(t, fields[5], pidStr)   // pgrp
-		assert.Equal(t, fields[6], ppid)  // session
-		assert.Equal(t, fields[8], pidStr)   // tpgrp
-		assert.Equal(t, fields[18], "20") // priority
-		assert.Equal(t, fields[20], "1")  // num threads
-		assert.Equal(t, fields[52], "0")  // exit code
+		assert.Equal(t, fields[5], pidStr) // pgrp
+		assert.Equal(t, fields[6], ppid)   // session
+		assert.Equal(t, fields[8], pidStr) // tpgrp
+		assert.Equal(t, fields[18], "20")  // priority
+		assert.Equal(t, fields[20], "1")   // num threads
+		assert.Equal(t, fields[52], "0")   // exit code
 	}
 }
 
@@ -125,16 +125,36 @@ func Test_fillFromStatusWithContext(t *testing.T) {
 	defer f()
 	for _, pid := range pids {
 		pid, err := strconv.ParseInt(pid.Name(), 0, 32)
-		if err != nil{
+		if err != nil {
 			continue
 		}
-		if _, err := os.Stat(fmt.Sprintf("testdata/linux/%d/status", pid)); err != nil{
+		if _, err := os.Stat(fmt.Sprintf("testdata/linux/%d/status", pid)); err != nil {
 			continue
 		}
 		p, _ := NewProcess(int32(pid))
 		if err := p.fillFromStatusWithContext(context.Background()); err != nil {
 			t.Error(err)
 		}
+	}
+}
+
+func Benchmark_fillFromCommWithContext(b *testing.B) {
+	f := common.MockEnv("HOST_PROC", "testdata/linux")
+	defer f()
+	pid := 1060
+	for i := 0; i < b.N; i++ {
+		p, _ := NewProcess(int32(pid))
+		p.fillFromCommWithContext(context.Background())
+	}
+}
+
+func Benchmark_fillFromStatusWithContext(b *testing.B) {
+	f := common.MockEnv("HOST_PROC", "testdata/linux")
+	defer f()
+	pid := 1060
+	for i := 0; i < b.N; i++ {
+		p, _ := NewProcess(int32(pid))
+		p.fillFromStatusWithContext(context.Background())
 	}
 }
 
