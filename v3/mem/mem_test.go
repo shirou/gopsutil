@@ -110,3 +110,29 @@ func TestSwapMemoryStat_String(t *testing.T) {
 		t.Errorf("SwapMemoryStat string is invalid: %v", v)
 	}
 }
+
+func TestSwapDevices(t *testing.T) {
+	v, err := SwapDevices()
+	skipIfNotImplementedErr(t, err)
+	if err != nil {
+		t.Fatalf("error calling SwapDevices: %v", err)
+	}
+
+	t.Logf("SwapDevices() -> %+v", v)
+
+	if len(v) == 0 {
+		t.Fatalf("no swap devices found. [this is expected if the host has swap disabled]")
+	}
+
+	for _, device := range v {
+		if device.Name == "" {
+			t.Fatalf("deviceName not set in %+v", device)
+		}
+		if device.FreeBytes == 0 {
+			t.Logf("[WARNING] free-bytes is zero in %+v. This might be expected", device)
+		}
+		if device.UsedBytes == 0 {
+			t.Logf("[WARNING] used-bytes is zero in %+v. This might be expected", device)
+		}
+	}
+}
