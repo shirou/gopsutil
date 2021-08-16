@@ -48,12 +48,12 @@
   version = "v1.6.0"
 
 [[projects]]
-  digest = "1:75b5c63e0eae3f1b290c91ff3084b80c9a51066c6dff1a6aca31ccbdab4aeee4"
+  digest = "1:3f14c2e97a330f13c73db03a73dc3f0f4bb601d759c16d73263a6cf3c7c20a77"
   name = "github.com/tklauser/go-sysconf"
   packages = ["."]
   pruneopts = "UT"
-  revision = "bf420f795f20e170808c4d27a6b083f08725911f"
-  version = "v0.3.6"
+  revision = "18e8c84cb3317596497f8994bc890794c5ab5d4b"
+  version = "v0.3.8"
 
 [[projects]]
   digest = "1:e7bf47a37e6d0fb2f4bd0f65f574f8a92922f048cab3f106b0a7a413cbb14714"
