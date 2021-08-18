@@ -110,7 +110,7 @@ func Virtualization() (string, string, error) {
 	return VirtualizationWithContext(context.Background())
 }
 
-// required variables for concurrency safe virtualization caching
+// required variables for concurrency safe virtualization caching.
 var (
 	cachedVirtMap   map[string]string
 	cachedVirtMutex sync.RWMutex
@@ -281,7 +281,7 @@ func GetOSRelease() (platform string, version string, err error) {
 	return platform, version, nil
 }
 
-// Remove quotes of the source string
+// trimQuotes removes quotes in the source string.
 func trimQuotes(s string) string {
 	if len(s) >= 2 {
 		if s[0] == '"' && s[len(s)-1] == '"' {
