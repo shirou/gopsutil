@@ -103,7 +103,6 @@ func MiscWithContext(ctx context.Context) (*MiscStat, error) {
 		default:
 			continue
 		}
-
 	}
 
 	procsTotal, err := getProcsTotal()
