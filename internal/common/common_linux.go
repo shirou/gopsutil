@@ -75,6 +75,18 @@ func BootTimeWithContext(ctx context.Context) (uint64, error) {
 		return 0, err
 	}
 
+	if statFile == "uptime" {
+		if len(lines) != 1 {
+			return 0, fmt.Errorf("wrong uptime format")
+		}
+		f := strings.Fields(lines[0])
+		b, err := strconv.ParseFloat(f[0], 64)
+		if err != nil {
+			return 0, err
+		}
+		t := uint64(time.Now().Unix()) - uint64(b)
+		return t, nil
+	}
 	if statFile == "stat" {
 		for _, line := range lines {
 			if strings.HasPrefix(line, "btime") {
@@ -90,17 +102,6 @@ func BootTimeWithContext(ctx context.Context) (uint64, error) {
 				return t, nil
 			}
 		}
-	} else if statFile == "uptime" {
-		if len(lines) != 1 {
-			return 0, fmt.Errorf("wrong uptime format")
-		}
-		f := strings.Fields(lines[0])
-		b, err := strconv.ParseFloat(f[0], 64)
-		if err != nil {
-			return 0, err
-		}
-		t := uint64(time.Now().Unix()) - uint64(b)
-		return t, nil
 	}
 
 	return 0, fmt.Errorf("could not find btime")
@@ -136,10 +137,8 @@ func VirtualizationWithContext(ctx context.Context) (string, string, error) {
 
 		if PathExists(filepath.Join(filename, "capabilities")) {
 			contents, err := ReadLines(filepath.Join(filename, "capabilities"))
-			if err == nil {
-				if StringsContains(contents, "control_d") {
-					role = "host"
-				}
+			if err == nil && StringsContains(contents, "control_d") {
+				role = "host"
 			}
 		}
 	}
