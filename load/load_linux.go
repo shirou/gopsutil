@@ -26,8 +26,7 @@ func AvgWithContext(ctx context.Context) (*AvgStat, error) {
 
 func sysinfoAvgWithContext(ctx context.Context) (*AvgStat, error) {
 	var info syscall.Sysinfo_t
-	err := syscall.Sysinfo(&info)
-	if err != nil {
+	if err := syscall.Sysinfo(&info); err != nil {
 		return nil, err
 	}
 
