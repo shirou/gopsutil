@@ -165,7 +165,7 @@ func UintToString(orig []uint8) string {
 			size = i
 			break
 		}
-		ret[i] = byte(o)
+		ret[i] = o
 	}
 	if size == -1 {
 		size = len(orig)
