@@ -3,6 +3,7 @@
 package process
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -35,7 +36,47 @@ const (
 	WorldReadable os.FileMode = 4
 )
 
+type MemoryMapSectionPermissions struct {
+	Read    bool
+	Write   bool
+	Execute bool
+	Private bool
+	Shared  bool
+}
+
+func (msp *MemoryMapSectionPermissions) parse(perm string) error {
+	if len(perm) != 4 {
+		return fmt.Errorf("can't parse section permission '%s'", perm)
+	}
+	for _, v := range perm {
+		switch v {
+		case 'r':
+			msp.Read = true
+		case 'w':
+			msp.Write = true
+		case 'x':
+			msp.Execute = true
+		case 'p':
+			msp.Private = true
+		case 's':
+			msp.Shared = true
+		}
+	}
+	return nil
+}
+
+type MemoryMapSectionHeader struct {
+	StartAddr  uintptr
+	EndAddr    uintptr
+	Permission MemoryMapSectionPermissions
+	Offset     uint64
+	Device     string
+	Inode      uint64
+}
+
 type MemoryMapsStat struct {
+	MemoryMapSectionHeader
+
 	Path         string `json:"path"`
 	Rss          uint64 `json:"rss"`
 	Size         uint64 `json:"size"`
@@ -47,6 +88,112 @@ type MemoryMapsStat struct {
 	Referenced   uint64 `json:"referenced"`
 	Anonymous    uint64 `json:"anonymous"`
 	Swap         uint64 `json:"swap"`
+}
+
+func (m *MemoryMapsStat) updateAttribute(fields []string) error {
+	if len(fields) < 2 {
+		return fmt.Errorf("update attribute not enough fields")
+	}
+	var v *uint64
+	switch fields[0] {
+	case "Size:":
+		v = &m.Size
+	case "Rss:":
+		v = &m.Rss
+	case "Pss:":
+		v = &m.Pss
+	case "Shared_Clean:":
+		v = &m.SharedClean
+	case "Shared_Dirty:":
+		v = &m.SharedDirty
+	case "Private_Clean:":
+		v = &m.PrivateClean
+	case "Private_Dirty:":
+		v = &m.PrivateDirty
+	case "Referenced:":
+		v = &m.Referenced
+	case "Anonymous:":
+		v = &m.Anonymous
+	case "Swap:":
+		v = &m.Swap
+	default:
+		// ignore other fields
+		return nil
+	}
+
+	t, err := strconv.ParseUint(fields[1], 10, 64)
+	if err != nil {
+		return err
+	}
+
+	*v = t
+	return nil
+}
+
+/*
+   Parse a memory section from /proc/pid/maps or header section line of /proc/pid/smaps
+
+ StartAddr        EndAddr    Permission Offset Device Inode              Path
+ffffffffff600000-ffffffffff601000 --xp 00000000 00:00 0                  [vsyscall]
+*/
+func (ms *MemoryMapsStat) parseHeader(fields []string) error {
+	if len(fields) < 5 {
+		return fmt.Errorf("can't parse section, not enough fields '%v'", fields)
+	}
+
+	/* Address Range */
+	i := strings.IndexRune(fields[0], '-')
+	if i < 0 {
+		return fmt.Errorf("can't parse address section, not enough fields '%v'", fields[0])
+	}
+	startAddr := fields[0][:i]
+	endAddr := fields[0][i+1:]
+	a, err := strconv.ParseUint(startAddr, 16, 64)
+	if err != nil {
+		return err
+	}
+	ms.StartAddr = uintptr(a)
+	a, err = strconv.ParseUint(endAddr, 16, 64)
+	if err != nil {
+		return err
+	}
+	ms.EndAddr = uintptr(a)
+
+	// Permission
+	if err := ms.Permission.parse(fields[1]); err != nil {
+		return err
+	}
+
+	// Offset
+	a, err = strconv.ParseUint(fields[2], 16, 64)
+	if err != nil {
+		return err
+	}
+	ms.Offset = a
+
+	// Device
+	dev := fields[3]
+	if len(dev) < 5 || !strings.Contains(dev, ":") {
+		return fmt.Errorf("can't parse device section, '%s'", dev)
+	}
+	ms.Device = dev
+
+	// Inode
+	a, err = strconv.ParseUint(fields[4], 10, 64)
+	if err != nil {
+		return err
+	}
+	ms.Inode = a
+
+	if len(fields) >= 6 {
+		ms.Path = strings.Join(fields[5:], " ")
+	}
+
+	return nil
+}
+
+func (ms *MemoryMapsStat) IsAnonymous() bool {
+	return len(ms.Path) == 0
 }
 
 type currentUser struct {
@@ -322,79 +469,43 @@ func (p *Process) IsRunning() (bool, error) {
 // MemoryMaps get memory maps from /proc/(pid)/smaps
 func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 	pid := p.Pid
-	var ret []MemoryMapsStat
+	var memMaps []MemoryMapsStat
 	smapsPath := common.HostProc(strconv.Itoa(int(pid)), "smaps")
-	contents, err := ioutil.ReadFile(smapsPath)
+
+	smaps, err := os.Open(smapsPath)
 	if err != nil {
 		return nil, err
 	}
-	lines := strings.Split(string(contents), "\n")
+	defer smaps.Close()
 
-	// function of parsing a block
-	getBlock := func(first_line []string, block []string) (MemoryMapsStat, error) {
-		m := MemoryMapsStat{}
-		m.Path = first_line[len(first_line)-1]
+	scanner := bufio.NewScanner(bufio.NewReader(smaps))
 
-		for _, line := range block {
-			if strings.Contains(line, "VmFlags") {
-				continue
+	firstLine := true
+	mms := MemoryMapsStat{}
+	for scanner.Scan() {
+		line := scanner.Text()
+		cols := strings.Fields(line)
+		if !strings.HasSuffix(cols[0], ":") {
+			if firstLine {
+				firstLine = false
+			} else {
+				memMaps = append(memMaps, mms)
 			}
-			field := strings.Split(line, ":")
-			if len(field) < 2 {
-				continue
+			mms = MemoryMapsStat{}
+			if err := mms.parseHeader(cols); err != nil {
+				return nil, err
 			}
-			v := strings.Trim(field[1], " kB") // remove last "kB"
-			t, err := strconv.ParseUint(v, 10, 64)
-			if err != nil {
-				return m, err
-			}
-
-			switch field[0] {
-			case "Size":
-				m.Size = t
-			case "Rss":
-				m.Rss = t
-			case "Pss":
-				m.Pss = t
-			case "Shared_Clean":
-				m.SharedClean = t
-			case "Shared_Dirty":
-				m.SharedDirty = t
-			case "Private_Clean":
-				m.PrivateClean = t
-			case "Private_Dirty":
-				m.PrivateDirty = t
-			case "Referenced":
-				m.Referenced = t
-			case "Anonymous":
-				m.Anonymous = t
-			case "Swap":
-				m.Swap = t
-			}
-		}
-		return m, nil
-	}
-
-	blocks := make([]string, 16)
-	for _, line := range lines {
-		field := strings.Split(line, " ")
-		if strings.HasSuffix(field[0], ":") == false {
-			// new block section
-			if len(blocks) > 0 {
-				g, err := getBlock(field, blocks)
-				if err != nil {
-					return &ret, err
-				}
-				ret = append(ret, g)
-			}
-			// starts new block
-			blocks = make([]string, 16)
 		} else {
-			blocks = append(blocks, line)
+			if err := mms.updateAttribute(cols); err != nil {
+				return nil, err
+			}
 		}
 	}
-
-	return &ret, nil
+	if firstLine {
+		return nil, fmt.Errorf("the proc/pid/smaps parsing is empty. smaps path : %s", smapsPath)
+	}
+	memMaps = append(memMaps, mms)
+	return &memMaps, nil
 }
 
 /**
