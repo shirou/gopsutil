@@ -498,46 +498,50 @@ func Test_Parent(t *testing.T) {
 
 func Test_Connections(t *testing.T) {
 	p := testGetProcess()
-	ch0 := make(chan string)
-	ch1 := make(chan string)
-	go func() { // TCP listening goroutine
-		addr, err := net.ResolveTCPAddr("tcp", "localhost:0") // dynamically get a random open port from OS
-		if err != nil {
-			t.Skip("unable to resolve localhost:", err)
-		}
-		l, err := net.ListenTCP(addr.Network(), addr)
-		if err != nil {
-			t.Skip(fmt.Sprintf("unable to listen on %v: %v", addr, err))
-		}
-		defer l.Close()
-		ch0 <- l.Addr().String()
-		for {
-			conn, err := l.Accept()
-			if err != nil {
-				t.Skip("unable to accept connection:", err)
-			}
-			ch1 <- l.Addr().String()
-			defer conn.Close()
-		}
-	}()
-	go func() { // TCP client goroutine
-		tcpServerAddr := <-ch0
-		net.Dial("tcp", tcpServerAddr)
-	}()
 
-	tcpServerAddr := <-ch1
+	addr, err := net.ResolveTCPAddr("tcp", "localhost:0") // dynamically get a random open port from OS
+	if err != nil {
+		t.Fatalf("unable to resolve localhost: %v", err)
+	}
+	l, err := net.ListenTCP(addr.Network(), addr)
+	if err != nil {
+		t.Fatalf("unable to listen on %v: %v", addr, err)
+	}
+	defer l.Close()
+
+	tcpServerAddr := l.Addr().String()
 	tcpServerAddrIP := strings.Split(tcpServerAddr, ":")[0]
 	tcpServerAddrPort, err := strconv.ParseUint(strings.Split(tcpServerAddr, ":")[1], 10, 32)
 	if err != nil {
-		t.Errorf("unable to parse tcpServerAddr port: %v", err)
+		t.Fatalf("unable to parse tcpServerAddr port: %v", err)
 	}
+
+	go func() { // TCP listening goroutine
+		conn, err := l.Accept()
+		if err != nil {
+			panic(err)
+		}
+		defer conn.Close()
+
+		_, err = ioutil.ReadAll(conn)
+		if err != nil {
+			panic(err)
+		}
+	}()
+
+	conn, err := net.Dial("tcp", tcpServerAddr)
+	if err != nil {
+		t.Fatalf("unable to dial %v: %v", tcpServerAddr, err)
+	}
+	defer conn.Close()
+
 	c, err := p.Connections()
 	skipIfNotImplementedErr(t, err)
 	if err != nil {
-		t.Errorf("error %v", err)
+		t.Fatalf("error %v", err)
 	}
 	if len(c) == 0 {
-		t.Errorf("no connections found")
+		t.Fatal("no connections found")
 	}
 	found := 0
 	for _, connection := range c {
@@ -546,7 +550,7 @@ func Test_Connections(t *testing.T) {
 		}
 	}
 	if found != 2 { // two established connections, one for the server, the other for the client
-		t.Errorf(fmt.Sprintf("wrong connections: %+v", c))
+		t.Fatalf("wrong connections: %+v", c)
 	}
 }
 
