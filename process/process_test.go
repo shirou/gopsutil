@@ -751,34 +751,38 @@ func Test_Process_Environ(t *testing.T) {
 
 func Test_AllProcesses_cmdLine(t *testing.T) {
 	procs, err := Processes()
-	if err == nil {
-		for _, proc := range procs {
-			var exeName string
-			var cmdLine string
+	skipIfNotImplementedErr(t, err)
+	if err != nil {
+		t.Fatalf("getting processes error %v", err)
+	}
+	for _, proc := range procs {
+		var exeName string
+		var cmdLine string
 
-			exeName, _ = proc.Exe()
-			cmdLine, err = proc.Cmdline()
-			if err != nil {
-				cmdLine = "Error: " + err.Error()
-			}
-
-			t.Logf("Process #%v: Name: %v / CmdLine: %v\n", proc.Pid, exeName, cmdLine)
+		exeName, _ = proc.Exe()
+		cmdLine, err = proc.Cmdline()
+		if err != nil {
+			cmdLine = "Error: " + err.Error()
 		}
+
+		t.Logf("Process #%v: Name: %v / CmdLine: %v\n", proc.Pid, exeName, cmdLine)
 	}
 }
 
 func Test_AllProcesses_environ(t *testing.T) {
 	procs, err := Processes()
-	if err == nil {
-		for _, proc := range procs {
-			exeName, _ := proc.Exe()
-			environ, err := proc.Environ()
-			if err != nil {
-				environ = []string{"Error: " + err.Error() }
-			}
-
-			t.Logf("Process #%v: Name: %v / Environment Variables: %v\n", proc.Pid, exeName, environ)
+	skipIfNotImplementedErr(t, err)
+	if err != nil {
+		t.Fatalf("getting processes error %v", err)
+	}
+	for _, proc := range procs {
+		exeName, _ := proc.Exe()
+		environ, err := proc.Environ()
+		if err != nil {
+			environ = []string{"Error: " + err.Error()}
 		}
+
+		t.Logf("Process #%v: Name: %v / Environment Variables: %v\n", proc.Pid, exeName, environ)
 	}
 }
 
