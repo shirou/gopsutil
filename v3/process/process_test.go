@@ -420,14 +420,14 @@ func Test_Process_Exe(t *testing.T) {
 
 func Test_Process_CpuPercent(t *testing.T) {
 	p := testGetProcess()
-	percent, err := p.Percent(0)
+	_, err := p.Percent(0)
 	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
 	duration := time.Duration(1000) * time.Microsecond
 	time.Sleep(duration)
-	percent, err = p.Percent(0)
+	percent, err := p.Percent(0)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
