@@ -216,6 +216,9 @@ func NewProcess(pid int32) (*Process, error) {
 		Pid: int32(pid),
 	}
 	file, err := os.Open(common.HostProc(strconv.Itoa(int(p.Pid))))
+	if err != nil {
+		return nil, err
+	}
 	defer file.Close()
 	return p, err
 }
