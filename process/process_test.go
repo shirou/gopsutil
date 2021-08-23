@@ -516,6 +516,7 @@ func Test_Connections(t *testing.T) {
 		t.Fatalf("unable to parse tcpServerAddr port: %v", err)
 	}
 
+	serverEstablished := make(chan struct{})
 	go func() { // TCP listening goroutine
 		conn, err := l.Accept()
 		if err != nil {
@@ -523,6 +524,7 @@ func Test_Connections(t *testing.T) {
 		}
 		defer conn.Close()
 
+		serverEstablished <- struct{}{}
 		_, err = ioutil.ReadAll(conn)
 		if err != nil {
 			panic(err)
@@ -535,6 +537,10 @@ func Test_Connections(t *testing.T) {
 	}
 	defer conn.Close()
 
+	// Rarely the call to net.Dial returns before the server connection is
+	// established. Wait so that the test doesn't fail.
+	<-serverEstablished
+
 	c, err := p.Connections()
 	skipIfNotImplementedErr(t, err)
 	if err != nil {
@@ -543,14 +549,33 @@ func Test_Connections(t *testing.T) {
 	if len(c) == 0 {
 		t.Fatal("no connections found")
 	}
-	found := 0
+
+	serverConnections := 0
 	for _, connection := range c {
-		if connection.Status == "ESTABLISHED" && (connection.Laddr.IP == tcpServerAddrIP && connection.Laddr.Port == uint32(tcpServerAddrPort)) || (connection.Raddr.IP == tcpServerAddrIP && connection.Raddr.Port == uint32(tcpServerAddrPort)) {
-			found++
+		if connection.Laddr.IP == tcpServerAddrIP && connection.Laddr.Port == uint32(tcpServerAddrPort) && connection.Raddr.Port != 0 {
+			if connection.Status != "ESTABLISHED" {
+				t.Fatalf("expected server connection to be ESTABLISHED, have %+v", connection)
+			}
+			serverConnections++
 		}
 	}
-	if found != 2 { // two established connections, one for the server, the other for the client
-		t.Fatalf("wrong connections: %+v", c)
+
+	clientConnections := 0
+	for _, connection := range c {
+		if connection.Raddr.IP == tcpServerAddrIP && connection.Raddr.Port == uint32(tcpServerAddrPort) {
+			if connection.Status != "ESTABLISHED" {
+				t.Fatalf("expected client connection to be ESTABLISHED, have %+v", connection)
+			}
+			clientConnections++
+		}
+	}
+
+	if serverConnections != 1 { // two established connections, one for the server, the other for the client
+		t.Fatalf("expected 1 server connection, have %d.\nDetails: %+v", serverConnections, c)
+	}
+
+	if clientConnections != 1 { // two established connections, one for the server, the other for the client
+		t.Fatalf("expected 1 server connection, have %d.\nDetails: %+v", clientConnections, c)
 	}
 }
 
