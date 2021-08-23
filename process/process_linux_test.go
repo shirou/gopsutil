@@ -126,3 +126,48 @@ func TestFillNsPidFromStatus(t *testing.T) {
 		assert.Equal(t, int32(0), p3.NsPid)
 	})
 }
+
+func TestProcCatSmaps(t *testing.T) {
+	err := os.Setenv("HOST_PROC", "./resources/linux_cat_smaps/proc")
+	defer os.Unsetenv("HOST_PROC")
+	assert.Nil(t, err)
+
+	pid := int32(12345)
+	p, err := NewProcess(pid)
+	assert.Nil(t, err)
+
+	mms, err := p.MemoryMaps(true)
+	assert.Nil(t, err)
+
+	pathFoundMap := make(map[string]bool)
+	pathFound := []string{}
+	for _, m := range *mms {
+		if _, found := pathFoundMap[m.Path]; !found {
+			pathFoundMap[m.Path] = true
+			pathFound = append(pathFound, m.Path)
+		}
+
+		if m.Size == 0 {
+			t.Errorf("section %+v have zero Size", m)
+		}
+
+		if m.IsAnonymous() && (m.Device != "00:00" || m.Inode != 0) {
+			t.Errorf("anonymous section %+v don't have correct device/inode", m)
+		}
+	}
+
+	expected := []string{
+		"", // anonymous map
+		"/usr/bin/cat",
+		"[heap]",
+		"/usr/lib/locale/locale-archive",
+		"/usr/lib/libc-2.33.so",
+		"/usr/lib/ld-2.33.so",
+		"/usr/lib/fake lib with space-2.33.so",
+		"[stack]",
+		"[vvar]",
+		"[vdso]",
+		"[vsyscall]",
+	}
+	assert.ElementsMatch(t, expected, pathFound)
+}
