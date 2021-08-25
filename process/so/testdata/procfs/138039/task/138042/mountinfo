@@ -1,0 +1,22 @@
+444 365 8:1 /home/FAKE/devel/go/src/github.com/DataDog/datadog-agent/pkg/network/so/cont/rootfs / ro,noatime master:1 - ext4 /dev/sda1 rw
+445 444 0:59 / /proc rw,relatime - proc proc rw
+446 444 0:60 / /dev rw,nosuid - tmpfs tmpfs rw,size=65536k,mode=755,inode64
+447 446 0:61 / /dev/pts rw,nosuid,noexec,relatime - devpts devpts rw,gid=5,mode=620,ptmxmode=666
+448 446 0:62 / /dev/shm rw,nosuid,nodev,noexec,relatime - tmpfs shm rw,size=65536k,inode64
+449 446 0:58 / /dev/mqueue rw,nosuid,nodev,noexec,relatime - mqueue mqueue rw
+450 444 0:63 / /sys ro,nosuid,nodev,noexec,relatime - sysfs sysfs ro
+451 450 0:26 /user.slice/user-1000.slice/sleep999 /sys/fs/cgroup ro,nosuid,nodev,noexec,relatime - cgroup2 cgroup rw,nsdelegate,memory_recursiveprot
+366 445 0:59 /bus /proc/bus ro,relatime - proc proc rw
+367 445 0:59 /fs /proc/fs ro,relatime - proc proc rw
+368 445 0:59 /irq /proc/irq ro,relatime - proc proc rw
+369 445 0:59 /sys /proc/sys ro,relatime - proc proc rw
+370 445 0:59 /sysrq-trigger /proc/sysrq-trigger ro,relatime - proc proc rw
+371 445 0:64 / /proc/acpi ro,relatime - tmpfs tmpfs ro,inode64
+372 445 0:65 / /proc/asound ro,relatime - tmpfs tmpfs ro,inode64
+373 445 0:60 /null /proc/kcore rw,nosuid - tmpfs tmpfs rw,size=65536k,mode=755,inode64
+374 445 0:60 /null /proc/keys rw,nosuid - tmpfs tmpfs rw,size=65536k,mode=755,inode64
+375 445 0:60 /null /proc/latency_stats rw,nosuid - tmpfs tmpfs rw,size=65536k,mode=755,inode64
+376 445 0:60 /null /proc/timer_list rw,nosuid - tmpfs tmpfs rw,size=65536k,mode=755,inode64
+377 445 0:60 /null /proc/sched_debug rw,nosuid - tmpfs tmpfs rw,size=65536k,mode=755,inode64
+378 450 0:66 / /sys/firmware ro,relatime - tmpfs tmpfs ro,inode64
+379 445 0:67 / /proc/scsi ro,relatime - tmpfs tmpfs ro,inode64
