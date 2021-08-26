@@ -24,7 +24,10 @@ type Library struct {
 // AllLibraries represents a filter that matches all shared libraries
 var AllLibraries = regexp.MustCompile(`\.so($|\.)`)
 
-func find(procPath string, filter *regexp.Regexp) []Library {
+// Find returns the host-resolved paths of all shared libraries (per mount namespace) matching the given filter
+// It does so by iterating over all /procPath/<PID>/maps and /procPath/<PID>/mountinfo files in the host
+// If filter is nil, all entries from /procPath/<PID>/maps with a pathname are reported
+func FindProc(procPath string, filter *regexp.Regexp) []Library {
 	finder := newFinder(procPath)
 	return finder.Find(filter)
 }
@@ -33,11 +36,11 @@ func find(procPath string, filter *regexp.Regexp) []Library {
 // It does so by iterating over all /proc/<PID>/maps and /proc/<PID>/mountinfo files in the host
 // If filter is nil, all entries from /proc/<PID>/maps with a pathname are reported
 func Find(filter *regexp.Regexp) []Library {
-	return find(common.HostProc(), filter)
+	return FindProc(common.HostProc(), filter)
 }
 
 // FromPID returns all shared libraries matching the given filter that are mapped into memory by a given PID
 // If filter is nil, all entries from /proc/<PID>/maps with a pathname are reported
 func FromPID(pid int32, filter *regexp.Regexp) []Library {
-	return find(common.HostProc(strconv.Itoa(int(pid))), filter)
+	return FindProc(common.HostProc(strconv.Itoa(int(pid))), filter)
 }
