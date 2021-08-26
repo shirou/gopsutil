@@ -1,0 +1,106 @@
+557f61d79000-557f61d99000 r--p 00000000 08:01 655749                     /usr/bin/bash
+557f61d99000-557f61e2c000 r-xp 00020000 08:01 655749                     /usr/bin/bash
+557f61e2c000-557f61e5b000 r--p 000b3000 08:01 655749                     /usr/bin/bash
+557f61e5b000-557f61e5e000 r--p 000e1000 08:01 655749                     /usr/bin/bash
+557f61e5e000-557f61e62000 rw-p 000e4000 08:01 655749                     /usr/bin/bash
+557f61e62000-557f61e70000 rw-p 00000000 00:00 0 
+557f62273000-557f6261e000 rw-p 00000000 00:00 0                          [heap]
+7fbbabd53000-7fbbabdd4000 rw-p 00000000 00:00 0 
+7fbbabdd4000-7fbbabdfd000 r--p 00000000 08:01 660588                     /usr/lib/libp11-kit.so.0.3.0
+7fbbabdfd000-7fbbabe9b000 r-xp 00029000 08:01 660588                     /usr/lib/libp11-kit.so.0.3.0
+7fbbabe9b000-7fbbabef5000 r--p 000c7000 08:01 660588                     /usr/lib/libp11-kit.so.0.3.0
+7fbbabef5000-7fbbabeff000 r--p 00120000 08:01 660588                     /usr/lib/libp11-kit.so.0.3.0
+7fbbabeff000-7fbbabf09000 rw-p 0012a000 08:01 660588                     /usr/lib/libp11-kit.so.0.3.0
+7fbbabf09000-7fbbabf7f000 r--p 00000000 08:01 661491                     /usr/lib/libcrypto.so.1.1
+7fbbabf7f000-7fbbac124000 r-xp 00076000 08:01 661491                     /usr/lib/libcrypto.so.1.1
+7fbbac124000-7fbbac1b5000 r--p 0021b000 08:01 661491                     /usr/lib/libcrypto.so.1.1
+7fbbac1b5000-7fbbac1e1000 r--p 002ab000 08:01 661491                     /usr/lib/libcrypto.so.1.1
+7fbbac1e1000-7fbbac1e3000 rw-p 002d7000 08:01 661491                     /usr/lib/libcrypto.so.1.1
+7fbbac1e3000-7fbbac1e7000 rw-p 00000000 00:00 0 
+7fbbac1e7000-7fbbac1e9000 r--p 00000000 08:01 666253                     /usr/lib/libcrypt.so.2.0.0
+7fbbac1e9000-7fbbac1fb000 r-xp 00002000 08:01 666253                     /usr/lib/libcrypt.so.2.0.0
+7fbbac1fb000-7fbbac214000 r--p 00014000 08:01 666253                     /usr/lib/libcrypt.so.2.0.0
+7fbbac214000-7fbbac215000 r--p 0002c000 08:01 666253                     /usr/lib/libcrypt.so.2.0.0
+7fbbac215000-7fbbac216000 rw-p 0002d000 08:01 666253                     /usr/lib/libcrypt.so.2.0.0
+7fbbac216000-7fbbac21e000 rw-p 00000000 00:00 0 
+7fbbac21e000-7fbbac224000 r--p 00000000 08:01 668178                     /usr/lib/libnss_systemd.so.2
+7fbbac224000-7fbbac254000 r-xp 00006000 08:01 668178                     /usr/lib/libnss_systemd.so.2
+7fbbac254000-7fbbac264000 r--p 00036000 08:01 668178                     /usr/lib/libnss_systemd.so.2
+7fbbac264000-7fbbac265000 ---p 00046000 08:01 668178                     /usr/lib/libnss_systemd.so.2
+7fbbac265000-7fbbac269000 r--p 00046000 08:01 668178                     /usr/lib/libnss_systemd.so.2
+7fbbac269000-7fbbac26a000 rw-p 0004a000 08:01 668178                     /usr/lib/libnss_systemd.so.2
+7fbbac26a000-7fbbac271000 r--p 00000000 08:01 661693                     /usr/lib/libpthread-2.33.so
+7fbbac271000-7fbbac280000 r-xp 00007000 08:01 661693                     /usr/lib/libpthread-2.33.so
+7fbbac280000-7fbbac284000 r--p 00016000 08:01 661693                     /usr/lib/libpthread-2.33.so
+7fbbac284000-7fbbac285000 ---p 0001a000 08:01 661693                     /usr/lib/libpthread-2.33.so
+7fbbac285000-7fbbac286000 r--p 0001a000 08:01 661693                     /usr/lib/libpthread-2.33.so
+7fbbac286000-7fbbac287000 rw-p 0001b000 08:01 661693                     /usr/lib/libpthread-2.33.so
+7fbbac287000-7fbbac28b000 rw-p 00000000 00:00 0 
+7fbbac28b000-7fbbac28e000 r--p 00000000 08:01 661541                     /usr/lib/libgcc_s.so.1
+7fbbac28e000-7fbbac2a0000 r-xp 00003000 08:01 661541                     /usr/lib/libgcc_s.so.1
+7fbbac2a0000-7fbbac2a3000 r--p 00015000 08:01 661541                     /usr/lib/libgcc_s.so.1
+7fbbac2a3000-7fbbac2a4000 ---p 00018000 08:01 661541                     /usr/lib/libgcc_s.so.1
+7fbbac2a4000-7fbbac2a5000 r--p 00018000 08:01 661541                     /usr/lib/libgcc_s.so.1
+7fbbac2a5000-7fbbac2a6000 rw-p 00019000 08:01 661541                     /usr/lib/libgcc_s.so.1
+7fbbac2a6000-7fbbac2ad000 r--p 00000000 08:01 668176                     /usr/lib/libnss_mymachines.so.2
+7fbbac2ad000-7fbbac2e4000 r-xp 00007000 08:01 668176                     /usr/lib/libnss_mymachines.so.2
+7fbbac2e4000-7fbbac2f8000 r--p 0003e000 08:01 668176                     /usr/lib/libnss_mymachines.so.2
+7fbbac2f8000-7fbbac2f9000 ---p 00052000 08:01 668176                     /usr/lib/libnss_mymachines.so.2
+7fbbac2f9000-7fbbac2fc000 r--p 00052000 08:01 668176                     /usr/lib/libnss_mymachines.so.2
+7fbbac2fc000-7fbbac2fd000 rw-p 00055000 08:01 668176                     /usr/lib/libnss_mymachines.so.2
+7fbbac2fd000-7fbbac2fe000 rw-p 00000000 00:00 0 
+7fbbac323000-7fbbac326000 r--p 00000000 08:01 661653                     /usr/lib/libnss_files-2.33.so
+7fbbac326000-7fbbac32d000 r-xp 00003000 08:01 661653                     /usr/lib/libnss_files-2.33.so
+7fbbac32d000-7fbbac32f000 r--p 0000a000 08:01 661653                     /usr/lib/libnss_files-2.33.so
+7fbbac32f000-7fbbac330000 r--p 0000b000 08:01 661653                     /usr/lib/libnss_files-2.33.so
+7fbbac330000-7fbbac331000 rw-p 0000c000 08:01 661653                     /usr/lib/libnss_files-2.33.so
+7fbbac331000-7fbbac337000 rw-p 00000000 00:00 0 
+7fbbac337000-7fbbac61f000 r--p 00000000 08:01 666182                     /usr/lib/locale/locale-archive
+7fbbac61f000-7fbbac621000 rw-p 00000000 00:00 0 
+7fbbac621000-7fbbac638000 r--p 00000000 08:01 661629                     /usr/lib/libncursesw.so.6.2
+7fbbac638000-7fbbac673000 r-xp 00017000 08:01 661629                     /usr/lib/libncursesw.so.6.2
+7fbbac673000-7fbbac68b000 r--p 00052000 08:01 661629                     /usr/lib/libncursesw.so.6.2
+7fbbac68b000-7fbbac690000 r--p 00069000 08:01 661629                     /usr/lib/libncursesw.so.6.2
+7fbbac690000-7fbbac691000 rw-p 0006e000 08:01 661629                     /usr/lib/libncursesw.so.6.2
+7fbbac691000-7fbbac6b7000 r--p 00000000 08:01 661479                     /usr/lib/libc-2.33.so
+7fbbac6b7000-7fbbac802000 r-xp 00026000 08:01 661479                     /usr/lib/libc-2.33.so
+7fbbac802000-7fbbac84e000 r--p 00171000 08:01 661479                     /usr/lib/libc-2.33.so
+7fbbac84e000-7fbbac851000 r--p 001bc000 08:01 661479                     /usr/lib/libc-2.33.so
+7fbbac851000-7fbbac854000 rw-p 001bf000 08:01 661479                     /usr/lib/libc-2.33.so
+7fbbac854000-7fbbac85d000 rw-p 00000000 00:00 0 
+7fbbac85d000-7fbbac85f000 r--p 00000000 08:01 661504                     /usr/lib/libdl-2.33.so
+7fbbac85f000-7fbbac861000 r-xp 00002000 08:01 661504                     /usr/lib/libdl-2.33.so
+7fbbac861000-7fbbac862000 r--p 00004000 08:01 661504                     /usr/lib/libdl-2.33.so
+7fbbac862000-7fbbac863000 r--p 00004000 08:01 661504                     /usr/lib/libdl-2.33.so
+7fbbac863000-7fbbac864000 rw-p 00005000 08:01 661504                     /usr/lib/libdl-2.33.so
+7fbbac864000-7fbbac87b000 r--p 00000000 08:01 661698                     /usr/lib/libreadline.so.8.1
+7fbbac87b000-7fbbac8a6000 r-xp 00017000 08:01 661698                     /usr/lib/libreadline.so.8.1
+7fbbac8a6000-7fbbac8b0000 r--p 00042000 08:01 661698                     /usr/lib/libreadline.so.8.1
+7fbbac8b0000-7fbbac8b3000 r--p 0004b000 08:01 661698                     /usr/lib/libreadline.so.8.1
+7fbbac8b3000-7fbbac8b9000 rw-p 0004e000 08:01 661698                     /usr/lib/libreadline.so.8.1
+7fbbac8b9000-7fbbac8bc000 rw-p 00000000 00:00 0 
+7fbbac8bd000-7fbbac8bf000 r--p 00000000 08:01 661532                     /usr/lib/libffi.so.7.1.0
+7fbbac8bf000-7fbbac8c5000 r-xp 00002000 08:01 661532                     /usr/lib/libffi.so.7.1.0
+7fbbac8c5000-7fbbac8c7000 r--p 00008000 08:01 661532                     /usr/lib/libffi.so.7.1.0
+7fbbac8c7000-7fbbac8c8000 r--p 00009000 08:01 661532                     /usr/lib/libffi.so.7.1.0
+7fbbac8c8000-7fbbac8c9000 rw-p 0000a000 08:01 661532                     /usr/lib/libffi.so.7.1.0
+7fbbac8c9000-7fbbac8cc000 r--p 00000000 08:01 660929                     /usr/lib/libcap.so.2.51
+7fbbac8cc000-7fbbac8d0000 r-xp 00003000 08:01 660929                     /usr/lib/libcap.so.2.51
+7fbbac8d0000-7fbbac8d2000 r--p 00007000 08:01 660929                     /usr/lib/libcap.so.2.51
+7fbbac8d2000-7fbbac8d3000 r--p 00008000 08:01 660929                     /usr/lib/libcap.so.2.51
+7fbbac8d3000-7fbbac8d4000 rw-p 00009000 08:01 660929                     /usr/lib/libcap.so.2.51
+7fbbac8d4000-7fbbac8d7000 r--p 00000000 08:01 661704                     /usr/lib/librt-2.33.so
+7fbbac8d7000-7fbbac8db000 r-xp 00003000 08:01 661704                     /usr/lib/librt-2.33.so
+7fbbac8db000-7fbbac8dd000 r--p 00007000 08:01 661704                     /usr/lib/librt-2.33.so
+7fbbac8dd000-7fbbac8de000 r--p 00008000 08:01 661704                     /usr/lib/librt-2.33.so
+7fbbac8de000-7fbbac8df000 rw-p 00009000 08:01 661704                     /usr/lib/librt-2.33.so
+7fbbac8df000-7fbbac8e0000 r--p 00000000 08:01 1055252                    /usr/share/locale/en_GB/LC_MESSAGES/libc.mo
+7fbbac8e0000-7fbbac8e1000 r--p 00000000 08:01 661433                     /usr/lib/ld-2.33.so
+7fbbac8e1000-7fbbac905000 r-xp 00001000 08:01 661433                     /usr/lib/ld-2.33.so
+7fbbac905000-7fbbac90e000 r--p 00025000 08:01 661433                     /usr/lib/ld-2.33.so
+7fbbac90e000-7fbbac910000 r--p 0002d000 08:01 661433                     /usr/lib/ld-2.33.so
+7fbbac910000-7fbbac912000 rw-p 0002f000 08:01 661433                     /usr/lib/ld-2.33.so
+7ffdf71db000-7ffdf71fc000 rw-p 00000000 00:00 0                          [stack]
+7ffdf73a5000-7ffdf73a9000 r--p 00000000 00:00 0                          [vvar]
+7ffdf73a9000-7ffdf73ab000 r-xp 00000000 00:00 0                          [vdso]
+ffffffffff600000-ffffffffff601000 --xp 00000000 00:00 0                  [vsyscall]

@@ -1,0 +1,23 @@
+562ec58c4000-562ec58c6000 r--p 00000000 08:01 656638                     /usr/bin/sleep
+562ec58c6000-562ec58ca000 r-xp 00002000 08:01 656638                     /usr/bin/sleep
+562ec58ca000-562ec58cc000 r--p 00006000 08:01 656638                     /usr/bin/sleep
+562ec58cd000-562ec58ce000 r--p 00008000 08:01 656638                     /usr/bin/sleep
+562ec58ce000-562ec58cf000 rw-p 00009000 08:01 656638                     /usr/bin/sleep
+562ec6b29000-562ec6b4a000 rw-p 00000000 00:00 0                          [heap]
+7f3b8c3e8000-7f3b8c6d0000 r--p 00000000 08:01 666182                     /usr/lib/locale/locale-archive
+7f3b8c6d0000-7f3b8c6d2000 rw-p 00000000 00:00 0 
+7f3b8c6d2000-7f3b8c6f8000 r--p 00000000 08:01 661479                     /usr/lib/libc-2.33.so
+7f3b8c6f8000-7f3b8c843000 r-xp 00026000 08:01 661479                     /usr/lib/libc-2.33.so
+7f3b8c843000-7f3b8c88f000 r--p 00171000 08:01 661479                     /usr/lib/libc-2.33.so
+7f3b8c88f000-7f3b8c892000 r--p 001bc000 08:01 661479                     /usr/lib/libc-2.33.so
+7f3b8c892000-7f3b8c895000 rw-p 001bf000 08:01 661479                     /usr/lib/libc-2.33.so
+7f3b8c895000-7f3b8c8a0000 rw-p 00000000 00:00 0 
+7f3b8c8c5000-7f3b8c8c6000 r--p 00000000 08:01 661433                     /usr/lib/ld-2.33.so
+7f3b8c8c6000-7f3b8c8ea000 r-xp 00001000 08:01 661433                     /usr/lib/ld-2.33.so
+7f3b8c8ea000-7f3b8c8f3000 r--p 00025000 08:01 661433                     /usr/lib/ld-2.33.so
+7f3b8c8f3000-7f3b8c8f5000 r--p 0002d000 08:01 661433                     /usr/lib/ld-2.33.so
+7f3b8c8f5000-7f3b8c8f7000 rw-p 0002f000 08:01 661433                     /usr/lib/ld-2.33.so
+7ffeb360c000-7ffeb362e000 rw-p 00000000 00:00 0                          [stack]
+7ffeb36ad000-7ffeb36b1000 r--p 00000000 00:00 0                          [vvar]
+7ffeb36b1000-7ffeb36b3000 r-xp 00000000 00:00 0                          [vdso]
+ffffffffff600000-ffffffffff601000 --xp 00000000 00:00 0                  [vsyscall]
