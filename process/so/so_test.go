@@ -14,7 +14,7 @@ func TestForeachPIDNoFilter(t *testing.T) {
 	for _, p := range testutil.ProcFS {
 		t.Log("testing PID :", p.Pid)
 
-		libs := find("testdata/procfs/"+strconv.Itoa(p.Pid), nil)
+		libs := FindProc("testdata/procfs/"+strconv.Itoa(p.Pid), nil)
 		libPathname := []string{}
 		for _, lib := range libs {
 			libPathname = append(libPathname, lib.Pathname)
@@ -29,7 +29,7 @@ func TestForeachPIDAllLibrariesFilter(t *testing.T) {
 	for _, p := range testutil.ProcFS {
 		t.Log("testing PID :", p.Pid)
 
-		libs := find("testdata/procfs/"+strconv.Itoa(p.Pid), AllLibraries)
+		libs := FindProc("testdata/procfs/"+strconv.Itoa(p.Pid), AllLibraries)
 		libPathname := []string{}
 		for _, lib := range libs {
 			libPathname = append(libPathname, lib.Pathname)
