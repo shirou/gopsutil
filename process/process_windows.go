@@ -40,7 +40,7 @@ var (
 	processorArchitecture uint
 )
 
-const processQueryInformation = windows.PROCESS_QUERY_LIMITED_INFORMATION | windows.PROCESS_QUERY_INFORMATION // WinXP doesn't know PROCESS_QUERY_LIMITED_INFORMATION
+const processQueryInformation = windows.PROCESS_QUERY_LIMITED_INFORMATION
 
 type SystemProcessInformation struct {
 	NextEntryOffset   uint64
