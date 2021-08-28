@@ -351,7 +351,7 @@ func (p *Process) PageFaultsWithContext(ctx context.Context) (*PageFaultsStat, e
 func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
 	pids, err := common.CallPgrepWithContext(ctx, invoke, p.Pid)
 	if err != nil {
-		if pids == nil || len(pids) == 0 {
+		if len(pids) == 0 {
 			return nil, ErrorNoChildren
 		}
 		return nil, err
@@ -678,10 +678,7 @@ func (p *Process) fillFromCmdlineWithContext(ctx context.Context) (string, error
 		return "", err
 	}
 	ret := strings.FieldsFunc(string(cmdline), func(r rune) bool {
-		if r == '\u0000' {
-			return true
-		}
-		return false
+		return r == '\u0000'
 	})
 
 	return strings.Join(ret, " "), nil
