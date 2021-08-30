@@ -48,20 +48,20 @@
   version = "v1.6.0"
 
 [[projects]]
-  digest = "1:3f14c2e97a330f13c73db03a73dc3f0f4bb601d759c16d73263a6cf3c7c20a77"
+  digest = "1:dc2f804edbbcc4e7c5385791b8703da9b6bc6e22e698233f919c19da6286cf11"
   name = "github.com/tklauser/go-sysconf"
   packages = ["."]
   pruneopts = "UT"
-  revision = "18e8c84cb3317596497f8994bc890794c5ab5d4b"
-  version = "v0.3.8"
+  revision = "18f67506ef17458385cd85f6f7678623087ba043"
+  version = "v0.3.9"
 
 [[projects]]
-  digest = "1:e7bf47a37e6d0fb2f4bd0f65f574f8a92922f048cab3f106b0a7a413cbb14714"
+  digest = "1:40a9f481f2c76a04fb1a0c083e317907875cd6405e96117f2aa81fd17aa28000"
   name = "github.com/tklauser/numcpus"
   packages = ["."]
   pruneopts = "UT"
-  revision = "c03481b99a3f0b56b010e938559fddce19d3cf53"
-  version = "v0.1.0"
+  revision = "ce6ed4c574066004ab884122d989748388233cad"
+  version = "v0.3.0"
 
 [[projects]]
   branch = "master"

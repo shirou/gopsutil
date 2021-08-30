@@ -35,7 +35,7 @@
 
 [[constraint]]
   name = "github.com/tklauser/go-sysconf"
-  version = "0.3.8"
+  version = "0.3.9"
 
 [[constraint]]
   branch = "master"
