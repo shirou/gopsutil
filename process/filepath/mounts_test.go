@@ -1,6 +1,6 @@
 // +build linux
 
-package so
+package filepath
 
 import (
 	"bufio"
