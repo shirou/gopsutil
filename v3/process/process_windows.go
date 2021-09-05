@@ -650,7 +650,10 @@ func (p *Process) TerminateWithContext(ctx context.Context) error {
 }
 
 func (p *Process) KillWithContext(ctx context.Context) error {
-	process := os.Process{Pid: int(p.Pid)}
+	process, err := os.FindProcess(int(p.Pid))
+	if err != nil {
+		return err
+	}
 	return process.Kill()
 }
 
