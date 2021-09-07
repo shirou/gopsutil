@@ -6,14 +6,16 @@ import (
 	"bufio"
 	"os"
 	"path"
-	"path/filepath"
+	fp "path/filepath"
 	"regexp"
 	"strconv"
+
+	"github.com/DataDog/gopsutil/process/filepath"
 )
 
 type finder struct {
 	procRoot     string
-	pathResolver *pathResolver
+	pathResolver *filepath.Resolver
 	buffer       *bufio.Reader
 }
 
@@ -27,7 +29,7 @@ func newFinder(procRoot string) *finder {
 	}
 	return &finder{
 		procRoot:     procRoot,
-		pathResolver: newPathResolver(realProcRoot, buffer),
+		pathResolver: filepath.NewResolver(realProcRoot),
 		buffer:       buffer,
 	}
 }
@@ -36,6 +38,7 @@ func (f *finder) Find(filter *regexp.Regexp) (result []Library) {
 	mapLib := make(map[libraryKey]Library)
 	err := iteratePIDS(f.procRoot, func(pidPath string, info os.FileInfo, mntNS ns) {
 		libs := getSharedLibraries(pidPath, f.buffer, filter)
+		f.pathResolver.LoadPIDMounts(pidPath)
 
 		for _, lib := range libs {
 			k := libraryKey{
@@ -48,14 +51,7 @@ func (f *finder) Find(filter *regexp.Regexp) (result []Library) {
 				continue
 			}
 
-			/* per PID we add mountInfo and resolv the host path */
-			mountInfo := getMountInfo(pidPath, f.buffer)
-			/* some /proc/pid/mountinfo could be empty */
-			if mountInfo == nil || len(mountInfo.mounts) == 0 {
-				continue
-			}
-
-			hostPath := f.pathResolver.Resolve(lib, mountInfo)
+			hostPath := f.pathResolver.Resolve(lib)
 			if hostPath == "" {
 				continue
 			}
@@ -78,5 +74,5 @@ func (f *finder) Find(filter *regexp.Regexp) (result []Library) {
 
 func iteratePIDS(procRoot string, fn callback) error {
 	w := newWalker(procRoot, fn)
-	return filepath.Walk(procRoot, filepath.WalkFunc(w.walk))
+	return fp.Walk(procRoot, fp.WalkFunc(w.walk))
 }

@@ -1,12 +1,12 @@
 // +build linux
 
-package so
+package filepath
 
 import (
 	"bufio"
 	"bytes"
 	"os"
-	"path/filepath"
+	fp "path/filepath"
 	"strings"
 )
 
@@ -38,7 +38,7 @@ type mountInfo struct {
 }
 
 func getMountInfo(pidPath string, b *bufio.Reader) *mountInfo {
-	f, err := os.Open(filepath.Join(pidPath, "mountinfo"))
+	f, err := os.Open(fp.Join(pidPath, "mountinfo"))
 	if err != nil {
 		return nil
 	}
