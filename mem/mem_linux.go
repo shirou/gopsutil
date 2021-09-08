@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/v3/internal/common"
 	"golang.org/x/sys/unix"
 )
 
@@ -430,7 +431,7 @@ func calcuateAvailVmem(ret *VirtualMemoryStat, retEx *VirtualMemoryExStat) uint6
 	return availMemory
 }
 
-const swapsFilePath = "/proc/swaps"
+const swapsFilename = "swaps"
 
 // swaps file column indexes
 const (
@@ -446,6 +447,7 @@ func SwapDevices() ([]*SwapDevice, error) {
 }
 
 func SwapDevicesWithContext(ctx context.Context) ([]*SwapDevice, error) {
+	swapsFilePath := common.HostProc(swapsFilename)
 	f, err := os.Open(swapsFilePath)
 	if err != nil {
 		return nil, err
@@ -456,6 +458,7 @@ func SwapDevicesWithContext(ctx context.Context) ([]*SwapDevice, error) {
 }
 
 func parseSwapsFile(r io.Reader) ([]*SwapDevice, error) {
+	swapsFilePath := common.HostProc(swapsFilename)
 	scanner := bufio.NewScanner(r)
 	if !scanner.Scan() {
 		if err := scanner.Err(); err != nil {

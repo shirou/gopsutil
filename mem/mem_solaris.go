@@ -141,7 +141,11 @@ func SwapDevices() ([]*SwapDevice, error) {
 }
 
 func SwapDevicesWithContext(ctx context.Context) ([]*SwapDevice, error) {
-	output, err := exec.Command(swapsCommand, "-l").Output()
+	swapsCommandPath, err := exec.LookPath(swapsCommand)
+	if err != nil {
+		return nil, fmt.Errorf("could not find command %q: %w", swapCommand, err)
+	}
+	output, err := exec.Command(swapsCommandPath, "-l").Output()
 	if err != nil {
 		return nil, fmt.Errorf("could not execute %q: %w", swapsCommand, err)
 	}
