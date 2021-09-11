@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-const swapCommand = "/sbin/swapctl"
+const swapCommand = "swapctl"
 
 // swapctl column indexes
 const (
