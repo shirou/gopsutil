@@ -30,7 +30,7 @@ can be skipped.
 
 - FreeBSD i386/amd64/arm
 - Linux i386/amd64/arm(raspberry pi)
-- Windows/amd64
+- Windows i386/amd64/arm/arm64
 - Darwin i386/amd64
 - OpenBSD amd64 (Thank you @mpfz0r!)
 - Solaris amd64 (developed and tested on SmartOS/Illumos, Thank you
@@ -72,22 +72,22 @@ The output is below.
     Total: 3179569152, Free:284233728, UsedPercent:84.508194%
     {"total":3179569152,"available":492572672,"used":2895335424,"usedPercent":84.50819439828305, (snip...)}
 
-You can set an alternative location to /proc by setting the HOST_PROC
+You can set an alternative location to `/proc` by setting the `HOST_PROC`
 environment variable.
 
-You can set an alternative location to /sys by setting the HOST_SYS
+You can set an alternative location to `/sys` by setting the `HOST_SYS`
 environment variable.
 
-You can set an alternative location to /etc by setting the HOST_ETC
+You can set an alternative location to `/etc` by setting the `HOST_ETC`
 environment variable.
 
-You can set an alternative location to /var by setting the HOST_VAR
+You can set an alternative location to `/var` by setting the `HOST_VAR`
 environment variable.
 
-You can set an alternative location to /run by setting the HOST_RUN
+You can set an alternative location to `/run` by setting the `HOST_RUN`
 environment variable.
 
-You can set an alternative location to /dev by setting the HOST_DEV
+You can set an alternative location to `/dev` by setting the `HOST_DEV`
 environment variable.
 
 ## Documentation
@@ -152,7 +152,7 @@ Some code is ported from Ohai. many thanks.
 
 ## Current Status
 
-- x: work
+- x: works
 - b: almost works, but something is broken
 
 |name                  |Linux  |FreeBSD  |OpenBSD  |macOS   |Windows  |Solaris  |
@@ -290,5 +290,5 @@ I have been influenced by the following great works:
 4.  Push to the branch (git push origin my-new-feature)
 5.  Create new Pull Request
 
-English is not my native language, so PRs correcting grammer or spelling
+English is not my native language, so PRs correcting grammar or spelling
 are welcome and appreciated.
