@@ -19,7 +19,7 @@ import (
 
 func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOCountersStat, error) {
 	var buf [C.NDRIVE]C.DriveStats
-	n, err := C.readdrivestat(&buf[0], C.int(len(buf)))
+	n, err := C.v3readdrivestat(&buf[0], C.int(len(buf)))
 	if err != nil {
 		return nil, err
 	}
