@@ -1,10 +1,15 @@
+// +build linux
+
 package mem
 
 import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestVirtualMemoryEx(t *testing.T) {
@@ -114,4 +119,42 @@ func TestVirtualMemoryLinux(t *testing.T) {
 			}
 		})
 	}
+}
+
+const validFile = `Filename				Type		Size		Used		Priority
+/dev/dm-2                               partition	67022844	490788		-2
+/swapfile                               file		2		1		-3
+`
+
+const invalidFile = `INVALID				Type		Size		Used		Priority
+/dev/dm-2                               partition	67022844	490788		-2
+/swapfile                               file		1048572		0		-3
+`
+
+func TestParseSwapsFile_ValidFile(t *testing.T) {
+	assert := assert.New(t)
+	stats, err := parseSwapsFile(strings.NewReader(validFile))
+	assert.NoError(err)
+
+	assert.Equal(*stats[0], SwapDevice{
+		Name:      "/dev/dm-2",
+		UsedBytes: 502566912,
+		FreeBytes: 68128825344,
+	})
+
+	assert.Equal(*stats[1], SwapDevice{
+		Name:      "/swapfile",
+		UsedBytes: 1024,
+		FreeBytes: 1024,
+	})
+}
+
+func TestParseSwapsFile_InvalidFile(t *testing.T) {
+	_, err := parseSwapsFile(strings.NewReader(invalidFile))
+	assert.Error(t, err)
+}
+
+func TestParseSwapsFile_EmptyFile(t *testing.T) {
+	_, err := parseSwapsFile(strings.NewReader(""))
+	assert.Error(t, err)
 }
