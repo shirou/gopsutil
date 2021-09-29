@@ -29,5 +29,4 @@ struct CPUStats {
 	natural_t idle;
 };
 
-extern int readdrivestat(DriveStats a[], int n);
-extern int readcpustat(CPUStats *cpu);
+extern int v3readdrivestat(DriveStats a[], int n);
