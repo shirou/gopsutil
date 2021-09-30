@@ -221,15 +221,15 @@ var fsTypeMap = map[int64]string{
 func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {
 	useMounts := false
 
-	filename := common.HostProc("self/mountinfo")
+	filename := common.HostProc("1/mountinfo")
 	lines, err := common.ReadLines(filename)
 	if err != nil {
 		if err != err.(*os.PathError) {
 			return nil, err
 		}
-		// if kernel does not support self/mountinfo, fallback to self/mounts (<2.6.26)
+		// if kernel does not support 1/mountinfo, fallback to 1/mounts (<2.6.26)
 		useMounts = true
-		filename = common.HostProc("self/mounts")
+		filename = common.HostProc("1/mounts")
 		lines, err = common.ReadLines(filename)
 		if err != nil {
 			return nil, err
@@ -261,7 +261,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 				}
 			}
 		} else {
-			// a line of self/mountinfo has the following structure:
+			// a line of 1/mountinfo has the following structure:
 			// 36  35  98:0 /mnt1 /mnt2 rw,noatime master:1 - ext3 /dev/root rw,errors=continue
 			// (1) (2) (3)   (4)   (5)      (6)      (7)   (8) (9)   (10)         (11)
 
