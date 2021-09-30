@@ -13,6 +13,7 @@ package cpu
 #include <mach/mach_host.h>
 #endif
 #include <mach/host_info.h>
+#include <TargetConditionals.h>
 #if TARGET_OS_MAC
 #include <libproc.h>
 #endif
