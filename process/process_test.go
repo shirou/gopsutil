@@ -473,7 +473,7 @@ func Test_Process_CreateTime(t *testing.T) {
 	}
 
 	gotElapsed := time.Since(time.Unix(int64(c/1000), 0))
-	maxElapsed := time.Duration(5 * time.Second)
+	maxElapsed := time.Duration(20 * time.Second)
 
 	if gotElapsed >= maxElapsed {
 		t.Errorf("this process has not been running for %v", gotElapsed)
