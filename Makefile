@@ -2,6 +2,7 @@
 .DEFAULT_GOAL := help
 
 SUBPKGS=cpu disk docker host internal load mem net process
+TAG=$(shell date +'v3.%y.%-m' --date='last Month')
 
 help:  ## Show help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -73,3 +74,7 @@ macos_test:
 
 init_tools:
 	go get github.com/golang/dep/cmd/dep
+
+release:
+	git tag $(TAG)
+	git push origin $(TAG)
