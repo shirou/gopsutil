@@ -4,8 +4,8 @@ jobs:
   test_v3_module:
     strategy:
       matrix:
-        go-version: [1.15.x, 1.16.x]
-        os: [ubuntu-18.04, ubuntu-16.04, windows-2019, windows-2016, macOS-10.14, macos-11.0]
+        go-version: [1.16.x, 1.17.x]
+        os: [ubuntu-20.04, ubuntu-18.04, windows-2019, windows-2016, macOS-10.15, macos-11]
     runs-on: ${{ matrix.os }}
     steps:
     - name: Install Go
@@ -25,8 +25,8 @@ jobs:
       GO111MODULE: off
     strategy:
       matrix:
-        go-version: [1.15.x, 1.16.x]
-        os: [ubuntu-18.04, ubuntu-16.04, windows-2019, windows-2016, macOS-10.14, macos-11.0]
+        go-version: [1.16.x, 1.17.x]
+        os: [ubuntu-20.04, ubuntu-18.04, windows-2019, windows-2016, macOS-10.15, macos-11]
     runs-on: ${{ matrix.os }}
     steps:
     - name: Install Go
@@ -50,8 +50,8 @@ jobs:
       GO111MODULE: off
     strategy:
       matrix:
-        go-version: [1.15.x, 1.16.x]
-        os: [ubuntu-18.04, ubuntu-16.04, windows-2019, windows-2016, macOS-10.14, macos-11.0]
+        go-version: [1.16.x, 1.17.x]
+        os: [ubuntu-20.04, ubuntu-18.04, windows-2019, windows-2016, macOS-10.15, macos-11]
     runs-on: ${{ matrix.os }}
     steps:
     - name: Install Go
