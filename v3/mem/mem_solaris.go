@@ -1,3 +1,4 @@
+//go:build solaris
 // +build solaris
 
 package mem
@@ -143,7 +144,7 @@ func SwapDevices() ([]*SwapDevice, error) {
 func SwapDevicesWithContext(ctx context.Context) ([]*SwapDevice, error) {
 	swapsCommandPath, err := exec.LookPath(swapsCommand)
 	if err != nil {
-		return nil, fmt.Errorf("could not find command %q: %w", swapCommand, err)
+		return nil, fmt.Errorf("could not find command %q: %w", swapsCommand, err)
 	}
 	output, err := invoke.CommandWithContext(swapsCommandPath, "-l")
 	if err != nil {
