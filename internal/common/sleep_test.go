@@ -2,6 +2,7 @@ package common_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -13,7 +14,7 @@ func TestSleep(test *testing.T) {
 	var t = func(name string, ctx context.Context, expected error) {
 		test.Run(name, func(test *testing.T) {
 			var err = common.Sleep(ctx, dt)
-			if err != expected {
+			if !errors.Is(err, expected) {
 				test.Errorf("expected %v, got %v", expected, err)
 			}
 		})
