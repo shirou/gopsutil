@@ -2,12 +2,12 @@
 
 
 [[projects]]
-  digest = "1:9909e0a06cff3bd88841c9d2e0cc91b0a431676009018c74c3315f33b49b0046"
+  digest = "1:3a991e1f8ab48d1445b5106b628609285cecb1bfe5abdd078b4320d32ec0f3ee"
   name = "github.com/StackExchange/wmi"
   packages = ["."]
   pruneopts = "UT"
-  revision = "cbe66965904dbe8a6cd589e2298e5d8b986bd7dd"
-  version = "1.1.0"
+  revision = "441642c1665945335b93778e496324884ce569e7"
+  version = "v1.2.1"
 
 [[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
@@ -18,15 +18,15 @@
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:440028f55cb322d8cb5b9d5ebec298a00b7d74690a658fe6b1c0c0b44341bfae"
+  digest = "1:fa413ac44630f9ca77bf7bb629804106a50cd5af351f89ed1e23e08e6173c5d0"
   name = "github.com/go-ole/go-ole"
   packages = [
     ".",
     "oleutil",
   ]
   pruneopts = "UT"
-  revision = "97b6244175ae18ea6eef668034fd6565847501c9"
-  version = "v1.2.4"
+  revision = "8b1f7f90f6b1728609c9694f2cff140d34fd91f8"
+  version = "v1.2.6"
 
 [[projects]]
   digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
@@ -37,15 +37,15 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:efd3a1c83607945eb57cb6cf9c5a87f1c709fb9fdfbd3d8f729ff03943275465"
+  digest = "1:5c7b4a9fefe5b7b160d2cf0ec8457de81db92038c45c88d7d59493568308cc5d"
   name = "github.com/stretchr/testify"
   packages = [
     "assert",
     "require",
   ]
   pruneopts = "UT"
-  revision = "004e3cb72213e5e727e4e08f668ee6c8f27e5d32"
-  version = "v1.6.0"
+  revision = "acba37e5db06f0093b465a7d47822bf13644b66c"
+  version = "v1.7.0"
 
 [[projects]]
   digest = "1:dc2f804edbbcc4e7c5385791b8703da9b6bc6e22e698233f919c19da6286cf11"
@@ -65,7 +65,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:1672d2eb5799465379f6016fa509eadd72c69e3eb2bf3cdfea9222e64e163b94"
+  digest = "1:cded1795a2d143aa9940244639afeaeecc5cfb9bb2a01bdcaa4087e9beb989c0"
   name = "golang.org/x/sys"
   packages = [
     "internal/unsafeheader",
@@ -75,15 +75,15 @@
     "windows/svc/mgr",
   ]
   pruneopts = "UT"
-  revision = "134d130e1a049f4194ae9920ac9f96455cde360d"
+  revision = "69063c4bb744bc56492b1a0533d73a23406b0bc2"
 
 [[projects]]
   branch = "v3"
-  digest = "1:f87d6c8edf5e57ae4a355abc05aca1dbf38b073068bba96c1fbbff852a1e2fd3"
+  digest = "1:107a619d3c3bcca214b2b7db810a5dffcd74b5d0262813cb2986e063fae2722f"
   name = "gopkg.in/yaml.v3"
   packages = ["."]
   pruneopts = "UT"
-  revision = "2ff61e1afc866138abf1a8adf3cc89721090ac31"
+  revision = "496545a6307b2a7d7a710fd516e5e16e8ab62dbc"
 
 [solve-meta]
   analyzer-name = "dep"
