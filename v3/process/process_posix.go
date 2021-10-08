@@ -16,6 +16,8 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+type Signal = syscall.Signal
+
 // POSIX
 func getTerminalMap() (map[uint64]string, error) {
 	ret := make(map[uint64]string)

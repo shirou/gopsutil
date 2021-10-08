@@ -4,7 +4,6 @@ package process
 
 import (
 	"context"
-	"syscall"
 
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/internal/common"
@@ -176,7 +175,7 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 	return nil, common.ErrNotImplementedError
 }
 
-func (p *Process) SendSignalWithContext(ctx context.Context, sig syscall.Signal) error {
+func (p *Process) SendSignalWithContext(ctx context.Context, sig Signal) error {
 	return common.ErrNotImplementedError
 }
 
