@@ -7,7 +7,6 @@ import (
 	"runtime"
 	"sort"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/shirou/gopsutil/v3/cpu"
@@ -520,7 +519,7 @@ func (p *Process) Tgid() (int32, error) {
 }
 
 // SendSignal sends a unix.Signal to the process.
-func (p *Process) SendSignal(sig syscall.Signal) error {
+func (p *Process) SendSignal(sig Signal) error {
 	return p.SendSignalWithContext(context.Background(), sig)
 }
 

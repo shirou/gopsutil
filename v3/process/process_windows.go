@@ -19,6 +19,8 @@ import (
 	"golang.org/x/sys/windows"
 )
 
+type Signal = syscall.Signal
+
 var (
 	modntdll             = windows.NewLazySystemDLL("ntdll.dll")
 	procNtResumeProcess  = modntdll.NewProc("NtResumeProcess")

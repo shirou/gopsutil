@@ -155,27 +155,27 @@ Some code is ported from Ohai. many thanks.
 - x: works
 - b: almost works, but something is broken
 
-|name                  |Linux  |FreeBSD  |OpenBSD  |macOS   |Windows  |Solaris  |
-|----------------------|-------|---------|---------|--------|---------|---------|
-|cpu\_times            |x      |x        |x        |x       |x        |         |
-|cpu\_count            |x      |x        |x        |x       |x        |         |
-|cpu\_percent          |x      |x        |x        |x       |x        |         |
-|cpu\_times\_percent   |x      |x        |x        |x       |x        |         |
-|virtual\_memory       |x      |x        |x        |x       |x        | b       |
-|swap\_memory          |x      |x        |x        |x       |         |         |
-|disk\_partitions      |x      |x        |x        |x       |x        |         |
-|disk\_io\_counters    |x      |x        |x        |        |         |         |
-|disk\_usage           |x      |x        |x        |x       |x        |         |
-|net\_io\_counters     |x      |x        |x        |b       |x        |         |
-|boot\_time            |x      |x        |x        |x       |x        |         |
-|users                 |x      |x        |x        |x       |x        |         |
-|pids                  |x      |x        |x        |x       |x        |         |
-|pid\_exists           |x      |x        |x        |x       |x        |         |
-|net\_connections      |x      |         |x        |x       |         |         |
-|net\_protocols        |x      |         |         |        |         |         |
-|net\_if\_addrs        |       |         |         |        |         |         |
-|net\_if\_stats        |       |         |         |        |         |         |
-|netfilter\_conntrack  |x      |         |         |        |         |         |
+|name                  |Linux  |FreeBSD  |OpenBSD  |macOS   |Windows  |Solaris  |Plan 9   |
+|----------------------|-------|---------|---------|--------|---------|---------|---------|
+|cpu\_times            |x      |x        |x        |x       |x        |         |         |
+|cpu\_count            |x      |x        |x        |x       |x        |         |         |
+|cpu\_percent          |x      |x        |x        |x       |x        |         |         |
+|cpu\_times\_percent   |x      |x        |x        |x       |x        |         |         |
+|virtual\_memory       |x      |x        |x        |x       |x        | b       |x        |
+|swap\_memory          |x      |x        |x        |x       |         |         |x        |
+|disk\_partitions      |x      |x        |x        |x       |x        |         |         |
+|disk\_io\_counters    |x      |x        |x        |        |         |         |         |
+|disk\_usage           |x      |x        |x        |x       |x        |         |         |
+|net\_io\_counters     |x      |x        |x        |b       |x        |         |         |
+|boot\_time            |x      |x        |x        |x       |x        |         |         |
+|users                 |x      |x        |x        |x       |x        |         |         |
+|pids                  |x      |x        |x        |x       |x        |         |         |
+|pid\_exists           |x      |x        |x        |x       |x        |         |         |
+|net\_connections      |x      |         |x        |x       |         |         |         |
+|net\_protocols        |x      |         |         |        |         |         |         |
+|net\_if\_addrs        |       |         |         |        |         |         |         |
+|net\_if\_stats        |       |         |         |        |         |         |         |
+|netfilter\_conntrack  |x      |         |         |        |         |         |         |
 
 
 ### Process class
