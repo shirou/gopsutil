@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"syscall"
@@ -161,6 +162,19 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 		return
 	}
 	platform = windows.UTF16ToString(regBuf[:])
+	if strings.Contains(platform, "Windows 10") { // check build number to determine whether it's actually Windows 11
+		err = windows.RegQueryValueEx(h, windows.StringToUTF16Ptr(`CurrentBuildNumber`), nil, &valType, nil, &bufLen)
+		if err == nil {
+			regBuf = make([]uint16, bufLen/2+1)
+			err = windows.RegQueryValueEx(h, windows.StringToUTF16Ptr(`CurrentBuildNumber`), nil, &valType, (*byte)(unsafe.Pointer(&regBuf[0])), &bufLen)
+			if err == nil {
+				buildNumberStr := windows.UTF16ToString(regBuf[:])
+				if buildNumber, err := strconv.Atoi(buildNumberStr); err == nil && buildNumber >= 22000 {
+					platform = strings.Replace(platform, "Windows 10", "Windows 11", 1)
+				}
+			}
+		}
+	}
 	if !strings.HasPrefix(platform, "Microsoft") {
 		platform = "Microsoft " + platform
 	}
