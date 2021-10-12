@@ -157,8 +157,8 @@ Some code is ported from Ohai. many thanks.
 
 |name                  |Linux  |FreeBSD  |OpenBSD  |macOS   |Windows  |Solaris  |Plan 9   |
 |----------------------|-------|---------|---------|--------|---------|---------|---------|
-|cpu\_times            |x      |x        |x        |x       |x        |         |         |
-|cpu\_count            |x      |x        |x        |x       |x        |         |         |
+|cpu\_times            |x      |x        |x        |x       |x        |         |b        |
+|cpu\_count            |x      |x        |x        |x       |x        |         |x        |
 |cpu\_percent          |x      |x        |x        |x       |x        |         |         |
 |cpu\_times\_percent   |x      |x        |x        |x       |x        |         |         |
 |virtual\_memory       |x      |x        |x        |x       |x        | b       |x        |
