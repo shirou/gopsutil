@@ -365,13 +365,15 @@ func (p *Process) createTimeWithContext(ctx context.Context) (int64, error) {
 }
 
 func (p *Process) CwdWithContext(_ context.Context) (string, error) {
-	process, err := windows.OpenProcess(processQueryInformation, false, uint32(p.Pid))
+	c, err := windows.OpenProcess(processQueryInformation, false, uint32(p.Pid))
 	if err != nil {
 		return "", err
 	}
-	var buf [syscall.MAX_LONG_PATH]uint16
-	var size uint32 = syscall.MAX_LONG_PATH
-	err = windows.QueryFullProcessImageName(process, 0, &buf[0], &size)
+	defer windows.CloseHandle(c)
+
+	buf := make([]uint16, syscall.MAX_LONG_PATH)
+	size := uint32(syscall.MAX_LONG_PATH)
+	err = windows.QueryFullProcessImageName(c, 0, &buf[0], &size)
 	if err != nil {
 		return "", err
 	}
