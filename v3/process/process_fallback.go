@@ -1,14 +1,17 @@
-// +build !darwin,!linux,!freebsd,!openbsd,!windows,!solaris
+// +build !darwin,!linux,!freebsd,!openbsd,!windows,!solaris,!plan9
 
 package process
 
 import (
 	"context"
+	"syscall"
 
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/internal/common"
 	"github.com/shirou/gopsutil/v3/net"
 )
+
+type Signal = syscall.Signal
 
 type MemoryMapsStat struct {
 	Path         string `json:"path"`

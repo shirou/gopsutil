@@ -82,7 +82,7 @@ func isMount(path string) bool {
 	if err != nil {
 		return false
 	}
-	if fileInfo.Mode() & os.ModeSymlink != 0 {
+	if fileInfo.Mode()&os.ModeSymlink != 0 {
 		return false
 	}
 	var stat1 unix.Stat_t
