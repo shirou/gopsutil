@@ -24,7 +24,7 @@ jobs:
           curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
           echo "PATH=$GOPATH/bin:$PATH" >> $GITHUB_PATH
         fi
-        cd $GOPATH/src/github.com/shirou/gopsutil
+        cd /home/runner/work/gopsutil/gopsutil/
         dep ensure
         # exclude v3 from being run with ./...
         rm -rf $GOPATH/src/github.com/shirou/gopsutil/v3
