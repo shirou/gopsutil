@@ -284,6 +284,12 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 				version = contents[0]
 			}
 		}
+	} else if common.PathExists(common.HostEtc("kylin-release")) {
+		p, v, err := common.GetOSRelease()
+		if err == nil {
+			platform = p
+			version = v
+		}
 	} else if common.PathExists(common.HostEtc("redhat-release")) {
 		contents, err := common.ReadLines(common.HostEtc("redhat-release"))
 		if err == nil {
@@ -364,6 +370,8 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 		family = "coreos"
 	case "solus":
 		family = "solus"
+	case "kylin":
+		family = "lylin"
 	}
 
 	return platform, family, version, nil
