@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/redhatxl/gopsutil/internal/common"
 	"golang.org/x/sys/unix"
 )
 
@@ -75,7 +75,7 @@ func fillFromMeminfoWithContext(ctx context.Context) (*VirtualMemoryStat, *Virtu
 
 		t, err := strconv.ParseUint(value, 10, 64)
 		if err != nil {
-			return ret, retEx,err
+			return ret, retEx, err
 		}
 		switch key {
 		case "MemTotal":

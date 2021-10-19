@@ -17,7 +17,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/redhatxl/gopsutil/internal/common"
 	"golang.org/x/sys/unix"
 )
 

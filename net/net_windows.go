@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/redhatxl/gopsutil/internal/common"
 	"golang.org/x/sys/windows"
 )
 
@@ -333,7 +333,6 @@ func ConntrackStats(percpu bool) ([]ConntrackStat, error) {
 func ConntrackStatsWithContext(ctx context.Context, percpu bool) ([]ConntrackStat, error) {
 	return nil, common.ErrNotImplementedError
 }
-
 
 // NetProtoCounters returns network statistics for the entire system
 // If protocols is empty then all protocols are returned, otherwise
