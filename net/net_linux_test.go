@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/redhatxl/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/internal/common"
 	"github.com/stretchr/testify/assert"
 )
 

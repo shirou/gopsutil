@@ -56,7 +56,7 @@ func TestDisk_io_counters(t *testing.T) {
 	}
 }
 
-// https://github.com/redhatxl/gopsutil/issues/560 regression test
+// https://github.com/shirou/gopsutil/issues/560 regression test
 func TestDisk_io_counters_concurrency_on_darwin_cgo(t *testing.T) {
 	if runtime.GOOS != "darwin" {
 		t.Skip("darwin only")

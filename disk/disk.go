@@ -3,7 +3,7 @@ package disk
 import (
 	"encoding/json"
 
-	"github.com/redhatxl/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/internal/common"
 )
 
 var invoke common.Invoker = common.Invoke{}

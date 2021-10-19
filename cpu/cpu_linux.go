@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/redhatxl/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/internal/common"
 )
 
 var CPUTick = float64(100)

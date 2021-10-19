@@ -11,7 +11,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/redhatxl/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/internal/common"
 )
 
 func parseNetstatI(output string) ([]IOCountersStat, error) {

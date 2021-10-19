@@ -5,7 +5,7 @@ package host
 import (
 	"context"
 
-	"github.com/redhatxl/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/internal/common"
 )
 
 func Info() (*InfoStat, error) {
