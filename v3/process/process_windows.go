@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"syscall"
 	"unicode/utf16"
@@ -604,7 +605,79 @@ func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
 }
 
 func (p *Process) OpenFilesWithContext(ctx context.Context) ([]OpenFilesStat, error) {
-	return nil, common.ErrNotImplementedError
+	files := make([]OpenFilesStat, 0)
+	fileExists := make(map[string]bool)
+
+	process, err := windows.OpenProcess(common.ProcessQueryInformation, false, uint32(p.Pid))
+	if err != nil {
+		return nil, err
+	}
+
+	buffer := make([]byte, 1024)
+	var size uint32
+
+	st := common.CallWithExpandingBuffer(
+		func() common.NtStatus {
+			return common.NtQuerySystemInformation(
+				common.SystemExtendedHandleInformationClass,
+				&buffer[0],
+				uint32(len(buffer)),
+				&size,
+			)
+		},
+		&buffer,
+		&size,
+	)
+	if st.IsError() {
+		return nil, st.Error()
+	}
+
+	handlesList := (*common.SystemExtendedHandleInformation)(unsafe.Pointer(&buffer[0]))
+	handles := make([]common.SystemExtendedHandleTableEntryInformation, int(handlesList.NumberOfHandles))
+	hdr := (*reflect.SliceHeader)(unsafe.Pointer(&handles))
+	hdr.Data = uintptr(unsafe.Pointer(&handlesList.Handles[0]))
+
+	currentProcess, err := windows.GetCurrentProcess()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, handle := range handles {
+		var file uintptr
+		if int32(handle.UniqueProcessId) != p.Pid {
+			continue
+		}
+		if windows.DuplicateHandle(process, windows.Handle(handle.HandleValue), currentProcess, (*windows.Handle)(&file),
+			0, true, windows.DUPLICATE_SAME_ACCESS) != nil {
+			continue
+		}
+		fileType, _ := windows.GetFileType(windows.Handle(file))
+		if fileType != windows.FILE_TYPE_DISK {
+			continue
+		}
+
+		var buf [syscall.MAX_LONG_PATH]uint16
+		n, err := windows.GetFinalPathNameByHandle(windows.Handle(file), &buf[0], syscall.MAX_LONG_PATH, 0)
+		if err != nil {
+			continue
+		}
+
+		fileName := string(utf16.Decode(buf[:n]))
+		fileInfo, _ := os.Stat(fileName)
+		if fileInfo.IsDir() {
+			continue
+		}
+
+		if _, exists := fileExists[fileName]; !exists {
+			files = append(files, OpenFilesStat{
+				Path: fileName,
+				Fd:   uint64(file),
+			})
+			fileExists[fileName] = true
+		}
+	}
+
+	return files, nil
 }
 
 func (p *Process) ConnectionsWithContext(ctx context.Context) ([]net.ConnectionStat, error) {
