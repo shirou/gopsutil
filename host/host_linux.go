@@ -372,7 +372,7 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 		family = "solus"
 
 	return platform, family, version, nil
-
+	}
 }
 
 func KernelVersion() (version string, err error) {
