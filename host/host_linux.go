@@ -348,7 +348,7 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 	}
 
 	switch platform {
-	case "debian", "ubuntu", "linuxmint", "raspbian":
+	case "debian", "ubuntu", "linuxmint", "raspbian", "kylin":
 		family = "debian"
 	case "fedora":
 		family = "fedora"
@@ -370,9 +370,6 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 		family = "coreos"
 	case "solus":
 		family = "solus"
-	case "kylin":
-		family = "kylin"
-	}
 
 	return platform, family, version, nil
 
