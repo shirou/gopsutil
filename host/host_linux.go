@@ -370,9 +370,10 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 		family = "coreos"
 	case "solus":
 		family = "solus"
-        }
+       }
 
 	return platform, family, version, nil
+
 }
 
 func KernelVersion() (version string, err error) {
