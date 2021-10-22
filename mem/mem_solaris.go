@@ -4,7 +4,6 @@ package mem
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os/exec"
 	"regexp"
@@ -68,7 +67,7 @@ func zoneName() (string, error) {
 	return strings.TrimSpace(string(out)), nil
 }
 
-var globalZoneMemoryCapacityMatch = regexp.MustCompile(`memory size: ([\d]+) Megabytes`)
+var globalZoneMemoryCapacityMatch = regexp.MustCompile(`[Mm]emory size: (\d+) Megabytes`)
 
 func globalZoneMemoryCapacity() (uint64, error) {
 	prtconf, err := exec.LookPath("prtconf")
@@ -84,7 +83,7 @@ func globalZoneMemoryCapacity() (uint64, error) {
 
 	match := globalZoneMemoryCapacityMatch.FindAllStringSubmatch(string(out), -1)
 	if len(match) != 1 {
-		return 0, errors.New("memory size not contained in output of /usr/sbin/prtconf")
+		return 0, fmt.Errorf("memory size not contained in output of %q", prtconf)
 	}
 
 	totalMB, err := strconv.ParseUint(match[0][1], 10, 64)
@@ -95,7 +94,7 @@ func globalZoneMemoryCapacity() (uint64, error) {
 	return totalMB * 1024 * 1024, nil
 }
 
-var kstatMatch = regexp.MustCompile(`([^\s]+)[\s]+([^\s]*)`)
+var kstatMatch = regexp.MustCompile(`(\S+)\s+(\S*)`)
 
 func nonGlobalZoneMemoryCapacity() (uint64, error) {
 	kstat, err := exec.LookPath("kstat")
