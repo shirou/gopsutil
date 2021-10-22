@@ -159,13 +159,13 @@ func getLSB() (*LSB, error) {
 			}
 			switch field[0] {
 			case "Distributor ID":
-				ret.ID = field[1]
+				ret.ID = strings.TrimPrefix(field[1], "\t")
 			case "Release":
-				ret.Release = field[1]
+				ret.Release = strings.TrimPrefix(field[1], "\t")
 			case "Codename":
-				ret.Codename = field[1]
+				ret.Codename = strings.TrimPrefix(field[1], "\t")
 			case "Description":
-				ret.Description = field[1]
+				ret.Description = strings.TrimPrefix(field[1], "\t")
 			}
 		}
 
