@@ -4,7 +4,6 @@ package mem
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os/exec"
 	"regexp"
@@ -84,7 +83,7 @@ func globalZoneMemoryCapacity() (uint64, error) {
 
 	match := globalZoneMemoryCapacityMatch.FindAllStringSubmatch(string(out), -1)
 	if len(match) != 1 {
-		return 0, errors.New("memory size not contained in output of /usr/sbin/prtconf")
+		return 0, fmt.Errorf("memory size not contained in output of %q", prtconf)
 	}
 
 	totalMB, err := strconv.ParseUint(match[0][1], 10, 64)
