@@ -147,7 +147,7 @@ func getlsbStruct() (*lsbStruct, error) {
 				ret.Description = field[1]
 			}
 		}
-	} else if common.PathExists("/usr/bin/lsb_release") {
+	} else {
 		lsb_release, err := exec.LookPath("lsb_release")
 		if err != nil {
 			return ret, err
