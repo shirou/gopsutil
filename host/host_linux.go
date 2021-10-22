@@ -148,7 +148,7 @@ func getLSB() (*LSB, error) {
 		if err != nil {
 			return ret, err
 		}
-		out, err := invoke.Command(lsb_release)
+		out, err := invoke.Command(lsb_release, "-a")
 		if err != nil {
 			return ret, err
 		}
