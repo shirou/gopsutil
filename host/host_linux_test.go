@@ -3,7 +3,10 @@
 package host
 
 import (
+	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetRedhatishVersion(t *testing.T) {
@@ -58,4 +61,22 @@ func TestGetRedhatishPlatform(t *testing.T) {
 	if ret != "" {
 		t.Errorf("Could not get platform with no value: %v", ret)
 	}
+}
+
+func TestGetLSB(t *testing.T) {
+	orig := os.Getenv("HOST_ETC")
+	os.Setenv("HOST_ETC", "testdata/linux/ubuntu/etc")
+	defer os.Setenv("HOST_ETC", orig)
+
+	lsb, err := getLSB()
+	if err != nil {
+		t.Errorf("Could not get LSB struct")
+	}
+	expected := &LSB{
+		ID:          "Ubuntu",
+		Release:     "20.04",
+		Codename:    "focal",
+		Description: "Ubuntu 20.04.3 LTS",
+	}
+	assert.Equal(t, expected, lsb)
 }
