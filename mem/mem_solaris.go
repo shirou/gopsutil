@@ -67,7 +67,7 @@ func zoneName() (string, error) {
 	return strings.TrimSpace(string(out)), nil
 }
 
-var globalZoneMemoryCapacityMatch = regexp.MustCompile(`[Mm]emory size: ([\d]+) Megabytes`)
+var globalZoneMemoryCapacityMatch = regexp.MustCompile(`[Mm]emory size: (\d+) Megabytes`)
 
 func globalZoneMemoryCapacity() (uint64, error) {
 	prtconf, err := exec.LookPath("prtconf")
@@ -94,7 +94,7 @@ func globalZoneMemoryCapacity() (uint64, error) {
 	return totalMB * 1024 * 1024, nil
 }
 
-var kstatMatch = regexp.MustCompile(`([^\s]+)[\s]+([^\s]*)`)
+var kstatMatch = regexp.MustCompile(`(\S+)\s+(\S*)`)
 
 func nonGlobalZoneMemoryCapacity() (uint64, error) {
 	kstat, err := exec.LookPath("kstat")
