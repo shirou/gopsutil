@@ -153,7 +153,7 @@ func getLSB() (*LSB, error) {
 			return ret, err
 		}
 		for _, line := range strings.Split(string(out), "\n") {
-			field := strings.Split(line, ":")
+			field := strings.SplitN(line, ":", 2)
 			if len(field) < 2 {
 				continue
 			}
