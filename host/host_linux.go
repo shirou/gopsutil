@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package host
@@ -128,35 +129,9 @@ func unquoteLsbValue(v string) string {
 	return v
 }
 
-
 func getLSB() (*LSB, error) {
 	ret := &LSB{}
-	if common.PathExists(common.HostEtc("lsb-release")) {
-		contents, err := common.ReadLines(common.HostEtc("lsb-release"))
-		if err != nil {
-			return ret, err // return empty
-		}
-		for _, line := range contents {
-			field := strings.Split(line, "=")
-			if len(field) < 2 {
-				continue
-			}
-			switch field[0] {
-			case "DISTRIB_ID":
-				ret.ID = unquoteLsbValue(field[1])
-			case "DISTRIB_RELEASE":
-				ret.Release = unquoteLsbValue(field[1])
-			case "DISTRIB_CODENAME":
-				ret.Codename = unquoteLsbValue(field[1])
-			case "DISTRIB_DESCRIPTION":
-				ret.Description = unquoteLsbValue(field[1])
-			}
-		}
-	} else {
-		lsb_release, err := exec.LookPath("lsb_release")
-		if err != nil {
-			return ret, err
-		}
+	if lsb_release, err := exec.LookPath("lsb_release"); err == nil {
 		out, err := invoke.Command(lsb_release, "-a")
 		if err != nil {
 			return ret, err
@@ -177,7 +152,27 @@ func getLSB() (*LSB, error) {
 				ret.Description = strings.TrimPrefix(field[1], "\t")
 			}
 		}
-
+	} else if common.PathExists(common.HostEtc("lsb-release")) {
+		contents, err := common.ReadLines(common.HostEtc("lsb-release"))
+		if err != nil {
+			return ret, err // return empty
+		}
+		for _, line := range contents {
+			field := strings.Split(line, "=")
+			if len(field) < 2 {
+				continue
+			}
+			switch field[0] {
+			case "DISTRIB_ID":
+				ret.ID = unquoteLsbValue(field[1])
+			case "DISTRIB_RELEASE":
+				ret.Release = unquoteLsbValue(field[1])
+			case "DISTRIB_CODENAME":
+				ret.Codename = unquoteLsbValue(field[1])
+			case "DISTRIB_DESCRIPTION":
+				ret.Description = unquoteLsbValue(field[1])
+			}
+		}
 	}
 
 	return ret, nil

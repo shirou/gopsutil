@@ -67,6 +67,9 @@ func TestGetLsbStruct(t *testing.T) {
 	orig := os.Getenv("HOST_ETC")
 	os.Setenv("HOST_ETC", "testdata/linux/ubuntu/etc")
 	defer os.Setenv("HOST_ETC", orig)
+	origPath := os.Getenv("PATH")
+	os.Setenv("PATH", "/nonexistent")
+	defer os.Setenv("PATH", origPath)
 
 	lsb, err := getlsbStruct()
 	if err != nil {
