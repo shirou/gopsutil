@@ -125,14 +125,6 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 
 }
 
-func unquoteLsbValue(v string) string {
-	last := len(v) - 1
-	if v[0] == '"' && v[last] == '"' {
-		return v[1:last]
-	}
-	return v
-}
-
 func getlsbStruct() (*lsbStruct, error) {
 	ret := &lsbStruct{}
 	if lsb_release, err := exec.LookPath("lsb_release"); err == nil {
@@ -168,13 +160,13 @@ func getlsbStruct() (*lsbStruct, error) {
 			}
 			switch field[0] {
 			case "DISTRIB_ID":
-				ret.ID = unquoteLsbValue(field[1])
+				ret.ID = common.TrimQuotes(field[1])
 			case "DISTRIB_RELEASE":
-				ret.Release = unquoteLsbValue(field[1])
+				ret.Release = common.TrimQuotes(field[1])
 			case "DISTRIB_CODENAME":
-				ret.Codename = unquoteLsbValue(field[1])
+				ret.Codename = common.TrimQuotes(field[1])
 			case "DISTRIB_DESCRIPTION":
-				ret.Description = unquoteLsbValue(field[1])
+				ret.Description = common.TrimQuotes(field[1])
 			}
 		}
 	}
