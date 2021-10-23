@@ -116,51 +116,51 @@ type processBasicInformation64 struct {
 }
 
 type processEnvironmentBlock32 struct {
-	Reserved1 [2]uint8
-	BeingDebugged uint8
-	Reserved2 uint8
-	Reserved3 [2]uint32
-	Ldr uint32
+	Reserved1         [2]uint8
+	BeingDebugged     uint8
+	Reserved2         uint8
+	Reserved3         [2]uint32
+	Ldr               uint32
 	ProcessParameters uint32
 	// More fields which we don't use so far
 }
 
 type processEnvironmentBlock64 struct {
-	Reserved1 [2]uint8
-	BeingDebugged uint8
-	Reserved2 uint8
-	_ [4]uint8 // padding, since we are 64 bit, the next pointer is 64 bit aligned (when compiling for 32 bit, this is not the case without manual padding)
-	Reserved3 [2]uint64
-	Ldr uint64
+	Reserved1         [2]uint8
+	BeingDebugged     uint8
+	Reserved2         uint8
+	_                 [4]uint8 // padding, since we are 64 bit, the next pointer is 64 bit aligned (when compiling for 32 bit, this is not the case without manual padding)
+	Reserved3         [2]uint64
+	Ldr               uint64
 	ProcessParameters uint64
 	// More fields which we don't use so far
 }
 
 type rtlUserProcessParameters32 struct {
-	Reserved1 [16]uint8
-	Reserved2 [10]uint32
+	Reserved1           [16]uint8
+	Reserved2           [10]uint32
 	ImagePathNameLength uint16
-	_ uint16
-	ImagePathAddress uint32
-	CommandLineLength uint16
-	_ uint16
-	CommandLineAddress uint32
-	EnvironmentAddress uint32
+	_                   uint16
+	ImagePathAddress    uint32
+	CommandLineLength   uint16
+	_                   uint16
+	CommandLineAddress  uint32
+	EnvironmentAddress  uint32
 	// More fields which we don't use so far
 }
 
 type rtlUserProcessParameters64 struct {
-	Reserved1 [16]uint8
-	Reserved2 [10]uint64
+	Reserved1           [16]uint8
+	Reserved2           [10]uint64
 	ImagePathNameLength uint16
-	_ uint16 // Max Length
-	_ uint32 // Padding
-	ImagePathAddress uint64
-	CommandLineLength uint16
-	_ uint16 // Max Length
-	_ uint32 // Padding
-	CommandLineAddress uint64
-	EnvironmentAddress uint64
+	_                   uint16 // Max Length
+	_                   uint32 // Padding
+	ImagePathAddress    uint64
+	CommandLineLength   uint16
+	_                   uint16 // Max Length
+	_                   uint32 // Padding
+	CommandLineAddress  uint64
+	EnvironmentAddress  uint64
 	// More fields which we don't use so far
 }
 
@@ -669,7 +669,10 @@ func (p *Process) TerminateWithContext(ctx context.Context) error {
 }
 
 func (p *Process) KillWithContext(ctx context.Context) error {
-	process := os.Process{Pid: int(p.Pid)}
+	process, err := os.FindProcess(int(p.Pid))
+	if err != nil {
+		return err
+	}
 	return process.Kill()
 }
 
@@ -928,14 +931,14 @@ func getProcessEnvironmentVariables(pid int32, ctx context.Context) ([]string, e
 		is32BitProcess: procIs32Bits,
 		offset:         processParameterBlockAddress,
 	})
-	envvarScanner.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error){
+	envvarScanner.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error) {
 		if atEOF && len(data) == 0 {
 			return 0, nil, nil
 		}
 		// Check for UTF-16 zero character
-		for i := 0; i < len(data) - 1; i+=2 {
+		for i := 0; i < len(data)-1; i += 2 {
 			if data[i] == 0 && data[i+1] == 0 {
-				return i+2, data[0:i], nil
+				return i + 2, data[0:i], nil
 			}
 		}
 		if atEOF {
@@ -965,9 +968,9 @@ func getProcessEnvironmentVariables(pid int32, ctx context.Context) ([]string, e
 }
 
 type processReader struct {
-	processHandle windows.Handle
+	processHandle  windows.Handle
 	is32BitProcess bool
-	offset uint64
+	offset         uint64
 }
 
 func (p *processReader) Read(buf []byte) (int, error) {
