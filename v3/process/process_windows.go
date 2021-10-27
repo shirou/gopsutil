@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"syscall"
@@ -364,8 +365,22 @@ func (p *Process) createTimeWithContext(ctx context.Context) (int64, error) {
 	return ru.CreationTime.Nanoseconds() / 1000000, nil
 }
 
-func (p *Process) CwdWithContext(ctx context.Context) (string, error) {
-	return "", common.ErrNotImplementedError
+func (p *Process) CwdWithContext(_ context.Context) (string, error) {
+	c, err := windows.OpenProcess(processQueryInformation, false, uint32(p.Pid))
+	if err != nil {
+		return "", err
+	}
+	defer windows.CloseHandle(c)
+
+	buf := make([]uint16, syscall.MAX_LONG_PATH)
+	size := uint32(syscall.MAX_LONG_PATH)
+	err = windows.QueryFullProcessImageName(c, 0, &buf[0], &size)
+	if err != nil {
+		return "", err
+	}
+	path := string(utf16.Decode(buf[:syscall.MAX_LONG_PATH]))
+	dir := filepath.Dir(path)
+	return dir, nil
 }
 
 func (p *Process) ParentWithContext(ctx context.Context) (*Process, error) {
