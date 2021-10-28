@@ -125,12 +125,23 @@ type processEnvironmentBlock64 struct {
 
 type rtlUserProcessParameters32 struct {
 	Reserved1 [16]uint8
-	Reserved2 [10]uint32
+	ConsoleHandle uint32
+	ConsoleFlags uint32
+	StdInputHandle uint32
+	StdOutputHandle uint32
+	StdErrorHandle uint32
+	CurrentDirectoryPathNameLength uint16
+	_ uint16 // Max Length
+	CurrentDirectoryPathAddress uint32
+	CurrentDirectoryHandle uint32
+	DllPathNameLength uint16
+	_ uint16 // Max Length
+	DllPathAddress uint32
 	ImagePathNameLength uint16
-	_ uint16
+	_ uint16 // Max Length
 	ImagePathAddress uint32
 	CommandLineLength uint16
-	_ uint16
+	_ uint16 // Max Length
 	CommandLineAddress uint32
 	EnvironmentAddress uint32
 	// More fields which we don't use so far
@@ -138,7 +149,20 @@ type rtlUserProcessParameters32 struct {
 
 type rtlUserProcessParameters64 struct {
 	Reserved1 [16]uint8
-	Reserved2 [10]uint64
+	ConsoleHandle uint64
+	ConsoleFlags uint64
+	StdInputHandle uint64
+	StdOutputHandle uint64
+	StdErrorHandle uint64
+	CurrentDirectoryPathNameLength uint16
+	_ uint16 // Max Length
+	_ uint32 // Padding
+	CurrentDirectoryPathAddress uint64
+	CurrentDirectoryHandle uint64
+	DllPathNameLength uint16
+	_ uint16 // Max Length
+	_ uint32 // Padding
+	DllPathAddress uint64
 	ImagePathNameLength uint16
 	_ uint16 // Max Length
 	_ uint32 // Padding
@@ -364,8 +388,48 @@ func (p *Process) createTimeWithContext(ctx context.Context) (int64, error) {
 	return ru.CreationTime.Nanoseconds() / 1000000, nil
 }
 
-func (p *Process) CwdWithContext(ctx context.Context) (string, error) {
-	return "", common.ErrNotImplementedError
+func (p *Process) CwdWithContext(_ context.Context) (string, error) {
+	h, err := windows.OpenProcess(processQueryInformation|windows.PROCESS_VM_READ, false, uint32(p.Pid))
+	if err == windows.ERROR_ACCESS_DENIED || err == windows.ERROR_INVALID_PARAMETER {
+		return "", nil
+	}
+	if err != nil {
+		return "", err
+	}
+	defer syscall.CloseHandle(syscall.Handle(h))
+
+	procIs32Bits := is32BitProcess(h)
+
+	if procIs32Bits {
+		userProcParams, err := getUserProcessParams32(h)
+		if err != nil {
+			return "", err
+		}
+		if userProcParams.CurrentDirectoryPathNameLength > 0 {
+			cwd := readProcessMemory(syscall.Handle(h), procIs32Bits, uint64(userProcParams.CurrentDirectoryPathAddress), uint(userProcParams.CurrentDirectoryPathNameLength))
+			if len(cwd) != int(userProcParams.CurrentDirectoryPathAddress) {
+				return "", errors.New("cannot read current working directory")
+			}
+
+			return convertUTF16ToString(cwd), nil
+		}
+	} else {
+		userProcParams, err := getUserProcessParams64(h)
+		if err != nil {
+			return "", err
+		}
+		if userProcParams.CurrentDirectoryPathNameLength > 0 {
+			cwd := readProcessMemory(syscall.Handle(h), procIs32Bits, userProcParams.CurrentDirectoryPathAddress, uint(userProcParams.CurrentDirectoryPathNameLength))
+			if len(cwd) != int(userProcParams.CurrentDirectoryPathNameLength) {
+				return "", errors.New("cannot read current working directory")
+			}
+
+			return convertUTF16ToString(cwd), nil
+		}
+	}
+
+	//if we reach here, we have no cwd
+	return "", nil
 }
 
 func (p *Process) ParentWithContext(ctx context.Context) (*Process, error) {

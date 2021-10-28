@@ -776,6 +776,22 @@ func Test_Process_Environ(t *testing.T) {
 	}
 }
 
+func Test_Process_Cwd(t *testing.T) {
+	myPid := os.Getpid()
+	currentWorkingDirectory, _ := os.Getwd()
+
+	process, _ := NewProcess(int32(myPid))
+	pidCwd, err := process.Cwd()
+	skipIfNotImplementedErr(t, err)
+	if err != nil {
+		t.Fatalf("getting cwd error %v", err)
+	}
+	pidCwd = strings.TrimSuffix(pidCwd, string(os.PathSeparator))
+	assert.Equal(t, currentWorkingDirectory, pidCwd)
+
+	t.Log(pidCwd)
+}
+
 func Test_AllProcesses_cmdLine(t *testing.T) {
 	procs, err := Processes()
 	skipIfNotImplementedErr(t, err)
@@ -810,6 +826,23 @@ func Test_AllProcesses_environ(t *testing.T) {
 		}
 
 		t.Logf("Process #%v: Name: %v / Environment Variables: %v\n", proc.Pid, exeName, environ)
+	}
+}
+
+func Test_AllProcesses_Cwd(t *testing.T) {
+	procs, err := Processes()
+	skipIfNotImplementedErr(t, err)
+	if err != nil {
+		t.Fatalf("getting processes error %v", err)
+	}
+	for _, proc := range procs {
+		exeName, _ := proc.Exe()
+		cwd, err := proc.Cwd()
+		if err != nil {
+			cwd = "Error: " + err.Error()
+		}
+
+		t.Logf("Process #%v: Name: %v / Current Working Directory: %s\n", proc.Pid, exeName, cwd)
 	}
 }
 
