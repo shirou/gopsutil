@@ -659,9 +659,6 @@ func Test_CPUTimes(t *testing.T) {
 }
 
 func Test_OpenFiles(t *testing.T) {
-	fp, err := os.Open("process_test.go")
-	defer fp.Close()
-
 	pid := os.Getpid()
 	p, err := NewProcess(int32(pid))
 	skipIfNotImplementedErr(t, err)
