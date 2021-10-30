@@ -192,7 +192,7 @@ Some code is ported from Ohai. many thanks.
 |exe                 |x      |x        |x        |       |x        |
 |uids                |x      |x        |x        |x      |         |
 |gids                |x      |x        |x        |x      |         |
-|terminal            |x      |x        |x        |x      |         |
+|terminal            |x      |x        |x        |       |         |
 |io\_counters        |x      |x        |x        |       |x        |
 |nice                |x      |x        |x        |x      |x        |
 |num\_fds            |x      |         |         |       |         |
