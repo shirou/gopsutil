@@ -347,7 +347,7 @@ func PlatformInformation() (platform string, family string, version string, err 
 		family = "debian"
 	case "fedora":
 		family = "fedora"
-	case "oracle", "centos", "redhat", "scientific", "enterpriseenterprise", "amazon", "xenserver", "cloudlinux", "ibm_powerkvm":
+	case "oracle", "centos", "redhat", "scientific", "enterpriseenterprise", "amazon", "xenserver", "cloudlinux", "ibm_powerkvm", "rocky":
 		family = "rhel"
 	case "suse", "opensuse":
 		family = "suse"
