@@ -261,6 +261,12 @@ func PlatformInformation() (platform string, family string, version string, err 
 		if err == nil {
 			version = getRedhatishVersion(contents)
 		}
+	} else if common.PathExists(common.HostEtc("slackware-version")) {
+		platform = "slackware"
+		contents, err := common.ReadLines(common.HostEtc("slackware-version"))
+		if err == nil {
+			version = getSlackwareVersion(contents)
+		}
 	} else if common.PathExists(common.HostEtc("debian_version")) {
 		if lsb.ID == "Ubuntu" {
 			platform = "ubuntu"
@@ -377,6 +383,12 @@ func KernelVersion() (version string, err error) {
 	}
 
 	return version, nil
+}
+
+func getSlackwareVersion(contents []string) string {
+	c := strings.ToLower(strings.Join(contents, ""))
+	c = strings.Replace(c, "slackware ", "", 1)
+	return c
 }
 
 func getRedhatishVersion(contents []string) string {
