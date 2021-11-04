@@ -363,6 +363,8 @@ func PlatformInformation() (platform string, family string, version string, err 
 		family = "alpine"
 	case "coreos":
 		family = "coreos"
+	case "solus":
+		family = "solus"
 	}
 
 	return platform, family, version, nil
