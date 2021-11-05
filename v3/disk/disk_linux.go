@@ -349,7 +349,7 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 	if err != nil {
 		return nil, err
 	}
-	ret := make(map[string]IOCountersStat, 0)
+	ret := make(map[string]IOCountersStat)
 	empty := IOCountersStat{}
 
 	// use only basename such as "/dev/sda1" to "sda1"
