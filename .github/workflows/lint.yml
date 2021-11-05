@@ -18,5 +18,6 @@ jobs:
       - name: Setup golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
+          args: --verbose
           version: latest
           working-directory: v3
