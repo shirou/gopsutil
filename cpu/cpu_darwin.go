@@ -14,11 +14,11 @@ import (
 // sys/resource.h
 const (
 	CPUser    = 0
-	CPNice    = 1
-	CPSys     = 2
-	CPIntr    = 3
-	CPIdle    = 4
-	CPUStates = 5
+	cpNice    = 1
+	cpSys     = 2
+	cpIntr    = 3
+	cpIdle    = 4
+	cpUStates = 5
 )
 
 // default value. from time.h

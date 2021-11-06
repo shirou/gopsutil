@@ -1,4 +1,4 @@
-// +build !darwin,!linux,!freebsd,!openbsd,!solaris,!windows,!dragonfly
+// +build !darwin,!linux,!freebsd,!openbsd,!solaris,!windows,!dragonfly,!plan9
 
 package cpu
 
@@ -6,7 +6,7 @@ import (
 	"context"
 	"runtime"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/v3/internal/common"
 )
 
 func Times(percpu bool) ([]TimesStat, error) {

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/v3/internal/common"
 )
 
 func Avg() (*AvgStat, error) {
@@ -26,15 +26,16 @@ func AvgWithContext(ctx context.Context) (*AvgStat, error) {
 
 func sysinfoAvgWithContext(ctx context.Context) (*AvgStat, error) {
 	var info syscall.Sysinfo_t
-	if err := syscall.Sysinfo(&info); err != nil {
+	err := syscall.Sysinfo(&info)
+	if err != nil {
 		return nil, err
 	}
 
-	const siLoadShift = 16
+	const si_load_shift = 16
 	return &AvgStat{
-		Load1:  float64(info.Loads[0]) / float64(1<<siLoadShift),
-		Load5:  float64(info.Loads[1]) / float64(1<<siLoadShift),
-		Load15: float64(info.Loads[2]) / float64(1<<siLoadShift),
+		Load1:  float64(info.Loads[0]) / float64(1<<si_load_shift),
+		Load5:  float64(info.Loads[1]) / float64(1<<si_load_shift),
+		Load15: float64(info.Loads[2]) / float64(1<<si_load_shift),
 	}, nil
 }
 
@@ -102,6 +103,7 @@ func MiscWithContext(ctx context.Context) (*MiscStat, error) {
 		default:
 			continue
 		}
+
 	}
 
 	procsTotal, err := getProcsTotal()

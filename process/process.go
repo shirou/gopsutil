@@ -7,19 +7,19 @@ import (
 	"runtime"
 	"sort"
 	"sync"
-	"syscall"
 	"time"
 
-	"github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/internal/common"
-	"github.com/shirou/gopsutil/mem"
-	"github.com/shirou/gopsutil/net"
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v3/mem"
+	"github.com/shirou/gopsutil/v3/net"
 )
 
 var (
 	invoke                 common.Invoker = common.Invoke{}
 	ErrorNoChildren                       = errors.New("process does not have children")
 	ErrorProcessNotRunning                = errors.New("process does not exist")
+	ErrorNotPermitted                     = errors.New("operation not permitted")
 )
 
 type Process struct {
@@ -42,6 +42,17 @@ type Process struct {
 
 	tgid int32
 }
+
+// Process status
+const (
+	Running = "running"
+	Sleep   = "sleep"
+	Stop    = "stop"
+	Idle    = "idle"
+	Zombie  = "zombie"
+	Wait    = "wait"
+	Lock    = "lock"
+)
 
 type OpenFilesStat struct {
 	Path string `json:"path"`
@@ -68,8 +79,8 @@ type SignalInfoStat struct {
 
 type RlimitStat struct {
 	Resource int32  `json:"resource"`
-	Soft     int32  `json:"soft"` //TODO too small. needs to be uint64
-	Hard     int32  `json:"hard"` //TODO too small. needs to be uint64
+	Soft     uint64 `json:"soft"`
+	Hard     uint64 `json:"hard"`
 	Used     uint64 `json:"used"`
 }
 
@@ -379,7 +390,7 @@ func (p *Process) Parent() (*Process, error) {
 // R: Running S: Sleep T: Stop I: Idle
 // Z: Zombie W: Wait L: Lock
 // The character is same within all supported platforms.
-func (p *Process) Status() (string, error) {
+func (p *Process) Status() ([]string, error) {
 	return p.StatusWithContext(context.Background())
 }
 
@@ -498,11 +509,6 @@ func (p *Process) ConnectionsMax(max int) ([]net.ConnectionStat, error) {
 	return p.ConnectionsMaxWithContext(context.Background(), max)
 }
 
-// NetIOCounters returns NetIOCounters of the process.
-func (p *Process) NetIOCounters(pernic bool) ([]net.IOCountersStat, error) {
-	return p.NetIOCountersWithContext(context.Background(), pernic)
-}
-
 // MemoryMaps get memory maps from /proc/(pid)/smaps
 func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 	return p.MemoryMapsWithContext(context.Background(), grouped)
@@ -514,7 +520,7 @@ func (p *Process) Tgid() (int32, error) {
 }
 
 // SendSignal sends a unix.Signal to the process.
-func (p *Process) SendSignal(sig syscall.Signal) error {
+func (p *Process) SendSignal(sig Signal) error {
 	return p.SendSignalWithContext(context.Background(), sig)
 }
 
@@ -546,4 +552,25 @@ func (p *Process) Username() (string, error) {
 // Environ returns the environment variables of the process.
 func (p *Process) Environ() ([]string, error) {
 	return p.EnvironWithContext(context.Background())
+}
+
+func convertStatusChar(letter string) string {
+	switch letter {
+	case "R":
+		return Running
+	case "S":
+		return Sleep
+	case "T":
+		return Stop
+	case "I":
+		return Idle
+	case "Z":
+		return Zombie
+	case "W":
+		return Wait
+	case "L":
+		return Lock
+	default:
+		return ""
+	}
 }

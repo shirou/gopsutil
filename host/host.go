@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/v3/internal/common"
 )
 
 var invoke common.Invoker = common.Invoke{}
@@ -27,7 +27,7 @@ type InfoStat struct {
 	KernelArch           string `json:"kernelArch"`      // native cpu architecture queried at runtime, as returned by `uname -m` or empty string in case of error
 	VirtualizationSystem string `json:"virtualizationSystem"`
 	VirtualizationRole   string `json:"virtualizationRole"` // guest or host
-	HostID               string `json:"hostid"`             // ex: uuid
+	HostID               string `json:"hostId"`             // ex: uuid
 }
 
 type UserStat struct {
@@ -39,7 +39,9 @@ type UserStat struct {
 
 type TemperatureStat struct {
 	SensorKey   string  `json:"sensorKey"`
-	Temperature float64 `json:"sensorTemperature"`
+	Temperature float64 `json:"temperature"`
+	High        float64 `json:"sensorHigh"`
+	Critical    float64 `json:"sensorCritical"`
 }
 
 func (h InfoStat) String() string {

@@ -12,9 +12,11 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/v3/internal/common"
 	"golang.org/x/sys/unix"
 )
+
+type Signal = syscall.Signal
 
 // POSIX
 func getTerminalMap() (map[uint64]string, error) {
@@ -80,7 +82,7 @@ func isMount(path string) bool {
 	if err != nil {
 		return false
 	}
-	if fileInfo.Mode() & os.ModeSymlink != 0 {
+	if fileInfo.Mode()&os.ModeSymlink != 0 {
 		return false
 	}
 	var stat1 unix.Stat_t

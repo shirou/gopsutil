@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/v3/internal/common"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -94,6 +94,28 @@ func Test_Process_splitProcStat_fromFile(t *testing.T) {
 	}
 }
 
+func Test_fillFromCommWithContext(t *testing.T) {
+	pids, err := ioutil.ReadDir("testdata/linux/")
+	if err != nil {
+		t.Error(err)
+	}
+	f := common.MockEnv("HOST_PROC", "testdata/linux")
+	defer f()
+	for _, pid := range pids {
+		pid, err := strconv.ParseInt(pid.Name(), 0, 32)
+		if err != nil {
+			continue
+		}
+		if _, err := os.Stat(fmt.Sprintf("testdata/linux/%d/status", pid)); err != nil {
+			continue
+		}
+		p, _ := NewProcess(int32(pid))
+		if err := p.fillFromCommWithContext(context.Background()); err != nil {
+			t.Error(err)
+		}
+	}
+}
+
 func Test_fillFromStatusWithContext(t *testing.T) {
 	pids, err := ioutil.ReadDir("testdata/linux/")
 	if err != nil {
@@ -113,6 +135,26 @@ func Test_fillFromStatusWithContext(t *testing.T) {
 		if err := p.fillFromStatusWithContext(context.Background()); err != nil {
 			t.Error(err)
 		}
+	}
+}
+
+func Benchmark_fillFromCommWithContext(b *testing.B) {
+	f := common.MockEnv("HOST_PROC", "testdata/linux")
+	defer f()
+	pid := 1060
+	p, _ := NewProcess(int32(pid))
+	for i := 0; i < b.N; i++ {
+		p.fillFromCommWithContext(context.Background())
+	}
+}
+
+func Benchmark_fillFromStatusWithContext(b *testing.B) {
+	f := common.MockEnv("HOST_PROC", "testdata/linux")
+	defer f()
+	pid := 1060
+	p, _ := NewProcess(int32(pid))
+	for i := 0; i < b.N; i++ {
+		p.fillFromStatusWithContext(context.Background())
 	}
 }
 

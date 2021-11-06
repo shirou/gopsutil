@@ -15,11 +15,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/v3/internal/common"
 	"golang.org/x/sys/unix"
 )
 
-type LSB struct {
+type lsbStruct struct {
 	ID          string
 	Release     string
 	Codename    string
@@ -27,7 +27,11 @@ type LSB struct {
 }
 
 // from utmp.h
-const USER_PROCESS = 7
+const (
+	user_PROCESS = 7
+
+	hostTemperatureScale = 1000.0
+)
 
 func HostIDWithContext(ctx context.Context) (string, error) {
 	sysProductUUID := common.HostSys("class/dmi/id/product_uuid")
@@ -104,7 +108,7 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 		if err != nil {
 			continue
 		}
-		if u.Type != USER_PROCESS {
+		if u.Type != user_PROCESS {
 			continue
 		}
 		user := UserStat{
@@ -120,8 +124,8 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 
 }
 
-func getLSB() (*LSB, error) {
-	ret := &LSB{}
+func getlsbStruct() (*lsbStruct, error) {
+	ret := &lsbStruct{}
 	if common.PathExists(common.HostEtc("lsb-release")) {
 		contents, err := common.ReadLines(common.HostEtc("lsb-release"))
 		if err != nil {
@@ -175,9 +179,9 @@ func getLSB() (*LSB, error) {
 }
 
 func PlatformInformationWithContext(ctx context.Context) (platform string, family string, version string, err error) {
-	lsb, err := getLSB()
+	lsb, err := getlsbStruct()
 	if err != nil {
-		lsb = &LSB{}
+		lsb = &lsbStruct{}
 	}
 
 	if common.PathExists(common.HostEtc("oracle-release")) {
@@ -366,19 +370,27 @@ func VirtualizationWithContext(ctx context.Context) (string, string, error) {
 }
 
 func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
-	var temperatures []TemperatureStat
-	files, err := filepath.Glob(common.HostSys("/class/hwmon/hwmon*/temp*_*"))
-	if err != nil {
+	var err error
+
+	var files []string
+
+	temperatures := make([]TemperatureStat, 0)
+
+	// Only the temp*_input file provides current temperature
+	// value in millidegree Celsius as reported by the temperature to the device:
+	// https://www.kernel.org/doc/Documentation/hwmon/sysfs-interface
+	if files, err = filepath.Glob(common.HostSys("/class/hwmon/hwmon*/temp*_input")); err != nil {
 		return temperatures, err
 	}
+
 	if len(files) == 0 {
 		// CentOS has an intermediate /device directory:
 		// https://github.com/giampaolo/psutil/issues/971
-		files, err = filepath.Glob(common.HostSys("/class/hwmon/hwmon*/device/temp*_*"))
-		if err != nil {
+		if files, err = filepath.Glob(common.HostSys("/class/hwmon/hwmon*/device/temp*_input")); err != nil {
 			return temperatures, err
 		}
 	}
+
 	var warns Warnings
 
 	if len(files) == 0 { // handle distributions without hwmon, like raspbian #391, parse legacy thermal_zone files
@@ -413,6 +425,8 @@ func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, err
 		return temperatures, warns.Reference()
 	}
 
+	temperatures = make([]TemperatureStat, 0, len(files))
+
 	// example directory
 	// device/           temp1_crit_alarm  temp2_crit_alarm  temp3_crit_alarm  temp4_crit_alarm  temp5_crit_alarm  temp6_crit_alarm  temp7_crit_alarm
 	// name              temp1_input       temp2_input       temp3_input       temp4_input       temp5_input       temp6_input       temp7_input
@@ -420,44 +434,81 @@ func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, err
 	// subsystem/        temp1_max         temp2_max         temp3_max         temp4_max         temp5_max         temp6_max         temp7_max
 	// temp1_crit        temp2_crit        temp3_crit        temp4_crit        temp5_crit        temp6_crit        temp7_crit        uevent
 	for _, file := range files {
-		filename := strings.Split(filepath.Base(file), "_")
-		if filename[1] == "label" {
-			// Do not try to read the temperature of the label file
-			continue
-		}
+		var raw []byte
+
+		var temperature float64
+
+		// Get the base directory location
+		directory := filepath.Dir(file)
+
+		// Get the base filename prefix like temp1
+		basename := strings.Split(filepath.Base(file), "_")[0]
+
+		// Get the base path like <dir>/temp1
+		basepath := filepath.Join(directory, basename)
 
 		// Get the label of the temperature you are reading
-		var label string
-		c, _ := ioutil.ReadFile(filepath.Join(filepath.Dir(file), filename[0]+"_label"))
-		if c != nil {
-			//format the label from "Core 0" to "core0_"
-			label = fmt.Sprintf("%s_", strings.Join(strings.Split(strings.TrimSpace(strings.ToLower(string(c))), " "), ""))
+		label := ""
+
+		if raw, _ = ioutil.ReadFile(basepath + "_label"); len(raw) != 0 {
+			// Format the label from "Core 0" to "core_0"
+			label = strings.Join(strings.Split(strings.TrimSpace(strings.ToLower(string(raw))), " "), "_")
 		}
 
 		// Get the name of the temperature you are reading
-		name, err := ioutil.ReadFile(filepath.Join(filepath.Dir(file), "name"))
-		if err != nil {
+		if raw, err = ioutil.ReadFile(filepath.Join(directory, "name")); err != nil {
 			warns.Add(err)
 			continue
+		}
+
+		name := strings.TrimSpace(string(raw))
+
+		if label != "" {
+			name = name + "_" + label
 		}
 
 		// Get the temperature reading
-		current, err := ioutil.ReadFile(file)
-		if err != nil {
-			warns.Add(err)
-			continue
-		}
-		temperature, err := strconv.ParseFloat(strings.TrimSpace(string(current)), 64)
-		if err != nil {
+		if raw, err = ioutil.ReadFile(file); err != nil {
 			warns.Add(err)
 			continue
 		}
 
-		tempName := strings.TrimSpace(strings.ToLower(string(strings.Join(filename[1:], ""))))
+		if temperature, err = strconv.ParseFloat(strings.TrimSpace(string(raw)), 64); err != nil {
+			warns.Add(err)
+			continue
+		}
+
+		// Add discovered temperature sensor to the list
 		temperatures = append(temperatures, TemperatureStat{
-			SensorKey:   fmt.Sprintf("%s_%s%s", strings.TrimSpace(string(name)), label, tempName),
-			Temperature: temperature / 1000.0,
+			SensorKey:   name,
+			Temperature: temperature / hostTemperatureScale,
+			High:        optionalValueReadFromFile(basepath+"_max") / hostTemperatureScale,
+			Critical:    optionalValueReadFromFile(basepath+"_crit") / hostTemperatureScale,
 		})
 	}
+
 	return temperatures, warns.Reference()
+}
+
+func optionalValueReadFromFile(filename string) float64 {
+	var raw []byte
+
+	var err error
+
+	var value float64
+
+	// Check if file exists
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		return 0
+	}
+
+	if raw, err = ioutil.ReadFile(filename); err != nil {
+		return 0
+	}
+
+	if value, err = strconv.ParseFloat(strings.TrimSpace(string(raw)), 64); err != nil {
+		return 0
+	}
+
+	return value
 }

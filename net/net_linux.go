@@ -16,27 +16,27 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/v3/internal/common"
 )
 
 const ( // Conntrack Column numbers
-	CT_ENTRIES = iota
-	CT_SEARCHED
-	CT_FOUND
-	CT_NEW
-	CT_INVALID
-	CT_IGNORE
-	CT_DELETE
-	CT_DELETE_LIST
-	CT_INSERT
-	CT_INSERT_FAILED
-	CT_DROP
-	CT_EARLY_DROP
-	CT_ICMP_ERROR
-	CT_EXPECT_NEW
-	CT_EXPECT_CREATE
-	CT_EXPECT_DELETE
-	CT_SEARCH_RESTART
+	ctENTRIES = iota
+	ctSEARCHED
+	ctFOUND
+	ctNEW
+	ctINVALID
+	ctIGNORE
+	ctDELETE
+	ctDELETE_LIST
+	ctINSERT
+	ctINSERT_FAILED
+	ctDROP
+	ctEARLY_DROP
+	ctICMP_ERROR
+	CT_EXPEctNEW
+	ctEXPECT_CREATE
+	CT_EXPEctDELETE
+	ctSEARCH_RESTART
 )
 
 // NetIOCounters returnes network I/O statistics for every network
@@ -278,23 +278,23 @@ func conntrackStatsFromFile(filename string, percpu bool) ([]ConntrackStat, erro
 		fields := strings.Fields(line)
 		if len(fields) == 17 && fields[0] != "entries" {
 			statlist.Append(NewConntrackStat(
-				common.HexToUint32(fields[CT_ENTRIES]),
-				common.HexToUint32(fields[CT_SEARCHED]),
-				common.HexToUint32(fields[CT_FOUND]),
-				common.HexToUint32(fields[CT_NEW]),
-				common.HexToUint32(fields[CT_INVALID]),
-				common.HexToUint32(fields[CT_IGNORE]),
-				common.HexToUint32(fields[CT_DELETE]),
-				common.HexToUint32(fields[CT_DELETE_LIST]),
-				common.HexToUint32(fields[CT_INSERT]),
-				common.HexToUint32(fields[CT_INSERT_FAILED]),
-				common.HexToUint32(fields[CT_DROP]),
-				common.HexToUint32(fields[CT_EARLY_DROP]),
-				common.HexToUint32(fields[CT_ICMP_ERROR]),
-				common.HexToUint32(fields[CT_EXPECT_NEW]),
-				common.HexToUint32(fields[CT_EXPECT_CREATE]),
-				common.HexToUint32(fields[CT_EXPECT_DELETE]),
-				common.HexToUint32(fields[CT_SEARCH_RESTART]),
+				common.HexToUint32(fields[ctENTRIES]),
+				common.HexToUint32(fields[ctSEARCHED]),
+				common.HexToUint32(fields[ctFOUND]),
+				common.HexToUint32(fields[ctNEW]),
+				common.HexToUint32(fields[ctINVALID]),
+				common.HexToUint32(fields[ctIGNORE]),
+				common.HexToUint32(fields[ctDELETE]),
+				common.HexToUint32(fields[ctDELETE_LIST]),
+				common.HexToUint32(fields[ctINSERT]),
+				common.HexToUint32(fields[ctINSERT_FAILED]),
+				common.HexToUint32(fields[ctDROP]),
+				common.HexToUint32(fields[ctEARLY_DROP]),
+				common.HexToUint32(fields[ctICMP_ERROR]),
+				common.HexToUint32(fields[CT_EXPEctNEW]),
+				common.HexToUint32(fields[ctEXPECT_CREATE]),
+				common.HexToUint32(fields[CT_EXPEctDELETE]),
+				common.HexToUint32(fields[ctSEARCH_RESTART]),
 			))
 		}
 	}
@@ -306,7 +306,7 @@ func conntrackStatsFromFile(filename string, percpu bool) ([]ConntrackStat, erro
 }
 
 // http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
-var TCPStatuses = map[string]string{
+var tcpStatuses = map[string]string{
 	"01": "ESTABLISHED",
 	"02": "SYN_SENT",
 	"03": "SYN_RECV",
@@ -545,12 +545,12 @@ func getProcInodes(root string, pid int32, max int) (map[string][]inodeMap, erro
 		return ret, err
 	}
 	defer f.Close()
-	files, err := f.Readdir(max)
+	dirEntries, err := f.ReadDir(max)
 	if err != nil {
 		return ret, err
 	}
-	for _, fd := range files {
-		inodePath := fmt.Sprintf("%s/%d/fd/%s", root, pid, fd.Name())
+	for _, dirEntry := range dirEntries {
+		inodePath := fmt.Sprintf("%s/%d/fd/%s", root, pid, dirEntry.Name())
 
 		inode, err := os.Readlink(inodePath)
 		if err != nil {
@@ -566,7 +566,7 @@ func getProcInodes(root string, pid int32, max int) (map[string][]inodeMap, erro
 		if !ok {
 			ret[inode] = make([]inodeMap, 0)
 		}
-		fd, err := strconv.Atoi(fd.Name())
+		fd, err := strconv.Atoi(dirEntry.Name())
 		if err != nil {
 			continue
 		}
@@ -786,7 +786,7 @@ func processInet(file string, kind netConnectionKindType, inodes map[string][]in
 			continue
 		}
 		if kind.sockType == syscall.SOCK_STREAM {
-			status = TCPStatuses[status]
+			status = tcpStatuses[status]
 		} else {
 			status = "NONE"
 		}

@@ -13,12 +13,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/v3/internal/common"
 	"golang.org/x/sys/unix"
 )
 
 const (
-	SectorSize = 512
+	sectorSize = 512
 )
 const (
 	// man statfs
@@ -252,7 +252,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 				Device:     fields[0],
 				Mountpoint: unescapeFstab(fields[1]),
 				Fstype:     fields[2],
-				Opts:       fields[3],
+				Opts:       strings.Fields(fields[3]),
 			}
 
 			if !all {
@@ -274,14 +274,10 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 			fields := strings.Fields(parts[0])
 			blockDeviceID := fields[2]
 			mountPoint := fields[4]
-			mountOpts := fields[5]
+			mountOpts := strings.Split(fields[5], ",")
 
 			if rootDir := fields[3]; rootDir != "" && rootDir != "/" {
-				if len(mountOpts) == 0 {
-					mountOpts = "bind"
-				} else {
-					mountOpts = "bind," + mountOpts
-				}
+				mountOpts = append(mountOpts, "bind")
 			}
 
 			fields = strings.Fields(parts[1])
@@ -418,8 +414,8 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 			return ret, err
 		}
 		d := IOCountersStat{
-			ReadBytes:        rbytes * SectorSize,
-			WriteBytes:       wbytes * SectorSize,
+			ReadBytes:        rbytes * sectorSize,
+			WriteBytes:       wbytes * sectorSize,
 			ReadCount:        reads,
 			WriteCount:       writes,
 			MergedReadCount:  mergedReads,
@@ -435,25 +431,19 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 		}
 		d.Name = name
 
-		d.SerialNumber = GetDiskSerialNumber(name)
-		d.Label = GetLabel(name)
+		d.SerialNumber, _ = SerialNumberWithContext(ctx, name)
+		d.Label, _ = LabelWithContext(ctx, name)
 
 		ret[name] = d
 	}
 	return ret, nil
 }
 
-// GetDiskSerialNumber returns Serial Number of given device or empty string
-// on error. Name of device is expected, eg. /dev/sda
-func GetDiskSerialNumber(name string) string {
-	return GetDiskSerialNumberWithContext(context.Background(), name)
-}
-
-func GetDiskSerialNumberWithContext(ctx context.Context, name string) string {
+func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
 	var stat unix.Stat_t
 	err := unix.Stat(name, &stat)
 	if err != nil {
-		return ""
+		return "", err
 	}
 	major := unix.Major(uint64(stat.Rdev))
 	minor := unix.Minor(uint64(stat.Rdev))
@@ -465,7 +455,7 @@ func GetDiskSerialNumberWithContext(ctx context.Context, name string) string {
 		for scanner.Scan() {
 			values := strings.Split(scanner.Text(), "=")
 			if len(values) == 2 && values[0] == "E:ID_SERIAL" {
-				return values[1]
+				return values[1], nil
 			}
 		}
 	}
@@ -476,28 +466,24 @@ func GetDiskSerialNumberWithContext(ctx context.Context, name string) string {
 	model, _ := ioutil.ReadFile(filepath.Join(devicePath, "model"))
 	serial, _ := ioutil.ReadFile(filepath.Join(devicePath, "serial"))
 	if len(model) > 0 && len(serial) > 0 {
-		return fmt.Sprintf("%s_%s", string(model), string(serial))
+		return fmt.Sprintf("%s_%s", string(model), string(serial)), nil
 	}
-	return ""
+	return "", nil
 }
 
-// GetLabel returns label of given device or empty string on error.
-// Name of device is expected, eg. /dev/sda
-// Supports label based on devicemapper name
-// See https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-block-dm
-func GetLabel(name string) string {
+func LabelWithContext(ctx context.Context, name string) (string, error) {
 	// Try label based on devicemapper name
 	dmname_filename := common.HostSys(fmt.Sprintf("block/%s/dm/name", name))
 
 	if !common.PathExists(dmname_filename) {
-		return ""
+		return "", nil
 	}
 
 	dmname, err := ioutil.ReadFile(dmname_filename)
 	if err != nil {
-		return ""
+		return "", err
 	} else {
-		return strings.TrimSpace(string(dmname))
+		return strings.TrimSpace(string(dmname)), nil
 	}
 }
 

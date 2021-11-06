@@ -16,11 +16,13 @@ import (
 	"unicode/utf16"
 	"unsafe"
 
-	"github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/internal/common"
-	"github.com/shirou/gopsutil/net"
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v3/net"
 	"golang.org/x/sys/windows"
 )
+
+type Signal = syscall.Signal
 
 var (
 	modntdll             = windows.NewLazySystemDLL("ntdll.dll")
@@ -45,21 +47,6 @@ var (
 
 const processQueryInformation = windows.PROCESS_QUERY_LIMITED_INFORMATION
 
-type SystemProcessInformation struct {
-	NextEntryOffset   uint64
-	NumberOfThreads   uint64
-	Reserved1         [48]byte
-	Reserved2         [3]byte
-	UniqueProcessID   uintptr
-	Reserved3         uintptr
-	HandleCount       uint64
-	Reserved4         [4]byte
-	Reserved5         [11]byte
-	PeakPagefileUsage uint64
-	PrivatePageCount  uint64
-	Reserved6         [6]uint64
-}
-
 type systemProcessorInformation struct {
 	ProcessorArchitecture uint16
 	ProcessorLevel        uint16
@@ -71,7 +58,7 @@ type systemProcessorInformation struct {
 type systemInfo struct {
 	wProcessorArchitecture      uint16
 	wReserved                   uint16
-	dwPageSize                  uint32
+	dwpageSize                  uint32
 	lpMinimumApplicationAddress uintptr
 	lpMaximumApplicationAddress uintptr
 	dwActiveProcessorMask       uintptr
@@ -119,22 +106,22 @@ type processBasicInformation64 struct {
 }
 
 type processEnvironmentBlock32 struct {
-	Reserved1         [2]uint8
-	BeingDebugged     uint8
-	Reserved2         uint8
-	Reserved3         [2]uint32
-	Ldr               uint32
+	Reserved1 [2]uint8
+	BeingDebugged uint8
+	Reserved2 uint8
+	Reserved3 [2]uint32
+	Ldr uint32
 	ProcessParameters uint32
 	// More fields which we don't use so far
 }
 
 type processEnvironmentBlock64 struct {
-	Reserved1         [2]uint8
-	BeingDebugged     uint8
-	Reserved2         uint8
-	_                 [4]uint8 // padding, since we are 64 bit, the next pointer is 64 bit aligned (when compiling for 32 bit, this is not the case without manual padding)
-	Reserved3         [2]uint64
-	Ldr               uint64
+	Reserved1 [2]uint8
+	BeingDebugged uint8
+	Reserved2 uint8
+	_ [4]uint8 // padding, since we are 64 bit, the next pointer is 64 bit aligned (when compiling for 32 bit, this is not the case without manual padding)
+	Reserved3 [2]uint64
+	Ldr uint64
 	ProcessParameters uint64
 	// More fields which we don't use so far
 }
@@ -457,8 +444,8 @@ func (p *Process) ParentWithContext(ctx context.Context) (*Process, error) {
 	return NewProcessWithContext(ctx, ppid)
 }
 
-func (p *Process) StatusWithContext(ctx context.Context) (string, error) {
-	return "", common.ErrNotImplementedError
+func (p *Process) StatusWithContext(ctx context.Context) ([]string, error) {
+	return []string{""}, common.ErrNotImplementedError
 }
 
 func (p *Process) ForegroundWithContext(ctx context.Context) (bool, error) {
@@ -767,10 +754,6 @@ func (p *Process) ConnectionsMaxWithContext(ctx context.Context, max int) ([]net
 	return nil, common.ErrNotImplementedError
 }
 
-func (p *Process) NetIOCountersWithContext(ctx context.Context, pernic bool) ([]net.IOCountersStat, error) {
-	return nil, common.ErrNotImplementedError
-}
-
 func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]MemoryMapsStat, error) {
 	return nil, common.ErrNotImplementedError
 }
@@ -963,6 +946,7 @@ func getProcessCPUTimes(pid int32) (SYSTEM_TIMES, error) {
 	return times, err
 }
 
+
 func getUserProcessParams32(handle windows.Handle) (rtlUserProcessParameters32, error) {
 	pebAddress, err := queryPebAddress(syscall.Handle(handle), true)
 	if err != nil {
@@ -1084,14 +1068,14 @@ func getProcessEnvironmentVariables(pid int32, ctx context.Context) ([]string, e
 		is32BitProcess: procIs32Bits,
 		offset:         processParameterBlockAddress,
 	})
-	envvarScanner.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+	envvarScanner.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error){
 		if atEOF && len(data) == 0 {
 			return 0, nil, nil
 		}
 		// Check for UTF-16 zero character
-		for i := 0; i < len(data)-1; i += 2 {
+		for i := 0; i < len(data) - 1; i+=2 {
 			if data[i] == 0 && data[i+1] == 0 {
-				return i + 2, data[0:i], nil
+				return i+2, data[0:i], nil
 			}
 		}
 		if atEOF {
@@ -1121,9 +1105,9 @@ func getProcessEnvironmentVariables(pid int32, ctx context.Context) ([]string, e
 }
 
 type processReader struct {
-	processHandle  windows.Handle
+	processHandle windows.Handle
 	is32BitProcess bool
-	offset         uint64
+	offset uint64
 }
 
 func (p *processReader) Read(buf []byte) (int, error) {

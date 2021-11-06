@@ -32,7 +32,8 @@ func TestReadLinesOffsetN(t *testing.T) {
 
 func TestIntToString(t *testing.T) {
 	src := []int8{65, 66, 67}
-	if dst := IntToString(src); dst != "ABC" {
+	dst := IntToString(src)
+	if dst != "ABC" {
 		t.Error("could not convert")
 	}
 }
@@ -57,7 +58,8 @@ func TestHexToUint32(t *testing.T) {
 }
 
 func TestMustParseInt32(t *testing.T) {
-	if ret := mustParseInt32("11111"); ret != int32(11111) {
+	ret := mustParseInt32("11111")
+	if ret != int32(11111) {
 		t.Error("could not parse")
 	}
 }
@@ -100,7 +102,8 @@ func TestHostEtc(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("windows doesn't have etc")
 	}
-	if p := HostEtc("mtab"); p != "/etc/mtab" {
+	p := HostEtc("mtab")
+	if p != "/etc/mtab" {
 		t.Errorf("invalid HostEtc, %s", p)
 	}
 }

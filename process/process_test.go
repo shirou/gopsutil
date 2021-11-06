@@ -16,7 +16,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/v3/internal/common"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -195,8 +195,11 @@ func Test_Process_Status(t *testing.T) {
 	if err != nil {
 		t.Errorf("getting status error %v", err)
 	}
-	if v != "R" && v != "S" {
-		t.Errorf("could not get state %v", v)
+	if len(v) == 0 {
+		t.Errorf("could not get state")
+	}
+	if v[0] != Running && v[0] != Sleep {
+		t.Errorf("got wrong state, %v", v)
 	}
 }
 
@@ -312,7 +315,6 @@ func Test_Process_Name(t *testing.T) {
 		t.Errorf("invalid Exe %s", n)
 	}
 }
-
 func Test_Process_Long_Name_With_Spaces(t *testing.T) {
 	tmpdir, err := ioutil.TempDir("", "")
 	if err != nil {
@@ -723,22 +725,6 @@ func Test_IsRunning(t *testing.T) {
 	}
 }
 
-func Test_Process_Cwd(t *testing.T) {
-	myPid := os.Getpid()
-	currentWorkingDirectory, _ := os.Getwd()
-
-	process, _ := NewProcess(int32(myPid))
-	pidCwd, err := process.Cwd()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Fatalf("getting cwd error %v", err)
-	}
-	pidCwd = strings.TrimSuffix(pidCwd, string(os.PathSeparator))
-	assert.Equal(t, currentWorkingDirectory, pidCwd)
-
-	t.Log(pidCwd)
-}
-
 func Test_Process_Environ(t *testing.T) {
 	tmpdir, err := ioutil.TempDir("", "")
 	if err != nil {
@@ -791,6 +777,22 @@ func Test_Process_Environ(t *testing.T) {
 	if !envvarFound {
 		t.Error("environment variable not found")
 	}
+}
+
+func Test_Process_Cwd(t *testing.T) {
+	myPid := os.Getpid()
+	currentWorkingDirectory, _ := os.Getwd()
+
+	process, _ := NewProcess(int32(myPid))
+	pidCwd, err := process.Cwd()
+	skipIfNotImplementedErr(t, err)
+	if err != nil {
+		t.Fatalf("getting cwd error %v", err)
+	}
+	pidCwd = strings.TrimSuffix(pidCwd, string(os.PathSeparator))
+	assert.Equal(t, currentWorkingDirectory, pidCwd)
+
+	t.Log(pidCwd)
 }
 
 func Test_AllProcesses_cmdLine(t *testing.T) {

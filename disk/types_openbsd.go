@@ -15,10 +15,10 @@ package disk
 import "C"
 
 const (
-	DEVSTAT_NO_DATA = 0x00
-	DEVSTAT_READ    = 0x01
-	DEVSTAT_WRITE   = 0x02
-	DEVSTAT_FREE    = 0x03
+	devstat_NO_DATA = 0x00
+	devstat_READ    = 0x01
+	devstat_WRITE   = 0x02
+	devstat_FREE    = 0x03
 )
 
 const (
@@ -29,4 +29,4 @@ type Diskstats C.struct_diskstats
 type Timeval C.struct_timeval
 
 type Diskstat C.struct_diskstat
-type Bintime C.struct_bintime
+type bintime C.struct_bintime

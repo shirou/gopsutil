@@ -5,8 +5,7 @@ package docker
 import (
 	"context"
 
-	cpu "github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/v3/internal/common"
 )
 
 // GetDockerStat returns a list of Docker basic stats.
@@ -33,19 +32,19 @@ func GetDockerIDListWithContext(ctx context.Context) ([]string, error) {
 // containerid is same as docker id if you use docker.
 // If you use container via systemd.slice, you could use
 // containerid = docker-<container id>.scope and base=/sys/fs/cgroup/cpuacct/system.slice/
-func CgroupCPU(containerid string, base string) (*cpu.TimesStat, error) {
+func CgroupCPU(containerid string, base string) (*CgroupCPUStat, error) {
 	return CgroupCPUWithContext(context.Background(), containerid, base)
 }
 
-func CgroupCPUWithContext(ctx context.Context, containerid string, base string) (*cpu.TimesStat, error) {
+func CgroupCPUWithContext(ctx context.Context, containerid string, base string) (*CgroupCPUStat, error) {
 	return nil, ErrCgroupNotAvailable
 }
 
-func CgroupCPUDocker(containerid string) (*cpu.TimesStat, error) {
+func CgroupCPUDocker(containerid string) (*CgroupCPUStat, error) {
 	return CgroupCPUDockerWithContext(context.Background(), containerid)
 }
 
-func CgroupCPUDockerWithContext(ctx context.Context, containerid string) (*cpu.TimesStat, error) {
+func CgroupCPUDockerWithContext(ctx context.Context, containerid string) (*CgroupCPUStat, error) {
 	return CgroupCPU(containerid, common.HostSys("fs/cgroup/cpuacct/docker"))
 }
 

@@ -11,14 +11,14 @@ const (
 	sizeofLongLong   = 0x8
 	sizeofLongDouble = 0x8
 
-	DEVSTAT_NO_DATA = 0x00
-	DEVSTAT_READ    = 0x01
-	DEVSTAT_WRITE   = 0x02
-	DEVSTAT_FREE    = 0x03
+	devstat_NO_DATA = 0x00
+	devstat_READ    = 0x01
+	devstat_WRITE   = 0x02
+	devstat_FREE    = 0x03
 )
 
 const (
-	sizeOfDevstat = 0x120
+	sizeOfdevstat = 0x120
 )
 
 type (
@@ -29,21 +29,21 @@ type (
 	_C_long_double int64
 )
 
-type Devstat struct {
+type devstat struct {
 	Sequence0     uint32
 	Allocated     int32
 	Start_count   uint32
 	End_count     uint32
-	Busy_from     Bintime
+	Busy_from     bintime
 	Dev_links     _Ctype_struct___0
 	Device_number uint32
 	Device_name   [16]int8
 	Unit_number   int32
 	Bytes         [4]uint64
 	Operations    [4]uint64
-	Duration      [4]Bintime
-	Busy_time     Bintime
-	Creation_time Bintime
+	Duration      [4]bintime
+	Busy_time     bintime
+	Creation_time bintime
 	Block_size    uint32
 	Pad_cgo_0     [4]byte
 	Tag_types     [3]uint64
@@ -55,7 +55,7 @@ type Devstat struct {
 	Sequence1     uint32
 	Pad_cgo_2     [4]byte
 }
-type Bintime struct {
+type bintime struct {
 	Sec  int64
 	Frac uint64
 }

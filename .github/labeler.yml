@@ -1,32 +1,21 @@
-v3:
-  - v3/**/*.go
 package:cpu:
   - cpu/*
-  - v3/cpu/*
 package:disk:
   - disk/*
-  - v3/disk/*
 package:docker:
   - docker/*
-  - v3/docker/*
 package:host:
   - host/*
-  - v3/host/*
 package:load:
   - load/*
-  - v3/load/*
 package:mem:
   - mem/*
-  - v3/mem/*
 package:net:
   - net/*
-  - v3/net/*
 package:process:
   - process/*
-  - v3/process/*
 package:winservices:
   - winservices/*
-  - v3/winservices/*
 os:linux:
   - ./**/*_linux.go
   - ./**/*_linux_mips64.go

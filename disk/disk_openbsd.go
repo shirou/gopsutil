@@ -7,7 +7,7 @@ import (
 	"context"
 	"encoding/binary"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/v3/internal/common"
 	"golang.org/x/sys/unix"
 )
 
@@ -26,33 +26,33 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 	}
 
 	for _, stat := range fs {
-		opts := "rw"
+		opts := []string{"rw"}
 		if stat.F_flags&unix.MNT_RDONLY != 0 {
-			opts = "ro"
+			opts = []string{"rw"}
 		}
 		if stat.F_flags&unix.MNT_SYNCHRONOUS != 0 {
-			opts += ",sync"
+			opts = append(opts, "sync")
 		}
 		if stat.F_flags&unix.MNT_NOEXEC != 0 {
-			opts += ",noexec"
+			opts = append(opts, "noexec")
 		}
 		if stat.F_flags&unix.MNT_NOSUID != 0 {
-			opts += ",nosuid"
+			opts = append(opts, "nosuid")
 		}
 		if stat.F_flags&unix.MNT_NODEV != 0 {
-			opts += ",nodev"
+			opts = append(opts, "nodev")
 		}
 		if stat.F_flags&unix.MNT_ASYNC != 0 {
-			opts += ",async"
+			opts = append(opts, "async")
 		}
 		if stat.F_flags&unix.MNT_SOFTDEP != 0 {
-			opts += ",softdep"
+			opts = append(opts, "softdep")
 		}
 		if stat.F_flags&unix.MNT_NOATIME != 0 {
-			opts += ",noatime"
+			opts = append(opts, "noatime")
 		}
 		if stat.F_flags&unix.MNT_WXALLOWED != 0 {
-			opts += ",wxallowed"
+			opts = append(opts, "wxallowed")
 		}
 
 		d := PartitionStat{
@@ -147,4 +147,12 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 
 func getFsType(stat unix.Statfs_t) string {
 	return common.IntToString(stat.F_fstypename[:])
+}
+
+func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
+	return "", common.ErrNotImplementedError
+}
+
+func LabelWithContext(ctx context.Context, name string) (string, error) {
+	return "", common.ErrNotImplementedError
 }

@@ -2,11 +2,10 @@ package common_test
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/v3/internal/common"
 )
 
 func TestSleep(test *testing.T) {
@@ -14,7 +13,7 @@ func TestSleep(test *testing.T) {
 	var t = func(name string, ctx context.Context, expected error) {
 		test.Run(name, func(test *testing.T) {
 			var err = common.Sleep(ctx, dt)
-			if !errors.Is(err, expected) {
+			if err != expected {
 				test.Errorf("expected %v, got %v", expected, err)
 			}
 		})
