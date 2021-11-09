@@ -1,4 +1,3 @@
-//go:build windows
 // +build windows
 
 package cpu
@@ -8,8 +7,8 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
 	"github.com/yusufpapurcu/wmi"
+	"github.com/shirou/gopsutil/v3/internal/common"
 	"golang.org/x/sys/windows"
 )
 

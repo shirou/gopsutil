@@ -25,8 +25,8 @@
 #define THUNDERBOLT_1          "TI1P"
 #define WIRELESS_MODULE        "TW0P"
 
-kern_return_t open_smc(void);
-kern_return_t close_smc(void);
-double get_temperature(char *);
+kern_return_t gopsutil_v3_open_smc(void);
+kern_return_t gopsutil_v3_close_smc(void);
+double gopsutil_v3_get_temperature(char *);
 
 #endif // __SMC_H__
