@@ -297,7 +297,7 @@ func PathExistsWithContents(filename string) bool {
 	defer f.Close()
 
 	r := bufio.NewReader(f)
-	_, err = r.ReadString('\n')
+	_, err = r.ReadSlice('\n')
 	if err != nil {
 		return false
 	}
