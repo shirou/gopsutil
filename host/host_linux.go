@@ -261,6 +261,12 @@ func PlatformInformation() (platform string, family string, version string, err 
 		if err == nil {
 			version = getRedhatishVersion(contents)
 		}
+	} else if common.PathExists(common.HostEtc("slackware-version")) {
+		platform = "slackware"
+		contents, err := common.ReadLines(common.HostEtc("slackware-version"))
+		if err == nil {
+			version = getSlackwareVersion(contents)
+		}
 	} else if common.PathExists(common.HostEtc("debian_version")) {
 		if lsb.ID == "Ubuntu" {
 			platform = "ubuntu"
@@ -341,9 +347,9 @@ func PlatformInformation() (platform string, family string, version string, err 
 		family = "debian"
 	case "fedora":
 		family = "fedora"
-	case "oracle", "centos", "redhat", "scientific", "enterpriseenterprise", "amazon", "xenserver", "cloudlinux", "ibm_powerkvm":
+	case "oracle", "centos", "redhat", "scientific", "enterpriseenterprise", "amazon", "xenserver", "cloudlinux", "ibm_powerkvm", "rocky":
 		family = "rhel"
-	case "suse", "opensuse":
+	case "suse", "opensuse", "opensuse-leap", "opensuse-tumbleweed", "opensuse-tumbleweed-kubic", "sles", "sled", "caasp":
 		family = "suse"
 	case "gentoo":
 		family = "gentoo"
@@ -357,6 +363,8 @@ func PlatformInformation() (platform string, family string, version string, err 
 		family = "alpine"
 	case "coreos":
 		family = "coreos"
+	case "solus":
+		family = "solus"
 	}
 
 	return platform, family, version, nil
@@ -377,6 +385,12 @@ func KernelVersion() (version string, err error) {
 	}
 
 	return version, nil
+}
+
+func getSlackwareVersion(contents []string) string {
+	c := strings.ToLower(strings.Join(contents, ""))
+	c = strings.Replace(c, "slackware ", "", 1)
+	return c
 }
 
 func getRedhatishVersion(contents []string) string {
