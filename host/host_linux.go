@@ -342,6 +342,8 @@ func PlatformInformation() (platform string, family string, version string, err 
 		version = lsb.Release
 	}
 
+	platform = strings.Trim(platform, "\"")
+
 	switch platform {
 	case "debian", "ubuntu", "linuxmint", "raspbian":
 		family = "debian"
