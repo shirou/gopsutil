@@ -3,8 +3,12 @@
 
 package host
 
-import "github.com/shirou/gopsutil/internal/common"
+import (
+	"context"
 
-func SensorsTemperatures() ([]TemperatureStat, error) {
+	"github.com/shirou/gopsutil/internal/common"
+)
+
+func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
 	return []TemperatureStat{}, common.ErrNotImplementedError
 }

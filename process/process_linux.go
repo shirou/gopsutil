@@ -5,8 +5,8 @@ package process
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"math"
@@ -16,21 +16,25 @@ import (
 	"strings"
 
 	"github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/internal/common"
 	"github.com/shirou/gopsutil/net"
+	"github.com/tklauser/go-sysconf"
 	"golang.org/x/sys/unix"
 )
 
-var (
-	ErrorNoChildren = errors.New("process does not have children")
-	PageSize        = uint64(os.Getpagesize())
-)
+var PageSize = uint64(os.Getpagesize())
 
-const (
-	PrioProcess = 0   // linux/resource.h
-	ClockTicks  = 100 // C.sysconf(C._SC_CLK_TCK)
-)
+const PrioProcess = 0 // linux/resource.h
+
+var ClockTicks = 100 // default value
+
+func init() {
+	clkTck, err := sysconf.Sysconf(sysconf.SC_CLK_TCK)
+	// ignore errors
+	if err == nil {
+		ClockTicks = int(clkTck)
+	}
+}
 
 // MemoryInfoExStat is different between OSes
 type MemoryInfoExStat struct {
@@ -68,224 +72,293 @@ func (m MemoryMapsStat) String() string {
 	return string(s)
 }
 
-// NewProcess creates a new Process instance, it only stores the pid and
-// checks that the process exists. Other method on Process can be used
-// to get more information about the process. An error will be returned
-// if the process does not exist.
-func NewProcess(pid int32) (*Process, error) {
-	p := &Process{
-		Pid: int32(pid),
-	}
-	file, err := os.Open(common.HostProc(strconv.Itoa(int(p.Pid))))
-	defer file.Close()
-	return p, err
-}
-
-// Ppid returns Parent Process ID of the process.
-func (p *Process) Ppid() (int32, error) {
-	_, ppid, _, _, _, err := p.fillFromStat()
+func (p *Process) PpidWithContext(ctx context.Context) (int32, error) {
+	_, ppid, _, _, _, _, _, err := p.fillFromStatWithContext(ctx)
 	if err != nil {
 		return -1, err
 	}
 	return ppid, nil
 }
 
-// Name returns name of the process.
-func (p *Process) Name() (string, error) {
+func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 	if p.name == "" {
-		if err := p.fillFromStatus(); err != nil {
+		if err := p.fillNameWithContext(ctx); err != nil {
 			return "", err
 		}
 	}
 	return p.name, nil
 }
 
-// Exe returns executable path of the process.
-func (p *Process) Exe() (string, error) {
-	return p.fillFromExe()
+func (p *Process) TgidWithContext(ctx context.Context) (int32, error) {
+	if p.tgid == 0 {
+		if err := p.fillFromStatusWithContext(ctx); err != nil {
+			return 0, err
+		}
+	}
+	return p.tgid, nil
 }
 
-// Cmdline returns the command line arguments of the process as a string with
-// each argument separated by 0x20 ascii character.
-func (p *Process) Cmdline() (string, error) {
-	return p.fillFromCmdline()
+func (p *Process) ExeWithContext(ctx context.Context) (string, error) {
+	return p.fillFromExeWithContext(ctx)
 }
 
-// CmdlineSlice returns the command line arguments of the process as a slice with each
-// element being an argument.
-func (p *Process) CmdlineSlice() ([]string, error) {
-	return p.fillSliceFromCmdline()
+func (p *Process) CmdlineWithContext(ctx context.Context) (string, error) {
+	return p.fillFromCmdlineWithContext(ctx)
 }
 
-// CreateTime returns created time of the process in milliseconds since the epoch, in UTC.
-func (p *Process) CreateTime() (int64, error) {
-	_, _, _, createTime, _, err := p.fillFromStat()
+func (p *Process) CmdlineSliceWithContext(ctx context.Context) ([]string, error) {
+	return p.fillSliceFromCmdlineWithContext(ctx)
+}
+
+func (p *Process) createTimeWithContext(ctx context.Context) (int64, error) {
+	_, _, _, createTime, _, _, _, err := p.fillFromStatWithContext(ctx)
 	if err != nil {
 		return 0, err
 	}
 	return createTime, nil
 }
 
-// Cwd returns current working directory of the process.
-func (p *Process) Cwd() (string, error) {
-	return p.fillFromCwd()
+func (p *Process) CwdWithContext(ctx context.Context) (string, error) {
+	return p.fillFromCwdWithContext(ctx)
 }
 
-// Parent returns parent Process of the process.
-func (p *Process) Parent() (*Process, error) {
-	err := p.fillFromStatus()
+func (p *Process) ParentWithContext(ctx context.Context) (*Process, error) {
+	err := p.fillFromStatusWithContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if p.parent == 0 {
 		return nil, fmt.Errorf("wrong number of parents")
 	}
-	return NewProcess(p.parent)
+	return NewProcessWithContext(ctx, p.parent)
 }
 
-// Status returns the process status.
-// Return value could be one of these.
-// R: Running S: Sleep T: Stop I: Idle
-// Z: Zombie W: Wait L: Lock
-// The charactor is same within all supported platforms.
-func (p *Process) Status() (string, error) {
-	err := p.fillFromStatus()
+func (p *Process) StatusWithContext(ctx context.Context) (string, error) {
+	err := p.fillFromStatusWithContext(ctx)
 	if err != nil {
 		return "", err
 	}
 	return p.status, nil
 }
 
-// Uids returns user ids of the process as a slice of the int
-func (p *Process) Uids() ([]int32, error) {
-	err := p.fillFromStatus()
+func (p *Process) ForegroundWithContext(ctx context.Context) (bool, error) {
+	// see https://github.com/shirou/gopsutil/issues/596#issuecomment-432707831 for implementation details
+	pid := p.Pid
+	statPath := common.HostProc(strconv.Itoa(int(pid)), "stat")
+	contents, err := ioutil.ReadFile(statPath)
+	if err != nil {
+		return false, err
+	}
+	fields := strings.Fields(string(contents))
+	if len(fields) < 8 {
+		return false, fmt.Errorf("insufficient data in %s", statPath)
+	}
+	pgid := fields[4]
+	tpgid := fields[7]
+	return pgid == tpgid, nil
+}
+
+func (p *Process) UidsWithContext(ctx context.Context) ([]int32, error) {
+	err := p.fillFromStatusWithContext(ctx)
 	if err != nil {
 		return []int32{}, err
 	}
 	return p.uids, nil
 }
 
-// Gids returns group ids of the process as a slice of the int
-func (p *Process) Gids() ([]int32, error) {
-	err := p.fillFromStatus()
+func (p *Process) GidsWithContext(ctx context.Context) ([]int32, error) {
+	err := p.fillFromStatusWithContext(ctx)
 	if err != nil {
 		return []int32{}, err
 	}
 	return p.gids, nil
 }
 
-// Terminal returns a terminal which is associated with the process.
-func (p *Process) Terminal() (string, error) {
-	terminal, _, _, _, _, err := p.fillFromStat()
+func (p *Process) GroupsWithContext(ctx context.Context) ([]int32, error) {
+	err := p.fillFromStatusWithContext(ctx)
+	if err != nil {
+		return []int32{}, err
+	}
+	return p.groups, nil
+}
+
+func (p *Process) TerminalWithContext(ctx context.Context) (string, error) {
+	t, _, _, _, _, _, _, err := p.fillFromStatWithContext(ctx)
 	if err != nil {
 		return "", err
 	}
+	termmap, err := getTerminalMap()
+	if err != nil {
+		return "", err
+	}
+	terminal := termmap[t]
 	return terminal, nil
 }
 
-// Nice returns a nice value (priority).
-// Notice: gopsutil can not set nice value.
-func (p *Process) Nice() (int32, error) {
-	_, _, _, _, nice, err := p.fillFromStat()
+func (p *Process) NiceWithContext(ctx context.Context) (int32, error) {
+	_, _, _, _, _, nice, _, err := p.fillFromStatWithContext(ctx)
 	if err != nil {
 		return 0, err
 	}
 	return nice, nil
 }
 
-// IOnice returns process I/O nice value (priority).
-func (p *Process) IOnice() (int32, error) {
+func (p *Process) IOniceWithContext(ctx context.Context) (int32, error) {
 	return 0, common.ErrNotImplementedError
 }
 
-// Rlimit returns Resource Limits.
-func (p *Process) Rlimit() ([]RlimitStat, error) {
-	return p.fillFromLimits()
+func (p *Process) RlimitWithContext(ctx context.Context) ([]RlimitStat, error) {
+	return p.RlimitUsageWithContext(ctx, false)
 }
 
-// IOCounters returns IO Counters.
-func (p *Process) IOCounters() (*IOCountersStat, error) {
-	return p.fillFromIO()
+func (p *Process) RlimitUsageWithContext(ctx context.Context, gatherUsed bool) ([]RlimitStat, error) {
+	rlimits, err := p.fillFromLimitsWithContext(ctx)
+	if !gatherUsed || err != nil {
+		return rlimits, err
+	}
+
+	_, _, _, _, rtprio, nice, _, err := p.fillFromStatWithContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := p.fillFromStatusWithContext(ctx); err != nil {
+		return nil, err
+	}
+
+	for i := range rlimits {
+		rs := &rlimits[i]
+		switch rs.Resource {
+		case RLIMIT_CPU:
+			times, err := p.TimesWithContext(ctx)
+			if err != nil {
+				return nil, err
+			}
+			rs.Used = uint64(times.User + times.System)
+		case RLIMIT_DATA:
+			rs.Used = uint64(p.memInfo.Data)
+		case RLIMIT_STACK:
+			rs.Used = uint64(p.memInfo.Stack)
+		case RLIMIT_RSS:
+			rs.Used = uint64(p.memInfo.RSS)
+		case RLIMIT_NOFILE:
+			n, err := p.NumFDsWithContext(ctx)
+			if err != nil {
+				return nil, err
+			}
+			rs.Used = uint64(n)
+		case RLIMIT_MEMLOCK:
+			rs.Used = uint64(p.memInfo.Locked)
+		case RLIMIT_AS:
+			rs.Used = uint64(p.memInfo.VMS)
+		case RLIMIT_LOCKS:
+			//TODO we can get the used value from /proc/$pid/locks. But linux doesn't enforce it, so not a high priority.
+		case RLIMIT_SIGPENDING:
+			rs.Used = p.sigInfo.PendingProcess
+		case RLIMIT_NICE:
+			// The rlimit for nice is a little unusual, in that 0 means the niceness cannot be decreased beyond the current value, but it can be increased.
+			// So effectively: if rs.Soft == 0 { rs.Soft = rs.Used }
+			rs.Used = uint64(nice)
+		case RLIMIT_RTPRIO:
+			rs.Used = uint64(rtprio)
+		}
+	}
+
+	return rlimits, err
 }
 
-// NumCtxSwitches returns the number of the context switches of the process.
-func (p *Process) NumCtxSwitches() (*NumCtxSwitchesStat, error) {
-	err := p.fillFromStatus()
+func (p *Process) IOCountersWithContext(ctx context.Context) (*IOCountersStat, error) {
+	return p.fillFromIOWithContext(ctx)
+}
+
+func (p *Process) NumCtxSwitchesWithContext(ctx context.Context) (*NumCtxSwitchesStat, error) {
+	err := p.fillFromStatusWithContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return p.numCtxSwitches, nil
 }
 
-// NumFDs returns the number of File Descriptors used by the process.
-func (p *Process) NumFDs() (int32, error) {
-	numFds, _, err := p.fillFromfd()
-	return numFds, err
+func (p *Process) NumFDsWithContext(ctx context.Context) (int32, error) {
+	_, fnames, err := p.fillFromfdListWithContext(ctx)
+	return int32(len(fnames)), err
 }
 
-// NumThreads returns the number of threads used by the process.
-func (p *Process) NumThreads() (int32, error) {
-	err := p.fillFromStatus()
+func (p *Process) NumThreadsWithContext(ctx context.Context) (int32, error) {
+	err := p.fillFromStatusWithContext(ctx)
 	if err != nil {
 		return 0, err
 	}
 	return p.numThreads, nil
 }
 
-// Threads returns a map of threads
-//
-// Notice: Not implemented yet. always returns empty map.
-func (p *Process) Threads() (map[string]string, error) {
-	ret := make(map[string]string, 0)
+func (p *Process) ThreadsWithContext(ctx context.Context) (map[int32]*cpu.TimesStat, error) {
+	ret := make(map[int32]*cpu.TimesStat)
+	taskPath := common.HostProc(strconv.Itoa(int(p.Pid)), "task")
+
+	tids, err := readPidsFromDir(taskPath)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, tid := range tids {
+		_, _, cpuTimes, _, _, _, _, err := p.fillFromTIDStatWithContext(ctx, tid)
+		if err != nil {
+			return nil, err
+		}
+		ret[tid] = cpuTimes
+	}
+
 	return ret, nil
 }
 
-// Times returns CPU times of the process.
-func (p *Process) Times() (*cpu.TimesStat, error) {
-	_, _, cpuTimes, _, _, err := p.fillFromStat()
+func (p *Process) TimesWithContext(ctx context.Context) (*cpu.TimesStat, error) {
+	_, _, cpuTimes, _, _, _, _, err := p.fillFromStatWithContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return cpuTimes, nil
 }
 
-// CPUAffinity returns CPU affinity of the process.
-//
-// Notice: Not implemented yet.
-func (p *Process) CPUAffinity() ([]int32, error) {
+func (p *Process) CPUAffinityWithContext(ctx context.Context) ([]int32, error) {
 	return nil, common.ErrNotImplementedError
 }
 
-// MemoryInfo returns platform in-dependend memory information, such as RSS, VMS and Swap
-func (p *Process) MemoryInfo() (*MemoryInfoStat, error) {
-	meminfo, _, err := p.fillFromStatm()
+func (p *Process) MemoryInfoWithContext(ctx context.Context) (*MemoryInfoStat, error) {
+	meminfo, _, err := p.fillFromStatmWithContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return meminfo, nil
 }
 
-// MemoryInfoEx returns platform dependend memory information.
-func (p *Process) MemoryInfoEx() (*MemoryInfoExStat, error) {
-	_, memInfoEx, err := p.fillFromStatm()
+func (p *Process) MemoryInfoExWithContext(ctx context.Context) (*MemoryInfoExStat, error) {
+	_, memInfoEx, err := p.fillFromStatmWithContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return memInfoEx, nil
 }
 
-// Children returns a slice of Process of the process.
-func (p *Process) Children() ([]*Process, error) {
-	pids, err := common.CallPgrep(invoke, p.Pid)
+func (p *Process) PageFaultsWithContext(ctx context.Context) (*PageFaultsStat, error) {
+	_, _, _, _, _, _, pageFaults, err := p.fillFromStatWithContext(ctx)
 	if err != nil {
-		if pids == nil || len(pids) == 0 {
+		return nil, err
+	}
+	return pageFaults, nil
+
+}
+
+func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
+	pids, err := common.CallPgrepWithContext(ctx, invoke, p.Pid)
+	if err != nil {
+		if len(pids) == 0 {
 			return nil, ErrorNoChildren
 		}
 		return nil, err
 	}
 	ret := make([]*Process, 0, len(pids))
 	for _, pid := range pids {
-		np, err := NewProcess(pid)
+		np, err := NewProcessWithContext(ctx, pid)
 		if err != nil {
 			return nil, err
 		}
@@ -294,10 +367,8 @@ func (p *Process) Children() ([]*Process, error) {
 	return ret, nil
 }
 
-// OpenFiles returns a slice of OpenFilesStat opend by the process.
-// OpenFilesStat includes a file path and file descriptor.
-func (p *Process) OpenFiles() ([]OpenFilesStat, error) {
-	_, ofs, err := p.fillFromfd()
+func (p *Process) OpenFilesWithContext(ctx context.Context) ([]OpenFilesStat, error) {
+	_, ofs, err := p.fillFromfdWithContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -309,28 +380,25 @@ func (p *Process) OpenFiles() ([]OpenFilesStat, error) {
 	return ret, nil
 }
 
-// Connections returns a slice of net.ConnectionStat used by the process.
-// This returns all kind of the connection. This measn TCP, UDP or UNIX.
-func (p *Process) Connections() ([]net.ConnectionStat, error) {
-	return net.ConnectionsPid("all", p.Pid)
+func (p *Process) ConnectionsWithContext(ctx context.Context) ([]net.ConnectionStat, error) {
+	return net.ConnectionsPidWithContext(ctx, "all", p.Pid)
 }
 
-// NetIOCounters returns NetIOCounters of the process.
-func (p *Process) NetIOCounters(pernic bool) ([]net.IOCountersStat, error) {
+func (p *Process) ConnectionsMaxWithContext(ctx context.Context, max int) ([]net.ConnectionStat, error) {
+	return net.ConnectionsPidMaxWithContext(ctx, "all", p.Pid, max)
+}
+
+func (p *Process) NetIOCountersWithContext(ctx context.Context, pernic bool) ([]net.IOCountersStat, error) {
 	filename := common.HostProc(strconv.Itoa(int(p.Pid)), "net/dev")
-	return net.IOCountersByFile(pernic, filename)
+	return net.IOCountersByFileWithContext(ctx, pernic, filename)
 }
 
-// IsRunning returns whether the process is running or not.
-// Not implemented yet.
-func (p *Process) IsRunning() (bool, error) {
-	return true, common.ErrNotImplementedError
-}
-
-// MemoryMaps get memory maps from /proc/(pid)/smaps
-func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
+func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]MemoryMapsStat, error) {
 	pid := p.Pid
 	var ret []MemoryMapsStat
+	if grouped {
+		ret = make([]MemoryMapsStat, 1)
+	}
 	smapsPath := common.HostProc(strconv.Itoa(int(pid)), "smaps")
 	contents, err := ioutil.ReadFile(smapsPath)
 	if err != nil {
@@ -339,9 +407,9 @@ func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 	lines := strings.Split(string(contents), "\n")
 
 	// function of parsing a block
-	getBlock := func(first_line []string, block []string) (MemoryMapsStat, error) {
+	getBlock := func(firstLine []string, block []string) (MemoryMapsStat, error) {
 		m := MemoryMapsStat{}
-		m.Path = first_line[len(first_line)-1]
+		m.Path = firstLine[len(firstLine)-1]
 
 		for _, line := range block {
 			if strings.Contains(line, "VmFlags") {
@@ -351,7 +419,8 @@ func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 			if len(field) < 2 {
 				continue
 			}
-			v := strings.Trim(field[1], " kB") // remove last "kB"
+			v := strings.Trim(field[1], "kB") // remove last "kB"
+			v = strings.TrimSpace(v)
 			t, err := strconv.ParseUint(v, 10, 64)
 			if err != nil {
 				return m, err
@@ -383,26 +452,53 @@ func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 		return m, nil
 	}
 
-	blocks := make([]string, 16)
-	for _, line := range lines {
-		field := strings.Split(line, " ")
-		if strings.HasSuffix(field[0], ":") == false {
+	var firstLine []string
+	blocks := make([]string, 0, 16)
+	for i, line := range lines {
+		fields := strings.Fields(line)
+
+		if (len(fields) > 0 && !strings.HasSuffix(fields[0], ":")) || i == len(lines)-1 {
 			// new block section
-			if len(blocks) > 0 {
-				g, err := getBlock(field, blocks)
+			if len(firstLine) > 0 && len(blocks) > 0 {
+				g, err := getBlock(firstLine, blocks)
 				if err != nil {
 					return &ret, err
 				}
-				ret = append(ret, g)
+				if grouped {
+					ret[0].Size += g.Size
+					ret[0].Rss += g.Rss
+					ret[0].Pss += g.Pss
+					ret[0].SharedClean += g.SharedClean
+					ret[0].SharedDirty += g.SharedDirty
+					ret[0].PrivateClean += g.PrivateClean
+					ret[0].PrivateDirty += g.PrivateDirty
+					ret[0].Referenced += g.Referenced
+					ret[0].Anonymous += g.Anonymous
+					ret[0].Swap += g.Swap
+				} else {
+					ret = append(ret, g)
+				}
 			}
 			// starts new block
-			blocks = make([]string, 16)
+			blocks = make([]string, 0, 16)
+			firstLine = fields
 		} else {
 			blocks = append(blocks, line)
 		}
 	}
 
 	return &ret, nil
+}
+
+func (p *Process) EnvironWithContext(ctx context.Context) ([]string, error) {
+	environPath := common.HostProc(strconv.Itoa(int(p.Pid)), "environ")
+
+	environContent, err := ioutil.ReadFile(environPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return strings.Split(string(environContent), "\000"), nil
 }
 
 /**
@@ -421,8 +517,30 @@ func limitToInt(val string) (int32, error) {
 	}
 }
 
+// Get name from /proc/(pid)/comm or /proc/(pid)/status
+func (p *Process) fillNameWithContext(ctx context.Context) error {
+	err := p.fillFromCommWithContext(ctx)
+	if err == nil && p.name != "" && len(p.name) < 15 {
+		return nil
+	}
+	return p.fillFromStatusWithContext(ctx)
+}
+
+// Get name from /proc/(pid)/comm
+func (p *Process) fillFromCommWithContext(ctx context.Context) error {
+	pid := p.Pid
+	statPath := common.HostProc(strconv.Itoa(int(pid)), "comm")
+	contents, err := ioutil.ReadFile(statPath)
+	if err != nil {
+		return err
+	}
+
+	p.name = strings.TrimSuffix(string(contents), "\n")
+	return nil
+}
+
 // Get num_fds from /proc/(pid)/limits
-func (p *Process) fillFromLimits() ([]RlimitStat, error) {
+func (p *Process) fillFromLimitsWithContext(ctx context.Context) ([]RlimitStat, error) {
 	pid := p.Pid
 	limitsFile := common.HostProc(strconv.Itoa(int(pid)), "limits")
 	d, err := os.Open(limitsFile)
@@ -514,16 +632,25 @@ func (p *Process) fillFromLimits() ([]RlimitStat, error) {
 	return limitStats, nil
 }
 
-// Get num_fds from /proc/(pid)/fd
-func (p *Process) fillFromfd() (int32, []*OpenFilesStat, error) {
+// Get list of /proc/(pid)/fd files
+func (p *Process) fillFromfdListWithContext(ctx context.Context) (string, []string, error) {
 	pid := p.Pid
 	statPath := common.HostProc(strconv.Itoa(int(pid)), "fd")
 	d, err := os.Open(statPath)
 	if err != nil {
-		return 0, nil, err
+		return statPath, []string{}, err
 	}
 	defer d.Close()
 	fnames, err := d.Readdirnames(-1)
+	return statPath, fnames, err
+}
+
+// Get num_fds from /proc/(pid)/fd
+func (p *Process) fillFromfdWithContext(ctx context.Context) (int32, []*OpenFilesStat, error) {
+	statPath, fnames, err := p.fillFromfdListWithContext(ctx)
+	if err != nil {
+		return 0, nil, err
+	}
 	numFDs := int32(len(fnames))
 
 	var openfiles []*OpenFilesStat
@@ -548,7 +675,7 @@ func (p *Process) fillFromfd() (int32, []*OpenFilesStat, error) {
 }
 
 // Get cwd from /proc/(pid)/cwd
-func (p *Process) fillFromCwd() (string, error) {
+func (p *Process) fillFromCwdWithContext(ctx context.Context) (string, error) {
 	pid := p.Pid
 	cwdPath := common.HostProc(strconv.Itoa(int(pid)), "cwd")
 	cwd, err := os.Readlink(cwdPath)
@@ -559,7 +686,7 @@ func (p *Process) fillFromCwd() (string, error) {
 }
 
 // Get exe from /proc/(pid)/exe
-func (p *Process) fillFromExe() (string, error) {
+func (p *Process) fillFromExeWithContext(ctx context.Context) (string, error) {
 	pid := p.Pid
 	exePath := common.HostProc(strconv.Itoa(int(pid)), "exe")
 	exe, err := os.Readlink(exePath)
@@ -570,7 +697,7 @@ func (p *Process) fillFromExe() (string, error) {
 }
 
 // Get cmdline from /proc/(pid)/cmdline
-func (p *Process) fillFromCmdline() (string, error) {
+func (p *Process) fillFromCmdlineWithContext(ctx context.Context) (string, error) {
 	pid := p.Pid
 	cmdPath := common.HostProc(strconv.Itoa(int(pid)), "cmdline")
 	cmdline, err := ioutil.ReadFile(cmdPath)
@@ -578,16 +705,13 @@ func (p *Process) fillFromCmdline() (string, error) {
 		return "", err
 	}
 	ret := strings.FieldsFunc(string(cmdline), func(r rune) bool {
-		if r == '\u0000' {
-			return true
-		}
-		return false
+		return r == '\u0000'
 	})
 
 	return strings.Join(ret, " "), nil
 }
 
-func (p *Process) fillSliceFromCmdline() ([]string, error) {
+func (p *Process) fillSliceFromCmdlineWithContext(ctx context.Context) ([]string, error) {
 	pid := p.Pid
 	cmdPath := common.HostProc(strconv.Itoa(int(pid)), "cmdline")
 	cmdline, err := ioutil.ReadFile(cmdPath)
@@ -610,7 +734,7 @@ func (p *Process) fillSliceFromCmdline() ([]string, error) {
 }
 
 // Get IO status from /proc/(pid)/io
-func (p *Process) fillFromIO() (*IOCountersStat, error) {
+func (p *Process) fillFromIOWithContext(ctx context.Context) (*IOCountersStat, error) {
 	pid := p.Pid
 	ioPath := common.HostProc(strconv.Itoa(int(pid)), "io")
 	ioline, err := ioutil.ReadFile(ioPath)
@@ -649,7 +773,7 @@ func (p *Process) fillFromIO() (*IOCountersStat, error) {
 }
 
 // Get memory info from /proc/(pid)/statm
-func (p *Process) fillFromStatm() (*MemoryInfoStat, *MemoryInfoExStat, error) {
+func (p *Process) fillFromStatmWithContext(ctx context.Context) (*MemoryInfoStat, *MemoryInfoExStat, error) {
 	pid := p.Pid
 	memPath := common.HostProc(strconv.Itoa(int(pid)), "statm")
 	contents, err := ioutil.ReadFile(memPath)
@@ -701,7 +825,7 @@ func (p *Process) fillFromStatm() (*MemoryInfoStat, *MemoryInfoExStat, error) {
 }
 
 // Get various status from /proc/(pid)/status
-func (p *Process) fillFromStatus() error {
+func (p *Process) fillFromStatusWithContext(ctx context.Context) error {
 	pid := p.Pid
 	statPath := common.HostProc(strconv.Itoa(int(pid)), "status")
 	contents, err := ioutil.ReadFile(statPath)
@@ -711,6 +835,7 @@ func (p *Process) fillFromStatus() error {
 	lines := strings.Split(string(contents), "\n")
 	p.numCtxSwitches = &NumCtxSwitchesStat{}
 	p.memInfo = &MemoryInfoStat{}
+	p.sigInfo = &SignalInfoStat{}
 	for _, line := range lines {
 		tabParts := strings.SplitN(line, "\t", 2)
 		if len(tabParts) < 2 {
@@ -729,17 +854,29 @@ func (p *Process) fillFromStatus() error {
 					extendedName := filepath.Base(cmdlineSlice[0])
 					if strings.HasPrefix(extendedName, p.name) {
 						p.name = extendedName
+					} else {
+						p.name = cmdlineSlice[0]
 					}
 				}
 			}
+			// Ensure we have a copy and not reference into slice
+			p.name = string([]byte(p.name))
 		case "State":
 			p.status = value[0:1]
+			// Ensure we have a copy and not reference into slice
+			p.status = string([]byte(p.status))
 		case "PPid", "Ppid":
 			pval, err := strconv.ParseInt(value, 10, 32)
 			if err != nil {
 				return err
 			}
 			p.parent = int32(pval)
+		case "Tgid":
+			pval, err := strconv.ParseInt(value, 10, 32)
+			if err != nil {
+				return err
+			}
+			p.tgid = int32(pval)
 		case "Uid":
 			p.uids = make([]int32, 0, 4)
 			for _, i := range strings.Split(value, "\t") {
@@ -757,6 +894,16 @@ func (p *Process) fillFromStatus() error {
 					return err
 				}
 				p.gids = append(p.gids, int32(v))
+			}
+		case "Groups":
+			groups := strings.Fields(value)
+			p.groups = make([]int32, 0, len(groups))
+			for _, i := range groups {
+				v, err := strconv.ParseInt(i, 10, 32)
+				if err != nil {
+					return err
+				}
+				p.groups = append(p.groups, int32(v))
 			}
 		case "Threads":
 			v, err := strconv.ParseInt(value, 10, 32)
@@ -797,77 +944,222 @@ func (p *Process) fillFromStatus() error {
 				return err
 			}
 			p.memInfo.Swap = v * 1024
+		case "VmHWM":
+			value := strings.Trim(value, " kB") // remove last "kB"
+			v, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return err
+			}
+			p.memInfo.HWM = v * 1024
+		case "VmData":
+			value := strings.Trim(value, " kB") // remove last "kB"
+			v, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return err
+			}
+			p.memInfo.Data = v * 1024
+		case "VmStk":
+			value := strings.Trim(value, " kB") // remove last "kB"
+			v, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return err
+			}
+			p.memInfo.Stack = v * 1024
+		case "VmLck":
+			value := strings.Trim(value, " kB") // remove last "kB"
+			v, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return err
+			}
+			p.memInfo.Locked = v * 1024
+		case "SigPnd":
+			if len(value) > 16 {
+				value = value[len(value)-16:]
+			}
+			v, err := strconv.ParseUint(value, 16, 64)
+			if err != nil {
+				return err
+			}
+			p.sigInfo.PendingThread = v
+		case "ShdPnd":
+			if len(value) > 16 {
+				value = value[len(value)-16:]
+			}
+			v, err := strconv.ParseUint(value, 16, 64)
+			if err != nil {
+				return err
+			}
+			p.sigInfo.PendingProcess = v
+		case "SigBlk":
+			if len(value) > 16 {
+				value = value[len(value)-16:]
+			}
+			v, err := strconv.ParseUint(value, 16, 64)
+			if err != nil {
+				return err
+			}
+			p.sigInfo.Blocked = v
+		case "SigIgn":
+			if len(value) > 16 {
+				value = value[len(value)-16:]
+			}
+			v, err := strconv.ParseUint(value, 16, 64)
+			if err != nil {
+				return err
+			}
+			p.sigInfo.Ignored = v
+		case "SigCgt":
+			if len(value) > 16 {
+				value = value[len(value)-16:]
+			}
+			v, err := strconv.ParseUint(value, 16, 64)
+			if err != nil {
+				return err
+			}
+			p.sigInfo.Caught = v
 		}
 
 	}
 	return nil
 }
 
-func (p *Process) fillFromStat() (string, int32, *cpu.TimesStat, int64, int32, error) {
+func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (uint64, int32, *cpu.TimesStat, int64, uint32, int32, *PageFaultsStat, error) {
 	pid := p.Pid
-	statPath := common.HostProc(strconv.Itoa(int(pid)), "stat")
+	var statPath string
+
+	if tid == -1 {
+		statPath = common.HostProc(strconv.Itoa(int(pid)), "stat")
+	} else {
+		statPath = common.HostProc(strconv.Itoa(int(pid)), "task", strconv.Itoa(int(tid)), "stat")
+	}
+
 	contents, err := ioutil.ReadFile(statPath)
 	if err != nil {
-		return "", 0, nil, 0, 0, err
+		return 0, 0, nil, 0, 0, 0, nil, err
 	}
-	fields := strings.Fields(string(contents))
+	// Indexing from one, as described in `man proc` about the file /proc/[pid]/stat
+	fields := splitProcStat(contents)
 
-	i := 1
-	for !strings.HasSuffix(fields[i], ")") {
-		i++
+	terminal, err := strconv.ParseUint(fields[7], 10, 64)
+	if err != nil {
+		return 0, 0, nil, 0, 0, 0, nil, err
 	}
 
-	termmap, err := getTerminalMap()
-	terminal := ""
-	if err == nil {
-		t, err := strconv.ParseUint(fields[i+5], 10, 64)
+	ppid, err := strconv.ParseInt(fields[4], 10, 32)
+	if err != nil {
+		return 0, 0, nil, 0, 0, 0, nil, err
+	}
+	utime, err := strconv.ParseFloat(fields[14], 64)
+	if err != nil {
+		return 0, 0, nil, 0, 0, 0, nil, err
+	}
+
+	stime, err := strconv.ParseFloat(fields[15], 64)
+	if err != nil {
+		return 0, 0, nil, 0, 0, 0, nil, err
+	}
+
+	// There is no such thing as iotime in stat file.  As an approximation, we
+	// will use delayacct_blkio_ticks (aggregated block I/O delays, as per Linux
+	// docs).  Note: I am assuming at least Linux 2.6.18
+	var iotime float64
+	if len(fields) > 42 {
+		iotime, err = strconv.ParseFloat(fields[42], 64)
 		if err != nil {
-			return "", 0, nil, 0, 0, err
+			iotime = 0 // Ancient linux version, most likely
 		}
-		terminal = termmap[t]
-	}
-
-	ppid, err := strconv.ParseInt(fields[i+2], 10, 32)
-	if err != nil {
-		return "", 0, nil, 0, 0, err
-	}
-	utime, err := strconv.ParseFloat(fields[i+12], 64)
-	if err != nil {
-		return "", 0, nil, 0, 0, err
-	}
-
-	stime, err := strconv.ParseFloat(fields[i+13], 64)
-	if err != nil {
-		return "", 0, nil, 0, 0, err
+	} else {
+		iotime = 0 // e.g. SmartOS containers
 	}
 
 	cpuTimes := &cpu.TimesStat{
 		CPU:    "cpu",
-		User:   float64(utime / ClockTicks),
-		System: float64(stime / ClockTicks),
+		User:   utime / float64(ClockTicks),
+		System: stime / float64(ClockTicks),
+		Iowait: iotime / float64(ClockTicks),
 	}
 
-	bootTime, _ := host.BootTime()
-	t, err := strconv.ParseUint(fields[i+20], 10, 64)
+	bootTime, _ := common.BootTimeWithContext(ctx)
+	t, err := strconv.ParseUint(fields[22], 10, 64)
 	if err != nil {
-		return "", 0, nil, 0, 0, err
+		return 0, 0, nil, 0, 0, 0, nil, err
 	}
 	ctime := (t / uint64(ClockTicks)) + uint64(bootTime)
 	createTime := int64(ctime * 1000)
+
+	rtpriority, err := strconv.ParseInt(fields[18], 10, 32)
+	if err != nil {
+		return 0, 0, nil, 0, 0, 0, nil, err
+	}
+	if rtpriority < 0 {
+		rtpriority = rtpriority*-1 - 1
+	} else {
+		rtpriority = 0
+	}
 
 	//	p.Nice = mustParseInt32(fields[18])
 	// use syscall instead of parse Stat file
 	snice, _ := unix.Getpriority(PrioProcess, int(pid))
 	nice := int32(snice) // FIXME: is this true?
 
-	return terminal, int32(ppid), cpuTimes, createTime, nice, nil
+	minFault, err := strconv.ParseUint(fields[10], 10, 64)
+	if err != nil {
+		return 0, 0, nil, 0, 0, 0, nil, err
+	}
+	cMinFault, err := strconv.ParseUint(fields[11], 10, 64)
+	if err != nil {
+		return 0, 0, nil, 0, 0, 0, nil, err
+	}
+	majFault, err := strconv.ParseUint(fields[12], 10, 64)
+	if err != nil {
+		return 0, 0, nil, 0, 0, 0, nil, err
+	}
+	cMajFault, err := strconv.ParseUint(fields[13], 10, 64)
+	if err != nil {
+		return 0, 0, nil, 0, 0, 0, nil, err
+	}
+
+	faults := &PageFaultsStat{
+		MinorFaults:      minFault,
+		MajorFaults:      majFault,
+		ChildMinorFaults: cMinFault,
+		ChildMajorFaults: cMajFault,
+	}
+
+	return terminal, int32(ppid), cpuTimes, createTime, uint32(rtpriority), nice, faults, nil
 }
 
-// Pids returns a slice of process ID list which are running now.
-func Pids() ([]int32, error) {
+func (p *Process) fillFromStatWithContext(ctx context.Context) (uint64, int32, *cpu.TimesStat, int64, uint32, int32, *PageFaultsStat, error) {
+	return p.fillFromTIDStatWithContext(ctx, -1)
+}
+
+func pidsWithContext(ctx context.Context) ([]int32, error) {
+	return readPidsFromDir(common.HostProc())
+}
+
+func ProcessesWithContext(ctx context.Context) ([]*Process, error) {
+	out := []*Process{}
+
+	pids, err := PidsWithContext(ctx)
+	if err != nil {
+		return out, err
+	}
+
+	for _, pid := range pids {
+		p, err := NewProcessWithContext(ctx, pid)
+		if err != nil {
+			continue
+		}
+		out = append(out, p)
+	}
+
+	return out, nil
+}
+
+func readPidsFromDir(path string) ([]int32, error) {
 	var ret []int32
 
-	d, err := os.Open(common.HostProc())
+	d, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
@@ -887,4 +1179,17 @@ func Pids() ([]int32, error) {
 	}
 
 	return ret, nil
+}
+
+func splitProcStat(content []byte) []string {
+	nameStart := bytes.IndexByte(content, '(')
+	nameEnd := bytes.LastIndexByte(content, ')')
+	restFields := strings.Fields(string(content[nameEnd+2:])) // +2 skip ') '
+	name := content[nameStart+1 : nameEnd]
+	pid := strings.TrimSpace(string(content[:nameStart]))
+	fields := make([]string, 3, len(restFields)+3)
+	fields[1] = string(pid)
+	fields[2] = string(name)
+	fields = append(fields, restFields...)
+	return fields
 }

@@ -3,21 +3,46 @@
 package load
 
 import (
+	"context"
 	"io/ioutil"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/shirou/gopsutil/internal/common"
 )
 
 func Avg() (*AvgStat, error) {
-	filename := common.HostProc("loadavg")
-	line, err := ioutil.ReadFile(filename)
+	return AvgWithContext(context.Background())
+}
+
+func AvgWithContext(ctx context.Context) (*AvgStat, error) {
+	stat, err := fileAvgWithContext(ctx)
 	if err != nil {
+		stat, err = sysinfoAvgWithContext(ctx)
+	}
+	return stat, err
+}
+
+func sysinfoAvgWithContext(ctx context.Context) (*AvgStat, error) {
+	var info syscall.Sysinfo_t
+	if err := syscall.Sysinfo(&info); err != nil {
 		return nil, err
 	}
 
-	values := strings.Fields(string(line))
+	const siLoadShift = 16
+	return &AvgStat{
+		Load1:  float64(info.Loads[0]) / float64(1<<siLoadShift),
+		Load5:  float64(info.Loads[1]) / float64(1<<siLoadShift),
+		Load15: float64(info.Loads[2]) / float64(1<<siLoadShift),
+	}, nil
+}
+
+func fileAvgWithContext(ctx context.Context) (*AvgStat, error) {
+	values, err := readLoadAvgFromFile()
+	if err != nil {
+		return nil, err
+	}
 
 	load1, err := strconv.ParseFloat(values[0], 64)
 	if err != nil {
@@ -44,6 +69,10 @@ func Avg() (*AvgStat, error) {
 // Misc returnes miscellaneous host-wide statistics.
 // Note: the name should be changed near future.
 func Misc() (*MiscStat, error) {
+	return MiscWithContext(context.Background())
+}
+
+func MiscWithContext(ctx context.Context) (*MiscStat, error) {
 	filename := common.HostProc("stat")
 	out, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -62,6 +91,8 @@ func Misc() (*MiscStat, error) {
 			continue
 		}
 		switch fields[0] {
+		case "processes":
+			ret.ProcsCreated = int(v)
 		case "procs_running":
 			ret.ProcsRunning = int(v)
 		case "procs_blocked":
@@ -71,8 +102,32 @@ func Misc() (*MiscStat, error) {
 		default:
 			continue
 		}
-
 	}
 
+	procsTotal, err := getProcsTotal()
+	if err != nil {
+		return ret, err
+	}
+	ret.ProcsTotal = int(procsTotal)
+
 	return ret, nil
+}
+
+func getProcsTotal() (int64, error) {
+	values, err := readLoadAvgFromFile()
+	if err != nil {
+		return 0, err
+	}
+	return strconv.ParseInt(strings.Split(values[3], "/")[1], 10, 64)
+}
+
+func readLoadAvgFromFile() ([]string, error) {
+	loadavgFilename := common.HostProc("loadavg")
+	line, err := ioutil.ReadFile(loadavgFilename)
+	if err != nil {
+		return nil, err
+	}
+
+	values := strings.Fields(string(line))
+	return values, nil
 }

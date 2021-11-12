@@ -2,20 +2,48 @@
 
 package host
 
-import "github.com/shirou/gopsutil/internal/common"
+import (
+	"context"
 
-func Info() (*InfoStat, error) {
-	return nil, common.ErrNotImplementedError
+	"github.com/shirou/gopsutil/internal/common"
+)
+
+func HostIDWithContext(ctx context.Context) (string, error) {
+	return "", common.ErrNotImplementedError
 }
 
-func BootTime() (uint64, error) {
+func numProcs(ctx context.Context) (uint64, error) {
 	return 0, common.ErrNotImplementedError
 }
 
-func Uptime() (uint64, error) {
+func BootTimeWithContext(ctx context.Context) (uint64, error) {
 	return 0, common.ErrNotImplementedError
 }
 
-func Users() ([]UserStat, error) {
+func UptimeWithContext(ctx context.Context) (uint64, error) {
+	return 0, common.ErrNotImplementedError
+}
+
+func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 	return []UserStat{}, common.ErrNotImplementedError
+}
+
+func VirtualizationWithContext(ctx context.Context) (string, string, error) {
+	return "", "", common.ErrNotImplementedError
+}
+
+func KernelVersionWithContext(ctx context.Context) (string, error) {
+	return "", common.ErrNotImplementedError
+}
+
+func PlatformInformationWithContext(ctx context.Context) (string, string, string, error) {
+	return "", "", "", common.ErrNotImplementedError
+}
+
+func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
+	return []TemperatureStat{}, common.ErrNotImplementedError
+}
+
+func KernelArch() (string, error) {
+	return "", common.ErrNotImplementedError
 }

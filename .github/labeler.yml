@@ -1,0 +1,65 @@
+v3:
+  - v3/**/*.go
+package:cpu:
+  - cpu/*
+  - v3/cpu/*
+package:disk:
+  - disk/*
+  - v3/disk/*
+package:docker:
+  - docker/*
+  - v3/docker/*
+package:host:
+  - host/*
+  - v3/host/*
+package:load:
+  - load/*
+  - v3/load/*
+package:mem:
+  - mem/*
+  - v3/mem/*
+package:net:
+  - net/*
+  - v3/net/*
+package:process:
+  - process/*
+  - v3/process/*
+package:winservices:
+  - winservices/*
+  - v3/winservices/*
+os:linux:
+  - ./**/*_linux.go
+  - ./**/*_linux_mips64.go
+  - ./**/*_linux_386.go
+  - ./**/*_linux_test.go
+  - ./**/*_linux_s390x.go
+  - ./**/*_linux_amd64.go
+  - ./**/*_posix.go
+os:freebsd:
+  - ./**/*_freebsd.go
+  - ./**/*_freebsd_386.go
+  - ./**/*_freebsd_test.go
+  - ./**/*_freebsd_amd64.go
+  - ./**/*_bsd.go
+  - ./**/*_posix.go
+os:darwin:
+  - ./**/*_darwin.go
+  - ./**/*_darwin_386.go
+  - ./**/*_darwin_test.go
+  - ./**/*_darwin_amd64.go
+  - ./**/*_posix.go
+os:openbsd:
+  - ./**/*_openbsd.go
+  - ./**/*_openbsd_386.go
+  - ./**/*_openbsd_test.go
+  - ./**/*_openbsd_amd64.go
+  - ./**/*_bsd.go
+  - ./**/*_posix.go
+os:windows:
+  - ./**/*_windows.go
+  - ./**/*_windows_386.go
+  - ./**/*_windows_test.go
+  - ./**/*_windows_amd64.go
+os:solaris:
+  - ./**/*_solaris.go
+  - ./**/*_posix.go

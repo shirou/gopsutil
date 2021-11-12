@@ -42,29 +42,6 @@ const (
 	DEVSTAT_READ    = 0x01
 	DEVSTAT_WRITE   = 0x02
 	DEVSTAT_FREE    = 0x03
-
-	// from sys/mount.h
-	MNT_RDONLY      = 0x00000001 /* read only filesystem */
-	MNT_SYNCHRONOUS = 0x00000002 /* filesystem written synchronously */
-	MNT_NOEXEC      = 0x00000004 /* can't exec from filesystem */
-	MNT_NOSUID      = 0x00000008 /* don't honor setuid bits on fs */
-	MNT_UNION       = 0x00000020 /* union with underlying filesystem */
-	MNT_ASYNC       = 0x00000040 /* filesystem written asynchronously */
-	MNT_SUIDDIR     = 0x00100000 /* special handling of SUID on dirs */
-	MNT_SOFTDEP     = 0x00200000 /* soft updates being done */
-	MNT_NOSYMFOLLOW = 0x00400000 /* do not follow symlinks */
-	MNT_GJOURNAL    = 0x02000000 /* GEOM journal support enabled */
-	MNT_MULTILABEL  = 0x04000000 /* MAC support for individual objects */
-	MNT_ACLS        = 0x08000000 /* ACL support enabled */
-	MNT_NOATIME     = 0x10000000 /* disable update of file access time */
-	MNT_NOCLUSTERR  = 0x40000000 /* disable cluster read */
-	MNT_NOCLUSTERW  = 0x80000000 /* disable cluster write */
-	MNT_NFS4ACLS    = 0x00000010
-
-	MNT_WAIT    = 1 /* synchronously wait for I/O to complete */
-	MNT_NOWAIT  = 2 /* start all I/O, but do not wait for it */
-	MNT_LAZY    = 3 /* push data not written by filesystem syncer */
-	MNT_SUSPEND = 4 /* Suspend file system after sync */
 )
 
 const (
@@ -80,9 +57,6 @@ type (
 	_C_long_long   C.longlong
 	_C_long_double C.longlong
 )
-
-type Statfs C.struct_statfs
-type Fsid C.struct_fsid
 
 type Devstat C.struct_devstat
 type Bintime C.struct_bintime

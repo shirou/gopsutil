@@ -4,112 +4,56 @@ package host
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
+	"errors"
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"runtime"
-	"strconv"
 	"strings"
-	"sync/atomic"
-	"time"
 	"unsafe"
 
 	"github.com/shirou/gopsutil/internal/common"
 	"github.com/shirou/gopsutil/process"
+	"golang.org/x/sys/unix"
 )
 
 // from utmpx.h
 const USER_PROCESS = 7
 
-func Info() (*InfoStat, error) {
-	ret := &InfoStat{
-		OS:             runtime.GOOS,
-		PlatformFamily: "darwin",
+func HostIDWithContext(ctx context.Context) (string, error) {
+	ioreg, err := exec.LookPath("ioreg")
+	if err != nil {
+		return "", err
 	}
 
-	hostname, err := os.Hostname()
-	if err == nil {
-		ret.Hostname = hostname
+	out, err := invoke.CommandWithContext(ctx, ioreg, "-rd1", "-c", "IOPlatformExpertDevice")
+	if err != nil {
+		return "", err
 	}
 
-	uname, err := exec.LookPath("uname")
-	if err == nil {
-		out, err := invoke.Command(uname, "-r")
-		if err == nil {
-			ret.KernelVersion = strings.ToLower(strings.TrimSpace(string(out)))
+	for _, line := range strings.Split(string(out), "\n") {
+		if strings.Contains(line, "IOPlatformUUID") {
+			parts := strings.SplitAfter(line, `" = "`)
+			if len(parts) == 2 {
+				uuid := strings.TrimRight(parts[1], `"`)
+				return strings.ToLower(uuid), nil
+			}
 		}
 	}
 
-	platform, family, pver, err := PlatformInformation()
-	if err == nil {
-		ret.Platform = platform
-		ret.PlatformFamily = family
-		ret.PlatformVersion = pver
-	}
-
-	system, role, err := Virtualization()
-	if err == nil {
-		ret.VirtualizationSystem = system
-		ret.VirtualizationRole = role
-	}
-
-	boot, err := BootTime()
-	if err == nil {
-		ret.BootTime = boot
-		ret.Uptime = uptime(boot)
-	}
-
-	procs, err := process.Pids()
-	if err == nil {
-		ret.Procs = uint64(len(procs))
-	}
-
-	values, err := common.DoSysctrl("kern.uuid")
-	if err == nil && len(values) == 1 && values[0] != "" {
-		ret.HostID = strings.ToLower(values[0])
-	}
-
-	return ret, nil
+	return "", errors.New("cannot find host id")
 }
 
-// cachedBootTime must be accessed via atomic.Load/StoreUint64
-var cachedBootTime uint64
-
-func BootTime() (uint64, error) {
-	t := atomic.LoadUint64(&cachedBootTime)
-	if t != 0 {
-		return t, nil
-	}
-	values, err := common.DoSysctrl("kern.boottime")
+func numProcs(ctx context.Context) (uint64, error) {
+	procs, err := process.PidsWithContext(ctx)
 	if err != nil {
 		return 0, err
 	}
-	// ex: { sec = 1392261637, usec = 627534 } Thu Feb 13 12:20:37 2014
-	v := strings.Replace(values[2], ",", "", 1)
-	boottime, err := strconv.ParseInt(v, 10, 64)
-	if err != nil {
-		return 0, err
-	}
-	t = uint64(boottime)
-	atomic.StoreUint64(&cachedBootTime, t)
-
-	return t, nil
+	return uint64(len(procs)), nil
 }
 
-func uptime(boot uint64) uint64 {
-	return uint64(time.Now().Unix()) - boot
-}
-
-func Uptime() (uint64, error) {
-	boot, err := BootTime()
-	if err != nil {
-		return 0, err
-	}
-	return uptime(boot), nil
-}
-
-func Users() ([]UserStat, error) {
+func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 	utmpfile := "/var/run/utmpx"
 	var ret []UserStat
 
@@ -153,7 +97,7 @@ func Users() ([]UserStat, error) {
 
 }
 
-func PlatformInformation() (string, string, string, error) {
+func PlatformInformationWithContext(ctx context.Context) (string, string, string, error) {
 	platform := ""
 	family := ""
 	pver := ""
@@ -162,27 +106,35 @@ func PlatformInformation() (string, string, string, error) {
 	if err != nil {
 		return "", "", "", err
 	}
-	uname, err := exec.LookPath("uname")
-	if err != nil {
-		return "", "", "", err
-	}
 
-	out, err := invoke.Command(uname, "-s")
+	p, err := unix.Sysctl("kern.ostype")
 	if err == nil {
-		platform = strings.ToLower(strings.TrimSpace(string(out)))
+		platform = strings.ToLower(p)
 	}
 
-	out, err = invoke.Command(sw_vers, "-productVersion")
+	out, err := invoke.CommandWithContext(ctx, sw_vers, "-productVersion")
 	if err == nil {
 		pver = strings.ToLower(strings.TrimSpace(string(out)))
+	}
+
+	// check if the macos server version file exists
+	_, err = os.Stat("/System/Library/CoreServices/ServerVersion.plist")
+
+	// server file doesn't exist
+	if os.IsNotExist(err) {
+		family = "Standalone Workstation"
+	} else {
+		family = "Server"
 	}
 
 	return platform, family, pver, nil
 }
 
-func Virtualization() (string, string, error) {
-	system := ""
-	role := ""
+func VirtualizationWithContext(ctx context.Context) (string, string, error) {
+	return "", "", common.ErrNotImplementedError
+}
 
-	return system, role, nil
+func KernelVersionWithContext(ctx context.Context) (string, error) {
+	version, err := unix.Sysctl("kern.osrelease")
+	return strings.ToLower(version), err
 }

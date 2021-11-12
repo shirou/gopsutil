@@ -2,11 +2,22 @@ package host
 
 import (
 	"fmt"
+	"os"
+	"sync"
 	"testing"
+
+	"github.com/shirou/gopsutil/internal/common"
 )
+
+func skipIfNotImplementedErr(t *testing.T, err error) {
+	if err == common.ErrNotImplementedError {
+		t.Skip("not implemented")
+	}
+}
 
 func TestHostInfo(t *testing.T) {
 	v, err := Info()
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -20,7 +31,12 @@ func TestHostInfo(t *testing.T) {
 }
 
 func TestUptime(t *testing.T) {
+	if os.Getenv("CIRCLECI") == "true" {
+		t.Skip("Skip CI")
+	}
+
 	v, err := Uptime()
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -30,7 +46,11 @@ func TestUptime(t *testing.T) {
 }
 
 func TestBoot_time(t *testing.T) {
+	if os.Getenv("CIRCLECI") == "true" {
+		t.Skip("Skip CI")
+	}
 	v, err := BootTime()
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -40,21 +60,28 @@ func TestBoot_time(t *testing.T) {
 	if v < 946652400 {
 		t.Errorf("Invalid Boottime, older than 2000-01-01")
 	}
+	t.Logf("first boot time: %d", v)
 
 	v2, err := BootTime()
+	skipIfNotImplementedErr(t, err)
+	if err != nil {
+		t.Errorf("error %v", err)
+	}
 	if v != v2 {
 		t.Errorf("cached boot time is different")
 	}
+	t.Logf("second boot time: %d", v2)
 }
 
 func TestUsers(t *testing.T) {
 	v, err := Users()
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
 	empty := UserStat{}
 	if len(v) == 0 {
-		t.Errorf("Users is empty")
+		t.Skip("Users is empty")
 	}
 	for _, u := range v {
 		if u == empty {
@@ -65,17 +92,18 @@ func TestUsers(t *testing.T) {
 
 func TestHostInfoStat_String(t *testing.T) {
 	v := InfoStat{
-		Hostname: "test",
-		Uptime:   3000,
-		Procs:    100,
-		OS:       "linux",
-		Platform: "ubuntu",
-		BootTime: 1447040000,
-		HostID:   "edfd25ff-3c9c-b1a4-e660-bd826495ad35",
+		Hostname:   "test",
+		Uptime:     3000,
+		Procs:      100,
+		OS:         "linux",
+		Platform:   "ubuntu",
+		BootTime:   1447040000,
+		HostID:     "edfd25ff-3c9c-b1a4-e660-bd826495ad35",
+		KernelArch: "x86_64",
 	}
-	e := `{"hostname":"test","uptime":3000,"bootTime":1447040000,"procs":100,"os":"linux","platform":"ubuntu","platformFamily":"","platformVersion":"","kernelVersion":"","virtualizationSystem":"","virtualizationRole":"","hostid":"edfd25ff-3c9c-b1a4-e660-bd826495ad35"}`
+	e := `{"hostname":"test","uptime":3000,"bootTime":1447040000,"procs":100,"os":"linux","platform":"ubuntu","platformFamily":"","platformVersion":"","kernelVersion":"","kernelArch":"x86_64","virtualizationSystem":"","virtualizationRole":"","hostid":"edfd25ff-3c9c-b1a4-e660-bd826495ad35"}`
 	if e != fmt.Sprintf("%v", v) {
-		t.Errorf("HostInfoStat string is invalid: %v", v)
+		t.Errorf("HostInfoStat string is invalid:\ngot  %v\nwant %v", v, e)
 	}
 }
 
@@ -93,14 +121,15 @@ func TestUserStat_String(t *testing.T) {
 }
 
 func TestHostGuid(t *testing.T) {
-	hi, err := Info()
+	id, err := HostID()
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Error(err)
 	}
-	if hi.HostID == "" {
+	if id == "" {
 		t.Error("Host id is empty")
 	} else {
-		t.Logf("Host id value: %v", hi.HostID)
+		t.Logf("Host id value: %v", id)
 	}
 }
 
@@ -113,4 +142,51 @@ func TestTemperatureStat_String(t *testing.T) {
 	if s != fmt.Sprintf("%v", v) {
 		t.Errorf("TemperatureStat string is invalid")
 	}
+}
+
+func TestVirtualization(t *testing.T) {
+	wg := sync.WaitGroup{}
+	testCount := 10
+	wg.Add(testCount)
+	for i := 0; i < testCount; i++ {
+		go func(j int) {
+			system, role, err := Virtualization()
+			wg.Done()
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("Virtualization() failed, %v", err)
+			}
+
+			if j == 9 {
+				t.Logf("Virtualization(): %s, %s", system, role)
+			}
+		}(i)
+	}
+	wg.Wait()
+}
+
+func TestKernelVersion(t *testing.T) {
+	version, err := KernelVersion()
+	skipIfNotImplementedErr(t, err)
+	if err != nil {
+		t.Errorf("KernelVersion() failed, %v", err)
+	}
+	if version == "" {
+		t.Errorf("KernelVersion() returns empty: %s", version)
+	}
+
+	t.Logf("KernelVersion(): %s", version)
+}
+
+func TestPlatformInformation(t *testing.T) {
+	platform, family, version, err := PlatformInformation()
+	skipIfNotImplementedErr(t, err)
+	if err != nil {
+		t.Errorf("PlatformInformation() failed, %v", err)
+	}
+	if platform == "" {
+		t.Errorf("PlatformInformation() returns empty: %v", platform)
+	}
+
+	t.Logf("PlatformInformation(): %v, %v, %v", platform, family, version)
 }

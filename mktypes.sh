@@ -1,37 +1,20 @@
+#!/bin/sh
 
-DIRS="cpu disk docker host load mem net process"
+PKGS="cpu disk docker host load mem net process"
 
-GOOS=`uname | tr '[:upper:]' '[:lower:]'`
-ARCH=`uname -m`
+GOOS=$(go env GOOS)
+GOARCH=$(go env GOARCH)
+GOARCH=$(go env GOARCH)
 
-case $ARCH in
-	amd64)
-		GOARCH="amd64"
-		;;
-	x86_64)
-		GOARCH="amd64"
-		;;
-	i386)
-		GOARCH="386"
-		;;
-	i686)
-		GOARCH="386"
-		;;
-	arm)
-		GOARCH="arm"
-		;;
-	*)
-		echo "unknown arch: $ARCH"
-		exit 1
-esac
-
-for DIR in $DIRS
+for DIR in . v3
 do
-	if [ -e ${DIR}/types_${GOOS}.go ]; then
-		echo "// +build $GOOS" > ${DIR}/${DIR}_${GOOS}_${GOARCH}.go
-		echo "// +build $GOARCH" >> ${DIR}/${DIR}_${GOOS}_${GOARCH}.go
-		go tool cgo -godefs ${DIR}/types_${GOOS}.go >> ${DIR}/${DIR}_${GOOS}_${GOARCH}.go
-	fi
+        (cd "$DIR" || exit
+        for PKG in $PKGS
+        do
+                if [ -e "${PKG}/types_${GOOS}.go" ]; then
+                        (echo "// +build $GOOS"
+                        echo "// +build $GOARCH"
+                        go tool cgo -godefs "${PKG}/types_${GOOS}.go") | gofmt > "${PKG}/${PKG}_${GOOS}_${GOARCH}.go"
+                fi
+        done)
 done
-
-

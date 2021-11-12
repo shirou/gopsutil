@@ -1,17 +1,21 @@
-// +build !darwin,!linux,!freebsd,!openbsd,!windows
+// +build !darwin,!linux,!freebsd,!openbsd,!windows,!solaris
 
 package disk
 
-import "github.com/shirou/gopsutil/internal/common"
+import (
+	"context"
 
-func IOCounters(names ...string) (map[string]IOCountersStat, error) {
+	"github.com/shirou/gopsutil/internal/common"
+)
+
+func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOCountersStat, error) {
 	return nil, common.ErrNotImplementedError
 }
 
-func Partitions(all bool) ([]PartitionStat, error) {
+func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {
 	return []PartitionStat{}, common.ErrNotImplementedError
 }
 
-func Usage(path string) (*UsageStat, error) {
+func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 	return nil, common.ErrNotImplementedError
 }

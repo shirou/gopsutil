@@ -1,0 +1,91 @@
+on: [push, pull_request]
+name: Test
+jobs:
+  test_v3_module:
+    strategy:
+      matrix:
+        go-version: [1.16.x, 1.17.x]
+        os: [ubuntu-20.04, ubuntu-18.04, windows-2019, windows-2016, macOS-10.15, macos-11]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Install Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go-version }}
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Test
+      run: |
+        cd ./v3/
+        go test ./...
+
+  test_v3_gopath:
+    env:
+      GOPATH: ${{ github.workspace }}
+      GO111MODULE: off
+    strategy:
+      matrix:
+        go-version: [1.16.x, 1.17.x]
+        os: [ubuntu-20.04, ubuntu-18.04, windows-2019, windows-2016, macOS-10.15, macos-11]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Install Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go-version }}
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        path: ${{ github.workspace }}/src/github.com/shirou/gopsutil
+    - name: Get dependencies
+      run: |
+        go get -t github.com/shirou/gopsutil/v3/...
+    - name: Test
+      run: |
+        go test github.com/shirou/gopsutil/v3/...
+
+  test_v2_gopath:
+    env:
+      GOPATH: ${{ github.workspace }}
+      GO111MODULE: off
+    strategy:
+      matrix:
+        go-version: [1.16.x, 1.17.x]
+        os: [ubuntu-20.04, ubuntu-18.04, windows-2019, windows-2016, macOS-10.15, macos-11]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Install Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go-version }}
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        path: ${{ github.workspace }}/src/github.com/shirou/gopsutil
+    - name: Get dependencies
+      if: runner.os == 'Windows'
+      run: |
+        go get -d -u github.com/golang/dep
+        cd $Env:GOPATH/src/github.com/golang/dep
+        git checkout v0.5.4
+        go install -ldflags="-X main.version=v0.5.4" ./cmd/dep
+        echo "$Env:GOPATH/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        cd $Env:GOPATH/src/github.com/shirou/gopsutil
+        dep ensure
+        # exclude v3 from being run with ./...
+        try { rm -ErrorAction:Stop -Recurse -Force $Env:GOPATH/src/github.com/shirou/gopsutil/v3 } catch [System.Management.Automation.ItemNotFoundException] {}
+    - name: Get dependencies
+      if: runner.os != 'Windows'
+      run: |
+        if ! command -v dep &>/dev/null; then
+          mkdir -p $GOPATH/bin
+          curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+          echo "PATH=$GOPATH/bin:$PATH" >> $GITHUB_PATH
+        fi
+        cd $GOPATH/src/github.com/shirou/gopsutil
+        dep ensure
+        # exclude v3 from being run with ./...
+        rm -rf $GOPATH/src/github.com/shirou/gopsutil/v3
+    - name: Test
+      run: |
+        go test github.com/shirou/gopsutil/...

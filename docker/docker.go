@@ -1,18 +1,23 @@
 package docker
 
 import (
+	"encoding/json"
 	"errors"
 
+	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/internal/common"
 )
 
 var ErrDockerNotAvailable = errors.New("docker not available")
 var ErrCgroupNotAvailable = errors.New("cgroup not available")
 
-var invoke common.Invoker
+var invoke common.Invoker = common.Invoke{}
 
-func init() {
-	invoke = common.Invoke{}
+const nanoseconds = 1e9
+
+type CgroupCPUStat struct {
+	cpu.TimesStat
+	Usage float64
 }
 
 type CgroupMemStat struct {
@@ -50,10 +55,20 @@ type CgroupMemStat struct {
 	MemFailCnt              uint64 `json:"memoryFailcnt"`
 }
 
+func (m CgroupMemStat) String() string {
+	s, _ := json.Marshal(m)
+	return string(s)
+}
+
 type CgroupDockerStat struct {
 	ContainerID string `json:"containerID"`
 	Name        string `json:"name"`
 	Image       string `json:"image"`
 	Status      string `json:"status"`
 	Running     bool   `json:"running"`
+}
+
+func (c CgroupDockerStat) String() string {
+	s, _ := json.Marshal(c)
+	return string(s)
 }

@@ -1,16 +1,13 @@
 package disk
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/shirou/gopsutil/internal/common"
 )
 
-var invoke common.Invoker
-
-func init() {
-	invoke = common.Invoke{}
-}
+var invoke common.Invoker = common.Invoke{}
 
 type UsageStat struct {
 	Path              string  `json:"path"`
@@ -46,6 +43,7 @@ type IOCountersStat struct {
 	WeightedIO       uint64 `json:"weightedIO"`
 	Name             string `json:"name"`
 	SerialNumber     string `json:"serialNumber"`
+	Label            string `json:"label"`
 }
 
 func (d UsageStat) String() string {
@@ -61,4 +59,24 @@ func (d PartitionStat) String() string {
 func (d IOCountersStat) String() string {
 	s, _ := json.Marshal(d)
 	return string(s)
+}
+
+// Usage returns a file system usage. path is a filesystem path such
+// as "/", not device file path like "/dev/vda1".  If you want to use
+// a return value of disk.Partitions, use "Mountpoint" not "Device".
+func Usage(path string) (*UsageStat, error) {
+	return UsageWithContext(context.Background(), path)
+}
+
+// Partitions returns disk partitions. If all is false, returns
+// physical devices only (e.g. hard disks, cd-rom drives, USB keys)
+// and ignore all others (e.g. memory partitions such as /dev/shm)
+//
+// 'all' argument is ignored for BSD, see: https://github.com/giampaolo/psutil/issues/906
+func Partitions(all bool) ([]PartitionStat, error) {
+	return PartitionsWithContext(context.Background(), all)
+}
+
+func IOCounters(names ...string) (map[string]IOCountersStat, error) {
+	return IOCountersWithContext(context.Background(), names...)
 }

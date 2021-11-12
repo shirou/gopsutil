@@ -1,5 +1,6 @@
+#!/usr/bin/env bash
 # This script is a helper of migration to gopsutil v2 using gorename
-# 
+#
 # go get golang.org/x/tools/cmd/gorename
 
 IFS=$'\n'
@@ -12,7 +13,7 @@ IFS=$'\n'
 #   This scripts replace process.NetIOCounters() to IOCounters().
 #   So you need hand-fixing process.
 
-TARGETS=`cat <<EOF
+TARGETS=$(cat <<EOF
 CPUTimesStat -> TimesStat
 CPUInfoStat -> InfoStat
 CPUTimes -> Times
@@ -48,11 +49,12 @@ NetConnectionsPid -> ConnectionsPid
 Uid -> UID
 Id -> ID
 convertCpuTimes -> convertCPUTimes
-EOF`
+EOF
+)
 
 for T in $TARGETS
 do
-  echo $T
+  echo "$T"
   gofmt -w -r "$T" ./*.go
 done
 

@@ -3,8 +3,12 @@
 
 package disk
 
-import "github.com/shirou/gopsutil/internal/common"
+import (
+	"context"
 
-func IOCounters(names ...string) (map[string]IOCountersStat, error) {
+	"github.com/shirou/gopsutil/internal/common"
+)
+
+func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOCountersStat, error) {
 	return nil, common.ErrNotImplementedError
 }

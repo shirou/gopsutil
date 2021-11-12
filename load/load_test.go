@@ -1,12 +1,22 @@
 package load
 
 import (
+	"errors"
 	"fmt"
 	"testing"
+
+	"github.com/shirou/gopsutil/internal/common"
 )
+
+func skipIfNotImplementedErr(t testing.TB, err error) {
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
+}
 
 func TestLoad(t *testing.T) {
 	v, err := Avg()
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -15,6 +25,7 @@ func TestLoad(t *testing.T) {
 	if v == empty {
 		t.Errorf("error load: %v", v)
 	}
+	t.Log(v)
 }
 
 func TestLoadAvgStat_String(t *testing.T) {
@@ -27,10 +38,12 @@ func TestLoadAvgStat_String(t *testing.T) {
 	if e != fmt.Sprintf("%v", v) {
 		t.Errorf("LoadAvgStat string is invalid: %v", v)
 	}
+	t.Log(e)
 }
 
 func TestMisc(t *testing.T) {
 	v, err := Misc()
+	skipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -39,16 +52,44 @@ func TestMisc(t *testing.T) {
 	if v == empty {
 		t.Errorf("error load: %v", v)
 	}
+	t.Log(v)
 }
 
 func TestMiscStatString(t *testing.T) {
 	v := MiscStat{
+		ProcsTotal:   4,
+		ProcsCreated: 5,
 		ProcsRunning: 1,
 		ProcsBlocked: 2,
 		Ctxt:         3,
 	}
-	e := `{"procsRunning":1,"procsBlocked":2,"ctxt":3}`
+	e := `{"procsTotal":4,"procsCreated":5,"procsRunning":1,"procsBlocked":2,"ctxt":3}`
 	if e != fmt.Sprintf("%v", v) {
 		t.Errorf("TestMiscString string is invalid: %v", v)
 	}
+	t.Log(e)
+}
+
+func BenchmarkLoad(b *testing.B) {
+	loadAvg := func(t testing.TB) {
+		v, err := Avg()
+		skipIfNotImplementedErr(t, err)
+		if err != nil {
+			t.Errorf("error %v", err)
+		}
+		empty := &AvgStat{}
+		if v == empty {
+			t.Errorf("error load: %v", v)
+		}
+	}
+
+	b.Run("FirstCall", func(b *testing.B) {
+		loadAvg(b)
+	})
+
+	b.Run("SubsequentCalls", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			loadAvg(b)
+		}
+	})
 }

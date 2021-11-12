@@ -4,25 +4,22 @@ package mem
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"github.com/shirou/gopsutil/internal/common"
 	"os/exec"
+
+	"github.com/shirou/gopsutil/internal/common"
+	"golang.org/x/sys/unix"
 )
 
 func GetPageSize() (uint64, error) {
-	mib := []int32{CTLVm, VmUvmexp}
-	buf, length, err := common.CallSyscall(mib)
-	if err != nil {
-		return 0, err
-	}
-	if length < sizeOfUvmexp {
-		return 0, fmt.Errorf("short syscall ret %d bytes", length)
-	}
-	var uvmexp Uvmexp
-	br := bytes.NewReader(buf)
-	err = common.Read(br, binary.LittleEndian, &uvmexp)
+	return GetPageSizeWithContext(context.Background())
+}
+
+func GetPageSizeWithContext(ctx context.Context) (uint64, error) {
+	uvmexp, err := unix.SysctlUvmexp("vm.uvmexp")
 	if err != nil {
 		return 0, err
 	}
@@ -30,17 +27,11 @@ func GetPageSize() (uint64, error) {
 }
 
 func VirtualMemory() (*VirtualMemoryStat, error) {
-	mib := []int32{CTLVm, VmUvmexp}
-	buf, length, err := common.CallSyscall(mib)
-	if err != nil {
-		return nil, err
-	}
-	if length < sizeOfUvmexp {
-		return nil, fmt.Errorf("short syscall ret %d bytes", length)
-	}
-	var uvmexp Uvmexp
-	br := bytes.NewReader(buf)
-	err = common.Read(br, binary.LittleEndian, &uvmexp)
+	return VirtualMemoryWithContext(context.Background())
+}
+
+func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
+	uvmexp, err := unix.SysctlUvmexp("vm.uvmexp")
 	if err != nil {
 		return nil, err
 	}
@@ -59,8 +50,8 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 	ret.Used = ret.Total - ret.Available
 	ret.UsedPercent = float64(ret.Used) / float64(ret.Total) * 100.0
 
-	mib = []int32{CTLVfs, VfsGeneric, VfsBcacheStat}
-	buf, length, err = common.CallSyscall(mib)
+	mib := []int32{CTLVfs, VfsGeneric, VfsBcacheStat}
+	buf, length, err := common.CallSyscall(mib)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +59,7 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 		return nil, fmt.Errorf("short syscall ret %d bytes", length)
 	}
 	var bcs Bcachestats
-	br = bytes.NewReader(buf)
+	br := bytes.NewReader(buf)
 	err = common.Read(br, binary.LittleEndian, &bcs)
 	if err != nil {
 		return nil, err
@@ -80,12 +71,16 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 
 // Return swapctl summary info
 func SwapMemory() (*SwapMemoryStat, error) {
+	return SwapMemoryWithContext(context.Background())
+}
+
+func SwapMemoryWithContext(ctx context.Context) (*SwapMemoryStat, error) {
 	swapctl, err := exec.LookPath("swapctl")
 	if err != nil {
 		return nil, err
 	}
 
-	out, err := invoke.Command(swapctl, "-sk")
+	out, err := invoke.CommandWithContext(ctx, swapctl, "-sk")
 	if err != nil {
 		return &SwapMemoryStat{}, nil
 	}
