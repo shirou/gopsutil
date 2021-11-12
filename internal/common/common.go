@@ -285,6 +285,25 @@ func PathExists(filename string) bool {
 	return false
 }
 
+func PathExistsWithContents(filename string) bool {
+	if _, err := os.Stat(filename); err != nil {
+		return false
+	}
+
+	f, err := os.Open(filename)
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+
+	r := bufio.NewReader(f)
+	_, err = r.ReadSlice('\n')
+	if err != nil {
+		return false
+	}
+	return true
+}
+
 //GetEnv retrieves the environment variable key. If it does not exist it returns the default.
 func GetEnv(key string, dfault string, combineWith ...string) string {
 	value := os.Getenv(key)
