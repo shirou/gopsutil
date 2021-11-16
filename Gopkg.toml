@@ -26,8 +26,8 @@
 
 
 [[constraint]]
-  name = "github.com/StackExchange/wmi"
-  version = "1.0.0"
+  name = "github.com/yusufpapurcu/wmi"
+  version = "1.2.2"
 
 [[constraint]]
   name = "github.com/stretchr/testify"
