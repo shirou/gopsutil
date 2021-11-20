@@ -2,14 +2,6 @@
 
 
 [[projects]]
-  digest = "1:3a991e1f8ab48d1445b5106b628609285cecb1bfe5abdd078b4320d32ec0f3ee"
-  name = "github.com/StackExchange/wmi"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "441642c1665945335b93778e496324884ce569e7"
-  version = "v1.2.1"
-
-[[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
@@ -29,12 +21,43 @@
   version = "v1.2.6"
 
 [[projects]]
+  digest = "1:465db2de82a3f7483baead1dc4eddd2510d6340729bbcc988e238e8cf3d0d18b"
+  name = "github.com/google/go-cmp"
+  packages = [
+    "cmp",
+    "cmp/cmpopts",
+    "cmp/internal/diff",
+    "cmp/internal/flags",
+    "cmp/internal/function",
+    "cmp/internal/value",
+  ]
+  pruneopts = "UT"
+  revision = "d103655696d8ae43c4125ee61454dbf03d8e8324"
+  version = "v0.5.6"
+
+[[projects]]
+  branch = "main"
+  digest = "1:dc1c9a9e26fc2b80713a51c26f8443314eed7d33e2e12df259d7f722df7fd355"
+  name = "github.com/lufia/plan9stats"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "39d0f177ccd07bdf5eb6f051ab9b09651f05d6f2"
+
+[[projects]]
   digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
   pruneopts = "UT"
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
   version = "v1.0.0"
+
+[[projects]]
+  branch = "main"
+  digest = "1:9ad2b62016ecf07e6c97a45a1bd6b66467a77be6ed88b618fb908f5cf312a304"
+  name = "github.com/power-devops/perfstat"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "5aafc221ea8c1ff54b0835cbd5f2386a8410be11"
 
 [[projects]]
   digest = "1:5c7b4a9fefe5b7b160d2cf0ec8457de81db92038c45c88d7d59493568308cc5d"
@@ -64,8 +87,16 @@
   version = "v0.3.0"
 
 [[projects]]
+  digest = "1:50a80d9d302a50c9f5ae5fb4e44c82cf40f0fa184ac847bec897438f28da21ee"
+  name = "github.com/yusufpapurcu/wmi"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "253c5f0cb35e666c4c0fc42083824e7c89f0cc8d"
+  version = "v1.2.2"
+
+[[projects]]
   branch = "master"
-  digest = "1:cded1795a2d143aa9940244639afeaeecc5cfb9bb2a01bdcaa4087e9beb989c0"
+  digest = "1:6eed2fd291874d17d37ecb2bda20d141a475992f3deb80989657325620e01962"
   name = "golang.org/x/sys"
   packages = [
     "internal/unsafeheader",
@@ -75,7 +106,18 @@
     "windows/svc/mgr",
   ]
   pruneopts = "UT"
-  revision = "69063c4bb744bc56492b1a0533d73a23406b0bc2"
+  revision = "dee7805ff2e13b1c4206de89b1c06e95ab66ae0d"
+
+[[projects]]
+  branch = "master"
+  digest = "1:918a46e4a2fb83df33f668f5a6bd51b2996775d073fce1800d3ec01b0a5ddd2b"
+  name = "golang.org/x/xerrors"
+  packages = [
+    ".",
+    "internal",
+  ]
+  pruneopts = "UT"
+  revision = "5ec99f83aff198f5fbd629d6c8d8eb38a04218ca"
 
 [[projects]]
   branch = "v3"
@@ -89,10 +131,14 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/StackExchange/wmi",
+    "github.com/google/go-cmp/cmp",
+    "github.com/google/go-cmp/cmp/cmpopts",
+    "github.com/lufia/plan9stats",
+    "github.com/power-devops/perfstat",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/require",
     "github.com/tklauser/go-sysconf",
+    "github.com/yusufpapurcu/wmi",
     "golang.org/x/sys/unix",
     "golang.org/x/sys/windows",
     "golang.org/x/sys/windows/svc",

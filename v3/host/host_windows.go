@@ -13,7 +13,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/StackExchange/wmi"
+	"github.com/yusufpapurcu/wmi"
 	"github.com/shirou/gopsutil/v3/internal/common"
 	"github.com/shirou/gopsutil/v3/process"
 	"golang.org/x/sys/windows"

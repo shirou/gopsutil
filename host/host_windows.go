@@ -13,9 +13,9 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/StackExchange/wmi"
 	"github.com/shirou/gopsutil/internal/common"
 	"github.com/shirou/gopsutil/process"
+	"github.com/yusufpapurcu/wmi"
 	"golang.org/x/sys/windows"
 )
 
