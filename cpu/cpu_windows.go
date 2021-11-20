@@ -8,7 +8,7 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/StackExchange/wmi"
+	"github.com/yusufpapurcu/wmi"
 	"github.com/shirou/gopsutil/internal/common"
 	"golang.org/x/sys/windows"
 )
