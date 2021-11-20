@@ -12,6 +12,7 @@ import (
 	"reflect"
 	"strings"
 	"syscall"
+	"time"
 	"unicode/utf16"
 	"unsafe"
 
@@ -720,24 +721,36 @@ func (p *Process) OpenFilesWithContext(ctx context.Context) ([]OpenFilesStat, er
 			continue
 		}
 
-		var buf [syscall.MAX_LONG_PATH]uint16
-		n, err := windows.GetFinalPathNameByHandle(windows.Handle(file), &buf[0], syscall.MAX_LONG_PATH, 0)
-		if err != nil {
-			continue
-		}
+		var fileName string
+		ch := make(chan struct{})
 
-		fileName := string(utf16.Decode(buf[:n]))
-		fileInfo, _ := os.Stat(fileName)
-		if fileInfo.IsDir() {
-			continue
-		}
+		go func() {
+			var buf [syscall.MAX_LONG_PATH]uint16
+			n, err := windows.GetFinalPathNameByHandle(windows.Handle(file), &buf[0], syscall.MAX_LONG_PATH, 0)
+			if err != nil {
+				return
+			}
 
-		if _, exists := fileExists[fileName]; !exists {
-			files = append(files, OpenFilesStat{
-				Path: fileName,
-				Fd:   uint64(file),
-			})
-			fileExists[fileName] = true
+			fileName = string(utf16.Decode(buf[:n]))
+			ch <- struct{}{}
+		}()
+
+		select {
+		case <-time.NewTimer(100 * time.Millisecond).C:
+			continue
+		case <-ch:
+			fileInfo, _ := os.Stat(fileName)
+			if fileInfo.IsDir() {
+				continue
+			}
+
+			if _, exists := fileExists[fileName]; !exists {
+				files = append(files, OpenFilesStat{
+					Path: fileName,
+					Fd:   uint64(file),
+				})
+				fileExists[fileName] = true
+			}
 		}
 	}
 
