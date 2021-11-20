@@ -752,7 +752,7 @@ func (p *Process) OpenFilesWithContext(ctx context.Context) ([]OpenFilesStat, er
 				fileExists[fileName] = true
 			}
 		case <-ctx.Done():
-			return files, nil
+			return files, ctx.Err()
 		}
 	}
 
