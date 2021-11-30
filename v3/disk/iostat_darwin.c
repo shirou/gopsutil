@@ -16,7 +16,7 @@ static int getdrivestat(io_registry_entry_t d, DriveStats *stat);
 static int fillstat(io_registry_entry_t d, DriveStats *stat);
 
 int
-v3readdrivestat(DriveStats a[], int n)
+gopsutil_v3_readdrivestat(DriveStats a[], int n)
 {
 	mach_port_t port;
 	CFMutableDictionaryRef match;
