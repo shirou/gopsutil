@@ -2,7 +2,11 @@
 
 package docker
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/shirou/gopsutil/v3/cgroup"
+)
 
 func TestGetDockerIDList(t *testing.T) {
 	// If there is not docker environment, this test always fail.
@@ -67,7 +71,7 @@ func TestCgroupMem(t *testing.T) {
 		if err != nil {
 			t.Errorf("error %v", err)
 		}
-		empty := &CgroupMemStat{}
+		empty := &cgroup.CgroupMemStat{}
 		if v == empty {
 			t.Errorf("Could not CgroupMemStat %v", v)
 		}
