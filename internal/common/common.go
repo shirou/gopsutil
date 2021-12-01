@@ -377,3 +377,14 @@ func getSysctrlEnv(env []string) []string {
 	}
 	return env
 }
+
+// TrimQuotes removes quotes around the source string.
+// If the source string is not surrounded by quotes at both ends, it is returned as is.
+func TrimQuotes(s string) string {
+	if len(s) >= 2 {
+		if s[0] == '"' && s[len(s)-1] == '"' {
+			return s[1 : len(s)-1]
+		}
+	}
+	return s
+}

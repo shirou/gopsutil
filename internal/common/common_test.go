@@ -134,3 +134,28 @@ func TestGetSysctrlEnv(t *testing.T) {
 		t.Errorf("unexpected real result from getSysctrlEnv: %q", env)
 	}
 }
+
+func TestTrimQuotes(t *testing.T) {
+	tests := []struct{
+		source string
+		expected string
+	}{
+		{"", ""},
+		{`"`,`"`},
+		{`""`, ""},
+		{"''", "''"},
+		{"''", "''"},
+		{` ""`, ` ""`},
+		{`"""`, `"`},
+		{`""""`, `""`},
+		{`"foo"`, "foo"},
+		{"foo", "foo"},
+	}
+	for _, test := range tests {
+		t.Run(test.source, func(t *testing.T) {
+			if TrimQuotes(test.source) != test.expected {
+				t.Errorf("expected %v", test.expected)
+			}
+		})
+	}
+}

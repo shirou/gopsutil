@@ -273,20 +273,10 @@ func GetOSRelease() (platform string, version string, err error) {
 		}
 		switch field[0] {
 		case "ID": // use ID for lowercase
-			platform = trimQuotes(field[1])
+			platform = TrimQuotes(field[1])
 		case "VERSION":
-			version = trimQuotes(field[1])
+			version = TrimQuotes(field[1])
 		}
 	}
 	return platform, version, nil
-}
-
-// Remove quotes of the source string
-func trimQuotes(s string) string {
-	if len(s) >= 2 {
-		if s[0] == '"' && s[len(s)-1] == '"' {
-			return s[1 : len(s)-1]
-		}
-	}
-	return s
 }
