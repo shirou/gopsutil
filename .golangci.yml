@@ -1,6 +1,7 @@
 linters:
   enable:
     - errorlint
+    - gci
     - gosimple
     - typecheck
   disable:
