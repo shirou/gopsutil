@@ -13,13 +13,13 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/shirou/gopsutil/internal/common"
-	"github.com/shirou/gopsutil/process"
+	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v3/process"
 	"golang.org/x/sys/unix"
 )
 
 // from utmpx.h
-const USER_PROCESS = 7
+const user_PROCESS = 7
 
 func HostIDWithContext(ctx context.Context) (string, error) {
 	ioreg, err := exec.LookPath("ioreg")
@@ -81,7 +81,7 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 		if err != nil {
 			continue
 		}
-		if u.Type != USER_PROCESS {
+		if u.Type != user_PROCESS {
 			continue
 		}
 		user := UserStat{

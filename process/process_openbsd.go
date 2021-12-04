@@ -14,10 +14,10 @@ import (
 	"strings"
 	"unsafe"
 
-	cpu "github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/internal/common"
-	mem "github.com/shirou/gopsutil/mem"
-	net "github.com/shirou/gopsutil/net"
+	cpu "github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/internal/common"
+	mem "github.com/shirou/gopsutil/v3/mem"
+	net "github.com/shirou/gopsutil/v3/net"
 	"golang.org/x/sys/unix"
 )
 
@@ -67,6 +67,10 @@ func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 	}
 
 	return name, nil
+}
+
+func (p *Process) CwdWithContext(ctx context.Context) (string, error) {
+	return "", common.ErrNotImplementedError
 }
 
 func (p *Process) ExeWithContext(ctx context.Context) (string, error) {
@@ -142,26 +146,26 @@ func (p *Process) ParentWithContext(ctx context.Context) (*Process, error) {
 	return nil, common.ErrNotImplementedError
 }
 
-func (p *Process) StatusWithContext(ctx context.Context) (string, error) {
+func (p *Process) StatusWithContext(ctx context.Context) ([]string, error) {
 	k, err := p.getKProc()
 	if err != nil {
-		return "", err
+		return []string{""}, err
 	}
 	var s string
 	switch k.Stat {
 	case SIDL:
 	case SRUN:
 	case SONPROC:
-		s = "R"
+		s = Running
 	case SSLEEP:
-		s = "S"
+		s = Sleep
 	case SSTOP:
-		s = "T"
+		s = Stop
 	case SDEAD:
-		s = "Z"
+		s = Zombie
 	}
 
-	return s, nil
+	return []string{s}, nil
 }
 
 func (p *Process) ForegroundWithContext(ctx context.Context) (bool, error) {

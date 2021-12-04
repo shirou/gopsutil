@@ -11,8 +11,8 @@ import (
 	"strconv"
 	"strings"
 
-	cpu "github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/internal/common"
+	cpu "github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/internal/common"
 )
 
 // GetDockerStat returns a list of Docker basic stats.
@@ -89,7 +89,7 @@ func GetDockerIDListWithContext(ctx context.Context) ([]string, error) {
 // containerID is same as docker id if you use docker.
 // If you use container via systemd.slice, you could use
 // containerID = docker-<container id>.scope and base=/sys/fs/cgroup/cpuacct/system.slice/
-func CgroupCPU(containerID string, base string) (*cpu.TimesStat, error) {
+func CgroupCPU(containerID string, base string) (*CgroupCPUStat, error) {
 	return CgroupCPUWithContext(context.Background(), containerID, base)
 }
 
@@ -101,7 +101,7 @@ func CgroupCPUUsage(containerID string, base string) (float64, error) {
 	return CgroupCPUUsageWithContext(context.Background(), containerID, base)
 }
 
-func CgroupCPUWithContext(ctx context.Context, containerID string, base string) (*cpu.TimesStat, error) {
+func CgroupCPUWithContext(ctx context.Context, containerID string, base string) (*CgroupCPUStat, error) {
 	statfile := getCgroupFilePath(containerID, base, "cpuacct", "cpuacct.stat")
 	lines, err := common.ReadLines(statfile)
 	if err != nil {
@@ -111,7 +111,9 @@ func CgroupCPUWithContext(ctx context.Context, containerID string, base string) 
 	if len(containerID) == 0 {
 		containerID = "all"
 	}
-	ret := &cpu.TimesStat{CPU: containerID}
+
+	ret := &CgroupCPUStat{}
+	ret.CPU = containerID
 	for _, line := range lines {
 		fields := strings.Split(line, " ")
 		if fields[0] == "user" {
@@ -127,6 +129,11 @@ func CgroupCPUWithContext(ctx context.Context, containerID string, base string) 
 			}
 		}
 	}
+	usage, err := CgroupCPUUsageWithContext(ctx, containerID, base)
+	if err != nil {
+		return nil, err
+	}
+	ret.Usage = usage
 	return ret, nil
 }
 
@@ -145,7 +152,7 @@ func CgroupCPUUsageWithContext(ctx context.Context, containerID, base string) (f
 	return ns / nanoseconds, nil
 }
 
-func CgroupCPUDocker(containerid string) (*cpu.TimesStat, error) {
+func CgroupCPUDocker(containerid string) (*CgroupCPUStat, error) {
 	return CgroupCPUDockerWithContext(context.Background(), containerid)
 }
 
@@ -153,7 +160,7 @@ func CgroupCPUUsageDocker(containerid string) (float64, error) {
 	return CgroupCPUDockerUsageWithContext(context.Background(), containerid)
 }
 
-func CgroupCPUDockerWithContext(ctx context.Context, containerid string) (*cpu.TimesStat, error) {
+func CgroupCPUDockerWithContext(ctx context.Context, containerid string) (*CgroupCPUStat, error) {
 	return CgroupCPU(containerid, common.HostSys("fs/cgroup/cpuacct/docker"))
 }
 
@@ -249,11 +256,11 @@ func CgroupMemWithContext(ctx context.Context, containerID string, base string) 
 	if err == nil {
 		ret.MemMaxUsageInBytes = r
 	}
-	r, err = getCgroupMemFile(containerID, base, "memoryLimitInBbytes")
+	r, err = getCgroupMemFile(containerID, base, "memory.limit_in_bytes")
 	if err == nil {
 		ret.MemLimitInBytes = r
 	}
-	r, err = getCgroupMemFile(containerID, base, "memoryFailcnt")
+	r, err = getCgroupMemFile(containerID, base, "memory.failcnt")
 	if err == nil {
 		ret.MemFailCnt = r
 	}

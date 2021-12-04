@@ -10,7 +10,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/v3/internal/common"
 )
 
 // Return a list of network connections opened.

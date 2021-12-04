@@ -12,7 +12,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/v3/internal/common"
 	"github.com/tklauser/go-sysconf"
 	"golang.org/x/sys/unix"
 )
@@ -20,20 +20,20 @@ import (
 // sys/sched.h
 var (
 	CPUser    = 0
-	CPNice    = 1
-	CPSys     = 2
-	CPIntr    = 3
-	CPIdle    = 4
-	CPUStates = 5
+	cpNice    = 1
+	cpSys     = 2
+	cpIntr    = 3
+	cpIdle    = 4
+	cpUStates = 5
 )
 
 // sys/sysctl.h
 const (
-	CTLKern     = 1  // "high kernel": proc, limits
-	CTLHw       = 6  // CTL_HW
-	SMT         = 24 // HW_SMT
-	KernCptime  = 40 // KERN_CPTIME
-	KernCptime2 = 71 // KERN_CPTIME2
+	ctlKern     = 1  // "high kernel": proc, limits
+	ctlHw       = 6  // CTL_HW
+	sMT         = 24 // HW_sMT
+	kernCptime  = 40 // KERN_CPTIME
+	kernCptime2 = 71 // KERN_CPTIME2
 )
 
 var ClocksPerSec = float64(128)
@@ -56,15 +56,15 @@ func init() {
 			return
 		}
 		if version >= 6.4 {
-			CPIntr = 4
-			CPIdle = 5
-			CPUStates = 6
+			cpIntr = 4
+			cpIdle = 5
+			cpUStates = 6
 		}
 	}()
 }
 
 func smt() (bool, error) {
-	mib := []int32{CTLHw, SMT}
+	mib := []int32{ctlHw, sMT}
 	buf, _, err := common.CallSyscall(mib)
 	if err != nil {
 		return false, err
@@ -108,12 +108,12 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 			j *= 2
 		}
 
-		var cpuTimes = make([]int32, CPUStates)
+		var cpuTimes = make([]int32, cpUStates)
 		var mib []int32
 		if percpu {
-			mib = []int32{CTLKern, KernCptime2, int32(j)}
+			mib = []int32{ctlKern, kernCptime2, int32(j)}
 		} else {
-			mib = []int32{CTLKern, KernCptime}
+			mib = []int32{ctlKern, kernCptime}
 		}
 		buf, _, err := common.CallSyscall(mib)
 		if err != nil {
@@ -127,10 +127,10 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 		}
 		c := TimesStat{
 			User:   float64(cpuTimes[CPUser]) / ClocksPerSec,
-			Nice:   float64(cpuTimes[CPNice]) / ClocksPerSec,
-			System: float64(cpuTimes[CPSys]) / ClocksPerSec,
-			Idle:   float64(cpuTimes[CPIdle]) / ClocksPerSec,
-			Irq:    float64(cpuTimes[CPIntr]) / ClocksPerSec,
+			Nice:   float64(cpuTimes[cpNice]) / ClocksPerSec,
+			System: float64(cpuTimes[cpSys]) / ClocksPerSec,
+			Idle:   float64(cpuTimes[cpIdle]) / ClocksPerSec,
+			Irq:    float64(cpuTimes[cpIntr]) / ClocksPerSec,
 		}
 		if percpu {
 			c.CPU = fmt.Sprintf("cpu%d", j)

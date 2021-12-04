@@ -7,19 +7,19 @@ import (
 	"runtime"
 	"sort"
 	"sync"
-	"syscall"
 	"time"
 
-	"github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/internal/common"
-	"github.com/shirou/gopsutil/mem"
-	"github.com/shirou/gopsutil/net"
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v3/mem"
+	"github.com/shirou/gopsutil/v3/net"
 )
 
 var (
 	invoke                 common.Invoker = common.Invoke{}
 	ErrorNoChildren                       = errors.New("process does not have children")
 	ErrorProcessNotRunning                = errors.New("process does not exist")
+	ErrorNotPermitted                     = errors.New("operation not permitted")
 )
 
 type Process struct {
@@ -42,6 +42,34 @@ type Process struct {
 
 	tgid int32
 }
+
+// Process status
+const (
+	// Running marks a task a running or runnable (on the run queue)
+	Running = "running"
+	// Blocked marks a task waiting on a short, uninterruptable operation (usually IO)
+	Blocked = "blocked"
+	// Idle marks a task sleeping for more than about 20 seconds
+	Idle = "idle"
+	// Lock marks a task waiting to acquire a lock
+	Lock = "lock"
+	// Sleep marks task waiting for short, interruptable operation
+	Sleep = "sleep"
+	// Stop marks a stopped process
+	Stop = "stop"
+	// Wait marks an idle interrupt thread (or paging in pre 2.6.xx Linux)
+	Wait = "wait"
+	// Zombie marks a defunct process, terminated but not reaped by its parent
+	Zombie = "zombie"
+
+	// Solaris states. See https://github.com/collectd/collectd/blob/1da3305c10c8ff9a63081284cf3d4bb0f6daffd8/src/processes.c#L2115
+	Daemon   = "daemon"
+	Detached = "detached"
+	System   = "system"
+	Orphan   = "orphan"
+
+	UnknownState = ""
+)
 
 type OpenFilesStat struct {
 	Path string `json:"path"`
@@ -68,8 +96,8 @@ type SignalInfoStat struct {
 
 type RlimitStat struct {
 	Resource int32  `json:"resource"`
-	Soft     int32  `json:"soft"` //TODO too small. needs to be uint64
-	Hard     int32  `json:"hard"` //TODO too small. needs to be uint64
+	Soft     uint64 `json:"soft"`
+	Hard     uint64 `json:"hard"`
 	Used     uint64 `json:"used"`
 }
 
@@ -379,7 +407,7 @@ func (p *Process) Parent() (*Process, error) {
 // R: Running S: Sleep T: Stop I: Idle
 // Z: Zombie W: Wait L: Lock
 // The character is same within all supported platforms.
-func (p *Process) Status() (string, error) {
+func (p *Process) Status() ([]string, error) {
 	return p.StatusWithContext(context.Background())
 }
 
@@ -498,11 +526,6 @@ func (p *Process) ConnectionsMax(max int) ([]net.ConnectionStat, error) {
 	return p.ConnectionsMaxWithContext(context.Background(), max)
 }
 
-// NetIOCounters returns NetIOCounters of the process.
-func (p *Process) NetIOCounters(pernic bool) ([]net.IOCountersStat, error) {
-	return p.NetIOCountersWithContext(context.Background(), pernic)
-}
-
 // MemoryMaps get memory maps from /proc/(pid)/smaps
 func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 	return p.MemoryMapsWithContext(context.Background(), grouped)
@@ -514,7 +537,7 @@ func (p *Process) Tgid() (int32, error) {
 }
 
 // SendSignal sends a unix.Signal to the process.
-func (p *Process) SendSignal(sig syscall.Signal) error {
+func (p *Process) SendSignal(sig Signal) error {
 	return p.SendSignalWithContext(context.Background(), sig)
 }
 
@@ -546,4 +569,43 @@ func (p *Process) Username() (string, error) {
 // Environ returns the environment variables of the process.
 func (p *Process) Environ() ([]string, error) {
 	return p.EnvironWithContext(context.Background())
+}
+
+// convertStatusChar as reported by the ps command across different platforms.
+func convertStatusChar(letter string) string {
+	// Sources
+	// Darwin: http://www.mywebuniversity.com/Man_Pages/Darwin/man_ps.html
+	// FreeBSD: https://www.freebsd.org/cgi/man.cgi?ps
+	// Linux https://man7.org/linux/man-pages/man1/ps.1.html
+	// OpenBSD: https://man.openbsd.org/ps.1#state
+	// Solaris: https://github.com/collectd/collectd/blob/1da3305c10c8ff9a63081284cf3d4bb0f6daffd8/src/processes.c#L2115
+	switch letter {
+	case "A":
+		return Daemon
+	case "D", "U":
+		return Blocked
+	case "E":
+		return Detached
+	case "I":
+		return Idle
+	case "L":
+		return Lock
+	case "O":
+		return Orphan
+	case "R":
+		return Running
+	case "S":
+		return Sleep
+	case "T", "t":
+		// "t" is used by Linux to signal stopped by the debugger during tracing
+		return Stop
+	case "W":
+		return Wait
+	case "Y":
+		return System
+	case "Z":
+		return Zombie
+	default:
+		return UnknownState
+	}
 }

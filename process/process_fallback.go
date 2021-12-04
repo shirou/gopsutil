@@ -1,4 +1,4 @@
-// +build !darwin,!linux,!freebsd,!openbsd,!windows,!solaris
+// +build !darwin,!linux,!freebsd,!openbsd,!windows,!solaris,!plan9
 
 package process
 
@@ -6,10 +6,12 @@ import (
 	"context"
 	"syscall"
 
-	"github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/internal/common"
-	"github.com/shirou/gopsutil/net"
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v3/net"
 )
+
+type Signal = syscall.Signal
 
 type MemoryMapsStat struct {
 	Path         string `json:"path"`
@@ -76,8 +78,8 @@ func (p *Process) ParentWithContext(ctx context.Context) (*Process, error) {
 	return nil, common.ErrNotImplementedError
 }
 
-func (p *Process) StatusWithContext(ctx context.Context) (string, error) {
-	return "", common.ErrNotImplementedError
+func (p *Process) StatusWithContext(ctx context.Context) ([]string, error) {
+	return []string{""}, common.ErrNotImplementedError
 }
 
 func (p *Process) ForegroundWithContext(ctx context.Context) (bool, error) {
@@ -172,15 +174,11 @@ func (p *Process) ConnectionsMaxWithContext(ctx context.Context, max int) ([]net
 	return nil, common.ErrNotImplementedError
 }
 
-func (p *Process) NetIOCountersWithContext(ctx context.Context, pernic bool) ([]net.IOCountersStat, error) {
-	return nil, common.ErrNotImplementedError
-}
-
 func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]MemoryMapsStat, error) {
 	return nil, common.ErrNotImplementedError
 }
 
-func (p *Process) SendSignalWithContext(ctx context.Context, sig syscall.Signal) error {
+func (p *Process) SendSignalWithContext(ctx context.Context, sig Signal) error {
 	return common.ErrNotImplementedError
 }
 

@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/v3/internal/common"
 )
 
 func skipIfNotImplementedErr(t *testing.T, err error) {
@@ -20,7 +20,7 @@ func TestAddrString(t *testing.T) {
 	v := Addr{IP: "192.168.0.1", Port: 8000}
 
 	s := fmt.Sprintf("%v", v)
-	if s != "{\"ip\":\"192.168.0.1\",\"port\":8000}" {
+	if s != `{"ip":"192.168.0.1","port":8000}` {
 		t.Errorf("Addr string is invalid: %v", v)
 	}
 }
@@ -232,7 +232,7 @@ func TestNetFilterCounters(t *testing.T) {
 
 	if runtime.GOOS == "linux" {
 		// some test environment has not the path.
-		if !common.PathExists("/proc/sys/net/netfilter/nf_conntrackCount") {
+		if !common.PathExists("/proc/sys/net/netfilter/nf_connTrackCount") {
 			t.SkipNow()
 		}
 	}
@@ -247,8 +247,30 @@ func TestNetFilterCounters(t *testing.T) {
 	}
 	for _, vv := range v {
 		if vv.ConnTrackMax == 0 {
-			t.Errorf("nf_conntrackMax needs to be greater than zero: %v", vv)
+			t.Errorf("nf_connTrackMax needs to be greater than zero: %v", vv)
 		}
 	}
 
+}
+
+func TestInterfaceStatString(t *testing.T) {
+	v := InterfaceStat{
+		Index:        0,
+		MTU:          1500,
+		Name:         "eth0",
+		HardwareAddr: "01:23:45:67:89:ab",
+		Flags:        []string{"up", "down"},
+		Addrs:        InterfaceAddrList{{Addr: "1.2.3.4"}, {Addr: "5.6.7.8"}},
+	}
+
+	s := fmt.Sprintf("%v", v)
+	if s != `{"index":0,"mtu":1500,"name":"eth0","hardwareAddr":"01:23:45:67:89:ab","flags":["up","down"],"addrs":[{"addr":"1.2.3.4"},{"addr":"5.6.7.8"}]}` {
+		t.Errorf("InterfaceStat string is invalid: %v", s)
+	}
+
+	list := InterfaceStatList{v, v}
+	s = fmt.Sprintf("%v", list)
+	if s != `[{"index":0,"mtu":1500,"name":"eth0","hardwareAddr":"01:23:45:67:89:ab","flags":["up","down"],"addrs":[{"addr":"1.2.3.4"},{"addr":"5.6.7.8"}]},{"index":0,"mtu":1500,"name":"eth0","hardwareAddr":"01:23:45:67:89:ab","flags":["up","down"],"addrs":[{"addr":"1.2.3.4"},{"addr":"5.6.7.8"}]}]` {
+		t.Errorf("InterfaceStatList string is invalid: %v", s)
+	}
 }

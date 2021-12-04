@@ -10,7 +10,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/v3/internal/common"
 	"golang.org/x/sys/unix"
 )
 
@@ -69,7 +69,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 			Device:     fields[0],
 			Mountpoint: fields[1],
 			Fstype:     fields[2],
-			Opts:       fields[3],
+			Opts:       strings.Split(fields[3], ","),
 		})
 	}
 	if err := scanner.Err(); err != nil {
@@ -112,4 +112,11 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 	usageStat.UsedPercent = (float64(usageStat.Used) / float64(usageStat.Total)) * 100.0
 
 	return usageStat, nil
+}
+func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
+	return "", common.ErrNotImplementedError
+}
+
+func LabelWithContext(ctx context.Context, name string) (string, error) {
+	return "", common.ErrNotImplementedError
 }

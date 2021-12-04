@@ -6,7 +6,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/v3/internal/common"
 )
 
 func skipIfNotImplementedErr(t *testing.T, err error) {
@@ -101,7 +101,7 @@ func TestHostInfoStat_String(t *testing.T) {
 		HostID:     "edfd25ff-3c9c-b1a4-e660-bd826495ad35",
 		KernelArch: "x86_64",
 	}
-	e := `{"hostname":"test","uptime":3000,"bootTime":1447040000,"procs":100,"os":"linux","platform":"ubuntu","platformFamily":"","platformVersion":"","kernelVersion":"","kernelArch":"x86_64","virtualizationSystem":"","virtualizationRole":"","hostid":"edfd25ff-3c9c-b1a4-e660-bd826495ad35"}`
+	e := `{"hostname":"test","uptime":3000,"bootTime":1447040000,"procs":100,"os":"linux","platform":"ubuntu","platformFamily":"","platformVersion":"","kernelVersion":"","kernelArch":"x86_64","virtualizationSystem":"","virtualizationRole":"","hostId":"edfd25ff-3c9c-b1a4-e660-bd826495ad35"}`
 	if e != fmt.Sprintf("%v", v) {
 		t.Errorf("HostInfoStat string is invalid:\ngot  %v\nwant %v", v, e)
 	}
@@ -137,10 +137,12 @@ func TestTemperatureStat_String(t *testing.T) {
 	v := TemperatureStat{
 		SensorKey:   "CPU",
 		Temperature: 1.1,
+		High:        30.1,
+		Critical:    0.1,
 	}
-	s := `{"sensorKey":"CPU","sensorTemperature":1.1}`
+	s := `{"sensorKey":"CPU","temperature":1.1,"sensorHigh":30.1,"sensorCritical":0.1}`
 	if s != fmt.Sprintf("%v", v) {
-		t.Errorf("TemperatureStat string is invalid")
+		t.Errorf("TemperatureStat string is invalid, %v", fmt.Sprintf("%v", v))
 	}
 }
 

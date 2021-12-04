@@ -3,7 +3,7 @@
 
 package cpu
 
-import "github.com/shirou/gopsutil/internal/common"
+import "github.com/shirou/gopsutil/v3/internal/common"
 
 func perCPUTimes() ([]TimesStat, error) {
 	return []TimesStat{}, common.ErrNotImplementedError
