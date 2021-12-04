@@ -72,7 +72,7 @@ kern_return_t gopsutil_v3_open_smc(void) {
   kern_return_t result;
   io_service_t service;
 
-  service = IOServiceGetMatchingService(kIOMasterPortDefault,
+  service = IOServiceGetMatchingService(kIOMainPortDefault,
                                         IOServiceMatching(IOSERVICE_SMC));
   if (service == 0) {
     // Note: IOServiceMatching documents 0 on failure
