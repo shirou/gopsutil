@@ -1,6 +1,7 @@
 package mem
 
 import (
+	"errors"
 	"fmt"
 	"runtime"
 	"testing"
@@ -10,7 +11,7 @@ import (
 )
 
 func skipIfNotImplementedErr(t *testing.T, err error) {
-	if err == common.ErrNotImplementedError {
+	if errors.Is(err, common.ErrNotImplementedError) {
 		t.Skip("not implemented")
 	}
 }

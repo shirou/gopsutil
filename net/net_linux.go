@@ -468,7 +468,7 @@ func connectionsPidMaxWithoutUidsWithContext(ctx context.Context, kind string, p
 		}
 	}
 	if err != nil {
-		return nil, fmt.Errorf("cound not get pid(s), %d: %s", pid, err)
+		return nil, fmt.Errorf("cound not get pid(s), %d: %w", pid, err)
 	}
 	return statsFromInodes(root, pid, tmap, inodes, skipUids)
 }
@@ -672,7 +672,7 @@ func getProcInodesAll(root string, max int) (map[string][]inodeMap, error) {
 		t, err := getProcInodes(root, pid, max)
 		if err != nil {
 			// skip if permission error or no longer exists
-			if os.IsPermission(err) || os.IsNotExist(err) || err == io.EOF {
+			if os.IsPermission(err) || os.IsNotExist(err) || errors.Is(err, io.EOF) {
 				continue
 			}
 			return ret, err
@@ -702,7 +702,7 @@ func decodeAddress(family uint32, src string) (Addr, error) {
 	}
 	decoded, err := hex.DecodeString(addr)
 	if err != nil {
-		return Addr{}, fmt.Errorf("decode error, %s", err)
+		return Addr{}, fmt.Errorf("decode error, %w", err)
 	}
 	var ip net.IP
 	// Assumes this is little_endian
