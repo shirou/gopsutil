@@ -42,6 +42,59 @@ type ConnectionStat struct {
 	Pid    int32   `json:"pid"`
 }
 
+type ConnectionStatOptions struct {
+	Context  context.Context
+	Kind     string
+	Pid      int32
+	Max      int
+	SkipUids bool
+	Walker   func(ConnectionStat) error
+}
+
+type ConnectionStatOptionsFn func(*ConnectionStatOptions)
+
+func WithSkipUids(skipUids bool) ConnectionStatOptionsFn {
+	return func(options *ConnectionStatOptions) {
+		options.SkipUids = skipUids
+	}
+}
+
+func WithMax(max int) ConnectionStatOptionsFn {
+	return func(options *ConnectionStatOptions) {
+		options.Max = max
+	}
+}
+
+func WithKind(kind string) ConnectionStatOptionsFn {
+	return func(options *ConnectionStatOptions) {
+		options.Kind = kind
+	}
+}
+
+func WithPid(pid int32) ConnectionStatOptionsFn {
+	return func(options *ConnectionStatOptions) {
+		options.Pid = pid
+	}
+}
+func WithContext(ctx context.Context) ConnectionStatOptionsFn {
+	return func(options *ConnectionStatOptions) {
+		options.Context = ctx
+	}
+}
+func WithWalker(walker func(ConnectionStat) error) ConnectionStatOptionsFn {
+	return func(options *ConnectionStatOptions) {
+		options.Walker = walker
+	}
+}
+
+func createOptions(fns ...ConnectionStatOptionsFn) *ConnectionStatOptions {
+	options := &ConnectionStatOptions{Context: context.Background(), Kind: "all"}
+	for _, fn := range fns {
+		fn(options)
+	}
+	return options
+}
+
 // System wide stats about different network protocols
 type ProtoCountersStat struct {
 	Protocol string           `json:"protocol"`

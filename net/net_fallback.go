@@ -1,3 +1,4 @@
+//go:build !aix && !darwin && !linux && !freebsd && !openbsd && !windows
 // +build !aix,!darwin,!linux,!freebsd,!openbsd,!windows
 
 package net
@@ -38,6 +39,12 @@ func ProtoCounters(protocols []string) ([]ProtoCountersStat, error) {
 
 func ProtoCountersWithContext(ctx context.Context, protocols []string) ([]ProtoCountersStat, error) {
 	return []ProtoCountersStat{}, common.ErrNotImplementedError
+}
+
+// Return a list of network connections opened.
+func ConnectionsOptions(fns ...ConnectionStatOptionsFn) ([]ConnectionStat, error) {
+	options := createOptions(fns...)
+	return ConnectionsWithContext(options.Context, options.Kind)
 }
 
 func Connections(kind string) ([]ConnectionStat, error) {

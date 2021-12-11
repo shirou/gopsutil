@@ -1,3 +1,4 @@
+//go:build aix
 // +build aix
 
 package net
@@ -336,6 +337,12 @@ func parseNetstatA(output string, kind string) ([]ConnectionStat, error) {
 
 	return ret, nil
 
+}
+
+// Return a list of network connections opened.
+func ConnectionsOptions(fns ...ConnectionStatOptionsFn) ([]ConnectionStat, error) {
+	options := createOptions(fns...)
+	return ConnectionsWithContext(options.Context, options.Kind)
 }
 
 func Connections(kind string) ([]ConnectionStat, error) {

@@ -1,3 +1,4 @@
+//go:build freebsd || darwin
 // +build freebsd darwin
 
 package net
@@ -12,6 +13,12 @@ import (
 
 	"github.com/shirou/gopsutil/v3/internal/common"
 )
+
+// Return a list of network connections opened.
+func ConnectionsOptions(fns ...ConnectionStatOptionsFn) ([]ConnectionStat, error) {
+	options := createOptions(fns...)
+	return ConnectionsPidWithContext(options.Context, options.Kind, options.Pid)
+}
 
 // Return a list of network connections opened.
 func Connections(kind string) ([]ConnectionStat, error) {
