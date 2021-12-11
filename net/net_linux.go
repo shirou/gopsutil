@@ -14,6 +14,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -568,43 +569,40 @@ func getProcInodes(root string, pid int32, max int) (map[string][]inodeMap, erro
 	ret := make(map[string][]inodeMap)
 
 	dir := fmt.Sprintf("%s/%d/fd", root, pid)
-	f, err := os.Open(dir)
-	if err != nil {
-		return ret, err
-	}
-	defer f.Close()
-	dirEntries, err := f.ReadDir(max)
-	if err != nil {
-		return ret, err
-	}
-	for _, dirEntry := range dirEntries {
-		inodePath := fmt.Sprintf("%s/%d/fd/%s", root, pid, dirEntry.Name())
+	n := 0
+	if err := filepath.WalkDir(dir, func(root string, info os.DirEntry, err error) error {
+		if err != nil || !info.IsDir() {
+			return err
+		}
 
+		inodePath := fmt.Sprintf("%s/%d/fd/%s", root, pid, info.Name())
 		inode, err := os.Readlink(inodePath)
 		if err != nil {
-			continue
+			return filepath.SkipDir
 		}
 		if !strings.HasPrefix(inode, "socket:[") {
-			continue
+			return filepath.SkipDir
 		}
 		// the process is using a socket
 		l := len(inode)
 		inode = inode[8 : l-1]
-		_, ok := ret[inode]
-		if !ok {
-			ret[inode] = make([]inodeMap, 0)
-		}
-		fd, err := strconv.Atoi(dirEntry.Name())
+		fd, err := strconv.Atoi(info.Name())
 		if err != nil {
-			continue
+			return filepath.SkipDir
 		}
 
-		i := inodeMap{
-			pid: pid,
-			fd:  uint32(fd),
-		}
+		i := inodeMap{pid: pid, fd: uint32(fd)}
 		ret[inode] = append(ret[inode], i)
+
+		if n++; max > 0 && n >= max {
+			return io.EOF
+		}
+
+		return filepath.SkipDir
+	}); err != nil {
+		return nil, err
 	}
+
 	return ret, nil
 }
 
@@ -617,25 +615,33 @@ func Pids() ([]int32, error) {
 }
 
 func PidsWithContext(ctx context.Context) ([]int32, error) {
+	return PidsWithContextWalker(ctx, nil)
+}
+
+func PidsWithContextWalker(ctx context.Context, pidWalker func(pid int32) error) ([]int32, error) {
 	var ret []int32
 
-	d, err := os.Open(common.HostProc())
-	if err != nil {
-		return nil, err
-	}
-	defer d.Close()
+	if err := filepath.WalkDir(common.HostProc(), func(root string, info os.DirEntry, err error) error {
+		if err == nil && info.IsDir() {
+			pid, err := strconv.ParseInt(info.Name(), 10, 32)
+			if err != nil { // if not numeric name, just skip
+				return filepath.SkipDir
+			}
 
-	fnames, err := d.Readdirnames(-1)
-	if err != nil {
-		return nil, err
-	}
-	for _, fname := range fnames {
-		pid, err := strconv.ParseInt(fname, 10, 32)
-		if err != nil {
-			// if not numeric name, just skip
-			continue
+			if pidWalker == nil {
+				ret = append(ret, int32(pid))
+			} else {
+				if err := pidWalker(int32(pid)); err != nil {
+					return err
+				}
+			}
+
+			return filepath.SkipDir
 		}
-		ret = append(ret, int32(pid))
+
+		return err
+	}); err != nil {
+		return nil, err
 	}
 
 	return ret, nil
@@ -690,27 +696,28 @@ func (p *process) fillFromStatus() error {
 }
 
 func getProcInodesAll(root string, max int) (map[string][]inodeMap, error) {
-	pids, err := Pids()
-	if err != nil {
-		return nil, err
-	}
 	ret := make(map[string][]inodeMap)
-
-	for _, pid := range pids {
+	pidWalker := func(pid int32) error {
 		t, err := getProcInodes(root, pid, max)
 		if err != nil {
 			// skip if permission error or no longer exists
 			if os.IsPermission(err) || os.IsNotExist(err) || err == io.EOF {
-				continue
+				return nil
 			}
-			return ret, err
+			return err
 		}
-		if len(t) == 0 {
-			continue
+		if len(t) > 0 {
+			// TODO: update ret.
+			ret = updateMap(ret, t)
 		}
-		// TODO: update ret.
-		ret = updateMap(ret, t)
+
+		return nil
 	}
+
+	if _, err := PidsWithContextWalker(context.Background(), pidWalker); err != nil {
+		return nil, err
+	}
+
 	return ret, nil
 }
 
@@ -896,14 +903,7 @@ func processUnix(file string, kind netConnectionKindType, inodes map[string][]in
 
 		inode := tokens[6]
 
-		var pairs []inodeMap
-		pairs, exists := inodes[inode]
-		if !exists {
-			pairs = []inodeMap{
-				{},
-			}
-		}
-		for _, pair := range pairs {
+		for _, pair := range inodes[inode] {
 			if filterPid > 0 && filterPid != pair.pid {
 				continue
 			}
@@ -934,12 +934,7 @@ func processUnix(file string, kind netConnectionKindType, inodes map[string][]in
 
 func updateMap(src map[string][]inodeMap, add map[string][]inodeMap) map[string][]inodeMap {
 	for key, value := range add {
-		a, exists := src[key]
-		if !exists {
-			src[key] = value
-			continue
-		}
-		src[key] = append(a, value...)
+		src[key] = append(src[key], value...)
 	}
 	return src
 }
