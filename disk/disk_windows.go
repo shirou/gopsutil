@@ -124,6 +124,24 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 					Fstype:     string(bytes.Replace(lpFileSystemNameBuffer, []byte("\x00"), []byte(""), -1)),
 					Opts:       opts,
 				}
+
+				switch typeret {
+				case 0:
+					d.DriveType = "unknown"
+				case 1:
+					d.DriveType = "no_root_dir"
+				case 2:
+					d.DriveType = "removable"
+				case 3:
+					d.DriveType = "fixed"
+				case 4:
+					d.DriveType = "remote"
+				case 5:
+					d.DriveType = "cdrom"
+				case 6:
+					d.DriveType = "ramdisk"
+				}
+
 				ret = append(ret, d)
 			}
 		}
