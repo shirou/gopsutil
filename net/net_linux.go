@@ -1,9 +1,10 @@
+//go:build linux
 // +build linux
 
 package net
 
 import (
-	"bytes"
+	"bufio"
 	"context"
 	"encoding/hex"
 	"errors"
@@ -12,6 +13,8 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -383,6 +386,11 @@ type connTmp struct {
 }
 
 // Return a list of network connections opened.
+func ConnectionsOptions(fns ...ConnectionStatOptionsFn) ([]ConnectionStat, error) {
+	return connectionsWithOptions(createOptions(fns...))
+}
+
+// Return a list of network connections opened.
 func Connections(kind string) ([]ConnectionStat, error) {
 	return ConnectionsWithContext(context.Background(), kind)
 }
@@ -451,6 +459,20 @@ func ConnectionsPidMaxWithoutUidsWithContext(ctx context.Context, kind string, p
 }
 
 func connectionsPidMaxWithoutUidsWithContext(ctx context.Context, kind string, pid int32, max int, skipUids bool) ([]ConnectionStat, error) {
+	return connectionsWithOptions(&ConnectionStatOptions{
+		Context:  ctx,
+		Kind:     kind,
+		Pid:      pid,
+		Max:      max,
+		SkipUids: skipUids,
+		Walker:   nil,
+	})
+}
+
+func connectionsWithOptions(options *ConnectionStatOptions) ([]ConnectionStat, error) {
+	kind := options.Kind
+	pid := options.Pid
+	max := options.Max
 	tmap, ok := netConnectionKindMap[kind]
 	if !ok {
 		return nil, fmt.Errorf("invalid kind, %s", kind)
@@ -462,74 +484,81 @@ func connectionsPidMaxWithoutUidsWithContext(ctx context.Context, kind string, p
 		inodes, err = getProcInodesAll(root, max)
 	} else {
 		inodes, err = getProcInodes(root, pid, max)
-		if len(inodes) == 0 {
-			// no connection for the pid
-			return []ConnectionStat{}, nil
+		if len(inodes) == 0 { // no connection for the pid
+			return nil, nil
 		}
 	}
 	if err != nil {
 		return nil, fmt.Errorf("cound not get pid(s), %d: %s", pid, err)
 	}
-	return statsFromInodes(root, pid, tmap, inodes, skipUids)
+	return statsFromInodes(root, options, tmap, inodes)
 }
 
-func statsFromInodes(root string, pid int32, tmap []netConnectionKindType, inodes map[string][]inodeMap, skipUids bool) ([]ConnectionStat, error) {
+func statsFromInodes(root string, options *ConnectionStatOptions, tmap []netConnectionKindType, inodes map[string][]inodeMap) ([]ConnectionStat, error) {
+	pid := options.Pid
+	skipUids := options.SkipUids
 	dupCheckMap := make(map[string]struct{})
 	var ret []ConnectionStat
 
-	var err error
+	connTmpWalker := func(c connTmp) error {
+		// Build TCP key to id the connection uniquely
+		// socket type, src ip, src port, dst ip, dst port and state should be enough
+		// to prevent duplications.
+		connKey := fmt.Sprintf("%d-%s:%d-%s:%d-%s", c.sockType, c.laddr.IP, c.laddr.Port, c.raddr.IP, c.raddr.Port, c.status)
+		if _, ok := dupCheckMap[connKey]; ok {
+			return nil
+		}
+
+		conn := ConnectionStat{
+			Fd:     c.fd,
+			Family: c.family,
+			Type:   c.sockType,
+			Laddr:  c.laddr,
+			Raddr:  c.raddr,
+			Status: c.status,
+			Pid:    c.pid,
+		}
+		if c.pid == 0 {
+			conn.Pid = c.boundPid
+		} else {
+			conn.Pid = c.pid
+		}
+
+		if !skipUids {
+			// fetch process owner Real, effective, saved set, and filesystem UIDs
+			proc := process{Pid: conn.Pid}
+			conn.Uids, _ = proc.getUids()
+		}
+
+		if options.Walker == nil {
+			ret = append(ret, conn)
+		} else {
+			if err := options.Walker(conn); err != nil {
+				return err
+			}
+		}
+		dupCheckMap[connKey] = struct{}{}
+		return nil
+	}
+
 	for _, t := range tmap {
 		var path string
-		var connKey string
-		var ls []connTmp
 		if pid == 0 {
 			path = fmt.Sprintf("%s/net/%s", root, t.filename)
 		} else {
 			path = fmt.Sprintf("%s/%d/net/%s", root, pid, t.filename)
 		}
+
+		var err error
 		switch t.family {
 		case syscall.AF_INET, syscall.AF_INET6:
-			ls, err = processInet(path, t, inodes, pid)
+			err = processInet(path, t, inodes, pid, connTmpWalker)
 		case syscall.AF_UNIX:
-			ls, err = processUnix(path, t, inodes, pid)
+			err = processUnix(path, t, inodes, pid, connTmpWalker)
 		}
 		if err != nil {
 			return nil, err
 		}
-		for _, c := range ls {
-			// Build TCP key to id the connection uniquely
-			// socket type, src ip, src port, dst ip, dst port and state should be enough
-			// to prevent duplications.
-			connKey = fmt.Sprintf("%d-%s:%d-%s:%d-%s", c.sockType, c.laddr.IP, c.laddr.Port, c.raddr.IP, c.raddr.Port, c.status)
-			if _, ok := dupCheckMap[connKey]; ok {
-				continue
-			}
-
-			conn := ConnectionStat{
-				Fd:     c.fd,
-				Family: c.family,
-				Type:   c.sockType,
-				Laddr:  c.laddr,
-				Raddr:  c.raddr,
-				Status: c.status,
-				Pid:    c.pid,
-			}
-			if c.pid == 0 {
-				conn.Pid = c.boundPid
-			} else {
-				conn.Pid = c.pid
-			}
-
-			if !skipUids {
-				// fetch process owner Real, effective, saved set, and filesystem UIDs
-				proc := process{Pid: conn.Pid}
-				conn.Uids, _ = proc.getUids()
-			}
-
-			ret = append(ret, conn)
-			dupCheckMap[connKey] = struct{}{}
-		}
-
 	}
 
 	return ret, nil
@@ -540,43 +569,40 @@ func getProcInodes(root string, pid int32, max int) (map[string][]inodeMap, erro
 	ret := make(map[string][]inodeMap)
 
 	dir := fmt.Sprintf("%s/%d/fd", root, pid)
-	f, err := os.Open(dir)
-	if err != nil {
-		return ret, err
-	}
-	defer f.Close()
-	dirEntries, err := f.ReadDir(max)
-	if err != nil {
-		return ret, err
-	}
-	for _, dirEntry := range dirEntries {
-		inodePath := fmt.Sprintf("%s/%d/fd/%s", root, pid, dirEntry.Name())
+	n := 0
+	if err := filepath.WalkDir(dir, func(root string, info os.DirEntry, err error) error {
+		if err != nil || !info.IsDir() {
+			return err
+		}
 
+		inodePath := fmt.Sprintf("%s/%d/fd/%s", root, pid, info.Name())
 		inode, err := os.Readlink(inodePath)
 		if err != nil {
-			continue
+			return filepath.SkipDir
 		}
 		if !strings.HasPrefix(inode, "socket:[") {
-			continue
+			return filepath.SkipDir
 		}
 		// the process is using a socket
 		l := len(inode)
 		inode = inode[8 : l-1]
-		_, ok := ret[inode]
-		if !ok {
-			ret[inode] = make([]inodeMap, 0)
-		}
-		fd, err := strconv.Atoi(dirEntry.Name())
+		fd, err := strconv.Atoi(info.Name())
 		if err != nil {
-			continue
+			return filepath.SkipDir
 		}
 
-		i := inodeMap{
-			pid: pid,
-			fd:  uint32(fd),
-		}
+		i := inodeMap{pid: pid, fd: uint32(fd)}
 		ret[inode] = append(ret[inode], i)
+
+		if n++; max > 0 && n >= max {
+			return io.EOF
+		}
+
+		return filepath.SkipDir
+	}); err != nil {
+		return nil, err
 	}
+
 	return ret, nil
 }
 
@@ -589,25 +615,33 @@ func Pids() ([]int32, error) {
 }
 
 func PidsWithContext(ctx context.Context) ([]int32, error) {
+	return PidsWithContextWalker(ctx, nil)
+}
+
+func PidsWithContextWalker(ctx context.Context, pidWalker func(pid int32) error) ([]int32, error) {
 	var ret []int32
 
-	d, err := os.Open(common.HostProc())
-	if err != nil {
-		return nil, err
-	}
-	defer d.Close()
+	if err := filepath.WalkDir(common.HostProc(), func(root string, info os.DirEntry, err error) error {
+		if err == nil && info.IsDir() {
+			pid, err := strconv.ParseInt(info.Name(), 10, 32)
+			if err != nil { // if not numeric name, just skip
+				return filepath.SkipDir
+			}
 
-	fnames, err := d.Readdirnames(-1)
-	if err != nil {
-		return nil, err
-	}
-	for _, fname := range fnames {
-		pid, err := strconv.ParseInt(fname, 10, 32)
-		if err != nil {
-			// if not numeric name, just skip
-			continue
+			if pidWalker == nil {
+				ret = append(ret, int32(pid))
+			} else {
+				if err := pidWalker(int32(pid)); err != nil {
+					return err
+				}
+			}
+
+			return filepath.SkipDir
 		}
-		ret = append(ret, int32(pid))
+
+		return err
+	}); err != nil {
+		return nil, err
 	}
 
 	return ret, nil
@@ -662,27 +696,28 @@ func (p *process) fillFromStatus() error {
 }
 
 func getProcInodesAll(root string, max int) (map[string][]inodeMap, error) {
-	pids, err := Pids()
-	if err != nil {
-		return nil, err
-	}
 	ret := make(map[string][]inodeMap)
-
-	for _, pid := range pids {
+	pidWalker := func(pid int32) error {
 		t, err := getProcInodes(root, pid, max)
 		if err != nil {
 			// skip if permission error or no longer exists
 			if os.IsPermission(err) || os.IsNotExist(err) || err == io.EOF {
-				continue
+				return nil
 			}
-			return ret, err
+			return err
 		}
-		if len(t) == 0 {
-			continue
+		if len(t) > 0 {
+			// TODO: update ret.
+			ret = updateMap(ret, t)
 		}
-		// TODO: update ret.
-		ret = updateMap(ret, t)
+
+		return nil
 	}
+
+	if _, err := PidsWithContextWalker(context.Background(), pidWalker); err != nil {
+		return nil, err
+	}
+
 	return ret, nil
 }
 
@@ -746,30 +781,24 @@ func parseIPv6HexString(src []byte) (net.IP, error) {
 	return net.IP(buf), nil
 }
 
-func processInet(file string, kind netConnectionKindType, inodes map[string][]inodeMap, filterPid int32) ([]connTmp, error) {
-
+func processInet(file string, kind netConnectionKindType, inodes map[string][]inodeMap, filterPid int32, connTmpWalker func(c connTmp) error) error {
 	if strings.HasSuffix(file, "6") && !common.PathExists(file) {
 		// IPv6 not supported, return empty.
-		return []connTmp{}, nil
+		return nil
 	}
 
 	// Read the contents of the /proc file with a single read sys call.
 	// This minimizes duplicates in the returned connections
 	// For more info:
 	// https://github.com/shirou/gopsutil/pull/361
-	contents, err := ioutil.ReadFile(file)
-	if err != nil {
-		return nil, err
-	}
 
-	lines := bytes.Split(contents, []byte("\n"))
-
-	var ret []connTmp
-	// skip first line
-	for _, line := range lines[1:] {
+	lineReader := func(lineNum int, line string) error {
+		if lineNum == 0 { // skip first line
+			return nil
+		}
 		l := strings.Fields(string(line))
 		if len(l) < 10 {
-			continue
+			return nil
 		}
 		laddr := l[1]
 		raddr := l[2]
@@ -783,7 +812,7 @@ func processInet(file string, kind netConnectionKindType, inodes map[string][]in
 			fd = i[0].fd
 		}
 		if filterPid > 0 && filterPid != pid {
-			continue
+			return nil
 		}
 		if kind.sockType == syscall.SOCK_STREAM {
 			status = tcpStatuses[status]
@@ -792,14 +821,14 @@ func processInet(file string, kind netConnectionKindType, inodes map[string][]in
 		}
 		la, err := decodeAddress(kind.family, laddr)
 		if err != nil {
-			continue
+			return nil
 		}
 		ra, err := decodeAddress(kind.family, raddr)
 		if err != nil {
-			continue
+			return nil
 		}
 
-		ret = append(ret, connTmp{
+		return connTmpWalker(connTmp{
 			fd:       fd,
 			family:   kind.family,
 			sockType: kind.sockType,
@@ -810,43 +839,71 @@ func processInet(file string, kind netConnectionKindType, inodes map[string][]in
 		})
 	}
 
-	return ret, nil
+	return readInconsistentFile(file, lineReader)
 }
 
-func processUnix(file string, kind netConnectionKindType, inodes map[string][]inodeMap, filterPid int32) ([]connTmp, error) {
+func readInconsistentFile(file string, lineWalker func(lineNum int, line string) error) error {
+	tmp, err := ioutil.TempFile("", "")
+	if err != nil {
+		return err
+	}
+	tmp.Close()
+	tmpName := tmp.Name()
+	os.Remove(tmpName)
+
+	cpCmd := exec.Command("cp", file, tmpName)
+	if err := cpCmd.Run(); err != nil {
+		return err
+	}
+	defer os.Remove(tmpName)
+
+	tmpFile, err := os.Open(tmpName)
+	if err != nil {
+		return err
+	}
+	defer tmpFile.Close()
+
+	scanner := bufio.NewScanner(tmpFile)
+	// There is one caveat: Scanner will error with lines longer than 65536 characters.
+	// If you know your line length is greater than 64K,
+	// use the Buffer() method to increase the scanner's capacity:
+	// const maxCapacity = longLineLen  // your required line length
+	// buf := make([]byte, maxCapacity)
+	// scanner.Buffer(buf, maxCapacity)
+	for i := 0; scanner.Scan(); i++ {
+		if err := lineWalker(i, scanner.Text()); err != nil {
+			return err
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func processUnix(file string, kind netConnectionKindType, inodes map[string][]inodeMap, filterPid int32, connTmpWalker func(c connTmp) error) error {
 	// Read the contents of the /proc file with a single read sys call.
 	// This minimizes duplicates in the returned connections
 	// For more info:
 	// https://github.com/shirou/gopsutil/pull/361
-	contents, err := ioutil.ReadFile(file)
-	if err != nil {
-		return nil, err
-	}
 
-	lines := bytes.Split(contents, []byte("\n"))
-
-	var ret []connTmp
-	// skip first line
-	for _, line := range lines[1:] {
+	lineWalker := func(lineNum int, line string) error {
+		if lineNum == 0 {
+			return nil // skip first line
+		}
 		tokens := strings.Fields(string(line))
 		if len(tokens) < 6 {
-			continue
+			return nil
 		}
 		st, err := strconv.Atoi(tokens[4])
 		if err != nil {
-			return nil, err
+			return nil
 		}
 
 		inode := tokens[6]
 
-		var pairs []inodeMap
-		pairs, exists := inodes[inode]
-		if !exists {
-			pairs = []inodeMap{
-				{},
-			}
-		}
-		for _, pair := range pairs {
+		for _, pair := range inodes[inode] {
 			if filterPid > 0 && filterPid != pair.pid {
 				continue
 			}
@@ -854,7 +911,7 @@ func processUnix(file string, kind netConnectionKindType, inodes map[string][]in
 			if len(tokens) == 8 {
 				path = tokens[len(tokens)-1]
 			}
-			ret = append(ret, connTmp{
+			if err := connTmpWalker(connTmp{
 				fd:       pair.fd,
 				family:   kind.family,
 				sockType: uint32(st),
@@ -864,21 +921,20 @@ func processUnix(file string, kind netConnectionKindType, inodes map[string][]in
 				pid:    pair.pid,
 				status: "NONE",
 				path:   path,
-			})
+			}); err != nil {
+				return err
+			}
 		}
+
+		return nil
 	}
 
-	return ret, nil
+	return readInconsistentFile(file, lineWalker)
 }
 
 func updateMap(src map[string][]inodeMap, add map[string][]inodeMap) map[string][]inodeMap {
 	for key, value := range add {
-		a, exists := src[key]
-		if !exists {
-			src[key] = value
-			continue
-		}
-		src[key] = append(a, value...)
+		src[key] = append(src[key], value...)
 	}
 	return src
 }

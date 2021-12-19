@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 package net
@@ -205,6 +206,12 @@ func IOCountersByFileWithContext(ctx context.Context, pernic bool, filename stri
 	return IOCounters(pernic)
 }
 
+// Return a list of network connections opened.
+func ConnectionsOptions(fns ...ConnectionStatOptionsFn) ([]ConnectionStat, error) {
+	options := createOptions(fns...)
+	return ConnectionsPidWithContext(options.Context, options.Kind, options.Pid)
+}
+
 // Return a list of network connections
 // Available kind:
 //   reference to netConnectionKindMap
@@ -332,7 +339,6 @@ func ConntrackStats(percpu bool) ([]ConntrackStat, error) {
 func ConntrackStatsWithContext(ctx context.Context, percpu bool) ([]ConntrackStat, error) {
 	return nil, common.ErrNotImplementedError
 }
-
 
 // NetProtoCounters returns network statistics for the entire system
 // If protocols is empty then all protocols are returned, otherwise

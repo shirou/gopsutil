@@ -1,3 +1,4 @@
+//go:build openbsd
 // +build openbsd
 
 package net
@@ -253,6 +254,12 @@ func parseNetstatAddr(local string, remote string, family uint32) (laddr Addr, r
 	}
 
 	return laddr, raddr, err
+}
+
+// Return a list of network connections opened.
+func ConnectionsOptions(fns ...ConnectionStatOptionsFn) ([]ConnectionStat, error) {
+	options := createOptions(fns...)
+	return ConnectionsWithContext(options.Context, options.Kind)
 }
 
 // Return a list of network connections opened.
