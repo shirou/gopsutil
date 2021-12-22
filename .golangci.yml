@@ -6,6 +6,7 @@ linters:
     - errorlint
     - gci
     - gofmt
+    - gofumpt
     - gosimple
     - typecheck
     - unparam
