@@ -5,6 +5,7 @@ linters:
     - durationcheck
     - errorlint
     - gci
+    - gofmt
     - gosimple
     - typecheck
     - unparam
