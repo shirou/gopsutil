@@ -10,7 +10,7 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           node-version: 1.17
-      - run: gofmt -s -w ./...  
+      - run: gofmt -s -w .
       - name: Commit changes
         uses: EndBug/add-and-commit@v7
         with:
