@@ -16,4 +16,4 @@ jobs:
         with:
           author_name: ${{ github.actor }}
           author_email: ${{ github.actor }}@users.noreply.github.com
-          message: 'Update dist/'
+          message: 'gofmt'
