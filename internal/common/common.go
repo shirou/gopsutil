@@ -12,6 +12,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -129,6 +130,9 @@ func ReadLinesOffsetN(filename string, offset uint, n int) ([]string, error) {
 	for i := 0; i < n+int(offset) || n < 0; i++ {
 		line, err := r.ReadString('\n')
 		if err != nil {
+			if err == io.EOF && len(line) > 0 {
+				ret = append(ret, strings.Trim(line, "\n"))
+			}
 			break
 		}
 		if i < int(offset) {
