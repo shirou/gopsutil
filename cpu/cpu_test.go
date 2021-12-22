@@ -1,6 +1,7 @@
 package cpu
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"runtime"
@@ -12,7 +13,7 @@ import (
 )
 
 func skipIfNotImplementedErr(t *testing.T, err error) {
-	if err == common.ErrNotImplementedError {
+	if errors.Is(err, common.ErrNotImplementedError) {
 		t.Skip("not implemented")
 	}
 }

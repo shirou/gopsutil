@@ -1,4 +1,9 @@
 linters:
+  enable:
+    - errorlint
+    - gci
+    - gosimple
+    - typecheck
   disable:
     - deadcode
     - errcheck

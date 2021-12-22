@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -224,7 +225,8 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 	filename := common.HostProc("1/mountinfo")
 	lines, err := common.ReadLines(filename)
 	if err != nil {
-		if err != err.(*os.PathError) {
+		var pathErr *os.PathError
+		if !errors.As(err, &pathErr) {
 			return nil, err
 		}
 		// if kernel does not support 1/mountinfo, fallback to 1/mounts (<2.6.26)
