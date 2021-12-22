@@ -14,6 +14,18 @@ jobs:
         go-version: ${{ matrix.go-version }}
     - name: Checkout code
       uses: actions/checkout@v2
+    - id: cache-paths
+      run: |
+        echo "::set-output name=cache::$(go env GOCACHE)"
+        echo "::set-output name=mod-cache::$(go env GOMODCACHE)"
+    - name: Cache go modules
+      uses: actions/cache@v2
+      with:
+        path: |
+          ${{ steps.cache-paths.outputs.cache }}
+          ${{ steps.cache-paths.outputs.mod-cache }}
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: ${{ runner.os }}-go-
     - name: Test
       run: |
         go test ./...
