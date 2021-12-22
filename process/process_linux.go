@@ -503,13 +503,12 @@ func (p *Process) EnvironWithContext(ctx context.Context) ([]string, error) {
 func limitToUint(val string) (uint64, error) {
 	if val == "unlimited" {
 		return math.MaxUint64, nil
-	} else {
-		res, err := strconv.ParseUint(val, 10, 64)
-		if err != nil {
-			return 0, err
-		}
-		return res, nil
 	}
+	res, err := strconv.ParseUint(val, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
 }
 
 // Get num_fds from /proc/(pid)/limits

@@ -486,9 +486,8 @@ func LabelWithContext(ctx context.Context, name string) (string, error) {
 	dmname, err := ioutil.ReadFile(dmname_filename)
 	if err != nil {
 		return "", err
-	} else {
-		return strings.TrimSpace(string(dmname)), nil
 	}
+	return strings.TrimSpace(string(dmname)), nil
 }
 
 func getFsType(stat unix.Statfs_t) string {

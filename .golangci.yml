@@ -1,5 +1,12 @@
 issues:
   max-same-issues: 0
+  exclude-rules: 
+  - linters: 
+    - revive
+    text:  "var-naming"
+  - linters: 
+    - revive
+    text:  "exported"
 linters:
   enable:
     - durationcheck
@@ -9,6 +16,7 @@ linters:
     - gofumpt
     - gosimple
     - misspell
+    - revive
     - typecheck
     - unparam
   disable:
