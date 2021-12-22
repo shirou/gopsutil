@@ -22,6 +22,7 @@ linters:
     - gosimple
     - misspell
     - nolintlint
+    - predeclared
     - revive
     - typecheck
     - unparam
