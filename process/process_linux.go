@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package process
@@ -251,7 +252,7 @@ func (p *Process) RlimitUsageWithContext(ctx context.Context, gatherUsed bool) (
 		case RLIMIT_AS:
 			rs.Used = uint64(p.memInfo.VMS)
 		case RLIMIT_LOCKS:
-			//TODO we can get the used value from /proc/$pid/locks. But linux doesn't enforce it, so not a high priority.
+			// TODO we can get the used value from /proc/$pid/locks. But linux doesn't enforce it, so not a high priority.
 		case RLIMIT_SIGPENDING:
 			rs.Used = p.sigInfo.PendingProcess
 		case RLIMIT_NICE:
@@ -345,7 +346,6 @@ func (p *Process) PageFaultsWithContext(ctx context.Context) (*PageFaultsStat, e
 		return nil, err
 	}
 	return pageFaults, nil
-
 }
 
 func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
@@ -548,7 +548,7 @@ func (p *Process) fillFromLimitsWithContext() ([]RlimitStat, error) {
 		// Remove last item from string
 		str = str[:len(str)-1]
 
-		//Now last item is a Soft limit
+		// Now last item is a Soft limit
 		statItem.Soft, err = limitToUint(str[len(str)-1])
 		if err != nil {
 			return nil, err
@@ -556,7 +556,7 @@ func (p *Process) fillFromLimitsWithContext() ([]RlimitStat, error) {
 		// Remove last item from string
 		str = str[:len(str)-1]
 
-		//The rest is a stats name
+		// The rest is a stats name
 		resourceName := strings.Join(str, " ")
 		switch resourceName {
 		case "Max cpu time":

@@ -1,3 +1,4 @@
+//go:build darwin
 // +build darwin
 
 package host
@@ -94,7 +95,6 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 	}
 
 	return ret, nil
-
 }
 
 func PlatformInformationWithContext(ctx context.Context) (string, string, string, error) {

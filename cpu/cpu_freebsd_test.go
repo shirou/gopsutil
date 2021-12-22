@@ -13,7 +13,7 @@ func TestParseDmesgBoot(t *testing.T) {
 		t.SkipNow()
 	}
 
-	var cpuTests = []struct {
+	cpuTests := []struct {
 		file   string
 		cpuNum int
 		cores  int32

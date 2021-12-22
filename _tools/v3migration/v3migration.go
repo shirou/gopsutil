@@ -103,5 +103,4 @@ func main() {
 			issueRemoveUnusedValue()
 		}
 	}
-
 }

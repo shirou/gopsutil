@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package host
@@ -121,7 +122,6 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 	}
 
 	return ret, nil
-
 }
 
 func getlsbStruct() (*lsbStruct, error) {
@@ -304,7 +304,6 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 	}
 
 	return platform, family, version, nil
-
 }
 
 func KernelVersionWithContext(ctx context.Context) (version string, err error) {

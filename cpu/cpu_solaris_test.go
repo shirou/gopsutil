@@ -15,28 +15,36 @@ func TestParseISAInfo(t *testing.T) {
 	}{
 		{
 			"1cpu_1core_isainfo.txt",
-			[]string{"rdseed", "adx", "avx2", "fma", "bmi2", "bmi1", "rdrand", "f16c", "vmx",
+			[]string{
+				"rdseed", "adx", "avx2", "fma", "bmi2", "bmi1", "rdrand", "f16c", "vmx",
 				"avx", "xsave", "pclmulqdq", "aes", "movbe", "sse4.2", "sse4.1", "ssse3", "popcnt",
 				"tscp", "cx16", "sse3", "sse2", "sse", "fxsr", "mmx", "cmov", "amd_sysc", "cx8",
-				"tsc", "fpu"},
+				"tsc", "fpu",
+			},
 		},
 		{
 			"2cpu_1core_isainfo.txt",
-			[]string{"rdseed", "adx", "avx2", "fma", "bmi2", "bmi1", "rdrand", "f16c", "vmx",
+			[]string{
+				"rdseed", "adx", "avx2", "fma", "bmi2", "bmi1", "rdrand", "f16c", "vmx",
 				"avx", "xsave", "pclmulqdq", "aes", "movbe", "sse4.2", "sse4.1", "ssse3", "popcnt",
 				"tscp", "cx16", "sse3", "sse2", "sse", "fxsr", "mmx", "cmov", "amd_sysc", "cx8",
-				"tsc", "fpu"},
+				"tsc", "fpu",
+			},
 		},
 		{
 			"2cpu_8core_isainfo.txt",
-			[]string{"vmx", "avx", "xsave", "pclmulqdq", "aes", "sse4.2", "sse4.1", "ssse3", "popcnt",
+			[]string{
+				"vmx", "avx", "xsave", "pclmulqdq", "aes", "sse4.2", "sse4.1", "ssse3", "popcnt",
 				"tscp", "cx16", "sse3", "sse2", "sse", "fxsr", "mmx", "cmov", "amd_sysc", "cx8",
-				"tsc", "fpu"},
+				"tsc", "fpu",
+			},
 		},
 		{
 			"2cpu_12core_isainfo.txt",
-			[]string{"amd_svm", "amd_lzcnt", "popcnt", "amd_sse4a", "tscp", "ahf", "cx16", "sse3", "sse2",
-				"sse", "fxsr", "amd_3dnowx", "amd_3dnow", "amd_mmx", "mmx", "cmov", "amd_sysc", "cx8", "tsc", "fpu"},
+			[]string{
+				"amd_svm", "amd_lzcnt", "popcnt", "amd_sse4a", "tscp", "ahf", "cx16", "sse3", "sse2",
+				"sse", "fxsr", "amd_3dnowx", "amd_3dnow", "amd_mmx", "mmx", "cmov", "amd_sysc", "cx8", "tsc", "fpu",
+			},
 		},
 	}
 

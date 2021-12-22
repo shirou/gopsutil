@@ -1,3 +1,4 @@
+//go:build ignore
 // +build ignore
 
 /*
@@ -40,5 +41,7 @@ type (
 	_C_long_long C.longlong
 )
 
-type Utmp C.struct_utmp // for FreeBSD 9.0 compatibility
-type Utmpx C.struct_futx
+type (
+	Utmp  C.struct_utmp // for FreeBSD 9.0 compatibility
+	Utmpx C.struct_futx
+)

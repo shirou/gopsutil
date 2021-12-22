@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package cpu
@@ -30,7 +31,7 @@ func Times(percpu bool) ([]TimesStat, error) {
 
 func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 	filename := common.HostProc("stat")
-	var lines = []string{}
+	lines := []string{}
 	if percpu {
 		statlines, err := common.ReadLines(filename)
 		if err != nil || len(statlines) < 2 {
@@ -338,7 +339,7 @@ func CountsWithContext(ctx context.Context, logical bool) (int, error) {
 	}
 	// physical cores
 	// https://github.com/giampaolo/psutil/blob/8415355c8badc9c94418b19bdf26e622f06f0cce/psutil/_pslinux.py#L615-L628
-	var threadSiblingsLists = make(map[string]bool)
+	threadSiblingsLists := make(map[string]bool)
 	// These 2 files are the same but */core_cpus_list is newer while */thread_siblings_list is deprecated and may disappear in the future.
 	// https://www.kernel.org/doc/Documentation/admin-guide/cputopology.rst
 	// https://github.com/giampaolo/psutil/pull/1727#issuecomment-707624964

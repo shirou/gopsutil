@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package disk
@@ -21,6 +22,7 @@ import (
 const (
 	sectorSize = 512
 )
+
 const (
 	// man statfs
 	ADFS_SUPER_MAGIC      = 0xadf5

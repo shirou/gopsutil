@@ -1,4 +1,6 @@
+//go:build ignore
 // +build ignore
+
 // Hand writing: _Ctype_struct___0
 
 /*
@@ -25,8 +27,12 @@ const (
 	sizeOfDiskstats = C.sizeof_struct_diskstats
 )
 
-type Diskstats C.struct_diskstats
-type Timeval C.struct_timeval
+type (
+	Diskstats C.struct_diskstats
+	Timeval   C.struct_timeval
+)
 
-type Diskstat C.struct_diskstat
-type bintime C.struct_bintime
+type (
+	Diskstat C.struct_diskstat
+	bintime  C.struct_bintime
+)

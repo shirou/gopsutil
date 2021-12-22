@@ -1,3 +1,4 @@
+//go:build ignore
 // +build ignore
 
 /*
@@ -39,5 +40,7 @@ type (
 	_C_long_long C.longlong
 )
 
-type Utmp C.struct_utmp
-type Timeval C.struct_timeval
+type (
+	Utmp    C.struct_utmp
+	Timeval C.struct_timeval
+)

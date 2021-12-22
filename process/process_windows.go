@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 package process
@@ -70,11 +71,9 @@ type systemInfo struct {
 }
 
 // Memory_info_ex is different between OSes
-type MemoryInfoExStat struct {
-}
+type MemoryInfoExStat struct{}
 
-type MemoryMapsStat struct {
-}
+type MemoryMapsStat struct{}
 
 // ioCounters is an equivalent representation of IO_COUNTERS in the Windows API.
 // https://docs.microsoft.com/windows/win32/api/winnt/ns-winnt-io_counters
@@ -195,8 +194,10 @@ type winTokenPriviledges struct {
 	Privileges     [1]winLUIDAndAttributes
 }
 
-type winLong int32
-type winDWord uint32
+type (
+	winLong  int32
+	winDWord uint32
+)
 
 func init() {
 	var systemInfo systemInfo
@@ -261,7 +262,6 @@ func pidsWithContext(ctx context.Context) ([]int32, error) {
 		return ret, nil
 
 	}
-
 }
 
 func PidExistsWithContext(ctx context.Context, pid int32) (bool, error) {
@@ -431,7 +431,7 @@ func (p *Process) CwdWithContext(_ context.Context) (string, error) {
 		}
 	}
 
-	//if we reach here, we have no cwd
+	// if we reach here, we have no cwd
 	return "", nil
 }
 
@@ -1018,14 +1018,14 @@ func is32BitProcess(h windows.Handle) bool {
 				procIs32Bits = true
 			}
 		} else {
-			//if the OS does not support the call, we fallback into the bitness of the app
+			// if the OS does not support the call, we fallback into the bitness of the app
 			if unsafe.Sizeof(wow64) == 4 {
 				procIs32Bits = true
 			}
 		}
 
 	default:
-		//for other unknown platforms, we rely on process platform
+		// for other unknown platforms, we rely on process platform
 		if unsafe.Sizeof(processorArchitecture) == 8 {
 			procIs32Bits = false
 		} else {
@@ -1159,7 +1159,7 @@ func getProcessCommandLine(pid int32) (string, error) {
 		}
 	}
 
-	//if we reach here, we have no command line
+	// if we reach here, we have no command line
 	return "", nil
 }
 
