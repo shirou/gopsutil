@@ -16,6 +16,7 @@ linters:
     - gofumpt
     - gosimple
     - misspell
+    - nolintlint
     - revive
     - typecheck
     - unparam
