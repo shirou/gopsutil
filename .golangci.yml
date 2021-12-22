@@ -2,6 +2,9 @@ issues:
   max-same-issues: 0
   exclude-rules: 
   - linters: 
+    - gosec
+    text:  "G204"
+  - linters: 
     - revive
     text:  "var-naming"
   - linters: 
@@ -15,6 +18,7 @@ linters:
     - gci
     - gofmt
     - gofumpt
+    - gosec
     - gosimple
     - misspell
     - nolintlint
