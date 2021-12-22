@@ -10,10 +10,12 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           node-version: 1.17
-      - run: gofmt -s -w .
+      - run: |
+          go install mvdan.cc/gofumpt@latest
+          gofumpt -l -w .
       - name: Commit changes
         uses: EndBug/add-and-commit@v7
         with:
           author_name: ${{ github.actor }}
           author_email: ${{ github.actor }}@users.noreply.github.com
-          message: 'gofmt'
+          message: 'gofumpt'
