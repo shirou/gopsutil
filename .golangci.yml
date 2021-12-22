@@ -1,9 +1,12 @@
+issues:
+  max-same-issues: 0
 linters:
   enable:
     - errorlint
     - gci
     - gosimple
     - typecheck
+    - unparam
   disable:
     - deadcode
     - errcheck

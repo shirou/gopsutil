@@ -63,7 +63,7 @@ func sysCPUPath(cpu int32, relPath string) string {
 	return common.HostSys(fmt.Sprintf("devices/system/cpu/cpu%d", cpu), relPath)
 }
 
-func finishCPUInfo(c *InfoStat) error {
+func finishCPUInfo(c *InfoStat) {
 	var lines []string
 	var err error
 	var value float64
@@ -82,17 +82,16 @@ func finishCPUInfo(c *InfoStat) error {
 	// if we encounter errors below such as there are no cpuinfo_max_freq file,
 	// we just ignore. so let Mhz is 0.
 	if err != nil || len(lines) == 0 {
-		return nil
+		return
 	}
 	value, err = strconv.ParseFloat(lines[0], 64)
 	if err != nil {
-		return nil
+		return
 	}
 	c.Mhz = value / 1000.0 // value is in kHz
 	if c.Mhz > 9999 {
 		c.Mhz = c.Mhz / 1000.0 // value in Hz
 	}
-	return nil
 }
 
 // CPUInfo on linux will return 1 item per physical thread.
@@ -127,10 +126,7 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 			processorName = value
 		case "processor":
 			if c.CPU >= 0 {
-				err := finishCPUInfo(&c)
-				if err != nil {
-					return ret, err
-				}
+				finishCPUInfo(&c)
 				ret = append(ret, c)
 			}
 			c = InfoStat{Cores: 1, ModelName: processorName}
@@ -224,10 +220,7 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 		}
 	}
 	if c.CPU >= 0 {
-		err := finishCPUInfo(&c)
-		if err != nil {
-			return ret, err
-		}
+		finishCPUInfo(&c)
 		ret = append(ret, c)
 	}
 	return ret, nil

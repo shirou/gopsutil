@@ -35,7 +35,7 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 }
 
 func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
-	vm, _, err := fillFromMeminfoWithContext(ctx)
+	vm, _, err := fillFromMeminfoWithContext()
 	if err != nil {
 		return nil, err
 	}
@@ -47,14 +47,14 @@ func VirtualMemoryEx() (*VirtualMemoryExStat, error) {
 }
 
 func VirtualMemoryExWithContext(ctx context.Context) (*VirtualMemoryExStat, error) {
-	_, vmEx, err := fillFromMeminfoWithContext(ctx)
+	_, vmEx, err := fillFromMeminfoWithContext()
 	if err != nil {
 		return nil, err
 	}
 	return vmEx, nil
 }
 
-func fillFromMeminfoWithContext(ctx context.Context) (*VirtualMemoryStat, *VirtualMemoryExStat, error) {
+func fillFromMeminfoWithContext() (*VirtualMemoryStat, *VirtualMemoryExStat, error) {
 	filename := common.HostProc("meminfo")
 	lines, _ := common.ReadLines(filename)
 
