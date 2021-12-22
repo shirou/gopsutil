@@ -9,6 +9,7 @@ issues:
     text:  "exported"
 linters:
   enable:
+    - asciicheck
     - durationcheck
     - errorlint
     - gci
