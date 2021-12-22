@@ -8,6 +8,7 @@ linters:
     - gofmt
     - gofumpt
     - gosimple
+    - misspell
     - typecheck
     - unparam
   disable:
