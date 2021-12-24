@@ -18,6 +18,7 @@ linters:
     - gci
     - gofmt
     - gofumpt
+    - goimports
     - gosec
     - gosimple
     - importas
