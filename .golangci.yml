@@ -16,6 +16,7 @@ linters:
     - durationcheck
     - errorlint
     - gci
+    - gochecknoinits
     - gofmt
     - gofumpt
     - gosec
