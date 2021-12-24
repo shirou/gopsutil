@@ -20,6 +20,7 @@ linters:
     - gofumpt
     - gosec
     - gosimple
+    - megacheck
     - misspell
     - nolintlint
     - predeclared
