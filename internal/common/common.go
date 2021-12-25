@@ -112,7 +112,7 @@ func ReadLines(filename string) ([]string, error) {
 	return ReadLinesOffsetN(filename, 0, -1)
 }
 
-// ReadLines reads contents from file and splits them by new line.
+// ReadLinesOffsetN reads contents from file and splits them by new line.
 // The offset tells at which line number to start.
 // The count determines the number of lines to read (starting from offset):
 //   n >= 0: at most n lines
