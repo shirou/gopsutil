@@ -34,5 +34,5 @@ jobs:
       with:
         fail_ci_if_error: true
         files: coverage.out
-        flags: ${{ matrix.os }},go-${{ matrix.go-version }}
+        flags: ${{ runner.os }},go-${{ matrix.go-version }}
         token: ${{ secrets.CODECOV_TOKEN }}
