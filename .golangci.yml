@@ -13,6 +13,7 @@ issues:
 linters:
   enable:
     - asciicheck
+    - contextcheck
     - durationcheck
     - errorlint
     - gci

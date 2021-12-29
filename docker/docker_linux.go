@@ -162,11 +162,11 @@ func CgroupCPUUsageDocker(containerid string) (float64, error) {
 }
 
 func CgroupCPUDockerWithContext(ctx context.Context, containerid string) (*CgroupCPUStat, error) {
-	return CgroupCPU(containerid, common.HostSys("fs/cgroup/cpuacct/docker"))
+	return CgroupCPUWithContext(ctx, containerid, common.HostSys("fs/cgroup/cpuacct/docker"))
 }
 
 func CgroupCPUDockerUsageWithContext(ctx context.Context, containerid string) (float64, error) {
-	return CgroupCPUUsage(containerid, common.HostSys("fs/cgroup/cpuacct/docker"))
+	return CgroupCPUUsageWithContext(ctx, containerid, common.HostSys("fs/cgroup/cpuacct/docker"))
 }
 
 func CgroupMem(containerID string, base string) (*CgroupMemStat, error) {
@@ -274,7 +274,7 @@ func CgroupMemDocker(containerID string) (*CgroupMemStat, error) {
 }
 
 func CgroupMemDockerWithContext(ctx context.Context, containerID string) (*CgroupMemStat, error) {
-	return CgroupMem(containerID, common.HostSys("fs/cgroup/memory/docker"))
+	return CgroupMemWithContext(ctx, containerID, common.HostSys("fs/cgroup/memory/docker"))
 }
 
 // getCgroupFilePath constructs file path to get targeted stats file.

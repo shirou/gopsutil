@@ -4,7 +4,6 @@
 package process
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -133,7 +132,7 @@ func Test_fillFromStatusWithContext(t *testing.T) {
 			continue
 		}
 		p, _ := NewProcess(int32(pid))
-		if err := p.fillFromStatusWithContext(); err != nil {
+		if err := p.fillFromStatus(); err != nil {
 			t.Error(err)
 		}
 	}
@@ -155,7 +154,7 @@ func Benchmark_fillFromStatusWithContext(b *testing.B) {
 	pid := 1060
 	p, _ := NewProcess(int32(pid))
 	for i := 0; i < b.N; i++ {
-		p.fillFromStatusWithContext()
+		p.fillFromStatus()
 	}
 }
 
@@ -175,7 +174,7 @@ func Test_fillFromTIDStatWithContext_lx_brandz(t *testing.T) {
 			continue
 		}
 		p, _ := NewProcess(int32(pid))
-		_, _, cpuTimes, _, _, _, _, err := p.fillFromTIDStatWithContext(context.Background(), -1)
+		_, _, cpuTimes, _, _, _, _, err := p.fillFromTIDStat(-1)
 		if err != nil {
 			t.Error(err)
 		}
