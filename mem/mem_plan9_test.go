@@ -1,3 +1,4 @@
+//go:build plan9
 // +build plan9
 
 package mem
@@ -12,14 +13,16 @@ var virtualMemoryTests = []struct {
 	mockedRootFS string
 	stat         *VirtualMemoryStat
 }{
-	{"swap", &VirtualMemoryStat{
-		Total:       1071185920,
-		Available:   808370176,
-		Used:        11436032,
-		UsedPercent: 1.3949677238843257,
-		Free:        808370176,
-		SwapTotal:   655360000,
-		SwapFree:    655360000},
+	{
+		"swap", &VirtualMemoryStat{
+			Total:       1071185920,
+			Available:   808370176,
+			Used:        11436032,
+			UsedPercent: 1.3949677238843257,
+			Free:        808370176,
+			SwapTotal:   655360000,
+			SwapFree:    655360000,
+		},
 	},
 }
 
@@ -49,10 +52,12 @@ var swapMemoryTests = []struct {
 	mockedRootFS string
 	swap         *SwapMemoryStat
 }{
-	{"swap", &SwapMemoryStat{
-		Total: 655360000,
-		Used:  0,
-		Free:  655360000},
+	{
+		"swap", &SwapMemoryStat{
+			Total: 655360000,
+			Used:  0,
+			Free:  655360000,
+		},
 	},
 }
 

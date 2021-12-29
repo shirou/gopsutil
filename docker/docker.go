@@ -8,8 +8,10 @@ import (
 	"github.com/shirou/gopsutil/v3/internal/common"
 )
 
-var ErrDockerNotAvailable = errors.New("docker not available")
-var ErrCgroupNotAvailable = errors.New("cgroup not available")
+var (
+	ErrDockerNotAvailable = errors.New("docker not available")
+	ErrCgroupNotAvailable = errors.New("cgroup not available")
+)
 
 var invoke common.Invoker = common.Invoke{}
 

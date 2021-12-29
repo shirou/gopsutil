@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package net
@@ -10,6 +11,7 @@ func BenchmarkGetConnectionsInet(b *testing.B) {
 		Connections("inet")
 	}
 }
+
 func BenchmarkGetConnectionsAll(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

@@ -37,6 +37,7 @@ func TestIntToString(t *testing.T) {
 		t.Error("could not convert")
 	}
 }
+
 func TestByteToString(t *testing.T) {
 	src := []byte{65, 66, 67}
 	dst := ByteToString(src)
@@ -63,12 +64,14 @@ func TestMustParseInt32(t *testing.T) {
 		t.Error("could not parse")
 	}
 }
+
 func TestMustParseUint64(t *testing.T) {
 	ret := mustParseUint64("11111")
 	if ret != uint64(11111) {
 		t.Error("could not parse")
 	}
 }
+
 func TestMustParseFloat64(t *testing.T) {
 	ret := mustParseFloat64("11111.11")
 	if ret != float64(11111.11) {
@@ -79,6 +82,7 @@ func TestMustParseFloat64(t *testing.T) {
 		t.Error("could not parse")
 	}
 }
+
 func TestStringsContains(t *testing.T) {
 	target, err := ReadLines("common_test.go")
 	if err != nil {

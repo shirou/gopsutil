@@ -74,7 +74,6 @@ func TestCpu_times(t *testing.T) {
 	if cpuTotal[0].Idle != 0 {
 		assert.InEpsilon(t, cpuTotal[0].Idle, perCPUIdleTimeSum, margin)
 	}
-
 }
 
 func TestCpu_counts(t *testing.T) {
@@ -162,7 +161,6 @@ func testCPUPercent(t *testing.T, percpu bool) {
 }
 
 func testCPUPercentLastUsed(t *testing.T, percpu bool) {
-
 	numcpu := runtime.NumCPU()
 	testCount := 10
 
@@ -194,7 +192,6 @@ func testCPUPercentLastUsed(t *testing.T, percpu bool) {
 			}
 		}
 	}
-
 }
 
 func TestCPUPercent(t *testing.T) {

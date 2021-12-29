@@ -5,6 +5,7 @@
 // Hand Writing
 // - all pointer in ExternProc to uint64
 
+//go:build ignore
 // +build ignore
 
 /*
@@ -153,9 +154,11 @@ type Posix_cred C.struct_posix_cred
 
 type Label C.struct_label
 
-type AuditinfoAddr C.struct_auditinfo_addr
-type AuMask C.struct_au_mask
-type AuTidAddr C.struct_au_tid_addr
+type (
+	AuditinfoAddr C.struct_auditinfo_addr
+	AuMask        C.struct_au_mask
+	AuTidAddr     C.struct_au_tid_addr
+)
 
 // TAILQ(ucred)
 type UcredQueue C.struct_ucred_queue

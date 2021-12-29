@@ -65,6 +65,7 @@ func Test_Pids_Fail(t *testing.T) {
 		t.Errorf("wrong getted pid nums: %v/%d", ret, len(ret))
 	}
 }
+
 func Test_Pid_exists(t *testing.T) {
 	checkPid := os.Getpid()
 
@@ -93,7 +94,6 @@ func Test_NewProcess(t *testing.T) {
 			t.Errorf("error %v", ret)
 		}
 	}
-
 }
 
 func Test_Process_memory_maps(t *testing.T) {
@@ -131,6 +131,7 @@ func Test_Process_memory_maps(t *testing.T) {
 		t.Errorf("memory map is empty")
 	}
 }
+
 func Test_Process_MemoryInfo(t *testing.T) {
 	p := testGetProcess()
 
@@ -316,6 +317,7 @@ func Test_Process_Name(t *testing.T) {
 		t.Errorf("invalid Exe %s", n)
 	}
 }
+
 func Test_Process_Long_Name_With_Spaces(t *testing.T) {
 	tmpdir, err := ioutil.TempDir("", "")
 	if err != nil {
@@ -361,6 +363,7 @@ func Test_Process_Long_Name_With_Spaces(t *testing.T) {
 	}
 	cmd.Process.Kill()
 }
+
 func Test_Process_Long_Name(t *testing.T) {
 	tmpdir, err := ioutil.TempDir("", "")
 	if err != nil {
@@ -406,6 +409,7 @@ func Test_Process_Long_Name(t *testing.T) {
 	}
 	cmd.Process.Kill()
 }
+
 func Test_Process_Exe(t *testing.T) {
 	p := testGetProcess()
 

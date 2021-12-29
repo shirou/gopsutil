@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package process
@@ -110,7 +111,7 @@ func Test_fillFromCommWithContext(t *testing.T) {
 			continue
 		}
 		p, _ := NewProcess(int32(pid))
-		if err := p.fillFromCommWithContext(context.Background()); err != nil {
+		if err := p.fillFromCommWithContext(); err != nil {
 			t.Error(err)
 		}
 	}
@@ -132,7 +133,7 @@ func Test_fillFromStatusWithContext(t *testing.T) {
 			continue
 		}
 		p, _ := NewProcess(int32(pid))
-		if err := p.fillFromStatusWithContext(context.Background()); err != nil {
+		if err := p.fillFromStatusWithContext(); err != nil {
 			t.Error(err)
 		}
 	}
@@ -144,7 +145,7 @@ func Benchmark_fillFromCommWithContext(b *testing.B) {
 	pid := 1060
 	p, _ := NewProcess(int32(pid))
 	for i := 0; i < b.N; i++ {
-		p.fillFromCommWithContext(context.Background())
+		p.fillFromCommWithContext()
 	}
 }
 
@@ -154,7 +155,7 @@ func Benchmark_fillFromStatusWithContext(b *testing.B) {
 	pid := 1060
 	p, _ := NewProcess(int32(pid))
 	for i := 0; i < b.N; i++ {
-		p.fillFromStatusWithContext(context.Background())
+		p.fillFromStatusWithContext()
 	}
 }
 

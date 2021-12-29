@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package disk
@@ -21,6 +22,7 @@ import (
 const (
 	sectorSize = 512
 )
+
 const (
 	// man statfs
 	ADFS_SUPER_MAGIC      = 0xadf5
@@ -484,9 +486,8 @@ func LabelWithContext(ctx context.Context, name string) (string, error) {
 	dmname, err := ioutil.ReadFile(dmname_filename)
 	if err != nil {
 		return "", err
-	} else {
-		return strings.TrimSpace(string(dmname)), nil
 	}
+	return strings.TrimSpace(string(dmname)), nil
 }
 
 func getFsType(stat unix.Statfs_t) string {

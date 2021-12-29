@@ -1,4 +1,6 @@
+//go:build ignore
 // +build ignore
+
 // plus hand editing about timeval
 
 /*
@@ -13,5 +15,7 @@ package host
 */
 import "C"
 
-type Utmpx C.struct_utmpx
-type Timeval C.struct_timeval
+type (
+	Utmpx   C.struct_utmpx
+	Timeval C.struct_timeval
+)

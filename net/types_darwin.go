@@ -1,4 +1,6 @@
+//go:build ignore
 // +build ignore
+
 // Hand writing: _Ctype_struct___3, 4
 
 /*
@@ -42,12 +44,14 @@ type (
 	_C_long_double C.longlong
 )
 
-type Xinpgen C.struct_xinpgen
-type Inpcb C.struct_inpcb
-type in_addr C.struct_in_addr
-type Inpcb_list_entry C.struct__inpcb_list_entry
-type Xsocket C.struct_xsocket
-type Xsockbuf C.struct_xsockbuf
-type Xinpcb C.struct_xinpcb
+type (
+	Xinpgen          C.struct_xinpgen
+	Inpcb            C.struct_inpcb
+	in_addr          C.struct_in_addr
+	Inpcb_list_entry C.struct__inpcb_list_entry
+	Xsocket          C.struct_xsocket
+	Xsockbuf         C.struct_xsockbuf
+	Xinpcb           C.struct_xinpcb
+)
 
-//type u_quad_t C.struct_u_quad_t
+// type u_quad_t C.struct_u_quad_t

@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 package host
@@ -13,9 +14,9 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/yusufpapurcu/wmi"
 	"github.com/shirou/gopsutil/v3/internal/common"
 	"github.com/shirou/gopsutil/v3/process"
+	"github.com/yusufpapurcu/wmi"
 	"golang.org/x/sys/windows"
 )
 

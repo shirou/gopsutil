@@ -71,7 +71,6 @@ func TestMiscStatString(t *testing.T) {
 }
 
 func BenchmarkLoad(b *testing.B) {
-
 	loadAvg := func(t testing.TB) {
 		v, err := Avg()
 		skipIfNotImplementedErr(t, err)

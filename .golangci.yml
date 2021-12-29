@@ -1,9 +1,35 @@
+issues:
+  max-same-issues: 0
+  exclude-rules: 
+  - linters: 
+    - gosec
+    text:  "G204"
+  - linters: 
+    - revive
+    text:  "var-naming"
+  - linters: 
+    - revive
+    text:  "exported"
 linters:
   enable:
+    - asciicheck
+    - durationcheck
     - errorlint
     - gci
+    - gofmt
+    - gofumpt
+    - goimports
+    - gosec
     - gosimple
+    - importas
+    - megacheck
+    - misspell
+    - nakedret
+    - nolintlint
+    - predeclared
+    - revive
     - typecheck
+    - unparam
   disable:
     - deadcode
     - errcheck

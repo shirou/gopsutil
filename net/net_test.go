@@ -50,7 +50,6 @@ func TestNetProtoCountersStatString(t *testing.T) {
 	if e != fmt.Sprintf("%v", v) {
 		t.Errorf("NetProtoCountersStat string is invalid: %v", v)
 	}
-
 }
 
 func TestNetConnectionStatString(t *testing.T) {
@@ -64,7 +63,6 @@ func TestNetConnectionStatString(t *testing.T) {
 	if e != fmt.Sprintf("%v", v) {
 		t.Errorf("NetConnectionStat string is invalid: %v", v)
 	}
-
 }
 
 func TestNetIOCountersAll(t *testing.T) {
@@ -223,7 +221,6 @@ func TestNetConnections(t *testing.T) {
 			t.Errorf("invalid NetConnections: %v", vv)
 		}
 	}
-
 }
 
 func TestNetFilterCounters(t *testing.T) {
@@ -251,7 +248,6 @@ func TestNetFilterCounters(t *testing.T) {
 			t.Errorf("nf_connTrackMax needs to be greater than zero: %v", vv)
 		}
 	}
-
 }
 
 func TestInterfaceStatString(t *testing.T) {

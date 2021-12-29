@@ -1,4 +1,6 @@
+//go:build ignore
 // +build ignore
+
 // Hand writing: _Ctype_struct___0
 
 /*
@@ -58,5 +60,7 @@ type (
 	_C_long_double C.longlong
 )
 
-type devstat C.struct_devstat
-type bintime C.struct_bintime
+type (
+	devstat C.struct_devstat
+	bintime C.struct_bintime
+)
