@@ -176,13 +176,17 @@ func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
 		return "", fmt.Errorf("exec geom: %w", err)
 	}
 	s := bufio.NewScanner(bytes.NewReader(geomOut))
+	serial := ""
 	for s.Scan() {
 		flds := strings.Fields(s.Text())
 		if len(flds) == 2 && flds[0] == "ident:" {
-			return flds[1], nil
+			if flds[1] != "(null)" {
+				serial = flds[1]
+			}
+			break
 		}
 	}
-	return "", nil
+	return serial, nil
 }
 
 func LabelWithContext(ctx context.Context, name string) (string, error) {
