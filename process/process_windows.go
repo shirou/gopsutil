@@ -703,6 +703,9 @@ func (p *Process) OpenFilesWithContext(ctx context.Context) ([]OpenFilesStat, er
 			0, true, windows.DUPLICATE_SAME_ACCESS) != nil {
 			continue
 		}
+		// release the new handle
+		defer windows.CloseHandle(windows.Handle(file))
+
 		fileType, _ := windows.GetFileType(windows.Handle(file))
 		if fileType != windows.FILE_TYPE_DISK {
 			continue
