@@ -111,7 +111,11 @@ func (p *Process) CmdlineSliceWithContext(ctx context.Context) ([]string, error)
 }
 
 func (p *Process) createTimeWithContext(ctx context.Context) (int64, error) {
-	return 0, common.ErrNotImplementedError
+	k, err := p.getKProc()
+	if err != nil {
+		return 0, err
+	}
+	return k.Start.Sec*1000 + k.Start.Usec/1000, nil
 }
 
 func (p *Process) ParentWithContext(ctx context.Context) (*Process, error) {
