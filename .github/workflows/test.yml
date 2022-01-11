@@ -29,10 +29,3 @@ jobs:
     - name: Test
       run: |
         go test -coverprofile='coverage.out' -covermode=atomic ./...
-    - name: Upload Code Coverage
-      uses: codecov/codecov-action@v2
-      with:
-        fail_ci_if_error: true
-        files: coverage.out
-        flags: ${{ runner.os }},go-${{ matrix.go-version }}
-        token: ${{ secrets.CODECOV_TOKEN }}
