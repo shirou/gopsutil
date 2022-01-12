@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/internal/common"
@@ -111,34 +110,14 @@ func (p *Process) cmdNameWithContext(ctx context.Context) ([]string, error) {
 }
 
 func (p *Process) createTimeWithContext(ctx context.Context) (int64, error) {
-	r, err := callPsWithContext(ctx, "etime", p.Pid, false, false)
+	kproc, err := unix.SysctlKinfoProc("kern.proc.pid", int(p.Pid))
 	if err != nil {
 		return 0, err
 	}
 
-	elapsedSegments := strings.Split(strings.Replace(r[0][0], "-", ":", 1), ":")
-	var elapsedDurations []time.Duration
-	for i := len(elapsedSegments) - 1; i >= 0; i-- {
-		p, err := strconv.ParseInt(elapsedSegments[i], 10, 0)
-		if err != nil {
-			return 0, err
-		}
-		elapsedDurations = append(elapsedDurations, time.Duration(p))
-	}
+	got := kproc.Proc.P_starttime.Sec*1000 + int64(kproc.Proc.P_starttime.Usec)/1000
 
-	elapsed := time.Duration(elapsedDurations[0]) * time.Second
-	if len(elapsedDurations) > 1 {
-		elapsed += time.Duration(elapsedDurations[1]) * time.Minute
-	}
-	if len(elapsedDurations) > 2 {
-		elapsed += time.Duration(elapsedDurations[2]) * time.Hour
-	}
-	if len(elapsedDurations) > 3 {
-		elapsed += time.Duration(elapsedDurations[3]) * time.Hour * 24
-	}
-
-	start := time.Now().Add(-elapsed)
-	return start.Unix() * 1000, nil
+	return got, nil
 }
 
 func (p *Process) ParentWithContext(ctx context.Context) (*Process, error) {
