@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/internal/common"
 	"github.com/shirou/gopsutil/v3/net"
 	"github.com/tklauser/go-sysconf"
@@ -80,25 +79,16 @@ func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 			return "", err
 		}
 		if len(cmdName) > 0 {
-			extendedName := filepath.Base(cmdName[0])
+			extendedName := filepath.Base(cmdName)
 			if strings.HasPrefix(extendedName, p.name) {
 				name = extendedName
 			} else {
-				name = cmdName[0]
+				name = cmdName
 			}
 		}
 	}
 
 	return name, nil
-}
-
-// cmdNameWithContext returns the command name (including spaces) without any arguments
-func (p *Process) cmdNameWithContext(ctx context.Context) ([]string, error) {
-	r, err := callPsWithContext(ctx, "command", p.Pid, false, true)
-	if err != nil {
-		return nil, err
-	}
-	return r[0], err
 }
 
 func (p *Process) createTimeWithContext(ctx context.Context) (int64, error) {
@@ -211,14 +201,6 @@ func (p *Process) IOCountersWithContext(ctx context.Context) (*IOCountersStat, e
 	return nil, common.ErrNotImplementedError
 }
 
-func (p *Process) NumThreadsWithContext(ctx context.Context) (int32, error) {
-	r, err := callPsWithContext(ctx, "utime,stime", p.Pid, true, false)
-	if err != nil {
-		return 0, err
-	}
-	return int32(len(r)), nil
-}
-
 func convertCPUTimes(s string) (ret float64, err error) {
 	var t int
 	var _tmp string
@@ -263,56 +245,6 @@ func convertCPUTimes(s string) (ret float64, err error) {
 	h, err = strconv.Atoi(_t[1])
 	t += h
 	return float64(t) / float64(clockTicks), nil
-}
-
-func (p *Process) TimesWithContext(ctx context.Context) (*cpu.TimesStat, error) {
-	r, err := callPsWithContext(ctx, "utime,stime", p.Pid, false, false)
-	if err != nil {
-		return nil, err
-	}
-
-	utime, err := convertCPUTimes(r[0][0])
-	if err != nil {
-		return nil, err
-	}
-	stime, err := convertCPUTimes(r[0][1])
-	if err != nil {
-		return nil, err
-	}
-
-	ret := &cpu.TimesStat{
-		CPU:    "cpu",
-		User:   utime,
-		System: stime,
-	}
-	return ret, nil
-}
-
-func (p *Process) MemoryInfoWithContext(ctx context.Context) (*MemoryInfoStat, error) {
-	r, err := callPsWithContext(ctx, "rss,vsize,pagein", p.Pid, false, false)
-	if err != nil {
-		return nil, err
-	}
-	rss, err := strconv.Atoi(r[0][0])
-	if err != nil {
-		return nil, err
-	}
-	vms, err := strconv.Atoi(r[0][1])
-	if err != nil {
-		return nil, err
-	}
-	pagein, err := strconv.Atoi(r[0][2])
-	if err != nil {
-		return nil, err
-	}
-
-	ret := &MemoryInfoStat{
-		RSS:  uint64(rss) * 1024,
-		VMS:  uint64(vms) * 1024,
-		Swap: uint64(pagein),
-	}
-
-	return ret, nil
 }
 
 func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
