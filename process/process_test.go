@@ -46,26 +46,6 @@ func Test_Pids(t *testing.T) {
 	}
 }
 
-func Test_Pids_Fail(t *testing.T) {
-	if runtime.GOOS != "darwin" {
-		t.Skip("darwin only")
-	}
-
-	mu.Lock()
-	defer mu.Unlock()
-
-	invoke = common.FakeInvoke{Suffix: "fail"}
-	ret, err := Pids()
-	skipIfNotImplementedErr(t, err)
-	invoke = common.Invoke{}
-	if err != nil {
-		t.Errorf("error %v", err)
-	}
-	if len(ret) != 9 {
-		t.Errorf("wrong getted pid nums: %v/%d", ret, len(ret))
-	}
-}
-
 func Test_Pid_exists(t *testing.T) {
 	checkPid := os.Getpid()
 
