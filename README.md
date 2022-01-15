@@ -130,7 +130,7 @@ will provide useful information.
   - CacheSize
   - Flags (ex: "fpu vme de pse tsc msr pae mce cx8 ...")
   - Microcode
-- load/LoadAvg() (linux, freebsd)
+- load/Avg() (linux, freebsd, solaris)
   - Load1
   - Load5
   - Load15
