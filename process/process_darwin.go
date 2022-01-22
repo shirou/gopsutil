@@ -141,23 +141,6 @@ func (p *Process) createTimeWithContext(ctx context.Context) (int64, error) {
 	return start.Unix() * 1000, nil
 }
 
-func (p *Process) ParentWithContext(ctx context.Context) (*Process, error) {
-	out, err := common.CallLsofWithContext(ctx, invoke, p.Pid, "-FR")
-	if err != nil {
-		return nil, err
-	}
-	for _, line := range out {
-		if len(line) >= 1 && line[0] == 'R' {
-			v, err := strconv.Atoi(line[1:])
-			if err != nil {
-				return nil, err
-			}
-			return NewProcessWithContext(ctx, int32(v))
-		}
-	}
-	return nil, fmt.Errorf("could not find parent line")
-}
-
 func (p *Process) StatusWithContext(ctx context.Context) ([]string, error) {
 	r, err := callPsWithContext(ctx, "state", p.Pid, false, false)
 	if err != nil {

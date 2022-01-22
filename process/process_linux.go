@@ -123,17 +123,6 @@ func (p *Process) CwdWithContext(ctx context.Context) (string, error) {
 	return p.fillFromCwdWithContext()
 }
 
-func (p *Process) ParentWithContext(ctx context.Context) (*Process, error) {
-	err := p.fillFromStatusWithContext()
-	if err != nil {
-		return nil, err
-	}
-	if p.parent == 0 {
-		return nil, fmt.Errorf("wrong number of parents")
-	}
-	return NewProcessWithContext(ctx, p.parent)
-}
-
 func (p *Process) StatusWithContext(ctx context.Context) ([]string, error) {
 	err := p.fillFromStatusWithContext()
 	if err != nil {

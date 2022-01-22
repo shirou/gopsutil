@@ -402,6 +402,15 @@ func (p *Process) Parent() (*Process, error) {
 	return p.ParentWithContext(context.Background())
 }
 
+// ParentWithContext returns parent Process of the process.
+func (p *Process) ParentWithContext(ctx context.Context) (*Process, error) {
+	ppid, err := p.PpidWithContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return NewProcessWithContext(ctx, ppid)
+}
+
 // Status returns the process status.
 // Return value could be one of these.
 // R: Running S: Sleep T: Stop I: Idle
