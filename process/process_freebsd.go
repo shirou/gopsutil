@@ -118,10 +118,6 @@ func (p *Process) createTimeWithContext(ctx context.Context) (int64, error) {
 	return k.Start.Sec*1000 + k.Start.Usec/1000, nil
 }
 
-func (p *Process) ParentWithContext(ctx context.Context) (*Process, error) {
-	return nil, common.ErrNotImplementedError
-}
-
 func (p *Process) StatusWithContext(ctx context.Context) ([]string, error) {
 	k, err := p.getKProc()
 	if err != nil {

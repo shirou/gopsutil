@@ -435,15 +435,6 @@ func (p *Process) CwdWithContext(_ context.Context) (string, error) {
 	return "", nil
 }
 
-func (p *Process) ParentWithContext(ctx context.Context) (*Process, error) {
-	ppid, err := p.PpidWithContext(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("could not get ParentProcessID: %s", err)
-	}
-
-	return NewProcessWithContext(ctx, ppid)
-}
-
 func (p *Process) StatusWithContext(ctx context.Context) ([]string, error) {
 	return []string{""}, common.ErrNotImplementedError
 }

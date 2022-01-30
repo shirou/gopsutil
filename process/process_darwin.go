@@ -100,15 +100,6 @@ func (p *Process) createTimeWithContext(ctx context.Context) (int64, error) {
 	return k.Proc.P_starttime.Sec*1000 + int64(k.Proc.P_starttime.Usec)/1000, nil
 }
 
-func (p *Process) ParentWithContext(ctx context.Context) (*Process, error) {
-	ppid, err := p.PpidWithContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewProcessWithContext(ctx, ppid)
-}
-
 func (p *Process) StatusWithContext(ctx context.Context) ([]string, error) {
 	r, err := callPsWithContext(ctx, "state", p.Pid, false, false)
 	if err != nil {
