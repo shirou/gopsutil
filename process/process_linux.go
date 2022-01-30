@@ -340,10 +340,10 @@ func (p *Process) PageFaultsWithContext(ctx context.Context) (*PageFaultsStat, e
 func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
 	pids, err := common.CallPgrepWithContext(ctx, invoke, p.Pid)
 	if err != nil {
-		if len(pids) == 0 {
-			return nil, ErrorNoChildren
-		}
 		return nil, err
+	}
+	if len(pids) == 0 {
+		return nil, ErrorNoChildren
 	}
 	ret := make([]*Process, 0, len(pids))
 	for _, pid := range pids {
