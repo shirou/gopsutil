@@ -19,7 +19,7 @@ func GetDockerStatWithContext(ctx context.Context) ([]CgroupDockerStat, error) {
 	return nil, ErrDockerNotAvailable
 }
 
-// GetDockerIDList returnes a list of DockerID.
+// GetDockerIDList returns a list of DockerID.
 // This requires certain permission.
 func GetDockerIDList() ([]string, error) {
 	return GetDockerIDListWithContext(context.Background())
@@ -29,7 +29,7 @@ func GetDockerIDListWithContext(ctx context.Context) ([]string, error) {
 	return nil, ErrDockerNotAvailable
 }
 
-// CgroupCPU returnes specified cgroup id CPU status.
+// CgroupCPU returns specified cgroup id CPU status.
 // containerid is same as docker id if you use docker.
 // If you use container via systemd.slice, you could use
 // containerid = docker-<container id>.scope and base=/sys/fs/cgroup/cpuacct/system.slice/

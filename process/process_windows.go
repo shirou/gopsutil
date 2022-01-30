@@ -189,7 +189,7 @@ type winLUIDAndAttributes struct {
 }
 
 // TOKEN_PRIVILEGES
-type winTokenPriviledges struct {
+type winTokenPrivileges struct {
 	PrivilegeCount winDWord
 	Privileges     [1]winLUIDAndAttributes
 }
@@ -218,23 +218,23 @@ func init() {
 	}
 	defer token.Close()
 
-	tokenPriviledges := winTokenPriviledges{PrivilegeCount: 1}
+	tokenPrivileges := winTokenPrivileges{PrivilegeCount: 1}
 	lpName := syscall.StringToUTF16("SeDebugPrivilege")
 	ret, _, _ := procLookupPrivilegeValue.Call(
 		0,
 		uintptr(unsafe.Pointer(&lpName[0])),
-		uintptr(unsafe.Pointer(&tokenPriviledges.Privileges[0].Luid)))
+		uintptr(unsafe.Pointer(&tokenPrivileges.Privileges[0].Luid)))
 	if ret == 0 {
 		return
 	}
 
-	tokenPriviledges.Privileges[0].Attributes = 0x00000002 // SE_PRIVILEGE_ENABLED
+	tokenPrivileges.Privileges[0].Attributes = 0x00000002 // SE_PRIVILEGE_ENABLED
 
 	procAdjustTokenPrivileges.Call(
 		uintptr(token),
 		0,
-		uintptr(unsafe.Pointer(&tokenPriviledges)),
-		uintptr(unsafe.Sizeof(tokenPriviledges)),
+		uintptr(unsafe.Pointer(&tokenPrivileges)),
+		uintptr(unsafe.Sizeof(tokenPrivileges)),
 		0,
 		0)
 }
