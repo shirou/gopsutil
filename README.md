@@ -7,7 +7,7 @@ challenge is porting all psutil functions on some architectures.
 
 ## v3 migration
 
-from v3.20.10, gopsutil becomes v3 which breaks backwards compatiblity.
+from v3.20.10, gopsutil becomes v3 which breaks backwards compatibility.
 See [v3Changes.md](_tools/v3migration/v3Changes.md) more detail changes.
 
 ## Tag semantics
@@ -21,7 +21,7 @@ for example, v2.17.04 means
 - 17: release year, 2017
 - 04: release month
 
-gopsutil aims to keep backwards-compatiblity until major version change.
+gopsutil aims to keep backwards compatibility until major version change.
 
 Tagged at every end of month, but if there are only a few commits, it
 can be skipped.
@@ -229,7 +229,7 @@ Some code is ported from Ohai. many thanks.
 |**HostInfo**     |       |         |         |        |        |         |
 |hostname         |x      |x        |x        |x       |x       |x        |
 |uptime           |x      |x        |x        |x       |        |x        |
-|proces           |x      |x        |x        |        |        |x        |
+|process          |x      |x        |x        |        |        |x        |
 |os               |x      |x        |x        |x       |x       |x        |
 |platform         |x      |x        |x        |x       |        |x        |
 |platformfamily   |x      |x        |x        |x       |        |x        |

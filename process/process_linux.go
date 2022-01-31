@@ -526,7 +526,7 @@ func (p *Process) fillFromLimitsWithContext() ([]RlimitStat, error) {
 		// Assert that last item is a Hard limit
 		statItem.Hard, err = limitToUint(str[len(str)-1])
 		if err != nil {
-			// On error remove last item an try once again since it can be unit or header line
+			// On error remove last item and try once again since it can be unit or header line
 			str = str[:len(str)-1]
 			statItem.Hard, err = limitToUint(str[len(str)-1])
 			if err != nil {
