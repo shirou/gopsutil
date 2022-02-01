@@ -123,17 +123,6 @@ func (p *Process) CwdWithContext(ctx context.Context) (string, error) {
 	return p.fillFromCwdWithContext()
 }
 
-func (p *Process) ParentWithContext(ctx context.Context) (*Process, error) {
-	err := p.fillFromStatusWithContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if p.parent == 0 {
-		return nil, fmt.Errorf("wrong number of parents")
-	}
-	return NewProcessWithContext(ctx, p.parent)
-}
-
 func (p *Process) StatusWithContext(ctx context.Context) ([]string, error) {
 	err := p.fillFromStatusWithContext(ctx)
 	if err != nil {
@@ -351,10 +340,10 @@ func (p *Process) PageFaultsWithContext(ctx context.Context) (*PageFaultsStat, e
 func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
 	pids, err := common.CallPgrepWithContext(ctx, invoke, p.Pid)
 	if err != nil {
-		if len(pids) == 0 {
-			return nil, ErrorNoChildren
-		}
 		return nil, err
+	}
+	if len(pids) == 0 {
+		return nil, ErrorNoChildren
 	}
 	ret := make([]*Process, 0, len(pids))
 	for _, pid := range pids {
@@ -537,7 +526,7 @@ func (p *Process) fillFromLimitsWithContext() ([]RlimitStat, error) {
 		// Assert that last item is a Hard limit
 		statItem.Hard, err = limitToUint(str[len(str)-1])
 		if err != nil {
-			// On error remove last item an try once again since it can be unit or header line
+			// On error remove last item and try once again since it can be unit or header line
 			str = str[:len(str)-1]
 			statItem.Hard, err = limitToUint(str[len(str)-1])
 			if err != nil {

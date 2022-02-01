@@ -100,8 +100,9 @@ func BootTimeWithContext(ctx context.Context) (uint64, error) {
 		if err != nil {
 			return 0, err
 		}
-		t := uint64(time.Now().Unix()) - uint64(b)
-		return t, nil
+		currentTime := float64(time.Now().UnixNano()) / float64(time.Second)
+		t := currentTime - b
+		return uint64(t), nil
 	}
 
 	return 0, fmt.Errorf("could not find btime")

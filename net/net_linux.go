@@ -40,7 +40,7 @@ const ( // Conntrack Column numbers
 	ctSEARCH_RESTART
 )
 
-// NetIOCounters returnes network I/O statistics for every network
+// NetIOCounters returns network I/O statistics for every network
 // interface installed on the system.  If pernic argument is false,
 // return only sum of all information (which name is 'all'). If true,
 // every network interface installed on the system is returned
@@ -188,7 +188,7 @@ func ProtoCountersWithContext(ctx context.Context, protocols []string) ([]ProtoC
 		line := lines[i]
 		r := strings.IndexRune(line, ':')
 		if r == -1 {
-			return nil, errors.New(filename + " is not fomatted correctly, expected ':'.")
+			return nil, errors.New(filename + " is not formatted correctly, expected ':'.")
 		}
 		proto := strings.ToLower(line[:r])
 		if !protos[proto] {
@@ -204,7 +204,7 @@ func ProtoCountersWithContext(ctx context.Context, protocols []string) ([]ProtoC
 		i++
 		statValues := strings.Split(lines[i][r+2:], " ")
 		if len(statNames) != len(statValues) {
-			return nil, errors.New(filename + " is not fomatted correctly, expected same number of columns.")
+			return nil, errors.New(filename + " is not formatted correctly, expected same number of columns.")
 		}
 		stat := ProtoCountersStat{
 			Protocol: proto,
@@ -543,7 +543,7 @@ func statsFromInodesWithContext(ctx context.Context, root string, pid int32, tma
 	return ret, nil
 }
 
-// getProcInodes returnes fd of the pid.
+// getProcInodes returns fd of the pid.
 func getProcInodes(root string, pid int32, max int) (map[string][]inodeMap, error) {
 	ret := make(map[string][]inodeMap)
 
@@ -553,7 +553,7 @@ func getProcInodes(root string, pid int32, max int) (map[string][]inodeMap, erro
 		return ret, err
 	}
 	defer f.Close()
-	dirEntries, err := f.ReadDir(max)
+	dirEntries, err := readDir(f, max)
 	if err != nil {
 		return ret, err
 	}
