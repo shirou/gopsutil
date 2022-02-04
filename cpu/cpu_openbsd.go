@@ -11,7 +11,6 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"syscall"
 
 	"github.com/shirou/gopsutil/v3/internal/common"
 	"github.com/tklauser/go-sysconf"
@@ -31,8 +30,6 @@ var (
 // sys/sysctl.h
 const (
 	ctlKern     = 1  // "high kernel": proc, limits
-	ctlHw       = 6  // CTL_HW
-	sMT         = 24 // HW_sMT
 	kernCptime  = 40 // KERN_CPTIME
 	kernCptime2 = 71 // KERN_CPTIME2
 )
@@ -64,22 +61,6 @@ func init() {
 	}()
 }
 
-func smt() (bool, error) {
-	mib := []int32{ctlHw, sMT}
-	buf, _, err := common.CallSyscall(mib)
-	if err != nil {
-		return false, err
-	}
-
-	var ret bool
-	br := bytes.NewReader(buf)
-	if err := binary.Read(br, binary.LittleEndian, &ret); err != nil {
-		return false, err
-	}
-
-	return ret, nil
-}
-
 func Times(percpu bool) ([]TimesStat, error) {
 	return TimesWithContext(context.Background(), percpu)
 }
@@ -94,25 +75,12 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 		ncpu = 1
 	}
 
-	smt, err := smt()
-	if err == syscall.EOPNOTSUPP {
-		// if hw.smt is not applicable for this platform (e.g. i386),
-		// pretend it's enabled
-		smt = true
-	} else if err != nil {
-		return nil, err
-	}
-
 	for i := 0; i < ncpu; i++ {
-		j := i
-		if !smt {
-			j *= 2
-		}
 
 		cpuTimes := make([]int32, cpUStates)
 		var mib []int32
 		if percpu {
-			mib = []int32{ctlKern, kernCptime2, int32(j)}
+			mib = []int32{ctlKern, kernCptime2, int32(i)}
 		} else {
 			mib = []int32{ctlKern, kernCptime}
 		}
@@ -134,7 +102,7 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 			Irq:    float64(cpuTimes[cpIntr]) / ClocksPerSec,
 		}
 		if percpu {
-			c.CPU = fmt.Sprintf("cpu%d", j)
+			c.CPU = fmt.Sprintf("cpu%d", i)
 		} else {
 			c.CPU = "cpu-total"
 		}
