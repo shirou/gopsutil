@@ -4,7 +4,9 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/csv"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -106,7 +108,44 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 }
 
 func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
-	return []TemperatureStat{}, common.ErrNotImplementedError
+	ipmitool, err := exec.LookPath("ipmitool")
+	var ret []TemperatureStat
+	if err != nil {
+		return ret, err
+	}
+
+	out, err := invoke.CommandWithContext(ctx, ipmitool, "-c", "sdr", "list")
+	if err != nil {
+		return ret, err
+	}
+
+	r := csv.NewReader(strings.NewReader(string(out)))
+	// Output may contain errors, e.g. "bmc_send_cmd: Permission denied", don't expect a consistent number of records
+	r.FieldsPerRecord = -1
+	for {
+		record, err := r.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return ret, err
+		}
+		// CPU1 Temp,40,degrees C,ok
+		if len(record) < 3 || record[1] == "" || record[2] != "degrees C" {
+			continue
+		}
+		v, err := strconv.ParseFloat(record[1], 64)
+		if err != nil {
+			return ret, err
+		}
+		ts := TemperatureStat{
+			SensorKey:   strings.TrimSuffix(record[0], " Temp"),
+			Temperature: v,
+		}
+		ret = append(ret, ts)
+	}
+
+	return ret, nil
 }
 
 func VirtualizationWithContext(ctx context.Context) (string, string, error) {
