@@ -26,6 +26,11 @@ import (
 	"time"
 )
 
+const (
+	// InvokerCtxKeyEnv is a Invoker context value key for setting the command environment, a slice of strings
+	InvokerCtxKeyEnv = "invoker-env"
+)
+
 var (
 	Timeout    = 3 * time.Second
 	ErrTimeout = errors.New("command timed out")
@@ -46,6 +51,11 @@ func (i Invoke) Command(name string, arg ...string) ([]byte, error) {
 
 func (i Invoke) CommandWithContext(ctx context.Context, name string, arg ...string) ([]byte, error) {
 	cmd := exec.CommandContext(ctx, name, arg...)
+
+	env := ctx.Value(InvokerCtxKeyEnv)
+	if cmdEnv, ok := env.([]string); ok {
+		cmd.Env = cmdEnv
+	}
 
 	var buf bytes.Buffer
 	cmd.Stdout = &buf
