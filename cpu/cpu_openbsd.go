@@ -9,8 +9,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"runtime"
-	"strconv"
-	"strings"
 	"syscall"
 
 	"github.com/shirou/gopsutil/v3/internal/common"
@@ -18,18 +16,17 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// sys/sched.h
-var (
+const (
+	// sys/sched.h
 	CPUser    = 0
 	cpNice    = 1
 	cpSys     = 2
-	cpIntr    = 3
-	cpIdle    = 4
-	cpUStates = 5
-)
+	cpSpin    = 3
+	cpIntr    = 4
+	cpIdle    = 5
+	cpUStates = 6
 
-// sys/sysctl.h
-const (
+	// sys/sysctl.h
 	ctlKern     = 1  // "high kernel": proc, limits
 	ctlHw       = 6  // CTL_HW
 	sMT         = 24 // HW_sMT
@@ -45,23 +42,6 @@ func init() {
 	if err == nil {
 		ClocksPerSec = float64(clkTck)
 	}
-
-	func() {
-		v, err := unix.Sysctl("kern.osrelease") // can't reuse host.PlatformInformation because of circular import
-		if err != nil {
-			return
-		}
-		v = strings.ToLower(v)
-		version, err := strconv.ParseFloat(v, 64)
-		if err != nil {
-			return
-		}
-		if version >= 6.4 {
-			cpIntr = 4
-			cpIdle = 5
-			cpUStates = 6
-		}
-	}()
 }
 
 func smt() (bool, error) {
