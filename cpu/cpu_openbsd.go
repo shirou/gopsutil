@@ -4,17 +4,18 @@
 package cpu
 
 import (
-	"bytes"
 	"context"
-	"encoding/binary"
 	"fmt"
 	"runtime"
 	"syscall"
+	"unsafe"
 
 	"github.com/shirou/gopsutil/v3/internal/common"
 	"github.com/tklauser/go-sysconf"
 	"golang.org/x/sys/unix"
 )
+
+import "C"
 
 const (
 	// sys/sched.h
@@ -51,13 +52,8 @@ func smtEnabled() (bool, error) {
 		return false, err
 	}
 
-	var ret bool
-	br := bytes.NewReader(buf)
-	if err := binary.Read(br, binary.LittleEndian, &ret); err != nil {
-		return false, err
-	}
-
-	return ret, nil
+	smt := *(*uint32)(unsafe.Pointer(&buf[0]))
+	return smt == 1, nil
 }
 
 func Times(percpu bool) ([]TimesStat, error) {
@@ -89,7 +85,6 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 			j *= 2
 		}
 
-		cpuTimes := make([]int32, cpuStates)
 		var mib []int32
 		if percpu {
 			mib = []int32{ctlKern, kernCptime2, int32(j)}
@@ -101,11 +96,24 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 			return ret, err
 		}
 
-		br := bytes.NewReader(buf)
-		err = binary.Read(br, binary.LittleEndian, &cpuTimes)
-		if err != nil {
-			return ret, err
+		var cpuTimes [cpuStates]uint64
+		if percpu {
+			// could use unsafe.Slice but it's only for go1.17+
+			var x []uint64
+			x = (*[cpuStates]uint64)(unsafe.Pointer(&buf[0]))[:]
+			for i := range x {
+				cpuTimes[i] = x[i]
+			}
+		} else {
+			// KERN_CPTIME yields long[CPUSTATES] and `long' is
+			// platform dependent
+			var x []C.long
+			x = (*[cpuStates]C.long)(unsafe.Pointer(&buf[0]))[:]
+			for i := range x {
+				cpuTimes[i] = uint64(x[i])
+			}
 		}
+
 		c := TimesStat{
 			User:   float64(cpuTimes[cpUser]) / ClocksPerSec,
 			Nice:   float64(cpuTimes[cpNice]) / ClocksPerSec,
