@@ -18,18 +18,18 @@ import (
 
 const (
 	// sys/sched.h
-	CPUser    = 0
+	cpUser    = 0
 	cpNice    = 1
 	cpSys     = 2
 	cpSpin    = 3
 	cpIntr    = 4
 	cpIdle    = 5
-	cpUStates = 6
+	cpuStates = 6
 
 	// sys/sysctl.h
 	ctlKern     = 1  // "high kernel": proc, limits
 	ctlHw       = 6  // CTL_HW
-	sMT         = 24 // HW_sMT
+	smt         = 24 // HW_SMT
 	kernCptime  = 40 // KERN_CPTIME
 	kernCptime2 = 71 // KERN_CPTIME2
 )
@@ -44,8 +44,8 @@ func init() {
 	}
 }
 
-func smt() (bool, error) {
-	mib := []int32{ctlHw, sMT}
+func smtEnabled() (bool, error) {
+	mib := []int32{ctlHw, smt}
 	buf, _, err := common.CallSyscall(mib)
 	if err != nil {
 		return false, err
@@ -74,7 +74,7 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 		ncpu = 1
 	}
 
-	smt, err := smt()
+	smt, err := smtEnabled()
 	if err == syscall.EOPNOTSUPP {
 		// if hw.smt is not applicable for this platform (e.g. i386),
 		// pretend it's enabled
@@ -89,7 +89,7 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 			j *= 2
 		}
 
-		cpuTimes := make([]int32, cpUStates)
+		cpuTimes := make([]int32, cpuStates)
 		var mib []int32
 		if percpu {
 			mib = []int32{ctlKern, kernCptime2, int32(j)}
@@ -107,7 +107,7 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 			return ret, err
 		}
 		c := TimesStat{
-			User:   float64(cpuTimes[CPUser]) / ClocksPerSec,
+			User:   float64(cpuTimes[cpUser]) / ClocksPerSec,
 			Nice:   float64(cpuTimes[cpNice]) / ClocksPerSec,
 			System: float64(cpuTimes[cpSys]) / ClocksPerSec,
 			Idle:   float64(cpuTimes[cpIdle]) / ClocksPerSec,
