@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"runtime"
-	"syscall"
 	"unsafe"
 
 	"github.com/shirou/gopsutil/v3/internal/common"
@@ -26,13 +25,14 @@ const (
 	cpIntr    = 4
 	cpIdle    = 5
 	cpuStates = 6
+	cpuOnline = 0x0001 // CPUSTATS_ONLINE
 
 	// sys/sysctl.h
-	ctlKern     = 1  // "high kernel": proc, limits
-	ctlHw       = 6  // CTL_HW
-	smt         = 24 // HW_SMT
-	kernCptime  = 40 // KERN_CPTIME
-	kernCptime2 = 71 // KERN_CPTIME2
+	ctlKern      = 1  // "high kernel": proc, limits
+	ctlHw        = 6  // CTL_HW
+	smt          = 24 // HW_SMT
+	kernCpTime   = 40 // KERN_CPTIME
+	kernCPUStats = 85 // KERN_CPUSTATS
 )
 
 var ClocksPerSec = float64(128)
@@ -45,87 +45,66 @@ func init() {
 	}
 }
 
-func smtEnabled() (bool, error) {
-	mib := []int32{ctlHw, smt}
-	buf, _, err := common.CallSyscall(mib)
-	if err != nil {
-		return false, err
-	}
-
-	smt := *(*uint32)(unsafe.Pointer(&buf[0]))
-	return smt == 1, nil
-}
-
 func Times(percpu bool) ([]TimesStat, error) {
 	return TimesWithContext(context.Background(), percpu)
 }
 
-func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
-	var ret []TimesStat
+func cpsToTS(cpuTimes [cpuStates]uint64, name string) TimesStat {
+	return TimesStat{
+		CPU:    name,
+		User:   float64(cpuTimes[cpUser]) / ClocksPerSec,
+		Nice:   float64(cpuTimes[cpNice]) / ClocksPerSec,
+		System: float64(cpuTimes[cpSys]) / ClocksPerSec,
+		Idle:   float64(cpuTimes[cpIdle]) / ClocksPerSec,
+		Irq:    float64(cpuTimes[cpIntr]) / ClocksPerSec,
+	}
+}
 
-	var ncpu int
-	if percpu {
-		ncpu, _ = Counts(true)
-	} else {
-		ncpu = 1
+func TimesWithContext(ctx context.Context, percpu bool) (ret []TimesStat, err error) {
+	cpuTimes := [cpuStates]uint64{}
+
+	if !percpu {
+		mib := []int32{ctlKern, kernCpTime}
+		buf, _, err := common.CallSyscall(mib)
+		if err != nil {
+			return ret, err
+		}
+		var x []C.long
+		// could use unsafe.Slice but it's only for go1.17+
+		x = (*[cpuStates]C.long)(unsafe.Pointer(&buf[0]))[:]
+		for i := range x {
+			cpuTimes[i] = uint64(x[i])
+		}
+		c := cpsToTS(cpuTimes, "cpu-total")
+		return []TimesStat{c}, nil
 	}
 
-	smt, err := smtEnabled()
-	if err == syscall.EOPNOTSUPP {
-		// if hw.smt is not applicable for this platform (e.g. i386),
-		// pretend it's enabled
-		smt = true
-	} else if err != nil {
-		return nil, err
+	ncpu, err := unix.SysctlUint32("hw.ncpu")
+	if err != nil {
+		return
 	}
 
-	for i := 0; i < ncpu; i++ {
-		j := i
-		if !smt {
-			j *= 2
-		}
-
-		var mib []int32
-		if percpu {
-			mib = []int32{ctlKern, kernCptime2, int32(j)}
-		} else {
-			mib = []int32{ctlKern, kernCptime}
-		}
+	var i uint32
+	for i = 0; i < ncpu; i++ {
+		mib := []int32{ctlKern, kernCPUStats, int32(i)}
 		buf, _, err := common.CallSyscall(mib)
 		if err != nil {
 			return ret, err
 		}
 
-		var cpuTimes [cpuStates]uint64
-		if percpu {
-			// could use unsafe.Slice but it's only for go1.17+
-			var x []uint64
-			x = (*[cpuStates]uint64)(unsafe.Pointer(&buf[0]))[:]
-			for i := range x {
-				cpuTimes[i] = x[i]
-			}
-		} else {
-			// KERN_CPTIME yields long[CPUSTATES] and `long' is
-			// platform dependent
-			var x []C.long
-			x = (*[cpuStates]C.long)(unsafe.Pointer(&buf[0]))[:]
-			for i := range x {
-				cpuTimes[i] = uint64(x[i])
-			}
+		data := unsafe.Pointer(&buf[0])
+		fptr := unsafe.Pointer(uintptr(data) + uintptr(8*cpuStates))
+		flags := *(*uint64)(fptr)
+		if (flags & cpuOnline) == 0 {
+			continue
 		}
 
-		c := TimesStat{
-			User:   float64(cpuTimes[cpUser]) / ClocksPerSec,
-			Nice:   float64(cpuTimes[cpNice]) / ClocksPerSec,
-			System: float64(cpuTimes[cpSys]) / ClocksPerSec,
-			Idle:   float64(cpuTimes[cpIdle]) / ClocksPerSec,
-			Irq:    float64(cpuTimes[cpIntr]) / ClocksPerSec,
+		var x []uint64
+		x = (*[cpuStates]uint64)(data)[:]
+		for i := range x {
+			cpuTimes[i] = x[i]
 		}
-		if percpu {
-			c.CPU = fmt.Sprintf("cpu%d", j)
-		} else {
-			c.CPU = "cpu-total"
-		}
+		c := cpsToTS(cpuTimes, fmt.Sprintf("cpu%d", i))
 		ret = append(ret, c)
 	}
 
