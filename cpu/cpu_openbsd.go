@@ -49,7 +49,7 @@ func Times(percpu bool) ([]TimesStat, error) {
 	return TimesWithContext(context.Background(), percpu)
 }
 
-func cpsToTS(cpuTimes [cpuStates]uint64, name string) TimesStat {
+func cpsToTS(cpuTimes []uint64, name string) TimesStat {
 	return TimesStat{
 		CPU:    name,
 		User:   float64(cpuTimes[cpUser]) / ClocksPerSec,
@@ -61,8 +61,6 @@ func cpsToTS(cpuTimes [cpuStates]uint64, name string) TimesStat {
 }
 
 func TimesWithContext(ctx context.Context, percpu bool) (ret []TimesStat, err error) {
-	cpuTimes := [cpuStates]uint64{}
-
 	if !percpu {
 		mib := []int32{ctlKern, kernCpTime}
 		buf, _, err := common.CallSyscall(mib)
@@ -72,10 +70,11 @@ func TimesWithContext(ctx context.Context, percpu bool) (ret []TimesStat, err er
 		var x []C.long
 		// could use unsafe.Slice but it's only for go1.17+
 		x = (*[cpuStates]C.long)(unsafe.Pointer(&buf[0]))[:]
+		cpuTimes := [cpuStates]uint64{}
 		for i := range x {
 			cpuTimes[i] = uint64(x[i])
 		}
-		c := cpsToTS(cpuTimes, "cpu-total")
+		c := cpsToTS(cpuTimes[:], "cpu-total")
 		return []TimesStat{c}, nil
 	}
 
@@ -101,10 +100,7 @@ func TimesWithContext(ctx context.Context, percpu bool) (ret []TimesStat, err er
 
 		var x []uint64
 		x = (*[cpuStates]uint64)(data)[:]
-		for i := range x {
-			cpuTimes[i] = x[i]
-		}
-		c := cpsToTS(cpuTimes, fmt.Sprintf("cpu%d", i))
+		c := cpsToTS(x, fmt.Sprintf("cpu%d", i))
 		ret = append(ret, c)
 	}
 
