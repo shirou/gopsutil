@@ -380,10 +380,16 @@ func (p *Process) ConnectionsMaxWithContext(ctx context.Context, max int) ([]net
 func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]MemoryMapsStat, error) {
 	pid := p.Pid
 	var ret []MemoryMapsStat
+	smapsPath := common.HostProc(strconv.Itoa(int(pid)), "smaps")
 	if grouped {
 		ret = make([]MemoryMapsStat, 1)
+		// If smaps_rollup exists (require kernel >= 4.15), then we will use it
+		// for pre-summed memory information for a process.
+		smapsRollupPath := common.HostProc(strconv.Itoa(int(pid)), "smaps_rollup")
+		if _, err := os.Stat(smapsRollupPath); !os.IsNotExist(err) {
+			smapsPath = smapsRollupPath
+		}
 	}
-	smapsPath := common.HostProc(strconv.Itoa(int(pid)), "smaps")
 	contents, err := ioutil.ReadFile(smapsPath)
 	if err != nil {
 		return nil, err
