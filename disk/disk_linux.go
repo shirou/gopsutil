@@ -280,6 +280,10 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 			mountPoint := fields[4]
 			mountOpts := strings.Split(fields[5], ",")
 
+			if rootDir := fields[3]; rootDir != "" && rootDir != "/" {
+				mountOpts = append(mountOpts, "bind")
+			}
+
 			fields = strings.Fields(parts[1])
 			fstype := fields[0]
 			device := fields[1]
@@ -297,10 +301,6 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 			if len(fields) >= 3 {
 				superBlockOpts := strings.Split(fields[2], ",")
 				mountOpts = append(mountOpts, superBlockOpts...)
-			}
-
-			if rootDir := fields[3]; rootDir != "" && rootDir != "/" {
-				mountOpts = append(mountOpts, "bind")
 			}
 
 			d = PartitionStat{
