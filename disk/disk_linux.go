@@ -456,11 +456,24 @@ func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
 	udevDataPath := common.HostRun(fmt.Sprintf("udev/data/b%d:%d", major, minor))
 	if udevdata, err := ioutil.ReadFile(udevDataPath); err == nil {
 		scanner := bufio.NewScanner(bytes.NewReader(udevdata))
+		var serial string
 		for scanner.Scan() {
 			values := strings.Split(scanner.Text(), "=")
-			if len(values) == 2 && values[0] == "E:ID_SERIAL" {
-				return values[1], nil
+			if len(values) == 2 {
+				if values[0] == "E:ID_SERIAL_SHORT" {
+					serial = values[1]
+					break
+				}
+				if values[0] == "E:ID_SERIAL" {
+					serial = values[1]
+				}
 			}
+		}
+		if err = scanner.Err(); err != nil {
+			return "", err
+		}
+		if serial != "" {
+			return serial, nil
 		}
 	}
 
