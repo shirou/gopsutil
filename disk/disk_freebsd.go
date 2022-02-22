@@ -137,6 +137,7 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 			IoTime:     uint64(d.Busy_time.Compute() * 1000),
 			Name:       name,
 		}
+		ds.SerialNumber, _ = SerialNumberWithContext(ctx, name)
 		ret[name] = ds
 	}
 
