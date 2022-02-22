@@ -445,7 +445,7 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 
 func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
 	var stat unix.Stat_t
-	err := unix.Stat(name, &stat)
+	err := unix.Stat(common.HostDev(strings.TrimPrefix(name, "/dev/")), &stat)
 	if err != nil {
 		return "", err
 	}
