@@ -14,17 +14,8 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-import "C"
-
 const (
 	// sys/sched.h
-	cpUser    = 0
-	cpNice    = 1
-	cpSys     = 2
-	cpSpin    = 3
-	cpIntr    = 4
-	cpIdle    = 5
-	cpuStates = 6
 	cpuOnline = 0x0001 // CPUSTATS_ONLINE
 
 	// sys/sysctl.h
@@ -36,6 +27,19 @@ const (
 )
 
 var ClocksPerSec = float64(128)
+
+type cpuStats struct {
+	// cs_time[CPUSTATES]
+	User uint64
+	Nice uint64
+	Sys  uint64
+	Spin uint64
+	Intr uint64
+	Idle uint64
+
+	// cs_flags
+	Flags uint64
+}
 
 func init() {
 	clkTck, err := sysconf.Sysconf(sysconf.SC_CLK_TCK)
@@ -49,17 +53,6 @@ func Times(percpu bool) ([]TimesStat, error) {
 	return TimesWithContext(context.Background(), percpu)
 }
 
-func cpsToTS(cpuTimes []uint64, name string) TimesStat {
-	return TimesStat{
-		CPU:    name,
-		User:   float64(cpuTimes[cpUser]) / ClocksPerSec,
-		Nice:   float64(cpuTimes[cpNice]) / ClocksPerSec,
-		System: float64(cpuTimes[cpSys]) / ClocksPerSec,
-		Idle:   float64(cpuTimes[cpIdle]) / ClocksPerSec,
-		Irq:    float64(cpuTimes[cpIntr]) / ClocksPerSec,
-	}
-}
-
 func TimesWithContext(ctx context.Context, percpu bool) (ret []TimesStat, err error) {
 	if !percpu {
 		mib := []int32{ctlKern, kernCpTime}
@@ -67,15 +60,16 @@ func TimesWithContext(ctx context.Context, percpu bool) (ret []TimesStat, err er
 		if err != nil {
 			return ret, err
 		}
-		var x []C.long
-		// could use unsafe.Slice but it's only for go1.17+
-		x = (*[cpuStates]C.long)(unsafe.Pointer(&buf[0]))[:]
-		cpuTimes := [cpuStates]uint64{}
-		for i := range x {
-			cpuTimes[i] = uint64(x[i])
+		times := (*cpuTimes)(unsafe.Pointer(&buf[0]))
+		stat := TimesStat{
+			CPU:    "cpu-total",
+			User:   float64(times.User) / ClocksPerSec,
+			Nice:   float64(times.Nice) / ClocksPerSec,
+			System: float64(times.Sys) / ClocksPerSec,
+			Idle:   float64(times.Idle) / ClocksPerSec,
+			Irq:    float64(times.Intr) / ClocksPerSec,
 		}
-		c := cpsToTS(cpuTimes[:], "cpu-total")
-		return []TimesStat{c}, nil
+		return []TimesStat{stat}, nil
 	}
 
 	ncpu, err := unix.SysctlUint32("hw.ncpu")
@@ -91,17 +85,18 @@ func TimesWithContext(ctx context.Context, percpu bool) (ret []TimesStat, err er
 			return ret, err
 		}
 
-		data := unsafe.Pointer(&buf[0])
-		fptr := unsafe.Pointer(uintptr(data) + uintptr(8*cpuStates))
-		flags := *(*uint64)(fptr)
-		if (flags & cpuOnline) == 0 {
+		stats := (*cpuStats)(unsafe.Pointer(&buf[0]))
+		if (stats.Flags & cpuOnline) == 0 {
 			continue
 		}
-
-		var x []uint64
-		x = (*[cpuStates]uint64)(data)[:]
-		c := cpsToTS(x, fmt.Sprintf("cpu%d", i))
-		ret = append(ret, c)
+		ret = append(ret, TimesStat{
+			CPU:    fmt.Sprintf("cpu%d", i),
+			User:   float64(stats.User) / ClocksPerSec,
+			Nice:   float64(stats.Nice) / ClocksPerSec,
+			System: float64(stats.Sys) / ClocksPerSec,
+			Idle:   float64(stats.Idle) / ClocksPerSec,
+			Irq:    float64(stats.Intr) / ClocksPerSec,
+		})
 	}
 
 	return ret, nil
