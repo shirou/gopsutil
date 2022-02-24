@@ -56,7 +56,7 @@ func NumProcs() (uint64, error) {
 }
 
 func BootTimeWithContext(ctx context.Context) (uint64, error) {
-	system, role, err := Virtualization()
+	system, role, err := VirtualizationWithContext(ctx)
 	if err != nil {
 		return 0, err
 	}

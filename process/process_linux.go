@@ -83,7 +83,7 @@ func (p *Process) PpidWithContext(ctx context.Context) (int32, error) {
 
 func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 	if p.name == "" {
-		if err := p.fillNameWithContext(); err != nil {
+		if err := p.fillNameWithContext(ctx); err != nil {
 			return "", err
 		}
 	}
@@ -92,7 +92,7 @@ func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 
 func (p *Process) TgidWithContext(ctx context.Context) (int32, error) {
 	if p.tgid == 0 {
-		if err := p.fillFromStatusWithContext(); err != nil {
+		if err := p.fillFromStatusWithContext(ctx); err != nil {
 			return 0, err
 		}
 	}
@@ -124,7 +124,7 @@ func (p *Process) CwdWithContext(ctx context.Context) (string, error) {
 }
 
 func (p *Process) StatusWithContext(ctx context.Context) ([]string, error) {
-	err := p.fillFromStatusWithContext()
+	err := p.fillFromStatusWithContext(ctx)
 	if err != nil {
 		return []string{""}, err
 	}
@@ -149,7 +149,7 @@ func (p *Process) ForegroundWithContext(ctx context.Context) (bool, error) {
 }
 
 func (p *Process) UidsWithContext(ctx context.Context) ([]int32, error) {
-	err := p.fillFromStatusWithContext()
+	err := p.fillFromStatusWithContext(ctx)
 	if err != nil {
 		return []int32{}, err
 	}
@@ -157,7 +157,7 @@ func (p *Process) UidsWithContext(ctx context.Context) ([]int32, error) {
 }
 
 func (p *Process) GidsWithContext(ctx context.Context) ([]int32, error) {
-	err := p.fillFromStatusWithContext()
+	err := p.fillFromStatusWithContext(ctx)
 	if err != nil {
 		return []int32{}, err
 	}
@@ -165,7 +165,7 @@ func (p *Process) GidsWithContext(ctx context.Context) ([]int32, error) {
 }
 
 func (p *Process) GroupsWithContext(ctx context.Context) ([]int32, error) {
-	err := p.fillFromStatusWithContext()
+	err := p.fillFromStatusWithContext(ctx)
 	if err != nil {
 		return []int32{}, err
 	}
@@ -211,7 +211,7 @@ func (p *Process) RlimitUsageWithContext(ctx context.Context, gatherUsed bool) (
 	if err != nil {
 		return nil, err
 	}
-	if err := p.fillFromStatusWithContext(); err != nil {
+	if err := p.fillFromStatusWithContext(ctx); err != nil {
 		return nil, err
 	}
 
@@ -261,7 +261,7 @@ func (p *Process) IOCountersWithContext(ctx context.Context) (*IOCountersStat, e
 }
 
 func (p *Process) NumCtxSwitchesWithContext(ctx context.Context) (*NumCtxSwitchesStat, error) {
-	err := p.fillFromStatusWithContext()
+	err := p.fillFromStatusWithContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -274,7 +274,7 @@ func (p *Process) NumFDsWithContext(ctx context.Context) (int32, error) {
 }
 
 func (p *Process) NumThreadsWithContext(ctx context.Context) (int32, error) {
-	err := p.fillFromStatusWithContext()
+	err := p.fillFromStatusWithContext(ctx)
 	if err != nil {
 		return 0, err
 	}
@@ -789,12 +789,12 @@ func (p *Process) fillFromStatmWithContext() (*MemoryInfoStat, *MemoryInfoExStat
 }
 
 // Get name from /proc/(pid)/comm or /proc/(pid)/status
-func (p *Process) fillNameWithContext() error {
+func (p *Process) fillNameWithContext(ctx context.Context) error {
 	err := p.fillFromCommWithContext()
 	if err == nil && p.name != "" && len(p.name) < 15 {
 		return nil
 	}
-	return p.fillFromStatusWithContext()
+	return p.fillFromStatusWithContext(ctx)
 }
 
 // Get name from /proc/(pid)/comm
@@ -811,7 +811,11 @@ func (p *Process) fillFromCommWithContext() error {
 }
 
 // Get various status from /proc/(pid)/status
-func (p *Process) fillFromStatusWithContext() error {
+func (p *Process) fillFromStatus() error {
+	return p.fillFromStatusWithContext(context.Background())
+}
+
+func (p *Process) fillFromStatusWithContext(ctx context.Context) error {
 	pid := p.Pid
 	statPath := common.HostProc(strconv.Itoa(int(pid)), "status")
 	contents, err := ioutil.ReadFile(statPath)
@@ -832,7 +836,7 @@ func (p *Process) fillFromStatusWithContext() error {
 		case "Name":
 			p.name = strings.Trim(value, " \t")
 			if len(p.name) >= 15 {
-				cmdlineSlice, err := p.CmdlineSlice()
+				cmdlineSlice, err := p.CmdlineSliceWithContext(ctx)
 				if err != nil {
 					return err
 				}
@@ -1007,6 +1011,10 @@ func (p *Process) fillFromStatusWithContext() error {
 
 	}
 	return nil
+}
+
+func (p *Process) fillFromTIDStat(tid int32) (uint64, int32, *cpu.TimesStat, int64, uint32, int32, *PageFaultsStat, error) {
+	return p.fillFromTIDStatWithContext(context.Background(), tid)
 }
 
 func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (uint64, int32, *cpu.TimesStat, int64, uint32, int32, *PageFaultsStat, error) {
