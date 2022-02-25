@@ -141,7 +141,7 @@ func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
 			return "", nil
 		}
 	}
-	if err = s.Err(); err != nil {
+	if err := s.Err(); err != nil {
 		return "", err
 	}
 	return "", nil
