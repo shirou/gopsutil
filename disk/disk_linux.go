@@ -288,6 +288,16 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 			fstype := fields[0]
 			device := fields[1]
 
+			// https://man7.org/linux/man-pages/man2/mount.2.html
+			// Since Linux 2.6.16, MS_RDONLY can be set or cleared on a per-mount-
+			// point basis as well as on the underlying filesystem superblock. The
+			// mounted filesystem will be writable only if neither the filesystem nor
+			// the mountpoint are flagged as read-only.
+			if len(fields) >= 3 {
+				superBlockOpts := strings.Split(fields[2], ",")
+				mountOpts = append(mountOpts, superBlockOpts...)
+			}
+
 			d = PartitionStat{
 				Device:     device,
 				Mountpoint: unescapeFstab(mountPoint),
