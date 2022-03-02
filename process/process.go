@@ -518,6 +518,12 @@ func (p *Process) Children() ([]*Process, error) {
 	return p.ChildrenWithContext(context.Background())
 }
 
+// TreePid returns a slice of process tree pids
+// (together with original ppid).
+func (p *Process) TreePid() []int32 {
+	return p.TreePidWithContext(context.Background())
+}
+
 // OpenFiles returns a slice of OpenFilesStat opend by the process.
 // OpenFilesStat includes a file path and file descriptor.
 func (p *Process) OpenFiles() ([]OpenFilesStat, error) {

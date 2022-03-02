@@ -647,6 +647,19 @@ func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
 	return out, nil
 }
 
+func (p *Process) TreePidWithContext(ctx context.Context) []int32 {
+	children, err := p.Children()
+	if err != nil {
+		return []int32{-1}
+	}
+
+	tree := []int32{p.Pid}
+	for _, child := range children {
+		tree = append(tree, child.TreePid()...)
+	}
+	return tree
+}
+
 func (p *Process) OpenFilesWithContext(ctx context.Context) ([]OpenFilesStat, error) {
 	files := make([]OpenFilesStat, 0)
 	fileExists := make(map[string]bool)
