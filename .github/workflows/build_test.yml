@@ -12,7 +12,7 @@ jobs:
       with:
         go-version: ${{ matrix.go-version }}
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - id: cache-paths
       run: |
         echo "::set-output name=cache::$(go env GOCACHE)"
