@@ -5,6 +5,7 @@ package docker
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -23,13 +24,11 @@ func GetDockerStat() ([]CgroupDockerStat, error) {
 }
 
 func GetDockerStatWithContext(ctx context.Context) ([]CgroupDockerStat, error) {
-	path, err := exec.LookPath("docker")
+	out, err := invoke.CommandWithContext(ctx, "docker", "ps", "-a", "--no-trunc", "--format", "{{.ID}}|{{.Image}}|{{.Names}}|{{.Status}}")
 	if err != nil {
-		return nil, ErrDockerNotAvailable
-	}
-
-	out, err := invoke.CommandWithContext(ctx, path, "ps", "-a", "--no-trunc", "--format", "{{.ID}}|{{.Image}}|{{.Names}}|{{.Status}}")
-	if err != nil {
+		if errors.Is(err, exec.ErrNotFound) {
+			return nil, ErrDockerNotAvailable
+		}
 		return []CgroupDockerStat{}, err
 	}
 	lines := strings.Split(string(out), "\n")
@@ -64,13 +63,11 @@ func GetDockerIDList() ([]string, error) {
 }
 
 func GetDockerIDListWithContext(ctx context.Context) ([]string, error) {
-	path, err := exec.LookPath("docker")
+	out, err := invoke.CommandWithContext(ctx, "docker", "ps", "-q", "--no-trunc")
 	if err != nil {
-		return nil, ErrDockerNotAvailable
-	}
-
-	out, err := invoke.CommandWithContext(ctx, path, "ps", "-q", "--no-trunc")
-	if err != nil {
+		if errors.Is(err, exec.ErrNotFound) {
+			return nil, ErrDockerNotAvailable
+		}
 		return []string{}, err
 	}
 	lines := strings.Split(string(out), "\n")

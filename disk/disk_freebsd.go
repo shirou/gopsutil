@@ -9,7 +9,6 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
-	"os/exec"
 	"strconv"
 	"strings"
 
@@ -168,11 +167,7 @@ func getFsType(stat unix.Statfs_t) string {
 }
 
 func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
-	geom, err := exec.LookPath("geom")
-	if err != nil {
-		return "", fmt.Errorf("find geom: %w", err)
-	}
-	geomOut, err := invoke.CommandWithContext(ctx, geom, "disk", "list", name)
+	geomOut, err := invoke.CommandWithContext(ctx, "geom", "disk", "list", name)
 	if err != nil {
 		return "", fmt.Errorf("exec geom: %w", err)
 	}

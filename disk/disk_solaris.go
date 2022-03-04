@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/shirou/gopsutil/v3/internal/common"
@@ -116,11 +115,7 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 }
 
 func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
-	cfgadm, err := exec.LookPath("cfgadm")
-	if err != nil {
-		return "", fmt.Errorf("find cfgadm: %w", err)
-	}
-	out, err := invoke.CommandWithContext(ctx, cfgadm, "-ls", "select=type(disk),cols=ap_id:info,cols2=,noheadings")
+	out, err := invoke.CommandWithContext(ctx, "cfgadm", "-ls", "select=type(disk),cols=ap_id:info,cols2=,noheadings")
 	if err != nil {
 		return "", fmt.Errorf("exec cfgadm: %w", err)
 	}

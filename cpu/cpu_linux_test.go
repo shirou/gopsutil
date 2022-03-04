@@ -1,6 +1,7 @@
 package cpu
 
 import (
+	"errors"
 	"os"
 	"os/exec"
 	"strconv"
@@ -43,14 +44,13 @@ func TestCPUparseStatLine_424(t *testing.T) {
 }
 
 func TestCPUCountsAgainstLscpu(t *testing.T) {
-	lscpu, err := exec.LookPath("lscpu")
-	if err != nil {
-		t.Skip("no lscpu to compare with")
-	}
-	cmd := exec.Command(lscpu)
+	cmd := exec.Command("lscpu")
 	cmd.Env = []string{"LC_ALL=C"}
 	out, err := cmd.Output()
 	if err != nil {
+		if errors.Is(err, exec.ErrNotFound) {
+			t.Skip("no lscpu to compare with")
+		}
 		t.Errorf("error executing lscpu: %v", err)
 	}
 	var threadsPerCore, coresPerSocket, sockets int

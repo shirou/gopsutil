@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -148,11 +147,7 @@ func getlsbStruct() (*lsbStruct, error) {
 			}
 		}
 	} else if common.PathExists("/usr/bin/lsb_release") {
-		lsb_release, err := exec.LookPath("lsb_release")
-		if err != nil {
-			return ret, err
-		}
-		out, err := invoke.Command(lsb_release)
+		out, err := invoke.Command("/usr/bin/lsb_release")
 		if err != nil {
 			return ret, err
 		}
