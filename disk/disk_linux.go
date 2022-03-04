@@ -417,18 +417,55 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 		if err != nil {
 			return ret, err
 		}
+		var discardCount, mergedDiscardCount, sectorsDiscardedCount, discardTime, flushCount, flushTime uint64
+		if len(fields) >= 18 {
+			// kernel 4.18+
+			discardCount, err = strconv.ParseUint((fields[14]), 10, 64)
+			if err != nil {
+				return ret, err
+			}
+			mergedDiscardCount, err = strconv.ParseUint((fields[15]), 10, 64)
+			if err != nil {
+				return ret, err
+			}
+			sectorsDiscardedCount, err = strconv.ParseUint((fields[16]), 10, 64)
+			if err != nil {
+				return ret, err
+			}
+			discardTime, err = strconv.ParseUint((fields[17]), 10, 64)
+			if err != nil {
+				return ret, err
+			}
+			if len(fields) >= 20 {
+				// kernel 5.5+
+				flushCount, err = strconv.ParseUint((fields[18]), 10, 64)
+				if err != nil {
+					return ret, err
+				}
+				flushTime, err = strconv.ParseUint((fields[19]), 10, 64)
+				if err != nil {
+					return ret, err
+				}
+			}
+		}
 		d := IOCountersStat{
-			ReadBytes:        rbytes * sectorSize,
-			WriteBytes:       wbytes * sectorSize,
-			ReadCount:        reads,
-			WriteCount:       writes,
-			MergedReadCount:  mergedReads,
-			MergedWriteCount: mergedWrites,
-			ReadTime:         rtime,
-			WriteTime:        wtime,
-			IopsInProgress:   iopsInProgress,
-			IoTime:           iotime,
-			WeightedIO:       weightedIO,
+			ReadBytes:             rbytes * sectorSize,
+			WriteBytes:            wbytes * sectorSize,
+			ReadCount:             reads,
+			WriteCount:            writes,
+			MergedReadCount:       mergedReads,
+			MergedWriteCount:      mergedWrites,
+			ReadTime:              rtime,
+			WriteTime:             wtime,
+			IopsInProgress:        iopsInProgress,
+			IoTime:                iotime,
+			WeightedIO:            weightedIO,
+			DiscardCount:          discardCount,
+			MergedDiscardCount:    mergedDiscardCount,
+			SectorsDiscardedCount: sectorsDiscardedCount,
+			DiscardTime:           discardTime,
+			FlushCount:            flushCount,
+			FlushTime:             flushTime,
 		}
 		if d == empty {
 			continue
