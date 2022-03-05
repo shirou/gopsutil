@@ -10,7 +10,6 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"strings"
 	"unsafe"
 
@@ -23,12 +22,7 @@ import (
 const user_PROCESS = 7
 
 func HostIDWithContext(ctx context.Context) (string, error) {
-	ioreg, err := exec.LookPath("ioreg")
-	if err != nil {
-		return "", err
-	}
-
-	out, err := invoke.CommandWithContext(ctx, ioreg, "-rd1", "-c", "IOPlatformExpertDevice")
+	out, err := invoke.CommandWithContext(ctx, "ioreg", "-rd1", "-c", "IOPlatformExpertDevice")
 	if err != nil {
 		return "", err
 	}
@@ -102,17 +96,12 @@ func PlatformInformationWithContext(ctx context.Context) (string, string, string
 	family := ""
 	pver := ""
 
-	sw_vers, err := exec.LookPath("sw_vers")
-	if err != nil {
-		return "", "", "", err
-	}
-
 	p, err := unix.Sysctl("kern.ostype")
 	if err == nil {
 		platform = strings.ToLower(p)
 	}
 
-	out, err := invoke.CommandWithContext(ctx, sw_vers, "-productVersion")
+	out, err := invoke.CommandWithContext(ctx, "sw_vers", "-productVersion")
 	if err == nil {
 		pver = strings.ToLower(strings.TrimSpace(string(out)))
 	}
