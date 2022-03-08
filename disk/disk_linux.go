@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -221,20 +222,32 @@ var fsTypeMap = map[int64]string{
 	ZFS_SUPER_MAGIC:             "zfs",                 /* 0x2FC12FC1 local */
 }
 
-func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {
-	useMounts := false
-
-	filename := common.HostProc("1/mountinfo")
-	lines, err := common.ReadLines(filename)
+// readMountFile reads mountinfo or mounts file under /proc/1 or /proc/self
+func readMountFile(root string) (lines []string, useMounts bool, filename string, err error) {
+	filename = common.HostProc(path.Join(root, "mountinfo"))
+	lines, err = common.ReadLines(filename)
 	if err != nil {
 		var pathErr *os.PathError
 		if !errors.As(err, &pathErr) {
-			return nil, err
+			return
 		}
 		// if kernel does not support 1/mountinfo, fallback to 1/mounts (<2.6.26)
 		useMounts = true
-		filename = common.HostProc("1/mounts")
+		filename = common.HostProc(path.Join(root, "mounts"))
 		lines, err = common.ReadLines(filename)
+		if err != nil {
+			return
+		}
+		return
+	}
+	return
+}
+
+func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {
+	lines, useMounts, filename, err := readMountFile("1")
+	if err != nil {
+		// fallback to "/proc/self/mountinfo"  #1159
+		lines, useMounts, filename, err = readMountFile("self")
 		if err != nil {
 			return nil, err
 		}
