@@ -235,9 +235,10 @@ var fsTypeMap = map[int64]string{
 	ZFS_SUPER_MAGIC:             "zfs",                 /* 0x2FC12FC1 local */
 }
 
-// readMountFile reads mountinfo or mounts file under /proc/1 or /proc/self
+// readMountFile reads mountinfo or mounts file under the specified root path
+// (eg, /proc/1, /proc/self, etc)
 func readMountFile(root string) (lines []string, useMounts bool, filename string, err error) {
-	filename = common.HostProc(path.Join(root, "mountinfo"))
+	filename = path.Join(root, "mountinfo")
 	lines, err = common.ReadLines(filename)
 	if err != nil {
 		var pathErr *os.PathError
@@ -246,7 +247,7 @@ func readMountFile(root string) (lines []string, useMounts bool, filename string
 		}
 		// if kernel does not support 1/mountinfo, fallback to 1/mounts (<2.6.26)
 		useMounts = true
-		filename = common.HostProc(path.Join(root, "mounts"))
+		filename = path.Join(root, "mounts")
 		lines, err = common.ReadLines(filename)
 		if err != nil {
 			return
@@ -257,10 +258,22 @@ func readMountFile(root string) (lines []string, useMounts bool, filename string
 }
 
 func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {
-	lines, useMounts, filename, err := readMountFile("1")
+	// by default, try "/proc/1/..." first
+	root := common.HostProc(path.Join("1"))
+
+	// force preference for dirname of HOST_PROC_MOUNTINFO, if set  #1271
+	hpmPath := os.Getenv("HOST_PROC_MOUNTINFO")
+	if hpmPath != "" {
+		root = filepath.Dir(hpmPath)
+	}
+
+	lines, useMounts, filename, err := readMountFile(root)
 	if err != nil {
-		// fallback to "/proc/self/mountinfo"  #1159
-		lines, useMounts, filename, err = readMountFile("self")
+		if hpmPath != "" { // don't fallback with HOST_PROC_MOUNTINFO
+			return nil, err
+		}
+		// fallback to "/proc/self/..."  #1159
+		lines, useMounts, filename, err = readMountFile(common.HostProc(path.Join("self")))
 		if err != nil {
 			return nil, err
 		}
