@@ -70,12 +70,37 @@ func hostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type Process struct {
+	Pid     int32                   `json:"pid"`
+	Name    string                  `json:"name"`
+	Cmdline string                  `json:"cmdline"`
+	Cpu     float64                 `json:"cpu"`
+	Mem     *process.MemoryInfoStat `json:"mem"`
+}
+
 func processHandler(w http.ResponseWriter, r *http.Request) {
-	if procs, err := process.Processes(); err != nil {
+	procs, err := process.Processes()
+	if err != nil {
 		w.WriteHeader(500)
 		w.Write([]byte(err.Error()))
-	} else {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(procs)
+		return
 	}
+	// Processes is not fully populated, only PIDs.
+	// Lets fill up with names and CLI command line
+	procList := make([]*Process, 0, len(procs))
+	for idx := range procs {
+		name, _ := procs[idx].Name()
+		cmdline, _ := procs[idx].Cmdline()
+		cpuTime, _ := procs[idx].CPUPercent()
+		mem, _ := procs[idx].MemoryInfo()
+		procList = append(procList, &Process{
+			Pid:     procs[idx].Pid,
+			Name:    name,
+			Cmdline: cmdline,
+			Cpu:     cpuTime,
+			Mem:     mem,
+		})
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(procList)
 }
