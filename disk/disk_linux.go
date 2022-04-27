@@ -349,7 +349,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 
 			// /dev/root is not the real device name
 			// so we get the real device name from its major/minor number
-			if d.Device == "/dev/root" {
+			if d.Device == "/dev/root" && d.Fstype != "nfs" {
 				devpath, err := os.Readlink(common.HostSys("/dev/block/" + blockDeviceID))
 				if err != nil {
 					return nil, err
