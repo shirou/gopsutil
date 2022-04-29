@@ -1,0 +1,12 @@
+on:
+  schedule:
+    - cron:  '0 1 1 * *'  # UTC 01:00 on the first day of the Month
+
+name: Release
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Release
+        run: make release
