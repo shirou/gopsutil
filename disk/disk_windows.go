@@ -12,6 +12,7 @@ import (
 
 	"github.com/shirou/gopsutil/v3/internal/common"
 	"golang.org/x/sys/windows"
+	"golang.org/x/sys/windows/registry"
 )
 
 var (
@@ -42,6 +43,14 @@ type diskPerformance struct {
 	StorageDeviceNumber uint32
 	StorageManagerName  [8]uint16
 	alignmentPadding    uint32 // necessary for 32bit support, see https://github.com/elastic/beats/pull/16553
+}
+
+func init() {
+	// enable disk performance counters on Windows Server editions (needs to run as admin)
+	key, err := registry.OpenKey(registry.LOCAL_MACHINE, `SYSTEM\CurrentControlSet\Services\PartMgr`, registry.SET_VALUE)
+	if err == nil {
+		key.SetDWordValue("EnableCounterForIoctl", 1)
+	}
 }
 
 func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
