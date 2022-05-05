@@ -351,10 +351,9 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 			// so we get the real device name from its major/minor number
 			if d.Device == "/dev/root" {
 				devpath, err := os.Readlink(common.HostSys("/dev/block/" + blockDeviceID))
-				if err != nil {
-					return nil, err
+				if err == nil {
+					d.Device = strings.Replace(d.Device, "root", filepath.Base(devpath), 1)
 				}
-				d.Device = strings.Replace(d.Device, "root", filepath.Base(devpath), 1)
 			}
 		}
 		ret = append(ret, d)
