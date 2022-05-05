@@ -1,5 +1,8 @@
 on: [push, pull_request]
 name: Test
+permissions:
+  contents: read
+
 jobs:
   test_v3_module:
     strategy:

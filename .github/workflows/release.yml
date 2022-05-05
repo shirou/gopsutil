@@ -3,6 +3,9 @@ on:
     - cron:  '0 1 1 * *'  # UTC 01:00 on the first day of the Month
 
 name: Release
+permissions:
+  contents: read
+
 jobs:
   release:
     runs-on: ubuntu-latest
