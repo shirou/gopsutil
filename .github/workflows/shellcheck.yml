@@ -1,5 +1,8 @@
 on: [push, pull_request]
 name: Shellcheck
+permissions:
+  contents: read
+
 jobs:
   shellcheck:
     name: Shellcheck
