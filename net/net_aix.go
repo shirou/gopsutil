@@ -11,88 +11,33 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/power-devops/perfstat"
 	"github.com/shirou/gopsutil/v3/internal/common"
 )
-
-func parseNetstatI(output string) ([]IOCountersStat, error) {
-	lines := strings.Split(string(output), "\n")
-	ret := make([]IOCountersStat, 0, len(lines)-1)
-	exists := make([]string, 0, len(ret))
-
-	// Check first line is header
-	if len(lines) > 0 && strings.Fields(lines[0])[0] != "Name" {
-		return nil, fmt.Errorf("not a 'netstat -i' output")
-	}
-
-	for _, line := range lines[1:] {
-		values := strings.Fields(line)
-		if len(values) < 1 || values[0] == "Name" {
-			continue
-		}
-		if common.StringsHas(exists, values[0]) {
-			// skip if already get
-			continue
-		}
-		exists = append(exists, values[0])
-
-		if len(values) < 9 {
-			continue
-		}
-
-		base := 1
-		// sometimes Address is omitted
-		if len(values) < 10 {
-			base = 0
-		}
-
-		parsed := make([]uint64, 0, 5)
-		vv := []string{
-			values[base+3], // Ipkts == PacketsRecv
-			values[base+4], // Ierrs == Errin
-			values[base+5], // Opkts == PacketsSent
-			values[base+6], // Oerrs == Errout
-			values[base+8], // Drops == Dropout
-		}
-
-		for _, target := range vv {
-			if target == "-" {
-				parsed = append(parsed, 0)
-				continue
-			}
-
-			t, err := strconv.ParseUint(target, 10, 64)
-			if err != nil {
-				return nil, err
-			}
-			parsed = append(parsed, t)
-		}
-
-		n := IOCountersStat{
-			Name:        values[0],
-			PacketsRecv: parsed[0],
-			Errin:       parsed[1],
-			PacketsSent: parsed[2],
-			Errout:      parsed[3],
-			Dropout:     parsed[4],
-		}
-		ret = append(ret, n)
-	}
-	return ret, nil
-}
 
 func IOCounters(pernic bool) ([]IOCountersStat, error) {
 	return IOCountersWithContext(context.Background(), pernic)
 }
 
 func IOCountersWithContext(ctx context.Context, pernic bool) ([]IOCountersStat, error) {
-	out, err := invoke.CommandWithContext(ctx, "netstat", "-idn")
+	ifs, err := perfstat.NetIfaceStat()
 	if err != nil {
 		return nil, err
 	}
 
-	iocounters, err := parseNetstatI(string(out))
-	if err != nil {
-		return nil, err
+	iocounters := make([]IOCountersStat, 0, len(ifs))
+	for _, netif := range ifs {
+		n := IOCountersStat{
+			Name: netif.Name,
+			BytesSent: uint64(netif.OBytes),
+			BytesRecv: uint64(netif.IBytes),
+			PacketsSent: uint64(netif.OPackets),
+			PacketsRecv: uint64(netif.IPackets),
+			Errin: uint64(netif.OErrors),
+			Errout: uint64(netif.IErrors),
+			Dropout: uint64(netif.XmitDrops),
+		}
+		iocounters = append(iocounters, n)
 	}
 	if pernic == false {
 		return getIOCountersAll(iocounters)
