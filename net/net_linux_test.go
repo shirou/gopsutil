@@ -82,18 +82,18 @@ func TestGetProcInodesAll(t *testing.T) {
 	go func() { // TCP listening goroutine to have some opened inodes even in CI
 		addr, err := net.ResolveTCPAddr("tcp", "localhost:0") // dynamically get a random open port from OS
 		if err != nil {
-			t.Skip("unable to resolve localhost:", err)
+			t.Skipf("unable to resolve localhost: %v", err)
 		}
 		l, err := net.ListenTCP(addr.Network(), addr)
 		if err != nil {
-			t.Skip(fmt.Sprintf("unable to listen on %v: %v", addr, err))
+			t.Skipf("unable to listen on %v: %v", addr, err)
 		}
 		defer l.Close()
 		waitForServer <- true
 		for {
 			conn, err := l.Accept()
 			if err != nil {
-				t.Skip("unable to accept connection:", err)
+				t.Skipf("unable to accept connection: %v", err)
 			}
 			defer conn.Close()
 		}
