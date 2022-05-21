@@ -109,6 +109,12 @@ func fillFromMeminfoWithContext() (*VirtualMemoryStat, *VirtualMemoryExStat, err
 				return ret, retEx, err
 			}
 			ret.Cached = t * 1024
+		case "SwapCached":
+			t, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return ret, retEx, err
+			}
+			ret.SwapCached = t * 1024
 		case "Active":
 			t, err := strconv.ParseUint(value, 10, 64)
 			if err != nil {
@@ -153,12 +159,12 @@ func fillFromMeminfoWithContext() (*VirtualMemoryStat, *VirtualMemoryExStat, err
 				return ret, retEx, err
 			}
 			retEx.Unevictable = t * 1024
-		case "WriteBack":
+		case "Mlocked":
 			t, err := strconv.ParseUint(value, 10, 64)
 			if err != nil {
 				return ret, retEx, err
 			}
-			ret.WriteBack = t * 1024
+			ret.Mlocked = t * 1024
 		case "WriteBackTmp":
 			t, err := strconv.ParseUint(value, 10, 64)
 			if err != nil {
@@ -171,12 +177,36 @@ func fillFromMeminfoWithContext() (*VirtualMemoryStat, *VirtualMemoryExStat, err
 				return ret, retEx, err
 			}
 			ret.Dirty = t * 1024
+		case "Writeback":
+			t, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return ret, retEx, err
+			}
+			ret.Writeback = t * 1024
+		case "WriteBack":
+			t, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return ret, retEx, err
+			}
+			ret.Writeback = t * 1024
+		case "AnonPages":
+			t, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return ret, retEx, err
+			}
+			ret.AnonPages = t * 1024
 		case "Shmem":
 			t, err := strconv.ParseUint(value, 10, 64)
 			if err != nil {
 				return ret, retEx, err
 			}
 			ret.Shared = t * 1024
+		case "KReclaimable":
+			t, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return ret, retEx, err
+			}
+			ret.Kreclaimable = t * 1024
 		case "Slab":
 			t, err := strconv.ParseUint(value, 10, 64)
 			if err != nil {
@@ -196,18 +226,36 @@ func fillFromMeminfoWithContext() (*VirtualMemoryStat, *VirtualMemoryExStat, err
 				return ret, retEx, err
 			}
 			ret.Sunreclaim = t * 1024
+		case "KernelStack":
+			t, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return ret, retEx, err
+			}
+			ret.Kernelstack = t * 1024
 		case "PageTables":
 			t, err := strconv.ParseUint(value, 10, 64)
 			if err != nil {
 				return ret, retEx, err
 			}
 			ret.PageTables = t * 1024
-		case "SwapCached":
+		case "NFS_Unstable":
 			t, err := strconv.ParseUint(value, 10, 64)
 			if err != nil {
 				return ret, retEx, err
 			}
-			ret.SwapCached = t * 1024
+			ret.Nfsunstable = t * 1024
+		case "Bounce":
+			t, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return ret, retEx, err
+			}
+			ret.Bounce = t * 1024
+		case "WritebackTmp":
+			t, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return ret, retEx, err
+			}
+			ret.WritebackTmp = t * 1024
 		case "CommitLimit":
 			t, err := strconv.ParseUint(value, 10, 64)
 			if err != nil {
@@ -280,6 +328,12 @@ func fillFromMeminfoWithContext() (*VirtualMemoryStat, *VirtualMemoryExStat, err
 				return ret, retEx, err
 			}
 			ret.VmallocChunk = t * 1024
+		case "Percpu":
+			t, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return ret, retEx, err
+			}
+			ret.Percpu = t * 1024
 		case "HugePages_Total":
 			t, err := strconv.ParseUint(value, 10, 64)
 			if err != nil {
@@ -298,6 +352,72 @@ func fillFromMeminfoWithContext() (*VirtualMemoryStat, *VirtualMemoryExStat, err
 				return ret, retEx, err
 			}
 			ret.HugePageSize = t * 1024
+		case "CmaTotal":
+			t, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return ret, retEx, err
+			}
+			ret.CmaTotal = t * 1024
+		case "CmaFree":
+			t, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return ret, retEx, err
+			}
+			ret.CmaFree = t * 1024
+		case "DirectMap4k":
+			t, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return ret, retEx, err
+			}
+			ret.DirectMap4k = t * 1024
+		case "DirectMap2M":
+			t, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return ret, retEx, err
+			}
+			ret.DirectMap2M = t * 1024
+		case "DirectMap1G":
+			t, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return ret, retEx, err
+			}
+			ret.DirectMap1G = t * 1024
+		case "HardwareCorrupted":
+			t, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return ret, retEx, err
+			}
+			ret.HardwareCorrupted = t * 1024
+		case "AnonHugePages":
+			t, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return ret, retEx, err
+			}
+			ret.AnonHugePages = t * 1024
+		case "ShmemHugePages":
+			t, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return ret, retEx, err
+			}
+			ret.ShmemHugePages = t * 1024
+		case "ShmemPmdMapped":
+			t, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return ret, retEx, err
+			}
+			ret.ShmemPmdMapped = t * 1024
+		case "HugePages_Rsvd":
+			t, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return ret, retEx, err
+			}
+			ret.HugePagesRsvd = t * 1024
+		case "HugePages_Surp":
+			t, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return ret, retEx, err
+			}
+			ret.HugePagesSurp = t * 1024
 		}
 	}
 
