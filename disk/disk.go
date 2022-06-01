@@ -41,13 +41,12 @@ type IOCountersStat struct {
 	IopsInProgress     uint64 `json:"iopsInProgress"`
 	IoTime             uint64 `json:"ioTime"`
 	WeightedIO         uint64 `json:"weightedIO"`
-	DiscardCount	   uint64 `json:"discardCount"`
+	DiscardCount       uint64 `json:"discardCount"`
 	MergedDiscardCount uint64 `json:"mergedDiscardCount"`
 	DiscardBytes       uint64 `json:"discardBytes"`
 	DiscardTime        uint64 `json:"discardTime"`
 	FlushCount         uint64 `json:"flushCount"`
 	FlushTime          uint64 `json:"flushTime"`
-
 	Name               string `json:"name"`
 	SerialNumber       string `json:"serialNumber"`
 	Label              string `json:"label"`
