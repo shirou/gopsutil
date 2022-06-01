@@ -455,18 +455,58 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 		if err != nil {
 			return ret, err
 		}
+		discards := uint64(0)
+		mergedDiscards := uint64(0)
+		dbytes := uint64(0)
+		dtime := uint64(0)
+		if len(fields) >= 18 {
+			discards, err = strconv.ParseUint((fields[14]), 10, 64)
+			if err != nil {
+				return ret, err
+			}
+			mergedDiscards, err = strconv.ParseUint((fields[15]), 10, 64)
+			if err != nil {
+				return ret, err
+			}
+			dbytes, err = strconv.ParseUint((fields[16]), 10, 64)
+			if err != nil {
+				return ret, err
+			}
+			dtime, err = strconv.ParseUint((fields[17]), 10, 64)
+			if err != nil {
+				return ret, err
+			}
+		}
+		flushes := uint64(0)
+		ftime := uint64(0)
+		if len(fields) >= 20 {
+			flushes, err = strconv.ParseUint((fields[18]), 10, 64)
+			if err != nil {
+				return ret, err
+			}
+			ftime, err = strconv.ParseUint((fields[19]), 10, 64)
+			if err != nil {
+				return ret, err
+			}
+		}
 		d := IOCountersStat{
-			ReadBytes:        rbytes * sectorSize,
-			WriteBytes:       wbytes * sectorSize,
-			ReadCount:        reads,
-			WriteCount:       writes,
-			MergedReadCount:  mergedReads,
-			MergedWriteCount: mergedWrites,
-			ReadTime:         rtime,
-			WriteTime:        wtime,
-			IopsInProgress:   iopsInProgress,
-			IoTime:           iotime,
-			WeightedIO:       weightedIO,
+			ReadBytes:          rbytes * sectorSize,
+			WriteBytes:         wbytes * sectorSize,
+			ReadCount:          reads,
+			WriteCount:         writes,
+			MergedReadCount:    mergedReads,
+			MergedWriteCount:   mergedWrites,
+			ReadTime:           rtime,
+			WriteTime:          wtime,
+			IopsInProgress:     iopsInProgress,
+			IoTime:             iotime,
+			WeightedIO:         weightedIO,
+			DiscardCount:       discards,
+			MergedDiscardCount: mergedDiscards,
+			DiscardBytes:       dbytes * sectorSize,
+			DiscardTime:        dtime,
+			FlushCount:         flushes,
+			FlushTime:          ftime,
 		}
 		if d == empty {
 			continue
