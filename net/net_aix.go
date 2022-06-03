@@ -11,38 +11,11 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/power-devops/perfstat"
 	"github.com/shirou/gopsutil/v3/internal/common"
 )
 
 func IOCounters(pernic bool) ([]IOCountersStat, error) {
 	return IOCountersWithContext(context.Background(), pernic)
-}
-
-func IOCountersWithContext(ctx context.Context, pernic bool) ([]IOCountersStat, error) {
-	ifs, err := perfstat.NetIfaceStat()
-	if err != nil {
-		return nil, err
-	}
-
-	iocounters := make([]IOCountersStat, 0, len(ifs))
-	for _, netif := range ifs {
-		n := IOCountersStat{
-			Name: netif.Name,
-			BytesSent: uint64(netif.OBytes),
-			BytesRecv: uint64(netif.IBytes),
-			PacketsSent: uint64(netif.OPackets),
-			PacketsRecv: uint64(netif.IPackets),
-			Errin: uint64(netif.OErrors),
-			Errout: uint64(netif.IErrors),
-			Dropout: uint64(netif.XmitDrops),
-		}
-		iocounters = append(iocounters, n)
-	}
-	if pernic == false {
-		return getIOCountersAll(iocounters)
-	}
-	return iocounters, nil
 }
 
 // IOCountersByFile exists just for compatibility with Linux.
