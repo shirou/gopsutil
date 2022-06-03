@@ -1,5 +1,5 @@
-//go:build aix
-// +build aix
+//go:build aix && cgo
+// +build aix,cgo
 
 package cpu
 
