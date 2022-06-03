@@ -5,6 +5,8 @@ package mem
 
 import (
 	"context"
+
+	"github.com/shirou/gopsutil/v3/internal/common"
 )
 
 func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {

@@ -5,8 +5,11 @@ package cpu
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"strconv"
+
+	"github.com/shirou/gopsutil/v3/internal/common"
 )
 
 func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
@@ -23,10 +26,8 @@ func CountsWithContext(ctx context.Context, logical bool) (int, error) {
 		return 0, fmt.Errorf("cannot execute prtconf: %s", err)
 	}
 	for _, line := range strings.Split(string(prtConfOut), "\n") {
-		if parts := strings.Split(line, ": "); len(parts) < 2 {
-			continue
-		}			
-		if parts[0] == "Number Of Processors" {
+		parts := strings.Split(line, ": ")
+		if len(parts) > 1 && parts[0] == "Number Of Processors" {
 			if ncpu, err := strconv.Atoi(parts[1]); err == nil {
 				return ncpu, nil
 			}

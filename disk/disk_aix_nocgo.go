@@ -5,6 +5,8 @@ package disk
 
 import (
 	"context"
+
+	"github.com/shirou/gopsutil/v3/internal/common"
 )
 
 func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {

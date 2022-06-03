@@ -6,10 +6,8 @@ package net
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
-	"syscall"
 
 	"github.com/shirou/gopsutil/v3/internal/common"
 )
