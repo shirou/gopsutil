@@ -57,9 +57,9 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 		}
 
 		d := PartitionStat{
-			Device:     common.IntToString(stat.F_mntfromname[:]),
-			Mountpoint: common.IntToString(stat.F_mntonname[:]),
-			Fstype:     common.IntToString(stat.F_fstypename[:]),
+			Device:     common.ByteToString(stat.F_mntfromname[:]),
+			Mountpoint: common.ByteToString(stat.F_mntonname[:]),
+			Fstype:     common.ByteToString(stat.F_fstypename[:]),
 			Opts:       opts,
 		}
 
@@ -147,7 +147,7 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 }
 
 func getFsType(stat unix.Statfs_t) string {
-	return common.IntToString(stat.F_fstypename[:])
+	return common.ByteToString(stat.F_fstypename[:])
 }
 
 func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
