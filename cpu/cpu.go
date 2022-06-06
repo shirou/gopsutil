@@ -99,9 +99,9 @@ func (c InfoStat) String() string {
 }
 
 func getAllBusy(t TimesStat) (float64, float64) {
-	busy := t.User + t.System + t.Nice + t.Iowait + t.Irq +
+	busy := t.User + t.System + t.Nice + t.Irq +
 		t.Softirq + t.Steal
-	return busy + t.Idle, busy
+	return busy + t.Idle + t.Iowait, busy
 }
 
 func calculateBusy(t1, t2 TimesStat) float64 {
