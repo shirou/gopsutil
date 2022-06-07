@@ -4,10 +4,21 @@ permissions:
   contents: read
 
 jobs:
+  go-versions:
+    runs-on: ubuntu-latest
+    outputs:
+      versions: ${{ steps.versions.outputs.value }}
+    steps:
+      - id: versions
+        run: |
+          versions=$(curl -s 'https://go.dev/dl/?mode=json' | jq -c 'map(.version[2:])')
+          echo "::set-output name=value::${versions}"
   build_test_v3:
+    needs: go-versions
     strategy:
+      fail-fast: false
       matrix:
-        go-version: [1.16.x, 1.17.x]
+        go-version: ${{fromJson(needs.go-versions.outputs.versions)}}
     runs-on: ubuntu-20.04
     steps:
     - name: Install Go
