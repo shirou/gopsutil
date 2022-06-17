@@ -31,16 +31,16 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 		h := whiteSpaces.Split(lines[len(lines)-3], -1)	// headers
 		v := whiteSpaces.Split(lines[len(lines)-2], -1)	// values
 		for i, header := range h {
-			if t, err := strconv.ParseUint(v[i], 10, 64); err == nil {
+			if t, err := strconv.ParseFloat(v[i], 64); err == nil {
 				switch header {
 					case `%usr`:
-						ret.User = float64(t)
+						ret.User = t
 					case `%sys`:
-						ret.System = float64(t)
+						ret.System = t
 					case `%wio`:
-						ret.Iowait = float64(t)
+						ret.Iowait = t
 					case `%idle`:
-						ret.Idle = float64(t)
+						ret.Idle = t
 				}
 			}
 		}
@@ -67,16 +67,16 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 		} else if strings.HasPrefix(line, "Processor Clock Speed:") {
 			p := whiteSpaces.Split(line, 5)
 			if len(p) > 4 {
-				if t, err := strconv.ParseUint(p[3], 10, 64); err == nil {
+				if t, err := strconv.ParseFloat(p[3], 64); err == nil {
 					switch strings.ToUpper(p[4]) {
 					case "MHZ":
-						ret.Mhz = float64(t)
+						ret.Mhz = t
 					case "GHZ":
-						ret.Mhz = float64(t) * 1000.0
+						ret.Mhz = t * 1000.0
 					case "KHZ":
-						ret.Mhz = float64(t) / 1000.0
+						ret.Mhz = t / 1000.0
 					default:
-						ret.Mhz = float64(t)
+						ret.Mhz = t
 					}
 				}
 			}
