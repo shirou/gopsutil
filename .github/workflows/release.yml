@@ -4,7 +4,7 @@ on:
 
 name: Release
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   release:
