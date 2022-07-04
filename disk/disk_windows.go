@@ -6,6 +6,7 @@ package disk
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"syscall"
 	"unsafe"
@@ -117,6 +118,9 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 				if driveret == 0 {
 					if typeret == 5 || typeret == 2 {
 						continue // device is not ready will happen if there is no disk in the drive
+					}
+					if errors.Is(err, windows.ERROR_OPERATION_ABORTED) {
+						continue
 					}
 					return ret, err
 				}
