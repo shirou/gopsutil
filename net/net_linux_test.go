@@ -151,7 +151,7 @@ func TestDecodeAddress(t *testing.T) {
 			Error: true,
 		},
 	}
-	if IsLittleEndian() {
+	if common.IsLittleEndian() {
 		addr["0500000A:0016"] = AddrTest{
 			IP:   "10.0.0.5",
 			Port: 22,

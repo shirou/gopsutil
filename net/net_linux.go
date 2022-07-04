@@ -723,7 +723,7 @@ func decodeAddressWithContext(ctx context.Context, family uint32, src string) (A
 	var ip net.IP
 
 	if family == syscall.AF_INET {
-		if IsLittleEndian() {
+		if common.IsLittleEndian() {
 			ip = net.IP(ReverseWithContext(ctx, decoded))
 		} else {
 			ip = net.IP(decoded)
