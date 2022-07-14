@@ -216,6 +216,12 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 				version = contents[0]
 			}
 		}
+	} else if common.PathExists(common.HostEtc("neokylin-release")) {
+		contents, err := common.ReadLines(common.HostEtc("neokylin-release"))
+		if err == nil {
+			version = getRedhatishVersion(contents)
+			platform = getRedhatishPlatform(contents)
+		}
 	} else if common.PathExists(common.HostEtc("redhat-release")) {
 		contents, err := common.ReadLines(common.HostEtc("redhat-release"))
 		if err == nil {
@@ -296,6 +302,8 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 		family = "coreos"
 	case "solus":
 		family = "solus"
+	case "neokylin":
+		family = "neokylin"
 	}
 
 	return platform, family, version, nil
@@ -322,7 +330,7 @@ func getRedhatishVersion(contents []string) string {
 	if strings.Contains(c, "rawhide") {
 		return "rawhide"
 	}
-	if matches := regexp.MustCompile(`release (\d[\d.]*)`).FindStringSubmatch(c); matches != nil {
+	if matches := regexp.MustCompile(`release (\w[\d.]*)`).FindStringSubmatch(c); matches != nil {
 		return matches[1]
 	}
 	return ""
