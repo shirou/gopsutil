@@ -102,6 +102,25 @@ func TestPathExists(t *testing.T) {
 	}
 }
 
+func TestPathExistsWithContents(t *testing.T) {
+	if !PathExistsWithContents("common_test.go") {
+		t.Error("exists but return not exists")
+	}
+	if PathExistsWithContents("should_not_exists.go") {
+		t.Error("not exists but return exists")
+	}
+
+	f, err := os.CreateTemp("", "empty_test.txt")
+	if err != nil {
+		t.Errorf("CreateTemp failed, %s", err)
+	}
+	defer os.Remove(f.Name()) // clean up
+
+	if PathExistsWithContents(f.Name()) {
+		t.Error("exists but no content file return true")
+	}
+}
+
 func TestHostEtc(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("windows doesn't have etc")
