@@ -313,19 +313,11 @@ func PathExists(filename string) bool {
 
 // PathExistsWithContents returns the filename exists and it is not empty
 func PathExistsWithContents(filename string) bool {
-	if _, err := os.Stat(filename); err != nil {
-		return false
-	}
-
-	f, err := os.Open(filename)
+	info, err := os.Stat(filename)
 	if err != nil {
 		return false
 	}
-	defer f.Close()
-
-	r := bufio.NewReader(f)
-	_, err = r.Peek(4) // check first 4 bytes
-	return err == nil
+	return info.Size() > 4 // at least 4 bytes
 }
 
 // GetEnv retrieves the environment variable key. If it does not exist it returns the default.
