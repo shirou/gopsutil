@@ -1,21 +1,21 @@
 # gopsutil: psutil for golang
 
-[![Test](https://github.com/shirou/gopsutil/actions/workflows/test.yml/badge.svg)](https://github.com/shirou/gopsutil/actions/workflows/test.yml) [![Coverage Status](https://coveralls.io/repos/github/shirou/gopsutil/badge.svg?branch=master)](https://coveralls.io/github/shirou/gopsutil?branch=master) [![Go Reference](https://pkg.go.dev/badge/github.com/shirou/gopsutil.svg)](https://pkg.go.dev/github.com/shirou/gopsutil)
+[![Test](https://github.com/shirou/gopsutil/actions/workflows/test.yml/badge.svg)](https://github.com/shirou/gopsutil/actions/workflows/test.yml) [![Coverage Status](https://coveralls.io/repos/github/shirou/gopsutil/badge.svg?branch=master)](https://coveralls.io/github/shirou/gopsutil?branch=master) [![Go Reference](https://pkg.go.dev/badge/github.com/shirou/gopsutil/v3.svg)](https://pkg.go.dev/github.com/shirou/gopsutil/v3) [![Go Documentation](https://godocs.io/github.com/shirou/gopsutil/v3?status.svg)](https://godocs.io/github.com/shirou/gopsutil/v3) [![Calendar Versioning](https://img.shields.io/badge/calver-vMAJOR.YY.MM-22bfda.svg)](https://calver.org/)
 
 This is a port of psutil (https://github.com/giampaolo/psutil). The
 challenge is porting all psutil functions on some architectures.
 
 ## v3 migration
 
-from v3.20.10, gopsutil becomes v3 which breaks backwards compatibility.
-See [v3Changes.md](_tools/v3migration/v3Changes.md) more detail changes.
+From v3.20.10, gopsutil becomes v3 which breaks backwards compatibility.
+See [v3Changes.md](_tools/v3migration/v3Changes.md) for more detailed changes.
 
 ## Tag semantics
 
 gopsutil tag policy is almost same as Semantic Versioning, but
-automatically increase like Ubuntu versioning.
+automatically increases like [Ubuntu versioning](https://calver.org/).
 
-for example, v2.17.04 means
+For example, v2.17.04 means
 
 - v2: major version
 - 17: release year, 2017
@@ -95,7 +95,7 @@ You can set an alternative location to `/proc/N/mountinfo` by setting the
 
 ## Documentation
 
-see http://godoc.org/github.com/shirou/gopsutil
+See https://pkg.go.dev/github.com/shirou/gopsutil/v3 or https://godocs.io/github.com/shirou/gopsutil/v3
 
 ## Requirements
 
