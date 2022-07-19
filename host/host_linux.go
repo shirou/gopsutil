@@ -179,26 +179,26 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 		lsb = &lsbStruct{}
 	}
 
-	if common.PathExists(common.HostEtc("oracle-release")) {
+	if common.PathExistsWithContents(common.HostEtc("oracle-release")) {
 		platform = "oracle"
 		contents, err := common.ReadLines(common.HostEtc("oracle-release"))
 		if err == nil {
 			version = getRedhatishVersion(contents)
 		}
 
-	} else if common.PathExists(common.HostEtc("enterprise-release")) {
+	} else if common.PathExistsWithContents(common.HostEtc("enterprise-release")) {
 		platform = "oracle"
 		contents, err := common.ReadLines(common.HostEtc("enterprise-release"))
 		if err == nil {
 			version = getRedhatishVersion(contents)
 		}
-	} else if common.PathExists(common.HostEtc("slackware-version")) {
+	} else if common.PathExistsWithContents(common.HostEtc("slackware-version")) {
 		platform = "slackware"
 		contents, err := common.ReadLines(common.HostEtc("slackware-version"))
 		if err == nil {
 			version = getSlackwareVersion(contents)
 		}
-	} else if common.PathExists(common.HostEtc("debian_version")) {
+	} else if common.PathExistsWithContents(common.HostEtc("debian_version")) {
 		if lsb.ID == "Ubuntu" {
 			platform = "ubuntu"
 			version = lsb.Release
@@ -206,7 +206,7 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 			platform = "linuxmint"
 			version = lsb.Release
 		} else {
-			if common.PathExists("/usr/bin/raspi-config") {
+			if common.PathExistsWithContents("/usr/bin/raspi-config") {
 				platform = "raspbian"
 			} else {
 				platform = "debian"
@@ -278,6 +278,8 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 		platform = strings.ToLower(lsb.ID)
 		version = lsb.Release
 	}
+
+	platform = strings.Trim(platform, `"`)
 
 	switch platform {
 	case "debian", "ubuntu", "linuxmint", "raspbian":
