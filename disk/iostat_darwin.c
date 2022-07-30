@@ -26,7 +26,7 @@ gopsutil_v3_readdrivestat(DriveStats a[], int n)
 
 	match = IOServiceMatching("IOMedia");
 	CFDictionaryAddValue(match, CFSTR(kIOMediaWholeKey), kCFBooleanTrue);
-	status = IOServiceGetMatchingServices((mach_port_t) NULL, match, &drives);
+	status = IOServiceGetMatchingServices(0, match, &drives);
 	if(status != KERN_SUCCESS)
 		return -1;
 
