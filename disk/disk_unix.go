@@ -26,7 +26,7 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 		InodesTotal: (uint64(stat.Files)),
 		InodesFree:  (uint64(stat.Ffree)),
 	}
-	
+
 	ret.Used = (uint64(stat.Blocks) - uint64(stat.Bfree)) * uint64(bsize)
 
 	if (ret.Used + ret.Free) == 0 {
