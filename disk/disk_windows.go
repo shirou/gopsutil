@@ -79,7 +79,21 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 	return ret, nil
 }
 
+type errorCollector []error
+
+func (c *errorCollector) collect(e error) { *c = append(*c, e) }
+
+func (c *errorCollector) Error() (err string) {
+	err = ""
+	for i, e := range *c {
+		err += fmt.Sprintf("\tError %d: %s\n", i, e.Error())
+	}
+
+	return err
+}
+
 func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {
+	collector := new(errorCollector)
 	var ret []PartitionStat
 	lpBuffer := make([]byte, 254)
 	diskret, _, err := procGetLogicalDriveStringsW.Call(
@@ -94,7 +108,9 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 			typepath, _ := windows.UTF16PtrFromString(path)
 			typeret, _, _ := procGetDriveType.Call(uintptr(unsafe.Pointer(typepath)))
 			if typeret == 0 {
-				return ret, windows.GetLastError()
+				err := windows.GetLastError()
+				collector.collect(err)
+				continue
 			}
 			// 2: DRIVE_REMOVABLE 3: DRIVE_FIXED 4: DRIVE_REMOTE 5: DRIVE_CDROM
 
@@ -118,7 +134,8 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 					if typeret == 5 || typeret == 2 {
 						continue // device is not ready will happen if there is no disk in the drive
 					}
-					return ret, err
+					collector.collect(err)
+					continue
 				}
 				opts := []string{"rw"}
 				if lpFileSystemFlags&fileReadOnlyVolume != 0 {
@@ -138,7 +155,11 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 			}
 		}
 	}
-	return ret, nil
+	if len(*collector) == 0 {
+		return ret, nil
+	} else {
+		return ret, collector
+	}
 }
 
 func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOCountersStat, error) {
