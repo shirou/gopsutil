@@ -185,30 +185,34 @@ func WalkThreads(proc *SYSTEM_PROCESS_INFORMATION, fn func(t SYSTEM_THREAD_INFOR
 // the returned structure has methods to walk through the structure
 func GetSystemProcessInformation() (*SystemProcessInformationWalk, error) {
 	var (
-		oneKb      uint32 = 1024
-		allocKb    uint32 = 1
-		allocBytes uint32 = allocKb * oneKb
-		buffer     []byte
-		usedBytes  uint32
+		oneKb     uint32 = 1024
+		allocKb   uint32 = 1
+		buffer    []byte
+		usedBytes uint32
 	)
 
-	buffer = make([]byte, allocBytes)
+	// iterating instead of calling common.CallWithExpandingBuffer hangs forever
+	for {
+		var allocBytes uint32 = allocKb * oneKb
+		buffer = make([]byte, allocBytes)
 
-	st := common.CallWithExpandingBuffer(
-		func() common.NtStatus {
-			return common.NtQuerySystemInformation(
-				windows.SystemProcessInformation,
-				&buffer[0],
-				allocBytes,
-				&usedBytes,
-			)
-		},
-		&buffer,
-		&usedBytes,
-	)
+		st := common.NtQuerySystemInformation(
+			windows.SystemProcessInformation,
+			&buffer[0],
+			allocBytes,
+			&usedBytes,
+		)
 
-	if st.IsError() {
-		return nil, st.Error()
+		if st == common.NtStatus(windows.STATUS_INFO_LENGTH_MISMATCH) {
+			allocKb *= 2
+			continue
+		}
+
+		if st.IsError() {
+			return nil, st.Error()
+		}
+
+		break
 	}
 
 	return &SystemProcessInformationWalk{

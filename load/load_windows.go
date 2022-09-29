@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/shirou/gopsutil/v3/internal/common"
-	"github.com/shirou/gopsutil/v3/internal/procstats"
+	"github.com/shirou/gopsutil/v3/procstats"
 )
 
 var (
