@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v3/internal/procstats"
 )
 
 var (
@@ -35,15 +36,16 @@ func loadAvgGoroutine() {
 		currentLoad       float64
 	)
 
-	counter, err := common.ProcessorQueueLengthCounter()
-	if err != nil || counter == nil {
-		log.Println("gopsutil: unexpected processor queue length counter error, please file an issue on github: err")
-		return
-	}
-
 	tick := time.NewTicker(samplingFrequency).C
 	for {
-		currentLoad, err = counter.GetValue()
+		// calling this because common.ProcessorQueueLengthCounter() returns zero values all time
+		w, err := procstats.GetSystemProcessInformation()
+		if err != nil {
+			log.Printf("gopsutil: unexpected GetSystemProcessInformation error, please file an issue on github: %v", err)
+		} else {
+			currentLoad = float64(w.Stats().Load)
+		}
+
 		loadAvgMutex.Lock()
 		loadErr = err
 		loadAvg1M = loadAvg1M*loadAvgFactor1M + currentLoad*(1-loadAvgFactor1M)
