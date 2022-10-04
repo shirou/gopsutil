@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/shirou/gopsutil/v3/internal/common"
-	"github.com/shirou/gopsutil/v3/procstats"
 )
 
 var (
@@ -39,7 +38,7 @@ func loadAvgGoroutine() {
 	tick := time.NewTicker(samplingFrequency).C
 	for {
 		// calling this because common.ProcessorQueueLengthCounter() returns zero values all time
-		w, err := procstats.GetSystemProcessInformation()
+		w, err := common.GetSystemProcessInformation()
 		if err != nil {
 			log.Printf("gopsutil: unexpected GetSystemProcessInformation error, please file an issue on github: %v", err)
 		} else {
