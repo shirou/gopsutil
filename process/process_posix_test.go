@@ -1,5 +1,5 @@
-//go:build linux || freebsd
-// +build linux freebsd
+//go:build linux || freebsd || netbsd
+// +build linux freebsd netbsd
 
 package process
 
