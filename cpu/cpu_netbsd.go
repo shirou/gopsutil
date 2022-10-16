@@ -14,32 +14,22 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-const (
-	// sys/sched.h
-	cpuOnline = 0x0001 // CPUSTATS_ONLINE
-
-	// sys/sysctl.h
-	ctlKern      = 1  // "high kernel": proc, limits
-	ctlHw        = 6  // CTL_HW
-	smt          = 24 // HW_SMT
-	kernCpTime   = 40 // KERN_CPTIME
-	kernCPUStats = 85 // KERN_CPUSTATS
-)
-
-var ClocksPerSec = float64(128)
-
-type cpuStats struct {
-	// cs_time[CPUSTATES]
+type cpuTimes struct {
 	User uint64
 	Nice uint64
 	Sys  uint64
-	Spin uint64
 	Intr uint64
 	Idle uint64
-
-	// cs_flags
-	Flags uint64
 }
+
+const (
+	// sys/sysctl.h
+	ctlKern      = 1  // "high kernel": proc, limits
+	ctlHw        = 6  // CTL_HW
+	kernCpTime   = 51 // KERN_CPTIME
+)
+
+var ClocksPerSec = float64(100)
 
 func init() {
 	clkTck, err := sysconf.Sysconf(sysconf.SC_CLK_TCK)
@@ -63,11 +53,11 @@ func TimesWithContext(ctx context.Context, percpu bool) (ret []TimesStat, err er
 		times := (*cpuTimes)(unsafe.Pointer(&buf[0]))
 		stat := TimesStat{
 			CPU:    "cpu-total",
-			User:   float64(times.User) / ClocksPerSec,
-			Nice:   float64(times.Nice) / ClocksPerSec,
-			System: float64(times.Sys) / ClocksPerSec,
-			Idle:   float64(times.Idle) / ClocksPerSec,
-			Irq:    float64(times.Intr) / ClocksPerSec,
+			User:   float64(times.User),
+			Nice:   float64(times.Nice),
+			System: float64(times.Sys),
+			Idle:   float64(times.Idle),
+			Irq:    float64(times.Intr),
 		}
 		return []TimesStat{stat}, nil
 	}
@@ -79,23 +69,20 @@ func TimesWithContext(ctx context.Context, percpu bool) (ret []TimesStat, err er
 
 	var i uint32
 	for i = 0; i < ncpu; i++ {
-		mib := []int32{ctlKern, kernCPUStats, int32(i)}
+		mib := []int32{ctlKern, kernCpTime, int32(i)}
 		buf, _, err := common.CallSyscall(mib)
 		if err != nil {
 			return ret, err
 		}
 
-		stats := (*cpuStats)(unsafe.Pointer(&buf[0]))
-		if (stats.Flags & cpuOnline) == 0 {
-			continue
-		}
+		stats := (*cpuTimes)(unsafe.Pointer(&buf[0]))
 		ret = append(ret, TimesStat{
 			CPU:    fmt.Sprintf("cpu%d", i),
-			User:   float64(stats.User) / ClocksPerSec,
-			Nice:   float64(stats.Nice) / ClocksPerSec,
-			System: float64(stats.Sys) / ClocksPerSec,
-			Idle:   float64(stats.Idle) / ClocksPerSec,
-			Irq:    float64(stats.Intr) / ClocksPerSec,
+			User:   float64(stats.User),
+			Nice:   float64(stats.Nice),
+			System: float64(stats.Sys),
+			Idle:   float64(stats.Idle),
+			Irq:    float64(stats.Intr),
 		})
 	}
 
@@ -113,11 +100,14 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 
 	c := InfoStat{}
 
-	mhz, err := unix.SysctlUint32("hw.cpuspeed")
+	mhz, err := unix.Sysctl("machdep.dmi.processor-frequency")
 	if err != nil {
 		return nil, err
 	}
-	c.Mhz = float64(mhz)
+	_, err = fmt.Sscanf(mhz, "%f", &c.Mhz)
+	if err != nil {
+		return nil, err
+	}
 
 	ncpu, err := unix.SysctlUint32("hw.ncpuonline")
 	if err != nil {
@@ -125,7 +115,7 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 	}
 	c.Cores = int32(ncpu)
 
-	if c.ModelName, err = unix.Sysctl("hw.model"); err != nil {
+	if c.ModelName, err = unix.Sysctl("machdep.dmi.processor-version"); err != nil {
 		return nil, err
 	}
 
