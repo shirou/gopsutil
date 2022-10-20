@@ -218,48 +218,37 @@ func getVolumeInformation(name string, warnings *common.Warnings) (*volumeInform
 	path := name + ":"
 	typepath, _ := windows.UTF16PtrFromString(path)
 	typeret, _, _ := procGetDriveType.Call(uintptr(unsafe.Pointer(typepath)))
-	if typeret == 0 {
-		err := windows.GetLastError()
+
+	lpVolumeNameBuffer := make([]byte, 256)
+	lpVolumeSerialNumber := int64(0)
+	lpMaximumComponentLength := int64(0)
+	lpFileSystemFlags := int64(0)
+	lpFileSystemNameBuffer := make([]byte, 256)
+	volpath, _ := windows.UTF16PtrFromString(name + ":/")
+	driveret, _, err := procGetVolumeInformation.Call(
+		uintptr(unsafe.Pointer(volpath)),
+		uintptr(unsafe.Pointer(&lpVolumeNameBuffer[0])),
+		uintptr(len(lpVolumeNameBuffer)),
+		uintptr(unsafe.Pointer(&lpVolumeSerialNumber)),
+		uintptr(unsafe.Pointer(&lpMaximumComponentLength)),
+		uintptr(unsafe.Pointer(&lpFileSystemFlags)),
+		uintptr(unsafe.Pointer(&lpFileSystemNameBuffer[0])),
+		uintptr(len(lpFileSystemNameBuffer)))
+	if driveret == 0 {
+		if typeret == 5 || typeret == 2 {
+			return nil, errDeviceNotReady // device is not ready will happen if there is no disk in the drive
+		}
 		if warnings != nil {
 			warnings.Add(err)
 		}
 		return nil, err
 	}
 
-	if typeret == windows.DRIVE_REMOVABLE || typeret == windows.DRIVE_FIXED || typeret == windows.DRIVE_REMOTE || typeret == windows.DRIVE_CDROM || typeret == windows.DRIVE_UNKNOWN {
-		lpVolumeNameBuffer := make([]byte, 256)
-		lpVolumeSerialNumber := int64(0)
-		lpMaximumComponentLength := int64(0)
-		lpFileSystemFlags := int64(0)
-		lpFileSystemNameBuffer := make([]byte, 256)
-		volpath, _ := windows.UTF16PtrFromString(name + ":/")
-		driveret, _, err := procGetVolumeInformation.Call(
-			uintptr(unsafe.Pointer(volpath)),
-			uintptr(unsafe.Pointer(&lpVolumeNameBuffer[0])),
-			uintptr(len(lpVolumeNameBuffer)),
-			uintptr(unsafe.Pointer(&lpVolumeSerialNumber)),
-			uintptr(unsafe.Pointer(&lpMaximumComponentLength)),
-			uintptr(unsafe.Pointer(&lpFileSystemFlags)),
-			uintptr(unsafe.Pointer(&lpFileSystemNameBuffer[0])),
-			uintptr(len(lpFileSystemNameBuffer)))
-		if driveret == 0 {
-			if typeret == 5 || typeret == 2 {
-				return nil, errDeviceNotReady // device is not ready will happen if there is no disk in the drive
-			}
-			if warnings != nil {
-				warnings.Add(err)
-			}
-			return nil, err
-		}
-
-		return &volumeInformation{
-			Label:                  string(bytes.Replace(lpVolumeNameBuffer, []byte("\x00"), []byte(""), -1)),
-			SerialNumber:           lpVolumeSerialNumber,
-			MaximumComponentLength: lpMaximumComponentLength,
-			FileSystemFlags:        lpFileSystemFlags,
-			FileSystemName:         string(bytes.Replace(lpFileSystemNameBuffer, []byte("\x00"), []byte(""), -1)),
-		}, nil
-	}
-
-	return nil, errInvalidDriveType
+	return &volumeInformation{
+		Label:                  string(bytes.Replace(lpVolumeNameBuffer, []byte("\x00"), []byte(""), -1)),
+		SerialNumber:           lpVolumeSerialNumber,
+		MaximumComponentLength: lpMaximumComponentLength,
+		FileSystemFlags:        lpFileSystemFlags,
+		FileSystemName:         string(bytes.Replace(lpFileSystemNameBuffer, []byte("\x00"), []byte(""), -1)),
+	}, nil
 }
