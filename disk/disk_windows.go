@@ -226,7 +226,7 @@ func getVolumeInformation(name string, warnings *common.Warnings) (*volumeInform
 		return nil, err
 	}
 
-	if typeret == windows.DRIVE_REMOVABLE || typeret == windows.DRIVE_FIXED || typeret == windows.DRIVE_REMOTE || typeret == windows.DRIVE_CDROM {
+	if typeret == windows.DRIVE_REMOVABLE || typeret == windows.DRIVE_FIXED || typeret == windows.DRIVE_REMOTE || typeret == windows.DRIVE_CDROM || typeret == windows.DRIVE_UNKNOWN {
 		lpVolumeNameBuffer := make([]byte, 256)
 		lpVolumeSerialNumber := int64(0)
 		lpMaximumComponentLength := int64(0)
