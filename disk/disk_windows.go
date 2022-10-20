@@ -96,7 +96,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 	}
 	for _, v := range lpBuffer {
 		if v >= 65 && v <= 90 {
-			i, err := getVolumeInformation(string(v))
+			i, err := getVolumeInformation(string(v), &warnings)
 			if err != nil && !errors.Is(err, errDeviceNotReady) && !errors.Is(err, errInvalidDriveType) {
 				continue
 			}
@@ -161,7 +161,7 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 				return drivemap, err
 			}
 
-			i, err := getVolumeInformation(vStr)
+			i, err := getVolumeInformation(vStr, nil)
 			if err != nil {
 				return nil, err
 			}
@@ -183,7 +183,7 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 }
 
 func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
-	i, err := getVolumeInformation(name)
+	i, err := getVolumeInformation(name, nil)
 	if err != nil {
 		return "", err
 	}
@@ -192,7 +192,7 @@ func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
 }
 
 func LabelWithContext(ctx context.Context, name string) (string, error) {
-	i, err := getVolumeInformation(name)
+	i, err := getVolumeInformation(name, nil)
 	if err != nil {
 		return "", err
 	}
@@ -214,12 +214,16 @@ var (
 )
 
 // getVolumeInformation returns all the information gathered from GetVolumeInformationW
-func getVolumeInformation(name string) (*volumeInformation, error) {
+func getVolumeInformation(name string, warnings *common.Warnings) (*volumeInformation, error) {
 	path := name + ":"
 	typepath, _ := windows.UTF16PtrFromString(path)
 	typeret, _, _ := procGetDriveType.Call(uintptr(unsafe.Pointer(typepath)))
 	if typeret == 0 {
-		return nil, windows.GetLastError()
+		err := windows.GetLastError()
+		if warnings != nil {
+			warnings.Add(err)
+		}
+		return nil, err
 	}
 
 	if typeret == windows.DRIVE_REMOVABLE || typeret == windows.DRIVE_FIXED || typeret == windows.DRIVE_REMOTE || typeret == windows.DRIVE_CDROM {
@@ -241,6 +245,9 @@ func getVolumeInformation(name string) (*volumeInformation, error) {
 		if driveret == 0 {
 			if typeret == 5 || typeret == 2 {
 				return nil, errDeviceNotReady // device is not ready will happen if there is no disk in the drive
+			}
+			if warnings != nil {
+				warnings.Add(err)
 			}
 			return nil, err
 		}
