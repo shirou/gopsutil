@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"syscall"
@@ -319,18 +320,19 @@ func (p *Process) PpidWithContext(ctx context.Context) (int32, error) {
 }
 
 func (p *Process) NameWithContext(ctx context.Context) (string, error) {
-	ppid, _, name, err := getFromSnapProcess(p.Pid)
+	if p.Pid == 0 {
+		return "System Idle Process", nil
+	}
+	if p.Pid == 4 {
+		return "System", nil
+	}
+
+	exe, err := p.ExeWithContext(ctx)
 	if err != nil {
 		return "", fmt.Errorf("could not get Name: %s", err)
 	}
 
-	// if no errors and not cached already, cache ppid
-	p.parent = ppid
-	if 0 == p.getPpid() {
-		p.setPpid(ppid)
-	}
-
-	return name, nil
+	return filepath.Base(exe), nil
 }
 
 func (p *Process) TgidWithContext(ctx context.Context) (int32, error) {
