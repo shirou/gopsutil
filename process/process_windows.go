@@ -987,15 +987,9 @@ func is32BitProcess(h windows.Handle) bool {
 
 	var procIs32Bits bool
 	switch processorArchitecture {
-	case PROCESSOR_ARCHITECTURE_INTEL:
-		fallthrough
-	case PROCESSOR_ARCHITECTURE_ARM:
+	case PROCESSOR_ARCHITECTURE_INTEL, PROCESSOR_ARCHITECTURE_ARM:
 		procIs32Bits = true
-	case PROCESSOR_ARCHITECTURE_ARM64:
-		fallthrough
-	case PROCESSOR_ARCHITECTURE_IA64:
-		fallthrough
-	case PROCESSOR_ARCHITECTURE_AMD64:
+	case PROCESSOR_ARCHITECTURE_ARM64, PROCESSOR_ARCHITECTURE_IA64, PROCESSOR_ARCHITECTURE_AMD64:
 		var wow64 uint
 
 		ret, _, _ := common.ProcNtQueryInformationProcess.Call(
