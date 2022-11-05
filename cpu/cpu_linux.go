@@ -244,13 +244,13 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 			c.Model = value
 		case "model name", "cpu":
 			c.ModelName = value
-			if c.ModelName == "" {
+			if c.VendorID == "ARM" && c.ModelName == "" {
 				if v, err := strconv.ParseUint(c.Model, 0, 16); err == nil {
-					modelName, isThereModel := armModelToModelName[v]
-					if !isThereModel {
-						c.ModelName = "Undefined"
-					} else {
+					modelName, exist := armModelToModelName[v]
+					if exist {
 						c.ModelName = modelName
+					} else {
+						c.ModelName = "Undefined"
 					}
 				}
 			}
