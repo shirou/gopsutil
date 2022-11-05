@@ -188,6 +188,14 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 		}
 	}
 
+	var UBR uint32 // Update Build Revision
+	err = windows.RegQueryValueEx(h, windows.StringToUTF16Ptr(`UBR`), nil, &valType, nil, &bufLen)
+	if err == nil {
+		regBuf := make([]byte, 4)
+		err = windows.RegQueryValueEx(h, windows.StringToUTF16Ptr(`UBR`), nil, &valType, (*byte)(unsafe.Pointer(&regBuf[0])), &bufLen)
+		copy((*[4]byte)(unsafe.Pointer(&UBR))[:], regBuf)
+	}
+
 	// PlatformFamily
 	switch osInfo.wProductType {
 	case 1:
@@ -199,7 +207,9 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 	}
 
 	// Platform Version
-	version = fmt.Sprintf("%d.%d.%d Build %d", osInfo.dwMajorVersion, osInfo.dwMinorVersion, osInfo.dwBuildNumber, osInfo.dwBuildNumber)
+	version = fmt.Sprintf("%d.%d.%d.%d Build %d.%d",
+		osInfo.dwMajorVersion, osInfo.dwMinorVersion, osInfo.dwBuildNumber, UBR,
+		osInfo.dwBuildNumber, UBR)
 
 	return platform, family, version, nil
 }
