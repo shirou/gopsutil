@@ -244,16 +244,6 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 			c.Model = value
 		case "model name", "cpu":
 			c.ModelName = value
-			if c.VendorID == "ARM" && c.ModelName == "" {
-				if v, err := strconv.ParseUint(c.Model, 0, 16); err == nil {
-					modelName, exist := armModelToModelName[v]
-					if exist {
-						c.ModelName = modelName
-					} else {
-						c.ModelName = "Undefined"
-					}
-				}
-			}
 			if strings.Contains(value, "POWER8") ||
 				strings.Contains(value, "POWER7") {
 				c.Model = strings.Split(value, " ")[0]
@@ -298,6 +288,16 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 	if c.CPU >= 0 {
 		finishCPUInfo(&c)
 		ret = append(ret, c)
+	}
+	if c.VendorID == "ARM" && c.ModelName == "" {
+		if v, err := strconv.ParseUint(c.Model, 0, 16); err == nil {
+			modelName, exist := armModelToModelName[v]
+			if exist {
+				c.ModelName = modelName
+			} else {
+				c.ModelName = "Undefined"
+			}
+		}
 	}
 	return ret, nil
 }
