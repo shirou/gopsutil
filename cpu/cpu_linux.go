@@ -285,10 +285,6 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 			c.Microcode = value
 		}
 	}
-	if c.CPU >= 0 {
-		finishCPUInfo(&c)
-		ret = append(ret, c)
-	}
 	if c.VendorID == "ARM" && c.ModelName == "" {
 		if v, err := strconv.ParseUint(c.Model, 0, 16); err == nil {
 			modelName, exist := armModelToModelName[v]
@@ -298,6 +294,10 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 				c.ModelName = "Undefined"
 			}
 		}
+	}
+	if c.CPU >= 0 {
+		finishCPUInfo(&c)
+		ret = append(ret, c)
 	}
 	return ret, nil
 }
