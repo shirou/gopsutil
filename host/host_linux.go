@@ -395,7 +395,7 @@ func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, err
 		}
 	}
 
-	var warns common.Warnings
+	var warns Warnings
 
 	if len(files) == 0 { // handle distributions without hwmon, like raspbian #391, parse legacy thermal_zone files
 		files, err = filepath.Glob(common.HostSys("/class/thermal/thermal_zone*/"))

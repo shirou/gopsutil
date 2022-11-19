@@ -80,7 +80,7 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 }
 
 func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {
-	warnings := common.Warnings{
+	warnings := Warnings{
 		Verbose: true,
 	}
 	var ret []PartitionStat
