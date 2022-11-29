@@ -35,7 +35,7 @@ func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
 			return nil, err
 		}
 		result.Total = cap
-		freemem, err := globalZoneFreeMemory()
+		freemem, err := globalZoneFreeMemory(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -93,8 +93,7 @@ func globalZoneMemoryCapacity() (uint64, error) {
 	return totalMB * 1024 * 1024, nil
 }
 
-func globalZoneFreeMemory() (uint64, error) {
-	ctx := context.Background()
+func globalZoneFreeMemory(ctx context.Context) (uint64, error) {
 	output, err := invoke.CommandWithContext(ctx, "pagesize")
 	if err != nil {
 		return 0, err
