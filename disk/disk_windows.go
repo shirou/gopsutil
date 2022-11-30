@@ -216,7 +216,7 @@ var (
 )
 
 // getVolumeInformation returns all the information gathered from GetVolumeInformationW
-func getVolumeInformation(name string, warnings *common.Warnings) (*volumeInformation, error) {
+func getVolumeInformation(name string, warnings *Warnings) (*volumeInformation, error) {
 	path := name + ":"
 	typepath, _ := windows.UTF16PtrFromString(path)
 	typeret, _, _ := procGetDriveType.Call(uintptr(unsafe.Pointer(typepath)))
