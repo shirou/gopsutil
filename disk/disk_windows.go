@@ -6,15 +6,12 @@ package disk
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
-	"strconv"
 	"syscall"
 	"unsafe"
 
-	"golang.org/x/sys/windows"
-
 	"github.com/shirou/gopsutil/v3/internal/common"
+	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
 )
 
@@ -98,27 +95,55 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 	}
 	for _, v := range lpBuffer {
 		if v >= 65 && v <= 90 {
-			i, err := getVolumeInformation(string(v), &warnings)
-			if err != nil && !errors.Is(err, errDeviceNotReady) && !errors.Is(err, errInvalidDriveType) {
+			path := string(v) + ":"
+			typepath, _ := windows.UTF16PtrFromString(path)
+			typeret, _, _ := procGetDriveType.Call(uintptr(unsafe.Pointer(typepath)))
+			if typeret == 0 {
+				err := windows.GetLastError()
+				warnings.Add(err)
 				continue
 			}
+			// 2: DRIVE_REMOVABLE 3: DRIVE_FIXED 4: DRIVE_REMOTE 5: DRIVE_CDROM
 
-			opts := []string{"rw"}
-			if i.FileSystemFlags&fileReadOnlyVolume != 0 {
-				opts = []string{"ro"}
-			}
-			if i.FileSystemFlags&fileFileCompression != 0 {
-				opts = append(opts, "compress")
-			}
+			if typeret == 2 || typeret == 3 || typeret == 4 || typeret == 5 {
+				lpVolumeNameBuffer := make([]byte, 256)
+				lpVolumeSerialNumber := int64(0)
+				lpMaximumComponentLength := int64(0)
+				lpFileSystemFlags := int64(0)
+				lpFileSystemNameBuffer := make([]byte, 256)
+				volpath, _ := windows.UTF16PtrFromString(string(v) + ":/")
+				driveret, _, err := procGetVolumeInformation.Call(
+					uintptr(unsafe.Pointer(volpath)),
+					uintptr(unsafe.Pointer(&lpVolumeNameBuffer[0])),
+					uintptr(len(lpVolumeNameBuffer)),
+					uintptr(unsafe.Pointer(&lpVolumeSerialNumber)),
+					uintptr(unsafe.Pointer(&lpMaximumComponentLength)),
+					uintptr(unsafe.Pointer(&lpFileSystemFlags)),
+					uintptr(unsafe.Pointer(&lpFileSystemNameBuffer[0])),
+					uintptr(len(lpFileSystemNameBuffer)))
+				if driveret == 0 {
+					if typeret == 5 || typeret == 2 {
+						continue // device is not ready will happen if there is no disk in the drive
+					}
+					warnings.Add(err)
+					continue
+				}
+				opts := []string{"rw"}
+				if lpFileSystemFlags&fileReadOnlyVolume != 0 {
+					opts = []string{"ro"}
+				}
+				if lpFileSystemFlags&fileFileCompression != 0 {
+					opts = append(opts, "compress")
+				}
 
-			path := string(v) + ":"
-			d := PartitionStat{
-				Mountpoint: path,
-				Device:     path,
-				Fstype:     i.FileSystemName,
-				Opts:       opts,
+				d := PartitionStat{
+					Mountpoint: path,
+					Device:     path,
+					Fstype:     string(bytes.Replace(lpFileSystemNameBuffer, []byte("\x00"), []byte(""), -1)),
+					Opts:       opts,
+				}
+				ret = append(ret, d)
 			}
-			ret = append(ret, d)
 		}
 	}
 	return ret, warnings.Reference()
@@ -136,8 +161,7 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 	}
 	for _, v := range lpBuffer[:lpBufferLen] {
 		if 'A' <= v && v <= 'Z' {
-			vStr := string(rune(v))
-			path := vStr + ":"
+			path := string(rune(v)) + ":"
 			typepath, _ := windows.UTF16PtrFromString(path)
 			typeret := windows.GetDriveType(typepath)
 			if typeret == 0 {
@@ -162,22 +186,14 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 			if err != nil {
 				return drivemap, err
 			}
-
-			i, err := getVolumeInformation(vStr, nil)
-			if err != nil {
-				return nil, err
-			}
-
 			drivemap[path] = IOCountersStat{
-				ReadBytes:    uint64(diskPerformance.BytesRead),
-				WriteBytes:   uint64(diskPerformance.BytesWritten),
-				ReadCount:    uint64(diskPerformance.ReadCount),
-				WriteCount:   uint64(diskPerformance.WriteCount),
-				ReadTime:     uint64(diskPerformance.ReadTime / 10000 / 1000), // convert to ms: https://github.com/giampaolo/psutil/issues/1012
-				WriteTime:    uint64(diskPerformance.WriteTime / 10000 / 1000),
-				Name:         path,
-				SerialNumber: strconv.FormatInt(i.SerialNumber, 10),
-				Label:        i.Label,
+				ReadBytes:  uint64(diskPerformance.BytesRead),
+				WriteBytes: uint64(diskPerformance.BytesWritten),
+				ReadCount:  uint64(diskPerformance.ReadCount),
+				WriteCount: uint64(diskPerformance.WriteCount),
+				ReadTime:   uint64(diskPerformance.ReadTime / 10000 / 1000), // convert to ms: https://github.com/giampaolo/psutil/issues/1012
+				WriteTime:  uint64(diskPerformance.WriteTime / 10000 / 1000),
+				Name:       path,
 			}
 		}
 	}
@@ -185,83 +201,9 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 }
 
 func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
-	i, err := getVolumeInformation(name, nil)
-	if err != nil {
-		return "", err
-	}
-
-	return strconv.FormatInt(i.SerialNumber, 10), nil
+	return "", common.ErrNotImplementedError
 }
 
 func LabelWithContext(ctx context.Context, name string) (string, error) {
-	i, err := getVolumeInformation(name, nil)
-	if err != nil {
-		return "", err
-	}
-
-	return i.Label, nil
-}
-
-type volumeInformation struct {
-	Label                  string
-	SerialNumber           int64
-	MaximumComponentLength int64
-	FileSystemFlags        int64
-	FileSystemName         string
-}
-
-var (
-	errDeviceNotReady   = errors.New("device not ready")
-	errInvalidDriveType = errors.New("invalid drive type specified")
-)
-
-// getVolumeInformation returns all the information gathered from GetVolumeInformationW
-func getVolumeInformation(name string, warnings *common.Warnings) (*volumeInformation, error) {
-	path := name + ":"
-	typepath, _ := windows.UTF16PtrFromString(path)
-	typeret, _, _ := procGetDriveType.Call(uintptr(unsafe.Pointer(typepath)))
-	if typeret == 0 {
-		err := windows.GetLastError()
-		if warnings != nil {
-			warnings.Add(err)
-		}
-		return nil, err
-	}
-
-	if typeret == windows.DRIVE_REMOVABLE || typeret == windows.DRIVE_FIXED || typeret == windows.DRIVE_REMOTE || typeret == windows.DRIVE_CDROM {
-		lpVolumeNameBuffer := make([]byte, 256)
-		lpVolumeSerialNumber := int64(0)
-		lpMaximumComponentLength := int64(0)
-		lpFileSystemFlags := int64(0)
-		lpFileSystemNameBuffer := make([]byte, 256)
-		volpath, _ := windows.UTF16PtrFromString(name + ":/")
-		driveret, _, err := procGetVolumeInformation.Call(
-			uintptr(unsafe.Pointer(volpath)),
-			uintptr(unsafe.Pointer(&lpVolumeNameBuffer[0])),
-			uintptr(len(lpVolumeNameBuffer)),
-			uintptr(unsafe.Pointer(&lpVolumeSerialNumber)),
-			uintptr(unsafe.Pointer(&lpMaximumComponentLength)),
-			uintptr(unsafe.Pointer(&lpFileSystemFlags)),
-			uintptr(unsafe.Pointer(&lpFileSystemNameBuffer[0])),
-			uintptr(len(lpFileSystemNameBuffer)))
-		if driveret == 0 {
-			if typeret == 5 || typeret == 2 {
-				return nil, errDeviceNotReady // device is not ready will happen if there is no disk in the drive
-			}
-			if warnings != nil {
-				warnings.Add(err)
-			}
-			return nil, err
-		}
-
-		return &volumeInformation{
-			Label:                  string(bytes.Replace(lpVolumeNameBuffer, []byte("\x00"), []byte(""), -1)),
-			SerialNumber:           lpVolumeSerialNumber,
-			MaximumComponentLength: lpMaximumComponentLength,
-			FileSystemFlags:        lpFileSystemFlags,
-			FileSystemName:         string(bytes.Replace(lpFileSystemNameBuffer, []byte("\x00"), []byte(""), -1)),
-		}, nil
-	}
-
-	return nil, errInvalidDriveType
+	return "", common.ErrNotImplementedError
 }
