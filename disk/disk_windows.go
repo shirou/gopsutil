@@ -15,6 +15,8 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
+type Warnings = common.Warnings
+
 var (
 	procGetDiskFreeSpaceExW     = common.Modkernel32.NewProc("GetDiskFreeSpaceExW")
 	procGetLogicalDriveStringsW = common.Modkernel32.NewProc("GetLogicalDriveStringsW")
@@ -80,7 +82,7 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 }
 
 func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {
-	warnings := common.Warnings{
+	warnings := Warnings{
 		Verbose: true,
 	}
 	var ret []PartitionStat
