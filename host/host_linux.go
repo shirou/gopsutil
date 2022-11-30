@@ -19,6 +19,8 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+type Warnings = common.Warnings
+
 type lsbStruct struct {
 	ID          string
 	Release     string
