@@ -242,6 +242,17 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 			c.Family = value
 		case "model", "CPU part":
 			c.Model = value
+			// if CPU is arm based, model name is found via model number. refer to: arch/arm64/kernel/cpuinfo.c
+			if c.VendorID == "ARM" {
+				if v, err := strconv.ParseUint(c.Model, 0, 16); err == nil {
+					modelName, exist := armModelToModelName[v]
+					if exist {
+						c.ModelName = modelName
+					} else {
+						c.ModelName = "Undefined"
+					}
+				}
+			}
 		case "model name", "cpu":
 			c.ModelName = value
 			if strings.Contains(value, "POWER8") ||
@@ -283,16 +294,6 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 			})
 		case "microcode":
 			c.Microcode = value
-		}
-	}
-	if c.VendorID == "ARM" && c.ModelName == "" {
-		if v, err := strconv.ParseUint(c.Model, 0, 16); err == nil {
-			modelName, exist := armModelToModelName[v]
-			if exist {
-				c.ModelName = modelName
-			} else {
-				c.ModelName = "Undefined"
-			}
 		}
 	}
 	if c.CPU >= 0 {
