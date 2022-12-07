@@ -320,11 +320,13 @@ func PathExistsWithContents(filename string) bool {
 	return info.Size() > 4 // at least 4 bytes
 }
 
+var PathPrefix string
+
 // GetEnv retrieves the environment variable key. If it does not exist it returns the default.
 func GetEnv(key string, dfault string, combineWith ...string) string {
 	value := os.Getenv(key)
 	if value == "" {
-		value = dfault
+		value = filepath.Join(PathPrefix, dfault)
 	}
 
 	switch len(combineWith) {

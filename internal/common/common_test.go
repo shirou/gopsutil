@@ -7,6 +7,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestReadlines(t *testing.T) {
@@ -158,5 +160,48 @@ func TestGetSysctrlEnv(t *testing.T) {
 	}
 	if !found {
 		t.Errorf("unexpected real result from getSysctrlEnv: %q", env)
+	}
+}
+
+func Test_GetEnv(t *testing.T) {
+	cases := []struct {
+		name        string
+		key         map[string]string
+		dfault      string
+		combineWith []string
+		out         string
+	}{
+		{
+			name:   "normal",
+			dfault: "/proc",
+			out:    "/proc",
+		},
+		{
+			name:   "1",
+			key:    map[string]string{"HOST_PROC": "/rootfs"},
+			dfault: "/proc",
+			out:    "/rootfs",
+		},
+		{
+			name:        "2",
+			dfault:      "/proc",
+			combineWith: []string{"/tmp1", "/tmp2"},
+			out:         "/proc/tmp1/tmp2",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			for k, v := range tc.key {
+				os.Setenv(k, v)
+			}
+			defer func() {
+				for k := range tc.key {
+					os.Unsetenv(k)
+				}
+			}()
+			out := GetEnv("HOST_PROC", tc.dfault, tc.combineWith...)
+			assert.Equal(t, tc.out, out)
+		})
 	}
 }
