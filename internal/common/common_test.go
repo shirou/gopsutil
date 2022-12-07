@@ -172,18 +172,18 @@ func Test_GetEnv(t *testing.T) {
 		out         string
 	}{
 		{
-			name:   "normal",
+			name:   "default",
 			dfault: "/proc",
 			out:    "/proc",
 		},
 		{
-			name:   "1",
+			name:   "key",
 			key:    map[string]string{"HOST_PROC": "/rootfs"},
 			dfault: "/proc",
 			out:    "/rootfs",
 		},
 		{
-			name:        "2",
+			name:        "combineWith",
 			dfault:      "/proc",
 			combineWith: []string{"/tmp1", "/tmp2"},
 			out:         "/proc/tmp1/tmp2",
