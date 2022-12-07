@@ -20,7 +20,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 		return ret, err
 	}
 	fs := make([]unix.Statfs_t, count)
-	count, err := unix.Getfsstat(fs, unix.MNT_WAIT)
+	count, err = unix.Getfsstat(fs, unix.MNT_WAIT)
 	if err != nil {
 		return ret, err
 	}
