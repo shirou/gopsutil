@@ -319,7 +319,7 @@ func KernelVersionWithContext(ctx context.Context) (version string, err error) {
 	if err != nil {
 		return "", err
 	}
-	return string(utsname.Release[:bytes.IndexByte(utsname.Release[:], 0)]), nil
+	return unix.ByteSliceToString(utsname.Release[:]), nil
 }
 
 func getSlackwareVersion(contents []string) string {
