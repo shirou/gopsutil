@@ -20,9 +20,11 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 		return ret, err
 	}
 	fs := make([]unix.Statfs_t, count)
-	if _, err = unix.Getfsstat(fs, unix.MNT_WAIT); err != nil {
+	count, err := unix.Getfsstat(fs, unix.MNT_WAIT)
+	if err != nil {
 		return ret, err
 	}
+	fs = fs[:count] // Actual count may be less than from the first call.
 	for _, stat := range fs {
 		opts := []string{"rw"}
 		if stat.Flags&unix.MNT_RDONLY != 0 {
