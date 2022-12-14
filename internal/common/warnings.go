@@ -1,11 +1,10 @@
-package host
+package common
 
-import (
-	"fmt"
-)
+import "fmt"
 
 type Warnings struct {
-	List []error
+	List    []error
+	Verbose bool
 }
 
 func (w *Warnings) Add(err error) {
@@ -20,5 +19,12 @@ func (w *Warnings) Reference() error {
 }
 
 func (w *Warnings) Error() string {
+	if w.Verbose {
+		str := ""
+		for i, e := range w.List {
+			str += fmt.Sprintf("\tError %d: %s\n", i, e.Error())
+		}
+		return str
+	}
 	return fmt.Sprintf("Number of warnings: %v", len(w.List))
 }

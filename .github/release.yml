@@ -1,0 +1,38 @@
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+      - dependencies
+    authors:
+      - dependabot[bot]
+  categories:
+    - title: "cpu"
+      labels:
+        - "package:cpu"
+    - title: "disk"
+      labels:
+        - "package:disk"
+    - title: "docker"
+      labels:
+        - "package:docker"
+    - title: "host"
+      labels:
+        - "package:host"
+    - title: "load"
+      labels:
+        - "package:load"
+    - title: "mem"
+      labels:
+        - "package:mem"
+    - title: "net"
+      labels:
+        - "package:net"
+    - title: "process"
+      labels:
+        - "package:process"
+    - title: "winservices"
+      labels:
+        - "package:winservices"
+    - title: Other Changes
+      labels:
+        - "*"

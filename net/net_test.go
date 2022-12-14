@@ -3,7 +3,6 @@ package net
 import (
 	"errors"
 	"fmt"
-	"math"
 	"os"
 	"runtime"
 	"testing"
@@ -86,8 +85,14 @@ func TestNetIOCountersAll(t *testing.T) {
 	for _, p := range per {
 		pr += p.PacketsRecv
 	}
-	// small diff is ok
-	if math.Abs(float64(v[0].PacketsRecv-pr)) > 5 {
+	// small diff is ok, compare instead of math.Abs(subtraction) with uint64
+	var diff uint64
+	if v[0].PacketsRecv > pr {
+		diff = v[0].PacketsRecv - pr
+	} else {
+		diff = pr - v[0].PacketsRecv
+	}
+	if diff > 5 {
 		if ci := os.Getenv("CI"); ci != "" {
 			// This test often fails in CI. so just print even if failed.
 			fmt.Printf("invalid sum value: %v, %v", v[0].PacketsRecv, pr)

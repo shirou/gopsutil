@@ -137,14 +137,6 @@ func TestDecodeAddress(t *testing.T) {
 	assert := assert.New(t)
 
 	addr := map[string]AddrTest{
-		"0500000A:0016": {
-			IP:   "10.0.0.5",
-			Port: 22,
-		},
-		"0100007F:D1C2": {
-			IP:   "127.0.0.1",
-			Port: 53698,
-		},
 		"11111:0035": {
 			Error: true,
 		},
@@ -158,6 +150,25 @@ func TestDecodeAddress(t *testing.T) {
 		"00855210011307F025401:0035": {
 			Error: true,
 		},
+	}
+	if common.IsLittleEndian() {
+		addr["0500000A:0016"] = AddrTest{
+			IP:   "10.0.0.5",
+			Port: 22,
+		}
+		addr["0100007F:D1C2"] = AddrTest{
+			IP:   "127.0.0.1",
+			Port: 53698,
+		}
+	} else {
+		addr["0A000005:0016"] = AddrTest{
+			IP:   "10.0.0.5",
+			Port: 22,
+		}
+		addr["7F000001:D1C2"] = AddrTest{
+			IP:   "127.0.0.1",
+			Port: 53698,
+		}
 	}
 
 	for src, dst := range addr {

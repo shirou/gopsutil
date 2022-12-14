@@ -17,8 +17,8 @@ func skipIfNotImplementedErr(t *testing.T, err error) {
 }
 
 func TestVirtual_memory(t *testing.T) {
-	if runtime.GOOS == "solaris" {
-		t.Skip("Only .Total is supported on Solaris")
+	if runtime.GOOS == "solaris" || runtime.GOOS == "illumos" {
+		t.Skip("Only .Total .Available are supported on Solaris/illumos")
 	}
 
 	v, err := VirtualMemory()

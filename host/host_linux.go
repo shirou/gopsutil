@@ -19,6 +19,8 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+type Warnings = common.Warnings
+
 type lsbStruct struct {
 	ID          string
 	Release     string
@@ -179,26 +181,26 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 		lsb = &lsbStruct{}
 	}
 
-	if common.PathExists(common.HostEtc("oracle-release")) {
+	if common.PathExistsWithContents(common.HostEtc("oracle-release")) {
 		platform = "oracle"
 		contents, err := common.ReadLines(common.HostEtc("oracle-release"))
 		if err == nil {
 			version = getRedhatishVersion(contents)
 		}
 
-	} else if common.PathExists(common.HostEtc("enterprise-release")) {
+	} else if common.PathExistsWithContents(common.HostEtc("enterprise-release")) {
 		platform = "oracle"
 		contents, err := common.ReadLines(common.HostEtc("enterprise-release"))
 		if err == nil {
 			version = getRedhatishVersion(contents)
 		}
-	} else if common.PathExists(common.HostEtc("slackware-version")) {
+	} else if common.PathExistsWithContents(common.HostEtc("slackware-version")) {
 		platform = "slackware"
 		contents, err := common.ReadLines(common.HostEtc("slackware-version"))
 		if err == nil {
 			version = getSlackwareVersion(contents)
 		}
-	} else if common.PathExists(common.HostEtc("debian_version")) {
+	} else if common.PathExistsWithContents(common.HostEtc("debian_version")) {
 		if lsb.ID == "Ubuntu" {
 			platform = "ubuntu"
 			version = lsb.Release
@@ -206,7 +208,7 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 			platform = "linuxmint"
 			version = lsb.Release
 		} else {
-			if common.PathExists("/usr/bin/raspi-config") {
+			if common.PathExistsWithContents("/usr/bin/raspi-config") {
 				platform = "raspbian"
 			} else {
 				platform = "debian"
@@ -215,6 +217,12 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 			if err == nil && len(contents) > 0 && contents[0] != "" {
 				version = contents[0]
 			}
+		}
+	} else if common.PathExists(common.HostEtc("neokylin-release")) {
+		contents, err := common.ReadLines(common.HostEtc("neokylin-release"))
+		if err == nil {
+			version = getRedhatishVersion(contents)
+			platform = getRedhatishPlatform(contents)
 		}
 	} else if common.PathExists(common.HostEtc("redhat-release")) {
 		contents, err := common.ReadLines(common.HostEtc("redhat-release"))
@@ -273,6 +281,8 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 		version = lsb.Release
 	}
 
+	platform = strings.Trim(platform, `"`)
+
 	switch platform {
 	case "debian", "ubuntu", "linuxmint", "raspbian":
 		family = "debian"
@@ -296,6 +306,8 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 		family = "coreos"
 	case "solus":
 		family = "solus"
+	case "neokylin":
+		family = "neokylin"
 	}
 
 	return platform, family, version, nil
@@ -307,7 +319,7 @@ func KernelVersionWithContext(ctx context.Context) (version string, err error) {
 	if err != nil {
 		return "", err
 	}
-	return string(utsname.Release[:bytes.IndexByte(utsname.Release[:], 0)]), nil
+	return unix.ByteSliceToString(utsname.Release[:]), nil
 }
 
 func getSlackwareVersion(contents []string) string {
@@ -322,7 +334,7 @@ func getRedhatishVersion(contents []string) string {
 	if strings.Contains(c, "rawhide") {
 		return "rawhide"
 	}
-	if matches := regexp.MustCompile(`release (\d[\d.]*)`).FindStringSubmatch(c); matches != nil {
+	if matches := regexp.MustCompile(`release (\w[\d.]*)`).FindStringSubmatch(c); matches != nil {
 		return matches[1]
 	}
 	return ""
