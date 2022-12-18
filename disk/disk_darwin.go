@@ -24,7 +24,10 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 	if err != nil {
 		return ret, err
 	}
-	fs = fs[:count] // Actual count may be less than from the first call.
+	// On 10.14, and possibly other OS versions, the actual count may
+	// be less than from the first call. Truncate to the returned count
+	// to prevent accessing uninitialized entries.
+	fs = fs[:count]
 	for _, stat := range fs {
 		opts := []string{"rw"}
 		if stat.Flags&unix.MNT_RDONLY != 0 {
