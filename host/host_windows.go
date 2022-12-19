@@ -103,6 +103,14 @@ func numProcs(ctx context.Context) (uint64, error) {
 }
 
 func UptimeWithContext(ctx context.Context) (uint64, error) {
+	up, err := uptimeMillis()
+	if err != nil {
+		return 0, err
+	}
+	return uint64((time.Duration(up) * time.Millisecond).Seconds()), nil
+}
+
+func uptimeMillis() (uint64, error) {
 	procGetTickCount := procGetTickCount64
 	err := procGetTickCount64.Find()
 	if err != nil {
@@ -112,7 +120,7 @@ func UptimeWithContext(ctx context.Context) (uint64, error) {
 	if lastErr != 0 {
 		return 0, lastErr
 	}
-	return uint64((time.Duration(r1) * time.Millisecond).Seconds()), nil
+	return uint64(r1), nil
 }
 
 // cachedBootTime must be accessed via atomic.Load/StoreUint64
@@ -123,11 +131,11 @@ func BootTimeWithContext(ctx context.Context) (uint64, error) {
 	if t != 0 {
 		return t, nil
 	}
-	up, err := Uptime()
+	up, err := uptimeMillis()
 	if err != nil {
 		return 0, err
 	}
-	t = timeSince(up)
+	t = uint64((time.Duration(timeSinceMillis(up)) * time.Millisecond).Seconds())
 	atomic.StoreUint64(&cachedBootTime, t)
 	return t, nil
 }

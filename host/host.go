@@ -155,3 +155,7 @@ func SensorsTemperatures() ([]TemperatureStat, error) {
 func timeSince(ts uint64) uint64 {
 	return uint64(time.Now().Unix()) - ts
 }
+
+func timeSinceMillis(ts uint64) uint64 {
+	return uint64(time.Now().UnixMilli()) - ts
+}
