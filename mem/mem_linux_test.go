@@ -4,7 +4,6 @@
 package mem
 
 import (
-	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -111,12 +110,9 @@ var virtualMemoryTests = []struct {
 }
 
 func TestVirtualMemoryLinux(t *testing.T) {
-	origProc := os.Getenv("HOST_PROC")
-	defer os.Setenv("HOST_PROC", origProc)
-
 	for _, tt := range virtualMemoryTests {
 		t.Run(tt.mockedRootFS, func(t *testing.T) {
-			os.Setenv("HOST_PROC", filepath.Join("testdata/linux/virtualmemory/", tt.mockedRootFS, "proc"))
+			t.Setenv("HOST_PROC", filepath.Join("testdata/linux/virtualmemory/", tt.mockedRootFS, "proc"))
 
 			stat, err := VirtualMemory()
 			skipIfNotImplementedErr(t, err)
