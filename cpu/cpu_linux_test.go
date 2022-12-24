@@ -2,7 +2,6 @@ package cpu
 
 import (
 	"errors"
-	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -10,8 +9,7 @@ import (
 )
 
 func TestTimesEmpty(t *testing.T) {
-	orig := os.Getenv("HOST_PROC")
-	os.Setenv("HOST_PROC", "testdata/linux/times_empty")
+	t.Setenv("HOST_PROC", "testdata/linux/times_empty")
 	_, err := Times(true)
 	if err != nil {
 		t.Error("Times(true) failed")
@@ -20,12 +18,10 @@ func TestTimesEmpty(t *testing.T) {
 	if err != nil {
 		t.Error("Times(false) failed")
 	}
-	os.Setenv("HOST_PROC", orig)
 }
 
 func TestCPUparseStatLine_424(t *testing.T) {
-	orig := os.Getenv("HOST_PROC")
-	os.Setenv("HOST_PROC", "testdata/linux/424/proc")
+	t.Setenv("HOST_PROC", "testdata/linux/424/proc")
 	{
 		l, err := Times(true)
 		if err != nil || len(l) == 0 {
@@ -40,7 +36,6 @@ func TestCPUparseStatLine_424(t *testing.T) {
 		}
 		t.Logf("Times(false): %#v", l)
 	}
-	os.Setenv("HOST_PROC", orig)
 }
 
 func TestCPUCountsAgainstLscpu(t *testing.T) {
@@ -93,9 +88,7 @@ func TestCPUCountsAgainstLscpu(t *testing.T) {
 }
 
 func TestCPUCountsLogicalAndroid_1037(t *testing.T) { // https://github.com/shirou/gopsutil/issues/1037
-	orig := os.Getenv("HOST_PROC")
-	os.Setenv("HOST_PROC", "testdata/linux/1037/proc")
-	defer os.Setenv("HOST_PROC", orig)
+	t.Setenv("HOST_PROC", "testdata/linux/1037/proc")
 
 	count, err := Counts(true)
 	if err != nil {

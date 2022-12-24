@@ -11,7 +11,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -62,8 +61,7 @@ func Test_Process_splitProcStat_fromFile(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	f := common.MockEnv("HOST_PROC", "testdata/linux")
-	defer f()
+	t.Setenv("HOST_PROC", "testdata/linux")
 	for _, pid := range pids {
 		pid, err := strconv.ParseInt(pid.Name(), 0, 32)
 		if err != nil {
@@ -99,8 +97,7 @@ func Test_fillFromCommWithContext(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	f := common.MockEnv("HOST_PROC", "testdata/linux")
-	defer f()
+	t.Setenv("HOST_PROC", "testdata/linux")
 	for _, pid := range pids {
 		pid, err := strconv.ParseInt(pid.Name(), 0, 32)
 		if err != nil {
@@ -121,8 +118,7 @@ func Test_fillFromStatusWithContext(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	f := common.MockEnv("HOST_PROC", "testdata/linux")
-	defer f()
+	t.Setenv("HOST_PROC", "testdata/linux")
 	for _, pid := range pids {
 		pid, err := strconv.ParseInt(pid.Name(), 0, 32)
 		if err != nil {
@@ -139,8 +135,7 @@ func Test_fillFromStatusWithContext(t *testing.T) {
 }
 
 func Benchmark_fillFromCommWithContext(b *testing.B) {
-	f := common.MockEnv("HOST_PROC", "testdata/linux")
-	defer f()
+	b.Setenv("HOST_PROC", "testdata/linux")
 	pid := 1060
 	p, _ := NewProcess(int32(pid))
 	for i := 0; i < b.N; i++ {
@@ -149,8 +144,7 @@ func Benchmark_fillFromCommWithContext(b *testing.B) {
 }
 
 func Benchmark_fillFromStatusWithContext(b *testing.B) {
-	f := common.MockEnv("HOST_PROC", "testdata/linux")
-	defer f()
+	b.Setenv("HOST_PROC", "testdata/linux")
 	pid := 1060
 	p, _ := NewProcess(int32(pid))
 	for i := 0; i < b.N; i++ {
@@ -163,8 +157,7 @@ func Test_fillFromTIDStatWithContext_lx_brandz(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	f := common.MockEnv("HOST_PROC", "testdata/lx_brandz")
-	defer f()
+	t.Setenv("HOST_PROC", "testdata/lx_brandz")
 	for _, pid := range pids {
 		pid, err := strconv.ParseInt(pid.Name(), 0, 32)
 		if err != nil {
