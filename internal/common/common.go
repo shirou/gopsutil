@@ -364,6 +364,10 @@ func HostDev(combineWith ...string) string {
 	return GetEnv("HOST_DEV", "/dev", combineWith...)
 }
 
+func HostRoot(combineWith ...string) string {
+	return GetEnv("HOST_ROOT", "/", combineWith...)
+}
+
 // getSysctrlEnv sets LC_ALL=C in a list of env vars for use when running
 // sysctl commands (see DoSysctrl).
 func getSysctrlEnv(env []string) []string {
