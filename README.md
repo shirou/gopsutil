@@ -90,6 +90,9 @@ environment variable.
 You can set an alternative location to `/dev` by setting the `HOST_DEV`
 environment variable.
 
+You can set an alternative location to `/` by setting the `HOST_ROOT`
+environment variable.
+
 You can set an alternative location to `/proc/N/mountinfo` by setting the
 `HOST_PROC_MOUNTINFO` environment variable.
 
