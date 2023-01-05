@@ -9,7 +9,7 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/tklauser/go-sysconf v0.3.11
 	github.com/yusufpapurcu/wmi v1.2.2
-	golang.org/x/sys v0.3.0
+	golang.org/x/sys v0.4.0
 )
 
 retract v3.22.11
