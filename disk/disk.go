@@ -26,6 +26,7 @@ type PartitionStat struct {
 	Device     string   `json:"device"`
 	Mountpoint string   `json:"mountpoint"`
 	Fstype     string   `json:"fstype"`
+	Drivetype  string   `json:"drivetype"`
 	Opts       []string `json:"opts"`
 }
 
