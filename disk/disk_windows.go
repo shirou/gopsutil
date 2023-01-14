@@ -81,72 +81,93 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 	return ret, nil
 }
 
+// PartitionsWithContext returns disk partitions.
+// Since GetVolumeInformation doesn't have a timeout, this method uses context to set deadline by users.
 func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {
 	warnings := Warnings{
 		Verbose: true,
 	}
 	var ret []PartitionStat
-	lpBuffer := make([]byte, 254)
-	diskret, _, err := procGetLogicalDriveStringsW.Call(
-		uintptr(len(lpBuffer)),
-		uintptr(unsafe.Pointer(&lpBuffer[0])))
-	if diskret == 0 {
-		return ret, err
-	}
-	for _, v := range lpBuffer {
-		if v >= 65 && v <= 90 {
-			path := string(v) + ":"
-			typepath, _ := windows.UTF16PtrFromString(path)
-			typeret, _, _ := procGetDriveType.Call(uintptr(unsafe.Pointer(typepath)))
-			if typeret == 0 {
-				err := windows.GetLastError()
-				warnings.Add(err)
-				continue
-			}
-			// 2: DRIVE_REMOVABLE 3: DRIVE_FIXED 4: DRIVE_REMOTE 5: DRIVE_CDROM
+	retChan := make(chan []PartitionStat)
+	errChan := make(chan error)
+	defer close(retChan)
+	defer close(errChan)
 
-			if typeret == 2 || typeret == 3 || typeret == 4 || typeret == 5 {
-				lpVolumeNameBuffer := make([]byte, 256)
-				lpVolumeSerialNumber := int64(0)
-				lpMaximumComponentLength := int64(0)
-				lpFileSystemFlags := int64(0)
-				lpFileSystemNameBuffer := make([]byte, 256)
-				volpath, _ := windows.UTF16PtrFromString(string(v) + ":/")
-				driveret, _, err := procGetVolumeInformation.Call(
-					uintptr(unsafe.Pointer(volpath)),
-					uintptr(unsafe.Pointer(&lpVolumeNameBuffer[0])),
-					uintptr(len(lpVolumeNameBuffer)),
-					uintptr(unsafe.Pointer(&lpVolumeSerialNumber)),
-					uintptr(unsafe.Pointer(&lpMaximumComponentLength)),
-					uintptr(unsafe.Pointer(&lpFileSystemFlags)),
-					uintptr(unsafe.Pointer(&lpFileSystemNameBuffer[0])),
-					uintptr(len(lpFileSystemNameBuffer)))
-				if driveret == 0 {
-					if typeret == 5 || typeret == 2 {
-						continue // device is not ready will happen if there is no disk in the drive
-					}
+	lpBuffer := make([]byte, 254)
+
+	f := func() {
+		diskret, _, err := procGetLogicalDriveStringsW.Call(
+			uintptr(len(lpBuffer)),
+			uintptr(unsafe.Pointer(&lpBuffer[0])))
+		if diskret == 0 {
+			errChan <- err
+			return
+		}
+		for _, v := range lpBuffer {
+			if v >= 65 && v <= 90 {
+				path := string(v) + ":"
+				typepath, _ := windows.UTF16PtrFromString(path)
+				typeret, _, _ := procGetDriveType.Call(uintptr(unsafe.Pointer(typepath)))
+				if typeret == 0 {
+					err := windows.GetLastError()
 					warnings.Add(err)
 					continue
 				}
-				opts := []string{"rw"}
-				if lpFileSystemFlags&fileReadOnlyVolume != 0 {
-					opts = []string{"ro"}
-				}
-				if lpFileSystemFlags&fileFileCompression != 0 {
-					opts = append(opts, "compress")
-				}
+				// 2: DRIVE_REMOVABLE 3: DRIVE_FIXED 4: DRIVE_REMOTE 5: DRIVE_CDROM
 
-				d := PartitionStat{
-					Mountpoint: path,
-					Device:     path,
-					Fstype:     string(bytes.Replace(lpFileSystemNameBuffer, []byte("\x00"), []byte(""), -1)),
-					Opts:       opts,
+				if typeret == 2 || typeret == 3 || typeret == 4 || typeret == 5 {
+					lpVolumeNameBuffer := make([]byte, 256)
+					lpVolumeSerialNumber := int64(0)
+					lpMaximumComponentLength := int64(0)
+					lpFileSystemFlags := int64(0)
+					lpFileSystemNameBuffer := make([]byte, 256)
+					volpath, _ := windows.UTF16PtrFromString(string(v) + ":/")
+					driveret, _, err := procGetVolumeInformation.Call(
+						uintptr(unsafe.Pointer(volpath)),
+						uintptr(unsafe.Pointer(&lpVolumeNameBuffer[0])),
+						uintptr(len(lpVolumeNameBuffer)),
+						uintptr(unsafe.Pointer(&lpVolumeSerialNumber)),
+						uintptr(unsafe.Pointer(&lpMaximumComponentLength)),
+						uintptr(unsafe.Pointer(&lpFileSystemFlags)),
+						uintptr(unsafe.Pointer(&lpFileSystemNameBuffer[0])),
+						uintptr(len(lpFileSystemNameBuffer)))
+					if driveret == 0 {
+						if typeret == 5 || typeret == 2 {
+							continue // device is not ready will happen if there is no disk in the drive
+						}
+						warnings.Add(err)
+						continue
+					}
+					opts := []string{"rw"}
+					if lpFileSystemFlags&fileReadOnlyVolume != 0 {
+						opts = []string{"ro"}
+					}
+					if lpFileSystemFlags&fileFileCompression != 0 {
+						opts = append(opts, "compress")
+					}
+
+					d := PartitionStat{
+						Mountpoint: path,
+						Device:     path,
+						Fstype:     string(bytes.Replace(lpFileSystemNameBuffer, []byte("\x00"), []byte(""), -1)),
+						Opts:       opts,
+					}
+					ret = append(ret, d)
 				}
-				ret = append(ret, d)
 			}
 		}
+		retChan <- ret
 	}
-	return ret, warnings.Reference()
+
+	go f()
+	select {
+	case err := <-errChan:
+		return ret, err
+	case ret := <-retChan:
+		return ret, warnings.Reference()
+	case <-ctx.Done():
+		return ret, ctx.Err()
+	}
 }
 
 func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOCountersStat, error) {
