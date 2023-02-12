@@ -253,7 +253,7 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 					}
 				}
 			}
-		case "model name", "cpu":
+		case "Model Name", "model name", "cpu":
 			c.ModelName = value
 			if strings.Contains(value, "POWER8") ||
 				strings.Contains(value, "POWER7") {
