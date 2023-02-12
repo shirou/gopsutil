@@ -207,6 +207,9 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 		} else if lsb.ID == "LinuxMint" {
 			platform = "linuxmint"
 			version = lsb.Release
+		} else if lsb.ID == "Kylin" {
+			platform = "Kylin"
+			version = lsb.Release
 		} else {
 			if common.PathExistsWithContents("/usr/bin/raspi-config") {
 				platform = "raspbian"
