@@ -196,7 +196,7 @@ func (p *Process) GidsWithContext(ctx context.Context) ([]int32, error) {
 	return gids, nil
 }
 
-func (p *Process) GroupsWithContext(ctx context.Context) ([]int32, error) {
+func (p *Process) GroupsWithContext(ctx context.Context) ([]uint32, error) {
 	k, err := p.getKProc()
 	if err != nil {
 		return nil, err
