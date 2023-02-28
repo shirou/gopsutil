@@ -182,15 +182,15 @@ func (p *Process) GidsWithContext(ctx context.Context) ([]int32, error) {
 	return gids, nil
 }
 
-func (p *Process) GroupsWithContext(ctx context.Context) ([]int32, error) {
+func (p *Process) GroupsWithContext(ctx context.Context) ([]uint32, error) {
 	k, err := p.getKProc()
 	if err != nil {
 		return nil, err
 	}
 
-	groups := make([]int32, k.Ngroups)
+	groups := make([]uint32, k.Ngroups)
 	for i := int16(0); i < k.Ngroups; i++ {
-		groups[i] = int32(k.Groups[i])
+		groups[i] = uint32(k.Groups[i])
 	}
 
 	return groups, nil
