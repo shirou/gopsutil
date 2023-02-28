@@ -164,10 +164,10 @@ func (p *Process) GidsWithContext(ctx context.Context) ([]int32, error) {
 	return p.gids, nil
 }
 
-func (p *Process) GroupsWithContext(ctx context.Context) ([]int32, error) {
+func (p *Process) GroupsWithContext(ctx context.Context) ([]uint32, error) {
 	err := p.fillFromStatusWithContext(ctx)
 	if err != nil {
-		return []int32{}, err
+		return []uint32{}, err
 	}
 	return p.groups, nil
 }
@@ -885,13 +885,13 @@ func (p *Process) fillFromStatusWithContext(ctx context.Context) error {
 			}
 		case "Groups":
 			groups := strings.Fields(value)
-			p.groups = make([]int32, 0, len(groups))
+			p.groups = make([]uint32, 0, len(groups))
 			for _, i := range groups {
-				v, err := strconv.ParseInt(i, 10, 32)
+				v, err := strconv.ParseUint(i, 10, 32)
 				if err != nil {
 					return err
 				}
-				p.groups = append(p.groups, int32(v))
+				p.groups = append(p.groups, uint32(v))
 			}
 		case "Threads":
 			v, err := strconv.ParseInt(value, 10, 32)
