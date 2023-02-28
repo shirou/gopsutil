@@ -142,7 +142,7 @@ func (p *Process) GidsWithContext(ctx context.Context) ([]int32, error) {
 	return gids, nil
 }
 
-func (p *Process) GroupsWithContext(ctx context.Context) ([]int32, error) {
+func (p *Process) GroupsWithContext(ctx context.Context) ([]uint32, error) {
 	return nil, common.ErrNotImplementedError
 	// k, err := p.getKProc()
 	// if err != nil {
