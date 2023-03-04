@@ -154,7 +154,7 @@ will provide useful information.
   - system wide stats on netfilter conntrack module
   - sourced from /proc/sys/net/netfilter/nf_conntrack_count
 
-Some code is ported from Ohai. many thanks.
+Some code is ported from Ohai. Many thanks.
 
 ## Current Status
 
