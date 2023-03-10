@@ -210,7 +210,7 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 		} else if lsb.ID == "Kylin" {
 			platform = "Kylin"
 			version = lsb.Release
-		} else if lsb.ID == "\"Cumulus Linux\"" {
+		} else if lsb.ID == `"Cumulus Linux"` {
 			platform = "cumuluslinux"
 			version = lsb.Release
 		} else {
