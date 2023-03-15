@@ -15,8 +15,6 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
-type Warnings = common.Warnings
-
 var (
 	procGetDiskFreeSpaceExW     = common.Modkernel32.NewProc("GetDiskFreeSpaceExW")
 	procGetLogicalDriveStringsW = common.Modkernel32.NewProc("GetLogicalDriveStringsW")
