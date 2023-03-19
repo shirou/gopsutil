@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"sync"
 	"syscall"
 	"unsafe"
 
@@ -90,12 +91,20 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 	var ret []PartitionStat
 	retChan := make(chan []PartitionStat)
 	errChan := make(chan error)
-	defer close(retChan)
-	defer close(errChan)
-
 	lpBuffer := make([]byte, 254)
 
+	var waitgrp sync.WaitGroup
+	waitgrp.Add(1)
+	defer waitgrp.Done()
+
 	f := func() {
+		defer func() {
+			waitgrp.Wait()
+			// fires when this func and the outside func finishes.
+			close(errChan)
+			close(retChan)
+		}()
+
 		diskret, _, err := procGetLogicalDriveStringsW.Call(
 			uintptr(len(lpBuffer)),
 			uintptr(unsafe.Pointer(&lpBuffer[0])))
