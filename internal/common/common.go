@@ -32,6 +32,10 @@ var (
 	ErrTimeout = errors.New("command timed out")
 )
 
+type envKey string
+
+var Env = envKey("string")
+
 type Invoker interface {
 	Command(string, ...string) ([]byte, error)
 	CommandWithContext(context.Context, string, ...string) ([]byte, error)
@@ -321,6 +325,23 @@ func PathExistsWithContents(filename string) bool {
 	return info.Size() > 4 // at least 4 bytes
 }
 
+// GetEnvWithContext retrieves the environment variable key. If it does not exist it returns the default.
+// The context may optionally contain a map superseding os.Env.
+func GetEnvWithContext(ctx context.Context, key string, dfault string, combineWith ...string) string {
+	var value string
+	if env, ok := ctx.Value(Env).(map[string]string); ok {
+		value = env[key]
+	}
+	if value == "" {
+		value = os.Getenv(key)
+	}
+	if value == "" {
+		value = dfault
+	}
+
+	return combine(value, combineWith)
+}
+
 // GetEnv retrieves the environment variable key. If it does not exist it returns the default.
 func GetEnv(key string, dfault string, combineWith ...string) string {
 	value := os.Getenv(key)
@@ -328,6 +349,10 @@ func GetEnv(key string, dfault string, combineWith ...string) string {
 		value = dfault
 	}
 
+	return combine(value, combineWith)
+}
+
+func combine(value string, combineWith []string) string {
 	switch len(combineWith) {
 	case 0:
 		return value
@@ -341,32 +366,71 @@ func GetEnv(key string, dfault string, combineWith ...string) string {
 	}
 }
 
+// Deprecated: use HostProcWithContext instead
 func HostProc(combineWith ...string) string {
 	return GetEnv("HOST_PROC", "/proc", combineWith...)
 }
 
+// Deprecated: use HostSysWithContext instead
 func HostSys(combineWith ...string) string {
 	return GetEnv("HOST_SYS", "/sys", combineWith...)
 }
 
+// Deprecated: use HostEtcWithContext instead
 func HostEtc(combineWith ...string) string {
 	return GetEnv("HOST_ETC", "/etc", combineWith...)
 }
 
+// Deprecated: use HostVarWithContext instead
 func HostVar(combineWith ...string) string {
 	return GetEnv("HOST_VAR", "/var", combineWith...)
 }
 
+// Deprecated: use HostRunWithContext instead
 func HostRun(combineWith ...string) string {
 	return GetEnv("HOST_RUN", "/run", combineWith...)
 }
 
+// Deprecated: use HostDevWithContext instead
 func HostDev(combineWith ...string) string {
 	return GetEnv("HOST_DEV", "/dev", combineWith...)
 }
 
+// Deprecated: use HostRootWithContext instead
 func HostRoot(combineWith ...string) string {
 	return GetEnv("HOST_ROOT", "/", combineWith...)
+}
+
+func HostProcWithContext(ctx context.Context, combineWith ...string) string {
+	return GetEnvWithContext(ctx, "HOST_PROC", "/proc", combineWith...)
+}
+
+func HostProcMountInfoWithContext(ctx context.Context, combineWith ...string) string {
+	return GetEnvWithContext(ctx, "HOST_PROC_MOUNTINFO", "", combineWith...)
+}
+
+func HostSysWithContext(ctx context.Context, combineWith ...string) string {
+	return GetEnvWithContext(ctx, "HOST_SYS", "/sys", combineWith...)
+}
+
+func HostEtcWithContext(ctx context.Context, combineWith ...string) string {
+	return GetEnvWithContext(ctx, "HOST_ETC", "/etc", combineWith...)
+}
+
+func HostVarWithContext(ctx context.Context, combineWith ...string) string {
+	return GetEnvWithContext(ctx, "HOST_VAR", "/var", combineWith...)
+}
+
+func HostRunWithContext(ctx context.Context, combineWith ...string) string {
+	return GetEnvWithContext(ctx, "HOST_RUN", "/run", combineWith...)
+}
+
+func HostDevWithContext(ctx context.Context, combineWith ...string) string {
+	return GetEnvWithContext(ctx, "HOST_DEV", "/dev", combineWith...)
+}
+
+func HostRootWithContext(ctx context.Context, combineWith ...string) string {
+	return GetEnvWithContext(ctx, "HOST_ROOT", "/", combineWith...)
 }
 
 // getSysctrlEnv sets LC_ALL=C in a list of env vars for use when running

@@ -35,9 +35,9 @@ const (
 )
 
 func HostIDWithContext(ctx context.Context) (string, error) {
-	sysProductUUID := common.HostSys("class/dmi/id/product_uuid")
-	machineID := common.HostEtc("machine-id")
-	procSysKernelRandomBootID := common.HostProc("sys/kernel/random/boot_id")
+	sysProductUUID := common.HostSysWithContext(ctx, "class/dmi/id/product_uuid")
+	machineID := common.HostEtcWithContext(ctx, "machine-id")
+	procSysKernelRandomBootID := common.HostProcWithContext(ctx, "sys/kernel/random/boot_id")
 	switch {
 	// In order to read this file, needs to be supported by kernel/arch and run as root
 	// so having fallback is important
@@ -67,7 +67,7 @@ func HostIDWithContext(ctx context.Context) (string, error) {
 }
 
 func numProcs(ctx context.Context) (uint64, error) {
-	return common.NumProcs()
+	return common.NumProcsWithContext(ctx)
 }
 
 func BootTimeWithContext(ctx context.Context) (uint64, error) {
@@ -83,7 +83,7 @@ func UptimeWithContext(ctx context.Context) (uint64, error) {
 }
 
 func UsersWithContext(ctx context.Context) ([]UserStat, error) {
-	utmpfile := common.HostVar("run/utmp")
+	utmpfile := common.HostVarWithContext(ctx, "run/utmp")
 
 	file, err := os.Open(utmpfile)
 	if err != nil {
@@ -124,10 +124,10 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 	return ret, nil
 }
 
-func getlsbStruct() (*lsbStruct, error) {
+func getlsbStruct(ctx context.Context) (*lsbStruct, error) {
 	ret := &lsbStruct{}
-	if common.PathExists(common.HostEtc("lsb-release")) {
-		contents, err := common.ReadLines(common.HostEtc("lsb-release"))
+	if common.PathExists(common.HostEtcWithContext(ctx, "lsb-release")) {
+		contents, err := common.ReadLines(common.HostEtcWithContext(ctx, "lsb-release"))
 		if err != nil {
 			return ret, err // return empty
 		}
@@ -175,31 +175,31 @@ func getlsbStruct() (*lsbStruct, error) {
 }
 
 func PlatformInformationWithContext(ctx context.Context) (platform string, family string, version string, err error) {
-	lsb, err := getlsbStruct()
+	lsb, err := getlsbStruct(ctx)
 	if err != nil {
 		lsb = &lsbStruct{}
 	}
 
-	if common.PathExistsWithContents(common.HostEtc("oracle-release")) {
+	if common.PathExistsWithContents(common.HostEtcWithContext(ctx, "oracle-release")) {
 		platform = "oracle"
-		contents, err := common.ReadLines(common.HostEtc("oracle-release"))
+		contents, err := common.ReadLines(common.HostEtcWithContext(ctx, "oracle-release"))
 		if err == nil {
 			version = getRedhatishVersion(contents)
 		}
 
-	} else if common.PathExistsWithContents(common.HostEtc("enterprise-release")) {
+	} else if common.PathExistsWithContents(common.HostEtcWithContext(ctx, "enterprise-release")) {
 		platform = "oracle"
-		contents, err := common.ReadLines(common.HostEtc("enterprise-release"))
+		contents, err := common.ReadLines(common.HostEtcWithContext(ctx, "enterprise-release"))
 		if err == nil {
 			version = getRedhatishVersion(contents)
 		}
-	} else if common.PathExistsWithContents(common.HostEtc("slackware-version")) {
+	} else if common.PathExistsWithContents(common.HostEtcWithContext(ctx, "slackware-version")) {
 		platform = "slackware"
-		contents, err := common.ReadLines(common.HostEtc("slackware-version"))
+		contents, err := common.ReadLines(common.HostEtcWithContext(ctx, "slackware-version"))
 		if err == nil {
 			version = getSlackwareVersion(contents)
 		}
-	} else if common.PathExistsWithContents(common.HostEtc("debian_version")) {
+	} else if common.PathExistsWithContents(common.HostEtcWithContext(ctx, "debian_version")) {
 		if lsb.ID == "Ubuntu" {
 			platform = "ubuntu"
 			version = lsb.Release
@@ -218,53 +218,53 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 			} else {
 				platform = "debian"
 			}
-			contents, err := common.ReadLines(common.HostEtc("debian_version"))
+			contents, err := common.ReadLines(common.HostEtcWithContext(ctx, "debian_version"))
 			if err == nil && len(contents) > 0 && contents[0] != "" {
 				version = contents[0]
 			}
 		}
-	} else if common.PathExists(common.HostEtc("neokylin-release")) {
-		contents, err := common.ReadLines(common.HostEtc("neokylin-release"))
+	} else if common.PathExists(common.HostEtcWithContext(ctx, "neokylin-release")) {
+		contents, err := common.ReadLines(common.HostEtcWithContext(ctx, "neokylin-release"))
 		if err == nil {
 			version = getRedhatishVersion(contents)
 			platform = getRedhatishPlatform(contents)
 		}
-	} else if common.PathExists(common.HostEtc("redhat-release")) {
-		contents, err := common.ReadLines(common.HostEtc("redhat-release"))
+	} else if common.PathExists(common.HostEtcWithContext(ctx, "redhat-release")) {
+		contents, err := common.ReadLines(common.HostEtcWithContext(ctx, "redhat-release"))
 		if err == nil {
 			version = getRedhatishVersion(contents)
 			platform = getRedhatishPlatform(contents)
 		}
-	} else if common.PathExists(common.HostEtc("system-release")) {
-		contents, err := common.ReadLines(common.HostEtc("system-release"))
+	} else if common.PathExists(common.HostEtcWithContext(ctx, "system-release")) {
+		contents, err := common.ReadLines(common.HostEtcWithContext(ctx, "system-release"))
 		if err == nil {
 			version = getRedhatishVersion(contents)
 			platform = getRedhatishPlatform(contents)
 		}
-	} else if common.PathExists(common.HostEtc("gentoo-release")) {
+	} else if common.PathExists(common.HostEtcWithContext(ctx, "gentoo-release")) {
 		platform = "gentoo"
-		contents, err := common.ReadLines(common.HostEtc("gentoo-release"))
+		contents, err := common.ReadLines(common.HostEtcWithContext(ctx, "gentoo-release"))
 		if err == nil {
 			version = getRedhatishVersion(contents)
 		}
-	} else if common.PathExists(common.HostEtc("SuSE-release")) {
-		contents, err := common.ReadLines(common.HostEtc("SuSE-release"))
+	} else if common.PathExists(common.HostEtcWithContext(ctx, "SuSE-release")) {
+		contents, err := common.ReadLines(common.HostEtcWithContext(ctx, "SuSE-release"))
 		if err == nil {
 			version = getSuseVersion(contents)
 			platform = getSusePlatform(contents)
 		}
 		// TODO: slackware detecion
-	} else if common.PathExists(common.HostEtc("arch-release")) {
+	} else if common.PathExists(common.HostEtcWithContext(ctx, "arch-release")) {
 		platform = "arch"
 		version = lsb.Release
-	} else if common.PathExists(common.HostEtc("alpine-release")) {
+	} else if common.PathExists(common.HostEtcWithContext(ctx, "alpine-release")) {
 		platform = "alpine"
-		contents, err := common.ReadLines(common.HostEtc("alpine-release"))
+		contents, err := common.ReadLines(common.HostEtcWithContext(ctx, "alpine-release"))
 		if err == nil && len(contents) > 0 && contents[0] != "" {
 			version = contents[0]
 		}
-	} else if common.PathExists(common.HostEtc("os-release")) {
-		p, v, err := common.GetOSRelease()
+	} else if common.PathExists(common.HostEtcWithContext(ctx, "os-release")) {
+		p, v, err := common.GetOSReleaseWithContext(ctx)
 		if err == nil {
 			platform = p
 			version = v
@@ -390,14 +390,14 @@ func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, err
 	// Only the temp*_input file provides current temperature
 	// value in millidegree Celsius as reported by the temperature to the device:
 	// https://www.kernel.org/doc/Documentation/hwmon/sysfs-interface
-	if files, err = filepath.Glob(common.HostSys("/class/hwmon/hwmon*/temp*_input")); err != nil {
+	if files, err = filepath.Glob(common.HostSysWithContext(ctx, "/class/hwmon/hwmon*/temp*_input")); err != nil {
 		return temperatures, err
 	}
 
 	if len(files) == 0 {
 		// CentOS has an intermediate /device directory:
 		// https://github.com/giampaolo/psutil/issues/971
-		if files, err = filepath.Glob(common.HostSys("/class/hwmon/hwmon*/device/temp*_input")); err != nil {
+		if files, err = filepath.Glob(common.HostSysWithContext(ctx, "/class/hwmon/hwmon*/device/temp*_input")); err != nil {
 			return temperatures, err
 		}
 	}
@@ -405,7 +405,7 @@ func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, err
 	var warns Warnings
 
 	if len(files) == 0 { // handle distributions without hwmon, like raspbian #391, parse legacy thermal_zone files
-		files, err = filepath.Glob(common.HostSys("/class/thermal/thermal_zone*/"))
+		files, err = filepath.Glob(common.HostSysWithContext(ctx, "/class/thermal/thermal_zone*/"))
 		if err != nil {
 			return temperatures, err
 		}

@@ -4,6 +4,7 @@
 package mem
 
 import (
+	"context"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -138,7 +139,7 @@ const invalidFile = `INVALID				Type		Size		Used		Priority
 
 func TestParseSwapsFile_ValidFile(t *testing.T) {
 	assert := assert.New(t)
-	stats, err := parseSwapsFile(strings.NewReader(validFile))
+	stats, err := parseSwapsFile(context.Background(), strings.NewReader(validFile))
 	assert.NoError(err)
 
 	assert.Equal(*stats[0], SwapDevice{
@@ -155,11 +156,11 @@ func TestParseSwapsFile_ValidFile(t *testing.T) {
 }
 
 func TestParseSwapsFile_InvalidFile(t *testing.T) {
-	_, err := parseSwapsFile(strings.NewReader(invalidFile))
+	_, err := parseSwapsFile(context.Background(), strings.NewReader(invalidFile))
 	assert.Error(t, err)
 }
 
 func TestParseSwapsFile_EmptyFile(t *testing.T) {
-	_, err := parseSwapsFile(strings.NewReader(""))
+	_, err := parseSwapsFile(context.Background(), strings.NewReader(""))
 	assert.Error(t, err)
 }
