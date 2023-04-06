@@ -9,8 +9,9 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/shirou/gopsutil/v3/internal/common"
 )
 
 func TestIOCountersByFileParsing(t *testing.T) {
@@ -248,6 +249,7 @@ entries  searched found new invalid ignore delete deleteList insert insertFailed
 
 	// Function under test
 	stats, err := conntrackStatsFromFile(tmpfile.Name(), true)
+	assert.Nil(t, err)
 	assert.Equal(t, 8, len(stats), "Expected 8 results")
 
 	summary := &ConntrackStat{}
@@ -308,6 +310,7 @@ entries  searched found new invalid ignore delete deleteList insert insertFailed
 
 	// Test summary grouping
 	totals, err := conntrackStatsFromFile(tmpfile.Name(), false)
+	assert.Nil(t, err)
 	for i, st := range totals {
 		assert.Equal(t, summary.Entries, st.Entries)
 		assert.Equal(t, summary.Searched, st.Searched)
