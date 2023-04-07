@@ -19,7 +19,7 @@ jobs:
         id: sbom
         env: 
           GITHUB_TOKEN: ${{ github.token }}
-      - uses: actions/upload-artifact@v3.1.0
+      - uses: actions/upload-artifact@v3.1.2
         with: 
           path: ${{steps.sbom.outputs.fileName }}
           name: "SBOM"
