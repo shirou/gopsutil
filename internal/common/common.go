@@ -25,16 +25,14 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/shirou/gopsutil/v3/common"
 )
 
 var (
 	Timeout    = 3 * time.Second
 	ErrTimeout = errors.New("command timed out")
 )
-
-type envKey string
-
-var Env = envKey("string")
 
 type Invoker interface {
 	Command(string, ...string) ([]byte, error)
@@ -329,7 +327,7 @@ func PathExistsWithContents(filename string) bool {
 // The context may optionally contain a map superseding os.Env.
 func GetEnvWithContext(ctx context.Context, key string, dfault string, combineWith ...string) string {
 	var value string
-	if env, ok := ctx.Value(Env).(map[string]string); ok {
+	if env, ok := ctx.Value(common.Env).(map[string]string); ok {
 		value = env[key]
 	}
 	if value == "" {
