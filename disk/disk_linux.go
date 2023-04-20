@@ -18,7 +18,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/ricardoffnunes/gopsutil/v3/internal/common"
 )
 
 const (

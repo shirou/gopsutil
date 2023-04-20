@@ -4,3 +4,4 @@ _obj
 *.tmp
 .idea
 vendor
+*.code-workspace

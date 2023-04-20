@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/ricardoffnunes/gopsutil/v3/internal/common"
 )
 
 // NetIOCounters returnes network I/O statistics for every network

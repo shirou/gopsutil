@@ -52,4 +52,4 @@ linters-settings:
     sections:
     - standard
     - default
-    - prefix(github.com/shirou)
+    - prefix(github.com/ricardoffnunes)
