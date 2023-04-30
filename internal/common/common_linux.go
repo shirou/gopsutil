@@ -5,6 +5,7 @@ package common
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -311,4 +312,47 @@ func trimQuotes(s string) string {
 		}
 	}
 	return s
+}
+
+type PressureStat struct {
+	SomeAvg10  float64 `json:"someAvg10"`
+	SomeAvg60  float64 `json:"someAvg60"`
+	SomeAvg300 float64 `json:"someAvg300"`
+	SomeTotal  uint64  `json:"someTotal"`
+	FullAvg10  float64 `json:"fullAvg10"`
+	FullAvg60  float64 `json:"fullAvg60"`
+	FullAvg300 float64 `json:"fullAvg300"`
+	FullTotal  uint64  `json:"fullTotal"`
+}
+
+const lineFormat = "avg10=%f avg60=%f avg300=%f total=%d"
+
+func PressureWithContext(ctx context.Context, resource string) (*PressureStat, error) {
+	ret := &PressureStat{}
+	filename := HostProc("pressure")
+	lines, _ := ReadLines(filename + "/" + resource)
+	for _, l := range lines {
+		prefix := strings.Split(l, " ")[0]
+		switch prefix {
+		case "some":
+			_, err := fmt.Sscanf(l, fmt.Sprintf("some %s", lineFormat), &ret.SomeAvg10, &ret.SomeAvg60, &ret.SomeAvg300, &ret.SomeTotal)
+			if err != nil {
+				continue
+			}
+		case "full":
+			_, err := fmt.Sscanf(l, fmt.Sprintf("full %s", lineFormat), &ret.FullAvg10, &ret.FullAvg60, &ret.FullAvg300, &ret.FullTotal)
+			if err != nil {
+				continue
+			}
+		default:
+			continue
+		}
+	}
+
+	return ret, nil
+}
+
+func (p PressureStat) String() string {
+	s, _ := json.Marshal(p)
+	return string(s)
 }
