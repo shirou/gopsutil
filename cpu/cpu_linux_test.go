@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTimesEmpty(t *testing.T) {
@@ -104,4 +106,19 @@ func TestCPUCountsLogicalAndroid_1037(t *testing.T) { // https://github.com/shir
 	if count != expected {
 		t.Errorf("expected %v, got %v", expected, count)
 	}
+}
+
+func TestCPUPressure(t *testing.T) {
+	assert := assert.New(t)
+	t.Setenv("HOST_PROC", "testdata/linux/proc")
+	s, err := CPUPressure()
+	assert.NoError(err)
+	assert.Equal(1.29, s.SomeAvg10)
+	assert.Equal(1.38, s.SomeAvg60)
+	assert.Equal(1.39, s.SomeAvg300)
+	assert.Equal(uint64(3825360042), s.SomeTotal)
+	assert.Equal(0.00, s.FullAvg10)
+	assert.Equal(0.00, s.FullAvg60)
+	assert.Equal(0.00, s.FullAvg300)
+	assert.Equal(uint64(0), s.FullTotal)
 }

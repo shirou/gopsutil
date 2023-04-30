@@ -163,3 +163,18 @@ func TestParseSwapsFile_EmptyFile(t *testing.T) {
 	_, err := parseSwapsFile(strings.NewReader(""))
 	assert.Error(t, err)
 }
+
+func TestMemoryPressure(t *testing.T) {
+	assert := assert.New(t)
+	t.Setenv("HOST_PROC", "testdata/linux/proc")
+	s, err := MemoryPressure()
+	assert.NoError(err)
+	assert.Equal(2.32, s.SomeAvg10)
+	assert.Equal(3.51, s.SomeAvg60)
+	assert.Equal(4.44, s.SomeAvg300)
+	assert.Equal(uint64(1835), s.SomeTotal)
+	assert.Equal(0.00, s.FullAvg10)
+	assert.Equal(0.00, s.FullAvg60)
+	assert.Equal(0.00, s.FullAvg300)
+	assert.Equal(uint64(1367), s.FullTotal)
+}
