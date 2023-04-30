@@ -524,3 +524,11 @@ func parseSwapsFile(r io.Reader) ([]*SwapDevice, error) {
 
 	return swapDevices, nil
 }
+
+func MemoryPressure() (*common.PressureStat, error) {
+	return MemoryPressureWithContext(context.Background(), "memory")
+}
+
+func MemoryPressureWithContext(ctx context.Context, resource string) (*common.PressureStat, error) {
+	return common.PressureWithContext(ctx, resource)
+}

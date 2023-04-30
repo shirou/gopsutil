@@ -537,3 +537,11 @@ func getFsType(stat unix.Statfs_t) string {
 	}
 	return ret
 }
+
+func IOPressure() (*common.PressureStat, error) {
+	return IOPressureWithContext(context.Background(), "io")
+}
+
+func IOPressureWithContext(ctx context.Context, resource string) (*common.PressureStat, error) {
+	return common.PressureWithContext(ctx, resource)
+}

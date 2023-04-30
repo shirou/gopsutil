@@ -478,3 +478,11 @@ func CountsWithContext(ctx context.Context, logical bool) (int, error) {
 	}
 	return ret, nil
 }
+
+func CPUPressure() (*common.PressureStat, error) {
+	return CPUPressureWithContext(context.Background(), "cpu")
+}
+
+func CPUPressureWithContext(ctx context.Context, resource string) (*common.PressureStat, error) {
+	return common.PressureWithContext(ctx, resource)
+}
