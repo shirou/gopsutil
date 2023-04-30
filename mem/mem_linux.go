@@ -525,7 +525,7 @@ func parseSwapsFile(r io.Reader) ([]*SwapDevice, error) {
 	return swapDevices, nil
 }
 
-func MemoryPressure() (*common.PressureStat, error) {
+func Pressure() (*common.PressureStat, error) {
 	return MemoryPressureWithContext(context.Background(), "memory")
 }
 

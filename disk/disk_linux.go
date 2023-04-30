@@ -538,7 +538,7 @@ func getFsType(stat unix.Statfs_t) string {
 	return ret
 }
 
-func IOPressure() (*common.PressureStat, error) {
+func Pressure() (*common.PressureStat, error) {
 	return IOPressureWithContext(context.Background(), "io")
 }
 

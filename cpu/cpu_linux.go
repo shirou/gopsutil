@@ -479,7 +479,7 @@ func CountsWithContext(ctx context.Context, logical bool) (int, error) {
 	return ret, nil
 }
 
-func CPUPressure() (*common.PressureStat, error) {
+func Pressure() (*common.PressureStat, error) {
 	return CPUPressureWithContext(context.Background(), "cpu")
 }
 
