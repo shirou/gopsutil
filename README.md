@@ -153,6 +153,8 @@ will provide useful information.
 - iptables nf_conntrack (linux only)
   - system wide stats on netfilter conntrack module
   - sourced from /proc/sys/net/netfilter/nf_conntrack_count
+- cpu/mem/disk/Pressure() (linux only)
+  - pressure information for each resource
 
 Some code is ported from Ohai. Many thanks.
 
@@ -167,14 +169,17 @@ Some code is ported from Ohai. Many thanks.
 |cpu\_count            |x      |x        |x        |x       |x        |         |x        |
 |cpu\_percent          |x      |x        |x        |x       |x        |         |         |
 |cpu\_times\_percent   |x      |x        |x        |x       |x        |         |         |
+|cpu\_pressure         |x      |         |         |        |         |         |         |
 |virtual\_memory       |x      |x        |x        |x       |x        | b       |x        |
 |swap\_memory          |x      |x        |x        |x       |         |         |x        |
 |disk\_partitions      |x      |x        |x        |x       |x        |         |         |
 |disk\_io\_counters    |x      |x        |x        |        |         |         |         |
+|disk\_io\_pressure    |x      |         |         |        |         |         |         |
 |disk\_usage           |x      |x        |x        |x       |x        |         |         |
 |net\_io\_counters     |x      |x        |x        |b       |x        |         |         |
 |boot\_time            |x      |x        |x        |x       |x        |         |         |
 |users                 |x      |x        |x        |x       |x        |         |         |
+|mem\_pressure         |x      |         |         |        |         |         |         |
 |pids                  |x      |x        |x        |x       |x        |         |         |
 |pid\_exists           |x      |x        |x        |x       |x        |         |         |
 |net\_connections      |x      |         |x        |x       |         |         |         |
