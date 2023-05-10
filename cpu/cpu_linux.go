@@ -352,7 +352,7 @@ func parseStatLine(line string) (*TimesStat, error) {
 	}
 
 	ct := &TimesStat{
-		CPU:     cpu,
+		CPU:     cpu / ClocksPerSec,
 		User:    user / ClocksPerSec,
 		Nice:    nice / ClocksPerSec,
 		System:  system / ClocksPerSec,
