@@ -235,3 +235,30 @@ func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
 func LabelWithContext(ctx context.Context, name string) (string, error) {
 	return "", common.ErrNotImplementedError
 }
+
+func ModelWithContext(ctx context.Context, name string) (map[string]string, error) {
+	out, err := exec.Command("wmic", "diskdrive", "get", "model,name").Output()
+	if err != nil {
+		return nil, errors.New("failed to execute 'wmic diskdrive' command: " + err.Error())
+	}
+	outStr := string(out)
+	lines := strings.Split(outStr, "\r\n")
+	diskMap := make(map[string]string)
+	for _, line := range lines {
+		if strings.Contains(line, "Model") && strings.Contains(line, "Name") {
+			fields := strings.Fields(line)
+			if len(fields) >= 3 {
+				diskName := strings.Join(fields[2:], " ")
+				model := fields[1]
+				if name != "" && !strings.Contains(diskName, name) {
+					continue
+				}
+				diskMap[diskName] = model
+				if name != "" {
+					return diskMap, nil
+				}
+			}
+		}
+	}
+	return diskMap, nil
+}

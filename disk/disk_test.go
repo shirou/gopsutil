@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"runtime"
+	"strings"
 	"sync"
 	"testing"
 
@@ -128,5 +129,51 @@ func TestDiskIOCountersStat_String(t *testing.T) {
 	e := `{"readCount":100,"mergedReadCount":0,"writeCount":200,"mergedWriteCount":0,"readBytes":300,"writeBytes":400,"readTime":0,"writeTime":0,"iopsInProgress":0,"ioTime":0,"weightedIO":0,"name":"sd01","serialNumber":"SERIAL","label":""}`
 	if e != fmt.Sprintf("%v", v) {
 		t.Errorf("DiskUsageStat string is invalid: %v", v)
+	}
+}
+
+func TestModel(t *testing.T) {
+	diskMap, err := Model("")
+	if err != nil {
+		t.Errorf("failed to get disk models: %v", err)
+		return
+	}
+	if len(diskMap) == 0 {
+		t.Errorf("no disk found")
+		return
+	}
+	for name, model := range diskMap {
+		t.Logf("%s: %s", name, model)
+	}
+	var diskName string
+	switch runtime.GOOS {
+	case "windows":
+		diskName = "Fixed"
+	case "darwin":
+		diskName = "Macintosh HD"
+	default:
+		diskName = ""
+	}
+	if diskName != "" {
+		diskMap, err = Model(diskName)
+		if err != nil {
+			t.Errorf("failed to get disk model: %v", err)
+			return
+		}
+		if len(diskMap) == 0 {
+			t.Errorf("no disk found")
+			return
+		}
+		for name, model := range diskMap {
+			if !strings.Contains(name, diskName) {
+				t.Errorf("expected disk name containing '%s', got '%s'", diskName, name)
+				return
+			}
+			if model == "" {
+				t.Errorf("expected non-empty disk model, got empty string")
+				return
+			}
+			t.Logf("%s: %s", name, model)
+		}
 	}
 }
