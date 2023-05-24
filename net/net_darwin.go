@@ -134,7 +134,7 @@ func parseIfconfigOutput(iface *netstatInterface) error {
 		return err
 	}
 
-	re := regexp.MustCompile(`media:\s+.*\((\d+)baseT\)`)
+	re := regexp.MustCompile(`media:\s+.*\((\d+)baseT`)
 	match := re.FindStringSubmatch(string(out))
 	if len(match) >= 2 {
 		speed, err := strconv.ParseUint(match[1], 10, 64)
