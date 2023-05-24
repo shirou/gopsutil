@@ -119,9 +119,33 @@ func parseNetstatOutput(output string) ([]netstatInterface, error) {
 		if nsIface.stat, nsIface.linkID, err = parseNetstatLine(lines[index+1]); err != nil {
 			return nil, err
 		}
+		if err := parseIfconfigOutput(&nsIface); err != nil {
+			return nil, err
+		}
 		interfaces[index] = nsIface
 	}
 	return interfaces, nil
+}
+
+func parseIfconfigOutput(iface *netstatInterface) error {
+	cmd := exec.Command("ifconfig", iface.stat.Name)
+	out, err := cmd.Output()
+	if err != nil {
+		return err
+	}
+
+	re := regexp.MustCompile(`media:\s+.*\((\d+)baseT\)`)
+	match := re.FindStringSubmatch(string(out))
+	if len(match) >= 2 {
+		speed, err := strconv.ParseUint(match[1], 10, 64)
+		if err != nil {
+			speed = 0
+		}
+		iface.stat.TransmitSpeed = speed
+		iface.stat.ReceiveSpeed = speed
+	}
+
+	return nil
 }
 
 // map that hold the name of a network interface and the number of usage

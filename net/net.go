@@ -22,6 +22,8 @@ type IOCountersStat struct {
 	Dropout     uint64 `json:"dropout"`     // total number of outgoing packets which were dropped (always 0 on OSX and BSD)
 	Fifoin      uint64 `json:"fifoin"`      // total number of FIFO buffers errors while receiving
 	Fifoout     uint64 `json:"fifoout"`     // total number of FIFO buffers errors while sending
+	TransmitSpeed uint64 `json:"transmitSpeed"` // transmission speed of interface
+	ReceiveSpeed  uint64 `json:"receiveSpeed"` // receiving speed of interface
 }
 
 // Addr is implemented compatibility to psutil
