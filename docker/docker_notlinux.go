@@ -62,5 +62,5 @@ func CgroupMemDocker(containerid string) (*CgroupMemStat, error) {
 }
 
 func CgroupMemDockerWithContext(ctx context.Context, containerid string) (*CgroupMemStat, error) {
-	return CgroupMem(containerid, common.HostSysWithContext(ctx, "fs/cgroup/memory/docker"))
+	return CgroupMemWithContext(ctx, containerid, common.HostSysWithContext(ctx, "fs/cgroup/memory/docker"))
 }
