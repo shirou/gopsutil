@@ -324,11 +324,11 @@ func PathExistsWithContents(filename string) bool {
 }
 
 // GetEnvWithContext retrieves the environment variable key. If it does not exist it returns the default.
-// The context may optionally contain a map superseding os.Env.
+// The context may optionally contain a map superseding os.EnvKey.
 func GetEnvWithContext(ctx context.Context, key string, dfault string, combineWith ...string) string {
 	var value string
-	if env, ok := ctx.Value(common.Env).(map[string]string); ok {
-		value = env[key]
+	if env, ok := ctx.Value(common.EnvKey).(common.EnvMap); ok {
+		value = env[common.EnvKeyType(key)]
 	}
 	if value == "" {
 		value = os.Getenv(key)

@@ -8,6 +8,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/shirou/gopsutil/v3/common"
 )
 
 func TestReadlines(t *testing.T) {
@@ -196,7 +198,7 @@ func TestGetEnvWithContextOverride(t *testing.T) {
 	defer func() {
 		os.Setenv("HOST_ETC", old)
 	}()
-	ctx := context.WithValue(context.Background(), Env, map[string]string{"HOST_ETC": "/foo"})
+	ctx := context.WithValue(context.Background(), common.EnvKey, common.EnvMap{common.HostEtcEnvKey: "/foo"})
 	p := HostEtcWithContext(ctx, "mtab")
 	if p != "/foo/mtab" {
 		t.Errorf("invalid HostEtc, %s", p)
