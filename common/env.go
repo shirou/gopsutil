@@ -6,7 +6,7 @@ type EnvKeyType string
 // gopsutil relies on to perform calls against the OS.
 // Example of use:
 //
-//	ctx := context.WithValue(context.Background(), common.EnvKey, EnvMap{"HOST_PROC": "/myproc"})
+//	ctx := context.WithValue(context.Background(), common.EnvKey, EnvMap{common.HostProcEnvKey: "/myproc"})
 //	avg, err := load.AvgWithContext(ctx)
 var EnvKey = EnvKeyType("env")
 
@@ -14,6 +14,10 @@ const (
 	HostProcEnvKey EnvKeyType = "HOST_PROC"
 	HostSysEnvKey  EnvKeyType = "HOST_SYS"
 	HostEtcEnvKey  EnvKeyType = "HOST_ETC"
+	HostVarEnvKey  EnvKeyType = "HOST_VAR"
+	HostRunEnvKey  EnvKeyType = "HOST_RUN"
+	HostDevEnvKey  EnvKeyType = "HOST_DEV"
+	HostRootEnvKey EnvKeyType = "HOST_ROOT"
 )
 
 type EnvMap map[EnvKeyType]string
