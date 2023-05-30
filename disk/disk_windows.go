@@ -6,7 +6,10 @@ package disk
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
+	"os/exec"
+	"strings"
 	"sync"
 	"syscall"
 	"unsafe"
