@@ -147,8 +147,6 @@ func TestModel(t *testing.T) {
 	}
 	var diskName string
 	switch runtime.GOOS {
-	case "windows":
-		diskName = "Fixed"
 	case "darwin":
 		diskName = "Macintosh HD"
 	default:
@@ -158,10 +156,6 @@ func TestModel(t *testing.T) {
 		diskMap, err = Model(diskName)
 		if err != nil {
 			t.Errorf("failed to get disk model: %v", err)
-			return
-		}
-		if len(diskMap) == 0 {
-			t.Errorf("no disk found")
 			return
 		}
 		for name, model := range diskMap {

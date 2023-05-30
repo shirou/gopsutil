@@ -190,3 +190,7 @@ func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
 func LabelWithContext(ctx context.Context, name string) (string, error) {
 	return "", common.ErrNotImplementedError
 }
+
+func ModelWithContext(ctx context.Context, name string) (map[string]string, error) {
+	return nil, common.ErrNotImplementedError
+}

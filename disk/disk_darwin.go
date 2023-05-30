@@ -6,11 +6,10 @@ package disk
 import (
 	"context"
 	"errors"
-	"os/exec"
-	"strings"
-
 	"github.com/shirou/gopsutil/v3/internal/common"
 	"golang.org/x/sys/unix"
+	"os/exec"
+	"strings"
 )
 
 // PartitionsWithContext returns disk partition.
