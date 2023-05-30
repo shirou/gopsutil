@@ -96,3 +96,7 @@ func SerialNumber(name string) (string, error) {
 func Label(name string) (string, error) {
 	return LabelWithContext(context.Background(), name)
 }
+
+func Model(name string) (map[string]string, error) {
+	return ModelWithContext(context.Background(), name)
+}

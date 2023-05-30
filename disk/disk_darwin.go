@@ -5,9 +5,11 @@ package disk
 
 import (
 	"context"
-
+	"errors"
 	"github.com/shirou/gopsutil/v3/internal/common"
 	"golang.org/x/sys/unix"
+	"os/exec"
+	"strings"
 )
 
 // PartitionsWithContext returns disk partition.
@@ -90,4 +92,47 @@ func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
 
 func LabelWithContext(ctx context.Context, name string) (string, error) {
 	return "", common.ErrNotImplementedError
+}
+
+func ModelWithContext(ctx context.Context, name string) (map[string]string, error) {
+	out, err := exec.Command("diskutil", "list").Output()
+	if err != nil {
+		return nil, errors.New("failed to execute 'diskutil list' command: " + err.Error())
+	}
+	outStr := string(out)
+	lines := strings.Split(outStr, "\n")
+	diskMap := make(map[string]string)
+	for _, line := range lines {
+		if strings.HasPrefix(line, "/dev/") {
+			fields := strings.Fields(line)
+			if len(fields) >= 1 {
+				partitionPath := fields[0]
+				if name != "" && !strings.Contains(partitionPath, name) {
+					continue
+				}
+				infoOut, err := exec.Command("diskutil", "info", partitionPath).Output()
+				if err != nil {
+					return nil, errors.New("failed to execute 'diskutil info' command: " + err.Error())
+				}
+				infoOutStr := string(infoOut)
+				infoLines := strings.Split(infoOutStr, "\n")
+				var diskName, model string
+				for _, infoLine := range infoLines {
+					if strings.HasPrefix(infoLine, "   Device Node:") {
+						diskName = strings.TrimSpace(strings.TrimPrefix(infoLine, "   Device Node:"))
+					}
+					if strings.HasPrefix(infoLine, "   Device / Media Name:") {
+						model = strings.TrimSpace(strings.TrimPrefix(infoLine, "   Device / Media Name:"))
+					}
+				}
+				if diskName != "" && model != "" {
+					diskMap[diskName] = model
+					if name != "" {
+						return diskMap, nil
+					}
+				}
+			}
+		}
+	}
+	return diskMap, nil
 }

@@ -537,3 +537,7 @@ func getFsType(stat unix.Statfs_t) string {
 	}
 	return ret
 }
+
+func ModelWithContext(ctx context.Context, name string) (map[string]string, error) {
+	return nil, common.ErrNotImplementedError
+}
