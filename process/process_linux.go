@@ -378,6 +378,52 @@ func (p *Process) ConnectionsMaxWithContext(ctx context.Context, max int) ([]net
 	return net.ConnectionsPidMaxWithContext(ctx, "all", p.Pid, max)
 }
 
+// function of parsing a block
+func getBlock(firstLine []string, block []string) (MemoryMapsStat, error) {
+	m := MemoryMapsStat{}
+	m.Path = firstLine[len(firstLine)-1]
+
+	for _, line := range block {
+		if strings.Contains(line, "VmFlags") {
+			continue
+		}
+		field := strings.Split(line, ":")
+		if len(field) < 2 {
+			continue
+		}
+		v := strings.Trim(field[1], "kB") // remove last "kB"
+		v = strings.TrimSpace(v)
+		t, err := strconv.ParseUint(v, 10, 64)
+		if err != nil {
+			return m, err
+		}
+
+		switch field[0] {
+		case "Size":
+			m.Size = t
+		case "Rss":
+			m.Rss = t
+		case "Pss":
+			m.Pss = t
+		case "Shared_Clean":
+			m.SharedClean = t
+		case "Shared_Dirty":
+			m.SharedDirty = t
+		case "Private_Clean":
+			m.PrivateClean = t
+		case "Private_Dirty":
+			m.PrivateDirty = t
+		case "Referenced":
+			m.Referenced = t
+		case "Anonymous":
+			m.Anonymous = t
+		case "Swap":
+			m.Swap = t
+		}
+	}
+	return m, nil
+}
+
 func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]MemoryMapsStat, error) {
 	pid := p.Pid
 	var ret []MemoryMapsStat
@@ -396,52 +442,6 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 		return nil, err
 	}
 	lines := strings.Split(string(contents), "\n")
-
-	// function of parsing a block
-	getBlock := func(firstLine []string, block []string) (MemoryMapsStat, error) {
-		m := MemoryMapsStat{}
-		m.Path = firstLine[len(firstLine)-1]
-
-		for _, line := range block {
-			if strings.Contains(line, "VmFlags") {
-				continue
-			}
-			field := strings.Split(line, ":")
-			if len(field) < 2 {
-				continue
-			}
-			v := strings.Trim(field[1], "kB") // remove last "kB"
-			v = strings.TrimSpace(v)
-			t, err := strconv.ParseUint(v, 10, 64)
-			if err != nil {
-				return m, err
-			}
-
-			switch field[0] {
-			case "Size":
-				m.Size = t
-			case "Rss":
-				m.Rss = t
-			case "Pss":
-				m.Pss = t
-			case "Shared_Clean":
-				m.SharedClean = t
-			case "Shared_Dirty":
-				m.SharedDirty = t
-			case "Private_Clean":
-				m.PrivateClean = t
-			case "Private_Dirty":
-				m.PrivateDirty = t
-			case "Referenced":
-				m.Referenced = t
-			case "Anonymous":
-				m.Anonymous = t
-			case "Swap":
-				m.Swap = t
-			}
-		}
-		return m, nil
-	}
 
 	var firstLine []string
 	blocks := make([]string, 0, 16)
