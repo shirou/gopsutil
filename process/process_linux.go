@@ -424,6 +424,19 @@ func getBlock(firstLine []string, block []string) (MemoryMapsStat, error) {
 	return m, nil
 }
 
+func appendToGrouped(ret []MemoryMapsStat, g *MemoryMapsStat) {
+	ret[0].Size += g.Size
+	ret[0].Rss += g.Rss
+	ret[0].Pss += g.Pss
+	ret[0].SharedClean += g.SharedClean
+	ret[0].SharedDirty += g.SharedDirty
+	ret[0].PrivateClean += g.PrivateClean
+	ret[0].PrivateDirty += g.PrivateDirty
+	ret[0].Referenced += g.Referenced
+	ret[0].Anonymous += g.Anonymous
+	ret[0].Swap += g.Swap
+}
+
 func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]MemoryMapsStat, error) {
 	pid := p.Pid
 	var ret []MemoryMapsStat
@@ -437,18 +450,21 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 			smapsPath = smapsRollupPath
 		}
 	}
-	contents, err := ioutil.ReadFile(smapsPath)
+	smapsFile, err := os.Open(smapsPath)
 	if err != nil {
 		return nil, err
 	}
-	lines := strings.Split(string(contents), "\n")
+	defer smapsFile.Close()
+
+	scanner := bufio.NewScanner(smapsFile)
 
 	var firstLine []string
 	blocks := make([]string, 0, 16)
 
-	for i, line := range lines {
+	for scanner.Scan() {
+		line := scanner.Text()
 		fields := strings.Fields(line)
-		if (len(fields) > 0 && !strings.HasSuffix(fields[0], ":")) || i == len(lines)-1 {
+		if len(fields) > 0 && !strings.HasSuffix(fields[0], ":") {
 			// new block section
 			if len(firstLine) > 0 && len(blocks) > 0 {
 				g, err := getBlock(firstLine, blocks)
@@ -456,16 +472,7 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 					return &ret, err
 				}
 				if grouped {
-					ret[0].Size += g.Size
-					ret[0].Rss += g.Rss
-					ret[0].Pss += g.Pss
-					ret[0].SharedClean += g.SharedClean
-					ret[0].SharedDirty += g.SharedDirty
-					ret[0].PrivateClean += g.PrivateClean
-					ret[0].PrivateDirty += g.PrivateDirty
-					ret[0].Referenced += g.Referenced
-					ret[0].Anonymous += g.Anonymous
-					ret[0].Swap += g.Swap
+					appendToGrouped(ret, &g)
 				} else {
 					ret = append(ret, g)
 				}
@@ -475,6 +482,18 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 			firstLine = fields
 		} else {
 			blocks = append(blocks, line)
+		}
+	}
+
+	if len(firstLine) > 0 && len(blocks) > 0 {
+		g, err := getBlock(firstLine, blocks)
+		if err != nil {
+			return &ret, err
+		}
+		if grouped {
+			appendToGrouped(ret, &g)
+		} else {
+			ret = append(ret, g)
 		}
 	}
 
