@@ -178,11 +178,7 @@ func TestGetEnvWithNoContext(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("windows doesn't have etc")
 	}
-	old := os.Getenv("HOST_ETC")
-	os.Setenv("HOST_ETC", "/bar")
-	defer func() {
-		os.Setenv("HOST_ETC", old)
-	}()
+	t.Setenv("HOST_ETC", "/bar")
 	p := HostEtcWithContext(context.Background(), "mtab")
 	if p != "/bar/mtab" {
 		t.Errorf("invalid HostEtc, %s", p)
@@ -193,11 +189,7 @@ func TestGetEnvWithContextOverride(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("windows doesn't have etc")
 	}
-	old := os.Getenv("HOST_ETC")
-	os.Setenv("HOST_ETC", "/bar")
-	defer func() {
-		os.Setenv("HOST_ETC", old)
-	}()
+	t.Setenv("HOST_ETC", "/bar")
 	ctx := context.WithValue(context.Background(), common.EnvKey, common.EnvMap{common.HostEtcEnvKey: "/foo"})
 	p := HostEtcWithContext(ctx, "mtab")
 	if p != "/foo/mtab" {

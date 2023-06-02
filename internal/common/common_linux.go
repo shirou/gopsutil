@@ -30,7 +30,6 @@ func DoSysctrl(mib string) ([]string, error) {
 	return values, nil
 }
 
-// Deprecated: use NumProcsWithContext instead
 func NumProcs() (uint64, error) {
 	return NumProcsWithContext(context.Background())
 }
