@@ -3,7 +3,10 @@
 
 package docker
 
-import "testing"
+import (
+	"context"
+	"testing"
+)
 
 func TestGetDockerIDList(t *testing.T) {
 	// If there is not docker environment, this test always fail.
@@ -43,7 +46,7 @@ func TestGetDockerStat(t *testing.T) {
 func TestCgroupCPU(t *testing.T) {
 	v, _ := GetDockerIDList()
 	for _, id := range v {
-		v, err := CgroupCPUDocker(id)
+		v, err := CgroupCPUDockerWithContext(context.Background(), id)
 		if err != nil {
 			t.Errorf("error %v", err)
 		}
@@ -55,7 +58,7 @@ func TestCgroupCPU(t *testing.T) {
 }
 
 func TestCgroupCPUInvalidId(t *testing.T) {
-	_, err := CgroupCPUDocker("bad id")
+	_, err := CgroupCPUDockerWithContext(context.Background(), "bad id")
 	if err == nil {
 		t.Error("Expected path does not exist error")
 	}

@@ -13,9 +13,10 @@ import (
 	"strings"
 	"unsafe"
 
+	"golang.org/x/sys/unix"
+
 	"github.com/shirou/gopsutil/v3/internal/common"
 	"github.com/shirou/gopsutil/v3/process"
-	"golang.org/x/sys/unix"
 )
 
 // from utmpx.h
