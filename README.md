@@ -96,6 +96,19 @@ environment variable.
 You can set an alternative location to `/proc/N/mountinfo` by setting the
 `HOST_PROC_MOUNTINFO` environment variable.
 
+### Adding settings using `context` (from v3.23.6)
+
+As of v3.23.6, it is now possible to pass a path location using `context`: import `"github.com/shirou/gopsutil/v3/common"` and pass a context with `common.EnvMap` set to `common.EnvKey`, and the location will be used within each function.
+
+```
+	ctx := context.WithValue(context.Background(), 
+		common.EnvKey, common.EnvMap{common.HostProcEnvKey: "/myproc"},
+	)
+	v, err := mem.VirtualMemoryWithContext(ctx)
+```
+
+First priority is given to the value set in `context`, then the value from the environment variable, and finally the default location.
+
 ## Documentation
 
 See https://pkg.go.dev/github.com/shirou/gopsutil/v3 or https://godocs.io/github.com/shirou/gopsutil/v3
