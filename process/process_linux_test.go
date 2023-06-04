@@ -4,6 +4,7 @@
 package process
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -107,7 +108,7 @@ func Test_fillFromCommWithContext(t *testing.T) {
 			continue
 		}
 		p, _ := NewProcess(int32(pid))
-		if err := p.fillFromCommWithContext(); err != nil {
+		if err := p.fillFromCommWithContext(context.Background()); err != nil {
 			t.Error(err)
 		}
 	}
@@ -139,7 +140,7 @@ func Benchmark_fillFromCommWithContext(b *testing.B) {
 	pid := 1060
 	p, _ := NewProcess(int32(pid))
 	for i := 0; i < b.N; i++ {
-		p.fillFromCommWithContext()
+		p.fillFromCommWithContext(context.Background())
 	}
 }
 

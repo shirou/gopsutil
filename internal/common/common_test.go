@@ -1,12 +1,15 @@
 package common
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"reflect"
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/shirou/gopsutil/v3/common"
 )
 
 func TestReadlines(t *testing.T) {
@@ -125,7 +128,7 @@ func TestHostEtc(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("windows doesn't have etc")
 	}
-	p := HostEtc("mtab")
+	p := HostEtcWithContext(context.Background(), "mtab")
 	if p != "/etc/mtab" {
 		t.Errorf("invalid HostEtc, %s", p)
 	}
@@ -158,5 +161,38 @@ func TestGetSysctrlEnv(t *testing.T) {
 	}
 	if !found {
 		t.Errorf("unexpected real result from getSysctrlEnv: %q", env)
+	}
+}
+
+func TestGetEnvDefault(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("windows doesn't have etc")
+	}
+	p := HostEtcWithContext(context.Background(), "mtab")
+	if p != "/etc/mtab" {
+		t.Errorf("invalid HostEtc, %s", p)
+	}
+}
+
+func TestGetEnvWithNoContext(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("windows doesn't have etc")
+	}
+	t.Setenv("HOST_ETC", "/bar")
+	p := HostEtcWithContext(context.Background(), "mtab")
+	if p != "/bar/mtab" {
+		t.Errorf("invalid HostEtc, %s", p)
+	}
+}
+
+func TestGetEnvWithContextOverride(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("windows doesn't have etc")
+	}
+	t.Setenv("HOST_ETC", "/bar")
+	ctx := context.WithValue(context.Background(), common.EnvKey, common.EnvMap{common.HostEtcEnvKey: "/foo"})
+	p := HostEtcWithContext(ctx, "mtab")
+	if p != "/foo/mtab" {
+		t.Errorf("invalid HostEtc, %s", p)
 	}
 }

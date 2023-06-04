@@ -1,6 +1,7 @@
 package net
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -101,7 +102,7 @@ func TestGetProcInodesAll(t *testing.T) {
 	}()
 	<-waitForServer
 
-	root := common.HostProc("")
+	root := common.HostProcWithContext(context.Background(), "")
 	v, err := getProcInodesAll(root, 0)
 	assert.Nil(t, err)
 	assert.NotEmpty(t, v)
