@@ -13,13 +13,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
 
-      - uses: advanced-security/sbom-generator-action@v0.0.1
+      - uses: advanced-security/sbom-generator-action@375dee8e6144d9fd0ec1f5667b4f6fb4faacefed # v0.0.1
         id: sbom
         env: 
           GITHUB_TOKEN: ${{ github.token }}
-      - uses: actions/upload-artifact@v3.1.2
+      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
         with: 
           path: ${{steps.sbom.outputs.fileName }}
           name: "SBOM"
