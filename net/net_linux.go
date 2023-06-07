@@ -91,7 +91,7 @@ func IOCountersByFileWithContext(ctx context.Context, pernic bool, filename stri
 				return ret, err
 			}
 		}
-		if speed[0] == "-1" {
+		if len(speed) == 0 || speed[0] == "-1" {
 			speed = []string{"0"}
 		}
 

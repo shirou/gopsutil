@@ -119,30 +119,44 @@ func parseNetstatOutput(output string) ([]netstatInterface, error) {
 		if nsIface.stat, nsIface.linkID, err = parseNetstatLine(lines[index+1]); err != nil {
 			return nil, err
 		}
-		if err := parseIfconfigOutput(&nsIface); err != nil {
-			return nil, err
-		}
 		interfaces[index] = nsIface
 	}
 	return interfaces, nil
 }
 
-func parseIfconfigOutput(iface *netstatInterface) error {
-	cmd := exec.Command("ifconfig", iface.stat.Name)
-	out, err := cmd.Output()
-	if err != nil {
-		return err
-	}
+func parseIfconfigBlock(block string) uint64 {
 
 	re := regexp.MustCompile(`media:\s+.*\((\d+)baseT`)
-	match := re.FindStringSubmatch(string(out))
+	match := re.FindStringSubmatch(block)
+
 	if len(match) >= 2 {
 		speed, err := strconv.ParseUint(match[1], 10, 64)
 		if err != nil {
 			speed = 0
 		}
-		iface.stat.TransmitSpeed = speed
-		iface.stat.ReceiveSpeed = speed
+		
+		return speed
+	}
+
+	return 0
+
+}
+
+func parseIfconfigOutput(output string, stats *[]IOCountersStat) error {
+
+	re := regexp.MustCompile(`(?m)^(\w+):.*(?:\n\t.+)*`)
+	
+	matches := re.FindAllStringSubmatch(output, -1)
+	ifconfigBlock := map[string]string{}
+
+	for _, match := range matches {
+		ifconfigBlock[match[1]] = match[0]
+	}
+
+	for _, stat := range *stats {
+		speed := parseIfconfigBlock(ifconfigBlock[stat.Name])
+		stat.TransmitSpeed = speed
+		stat.ReceiveSpeed = speed
 	}
 
 	return nil
@@ -269,6 +283,15 @@ func IOCountersWithContext(ctx context.Context, pernic bool) ([]IOCountersStat, 
 				}
 			}
 		}
+	}
+
+	out, err = invoke.CommandWithContext(ctx, "ifconfig", "-a")
+	if err != nil {
+		return nil, err
+	}
+	err = parseIfconfigOutput(string(out), &ret)
+	if err != nil {
+		return nil, err
 	}
 
 	if pernic == false {
