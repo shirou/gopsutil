@@ -170,12 +170,12 @@ func TestParseIfconfigOutput(t *testing.T) {
 	assert.Len(t, testStats, 2)
 
 	assert.NotNil(t, testStats[0].TransmitSpeed)
-	assert.Equal(t, uint(0), testStats[0].TransmitSpeed)
+	assert.Equal(t, uint64(0), testStats[0].TransmitSpeed)
 	assert.NotNil(t, testStats[0].ReceiveSpeed)
-	assert.Equal(t, uint(0), testStats[0].ReceiveSpeed)
+	assert.Equal(t, uint64(0), testStats[0].ReceiveSpeed)
 
 	assert.NotNil(t, testStats[1].TransmitSpeed)
-	assert.Equal(t, uint(1000), testStats[1].TransmitSpeed)
+	assert.Equal(t, uint64(1000), testStats[1].TransmitSpeed)
 	assert.NotNil(t, testStats[1].ReceiveSpeed)
-	assert.Equal(t, uint(1000), testStats[1].ReceiveSpeed)
+	assert.Equal(t, uint64(1000), testStats[1].ReceiveSpeed)
 }

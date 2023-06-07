@@ -5,10 +5,10 @@ package net
 
 import (
 	"context"
-	"strconv"
-	"strings"
 	"os/exec"
 	"regexp"
+	"strconv"
+	"strings"
 
 	"github.com/shirou/gopsutil/v3/internal/common"
 )
