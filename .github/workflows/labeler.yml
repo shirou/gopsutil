@@ -12,6 +12,6 @@ jobs:
       pull-requests: write  # for actions/labeler to add labels to PRs
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/labeler@v4
+    - uses: actions/labeler@9fcb2c2f5584144ca754f8bfe8c6f81e77753375 # v4.1.0
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
