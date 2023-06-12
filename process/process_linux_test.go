@@ -175,3 +175,19 @@ func Test_fillFromTIDStatWithContext_lx_brandz(t *testing.T) {
 		assert.Equal(t, float64(0), cpuTimes.Iowait)
 	}
 }
+
+func BenchmarkMemoryMapsGroupedTrue(b *testing.B) {
+	p := testGetProcess()
+	ctx := context.Background()
+	for i := 0; i < b.N; i++ {
+		p.MemoryMapsWithContext(ctx, true)
+	}
+}
+
+func BenchmarkMemoryMapsGroupedFalse(b *testing.B) {
+	p := testGetProcess()
+	ctx := context.Background()
+	for i := 0; i < b.N; i++ {
+		p.MemoryMapsWithContext(ctx, false)
+	}
+}
