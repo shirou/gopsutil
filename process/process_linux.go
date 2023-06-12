@@ -457,9 +457,10 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 	defer smapsFile.Close()
 
 	scanner := bufio.NewScanner(smapsFile)
+	scanner.Buffer(make([]byte, 120), bufio.MaxScanTokenSize)
 
 	var firstLine []string
-	blocks := make([]string, 0, 16)
+	blocks := make([]string, 0, 32)
 
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -478,7 +479,7 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 				}
 			}
 			// starts new block
-			blocks = make([]string, 0, 16)
+			blocks = blocks[:0]
 			firstLine = fields
 		} else {
 			blocks = append(blocks, line)
