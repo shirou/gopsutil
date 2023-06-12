@@ -379,62 +379,41 @@ func (p *Process) ConnectionsMaxWithContext(ctx context.Context, max int) ([]net
 }
 
 // function of parsing a block
-func getBlock(firstLine []string, block []string) (MemoryMapsStat, error) {
-	m := MemoryMapsStat{}
-	m.Path = firstLine[len(firstLine)-1]
-
-	for _, line := range block {
-		if strings.Contains(line, "VmFlags") {
-			continue
-		}
-		field := strings.Split(line, ":")
-		if len(field) < 2 {
-			continue
-		}
-		v := strings.Trim(field[1], "kB") // remove last "kB"
-		v = strings.TrimSpace(v)
-		t, err := strconv.ParseUint(v, 10, 64)
-		if err != nil {
-			return m, err
-		}
-
-		switch field[0] {
-		case "Size":
-			m.Size = t
-		case "Rss":
-			m.Rss = t
-		case "Pss":
-			m.Pss = t
-		case "Shared_Clean":
-			m.SharedClean = t
-		case "Shared_Dirty":
-			m.SharedDirty = t
-		case "Private_Clean":
-			m.PrivateClean = t
-		case "Private_Dirty":
-			m.PrivateDirty = t
-		case "Referenced":
-			m.Referenced = t
-		case "Anonymous":
-			m.Anonymous = t
-		case "Swap":
-			m.Swap = t
-		}
+func readBlock(line string, m *MemoryMapsStat) error {
+	field := strings.Split(line, ":")
+	if len(field) < 2 {
+		return nil
 	}
-	return m, nil
-}
+	v := strings.Trim(field[1], "kB") // remove last "kB"
+	v = strings.TrimSpace(v)
+	t, err := strconv.ParseUint(v, 10, 64)
+	if err != nil {
+		return err
+	}
 
-func appendToGrouped(ret []MemoryMapsStat, g *MemoryMapsStat) {
-	ret[0].Size += g.Size
-	ret[0].Rss += g.Rss
-	ret[0].Pss += g.Pss
-	ret[0].SharedClean += g.SharedClean
-	ret[0].SharedDirty += g.SharedDirty
-	ret[0].PrivateClean += g.PrivateClean
-	ret[0].PrivateDirty += g.PrivateDirty
-	ret[0].Referenced += g.Referenced
-	ret[0].Anonymous += g.Anonymous
-	ret[0].Swap += g.Swap
+	switch field[0] {
+	case "Size":
+		m.Size = t
+	case "Rss":
+		m.Rss = t
+	case "Pss":
+		m.Pss = t
+	case "Shared_Clean":
+		m.SharedClean = t
+	case "Shared_Dirty":
+		m.SharedDirty = t
+	case "Private_Clean":
+		m.PrivateClean = t
+	case "Private_Dirty":
+		m.PrivateDirty = t
+	case "Referenced":
+		m.Referenced = t
+	case "Anonymous":
+		m.Anonymous = t
+	case "Swap":
+		m.Swap = t
+	}
+	return nil
 }
 
 func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]MemoryMapsStat, error) {
@@ -442,7 +421,6 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 	var ret []MemoryMapsStat
 	smapsPath := common.HostProcWithContext(ctx, strconv.Itoa(int(pid)), "smaps")
 	if grouped {
-		ret = make([]MemoryMapsStat, 1)
 		// If smaps_rollup exists (require kernel >= 4.15), then we will use it
 		// for pre-summed memory information for a process.
 		smapsRollupPath := common.HostProcWithContext(ctx, strconv.Itoa(int(pid)), "smaps_rollup")
@@ -450,6 +428,7 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 			smapsPath = smapsRollupPath
 		}
 	}
+
 	smapsFile, err := os.Open(smapsPath)
 	if err != nil {
 		return nil, err
@@ -459,43 +438,28 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 	scanner := bufio.NewScanner(smapsFile)
 	scanner.Buffer(make([]byte, 120), bufio.MaxScanTokenSize)
 
-	var firstLine []string
-	blocks := make([]string, 0, 32)
+	current := MemoryMapsStat{}
 
 	for scanner.Scan() {
 		line := scanner.Text()
 		fields := strings.Fields(line)
-		if len(fields) > 0 && !strings.HasSuffix(fields[0], ":") {
-			// new block section
-			if len(firstLine) > 0 && len(blocks) > 0 {
-				g, err := getBlock(firstLine, blocks)
-				if err != nil {
-					return &ret, err
-				}
-				if grouped {
-					appendToGrouped(ret, &g)
-				} else {
-					ret = append(ret, g)
-				}
+
+		if strings.Contains(line, "VmFlags") {
+			if !grouped {
+				ret = append(ret, current)
+				current = MemoryMapsStat{}
 			}
-			// starts new block
-			blocks = blocks[:0]
-			firstLine = fields
+		} else if len(fields) > 0 && !strings.HasSuffix(fields[0], ":") {
+			current.Path = fields[len(fields)-1]
 		} else {
-			blocks = append(blocks, line)
+			if err := readBlock(line, &current); err != nil {
+				return nil, err
+			}
 		}
 	}
 
-	if len(firstLine) > 0 && len(blocks) > 0 {
-		g, err := getBlock(firstLine, blocks)
-		if err != nil {
-			return &ret, err
-		}
-		if grouped {
-			appendToGrouped(ret, &g)
-		} else {
-			ret = append(ret, g)
-		}
+	if grouped {
+		ret = append(ret, current)
 	}
 
 	return &ret, nil
