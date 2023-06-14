@@ -83,7 +83,7 @@ func IOCountersByFileWithContext(ctx context.Context, pernic bool, filename stri
 			continue
 		}
 
-		speed, err := common.ReadLines(common.HostSys("class/net/"+interfaceName+"/speed"))
+		speed, err := common.ReadLines(common.HostSys(fmt.Sprintf("class/net/%s/speed", interfaceName)))
 		if err != nil {
 			if strings.Contains(err.Error(), "no such file or directory") {
 				speed = []string{"0"}
@@ -146,19 +146,19 @@ func IOCountersByFileWithContext(ctx context.Context, pernic bool, filename stri
 		}
 
 		nic := IOCountersStat{
-			Name:        interfaceName,
-			BytesRecv:   bytesRecv,
-			PacketsRecv: packetsRecv,
-			Errin:       errIn,
-			Dropin:      dropIn,
-			Fifoin:      fifoIn,
-			BytesSent:   bytesSent,
-			PacketsSent: packetsSent,
-			Errout:      errOut,
-			Dropout:     dropOut,
-			Fifoout:     fifoOut,
-			TransmitSpeed: transmitSpeed,
-			ReceiveSpeed: receiveSpeed,
+			Name:        	interfaceName,
+			BytesRecv:   	bytesRecv,
+			PacketsRecv: 	packetsRecv,
+			Errin:       	errIn,
+			Dropin:      	dropIn,
+			Fifoin:      	fifoIn,
+			BytesSent:   	bytesSent,
+			PacketsSent: 	packetsSent,
+			Errout:      	errOut,
+			Dropout:     	dropOut,
+			Fifoout:     	fifoOut,
+			TransmitSpeed: 	transmitSpeed,
+			ReceiveSpeed: 	receiveSpeed,
 		}
 		ret = append(ret, nic)
 	}
