@@ -146,19 +146,19 @@ func IOCountersByFileWithContext(ctx context.Context, pernic bool, filename stri
 		}
 
 		nic := IOCountersStat{
-			Name:        	interfaceName,
-			BytesRecv:   	bytesRecv,
-			PacketsRecv: 	packetsRecv,
-			Errin:       	errIn,
-			Dropin:      	dropIn,
-			Fifoin:      	fifoIn,
-			BytesSent:   	bytesSent,
-			PacketsSent: 	packetsSent,
-			Errout:      	errOut,
-			Dropout:     	dropOut,
-			Fifoout:     	fifoOut,
-			TransmitSpeed: 	transmitSpeed,
-			ReceiveSpeed: 	receiveSpeed,
+			Name:          interfaceName,
+			BytesRecv:     bytesRecv,
+			PacketsRecv:   packetsRecv,
+			Errin:         errIn,
+			Dropin:        dropIn,
+			Fifoin:        fifoIn,
+			BytesSent:     bytesSent,
+			PacketsSent:   packetsSent,
+			Errout:        errOut,
+			Dropout:       dropOut,
+			Fifoout:       fifoOut,
+			TransmitSpeed: transmitSpeed,
+			ReceiveSpeed:  receiveSpeed,
 		}
 		ret = append(ret, nic)
 	}
