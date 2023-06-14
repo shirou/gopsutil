@@ -165,7 +165,7 @@ func TestParseIfconfigOutput(t *testing.T) {
 		{Name: "lo0"},
 		{Name: "en0"},
 	}
-	err := parseIfconfigOutput(ifconfigOutput, &testStats)
+	err := parseIfconfigOutput(ifconfigOutput, testStats)
 	assert.NoError(t, err)
 	assert.Len(t, testStats, 2)
 

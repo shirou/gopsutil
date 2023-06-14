@@ -142,7 +142,7 @@ func parseIfconfigBlock(block string) uint64 {
 
 }
 
-func parseIfconfigOutput(output string, stats *[]IOCountersStat) error {
+func parseIfconfigOutput(output string, stats []IOCountersStat) error {
 
 	re := regexp.MustCompile(`(?m)^(\w+):.*(?:\n\t.+)*`)
 	
@@ -153,10 +153,10 @@ func parseIfconfigOutput(output string, stats *[]IOCountersStat) error {
 		ifconfigBlock[match[1]] = match[0]
 	}
 
-	for _, stat := range *stats {
-		speed := parseIfconfigBlock(ifconfigBlock[stat.Name])
-		stat.TransmitSpeed = speed
-		stat.ReceiveSpeed = speed
+	for i, _ := range stats {
+		speed := parseIfconfigBlock(ifconfigBlock[stats[i].Name])
+		stats[i].TransmitSpeed = speed
+		stats[i].ReceiveSpeed = speed
 	}
 
 	return nil
@@ -289,7 +289,7 @@ func IOCountersWithContext(ctx context.Context, pernic bool) ([]IOCountersStat, 
 	if err != nil {
 		return nil, err
 	}
-	err = parseIfconfigOutput(string(out), &ret)
+	err = parseIfconfigOutput(string(out), ret)
 	if err != nil {
 		return nil, err
 	}
