@@ -378,9 +378,18 @@ func (p *Process) ConnectionsMaxWithContext(ctx context.Context, max int) ([]net
 	return net.ConnectionsPidMaxWithContext(ctx, "all", p.Pid, max)
 }
 
+// strings.Cut is only available from Go 1.18 and onwards, `stringsCut` is an implementation of it
+// working on older Go versions
+func stringsCut(s, sep string) (string, string, bool) {
+	if i := strings.Index(s, sep); i >= 0 {
+		return s[:i], s[i+len(sep):], true
+	}
+	return s, "", false
+}
+
 // function of parsing a block
 func readBlock(line string, m *MemoryMapsStat) error {
-	name, value, found := strings.Cut(line, ":")
+	name, value, found := stringsCut(line, ":")
 	if !found {
 		return nil
 	}
