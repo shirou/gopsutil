@@ -380,18 +380,19 @@ func (p *Process) ConnectionsMaxWithContext(ctx context.Context, max int) ([]net
 
 // function of parsing a block
 func readBlock(line string, m *MemoryMapsStat) error {
-	field := strings.Split(line, ":")
-	if len(field) < 2 {
+	name, value, found := strings.Cut(line, ":")
+	if !found {
 		return nil
 	}
-	v := strings.Trim(field[1], "kB") // remove last "kB"
+
+	v := strings.Trim(value, "kB") // remove last "kB"
 	v = strings.TrimSpace(v)
 	t, err := strconv.ParseUint(v, 10, 64)
 	if err != nil {
 		return err
 	}
 
-	switch field[0] {
+	switch name {
 	case "Size":
 		m.Size = t
 	case "Rss":
