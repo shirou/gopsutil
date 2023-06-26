@@ -442,14 +442,13 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		fields := strings.Fields(line)
 
 		if strings.Contains(line, "VmFlags") {
 			if !grouped {
 				ret = append(ret, current)
 				current = MemoryMapsStat{}
 			}
-		} else if len(fields) > 0 && !strings.HasSuffix(fields[0], ":") {
+		} else if fields := strings.Fields(line); len(fields) > 0 && !strings.HasSuffix(fields[0], ":") {
 			current.Path = fields[len(fields)-1]
 		} else {
 			if err := readBlock(line, &current); err != nil {
