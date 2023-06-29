@@ -232,9 +232,9 @@ Some code is ported from Ohai. Many thanks.
 |rlimit              |x      |         |         |       |         |
 |num\_handlers       |       |         |         |       |         |
 |threads             |x      |         |         |       |         |
-|cpu\_percent        |x      |         |x        |x      |         |
+|cpu\_percent        |x      |         |x        |x      |x        |
 |cpu\_affinity       |       |         |         |       |         |
-|memory\_percent     |       |         |         |       |         |
+|memory\_percent     |x      |         |         |       |x        |
 |parent              |x      |         |x        |x      |x        |
 |children            |x      |x        |x        |x      |x        |
 |connections         |x      |         |x        |x      |         |
