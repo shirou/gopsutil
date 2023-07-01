@@ -1,6 +1,7 @@
 package process
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -389,6 +390,62 @@ func Test_Process_Long_Name(t *testing.T) {
 		t.Fatalf("%s != %s", basename, n)
 	}
 	cmd.Process.Kill()
+}
+
+func Test_Process_Name_Against_Python(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("only applies to posix")
+	}
+	py3Path, err := exec.LookPath("python3")
+	if err != nil {
+		t.Skipf("python3 not found: %s", err)
+	}
+	if out, err := exec.Command(py3Path, "-c", "import psutil").CombinedOutput(); err != nil {
+		t.Skipf("psutil not found for %s: %s", py3Path, out)
+	}
+
+	tmpdir, err := ioutil.TempDir("", "")
+	if err != nil {
+		t.Fatalf("unable to create temp dir %v", err)
+	}
+	defer os.RemoveAll(tmpdir) // clean up
+	tmpfilepath := filepath.Join(tmpdir, "looooooooooooooooooooong.py")
+	tmpfile, err := os.Create(tmpfilepath)
+	if err != nil {
+		t.Fatalf("unable to create temp file %v", err)
+	}
+	tmpfilecontent := []byte("#!" + py3Path + "\nimport psutil, time\nprint(psutil.Process().name(), flush=True)\nwhile True:\n\ttime.sleep(1)")
+	if _, err := tmpfile.Write(tmpfilecontent); err != nil {
+		tmpfile.Close()
+		t.Fatalf("unable to write temp file %v", err)
+	}
+	if err := tmpfile.Chmod(0o744); err != nil {
+		t.Fatalf("unable to chmod u+x temp file %v", err)
+	}
+	if err := tmpfile.Close(); err != nil {
+		t.Fatalf("unable to close temp file %v", err)
+	}
+	cmd := exec.Command(tmpfilepath)
+	outPipe, _ := cmd.StdoutPipe()
+	scanner := bufio.NewScanner(outPipe)
+	cmd.Start()
+	defer cmd.Process.Kill()
+	scanner.Scan()
+	pyName := scanner.Text() // first line printed by py3 script, its name
+	t.Logf("pyName %s", pyName)
+	p, err := NewProcess(int32(cmd.Process.Pid))
+	skipIfNotImplementedErr(t, err)
+	if err != nil {
+		t.Fatalf("getting process error %v", err)
+	}
+	name, err := p.Name()
+	skipIfNotImplementedErr(t, err)
+	if err != nil {
+		t.Fatalf("getting name error %v", err)
+	}
+	if pyName != name {
+		t.Fatalf("psutil and gopsutil process.Name() results differ: expected %s, got %s", pyName, name)
+	}
 }
 
 func Test_Process_Exe(t *testing.T) {
