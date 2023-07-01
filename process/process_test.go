@@ -785,60 +785,6 @@ func Test_Process_Cwd(t *testing.T) {
 	t.Log(pidCwd)
 }
 
-func Test_AllProcesses_cmdLine(t *testing.T) {
-	procs, err := Processes()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Fatalf("getting processes error %v", err)
-	}
-	for _, proc := range procs {
-		var exeName string
-		var cmdLine string
-
-		exeName, _ = proc.Exe()
-		cmdLine, err = proc.Cmdline()
-		if err != nil {
-			cmdLine = "Error: " + err.Error()
-		}
-
-		t.Logf("Process #%v: Name: %v / CmdLine: %v\n", proc.Pid, exeName, cmdLine)
-	}
-}
-
-func Test_AllProcesses_environ(t *testing.T) {
-	procs, err := Processes()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Fatalf("getting processes error %v", err)
-	}
-	for _, proc := range procs {
-		exeName, _ := proc.Exe()
-		environ, err := proc.Environ()
-		if err != nil {
-			environ = []string{"Error: " + err.Error()}
-		}
-
-		t.Logf("Process #%v: Name: %v / Environment Variables: %v\n", proc.Pid, exeName, environ)
-	}
-}
-
-func Test_AllProcesses_Cwd(t *testing.T) {
-	procs, err := Processes()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Fatalf("getting processes error %v", err)
-	}
-	for _, proc := range procs {
-		exeName, _ := proc.Exe()
-		cwd, err := proc.Cwd()
-		if err != nil {
-			cwd = "Error: " + err.Error()
-		}
-
-		t.Logf("Process #%v: Name: %v / Current Working Directory: %s\n", proc.Pid, exeName, cwd)
-	}
-}
-
 func BenchmarkNewProcess(b *testing.B) {
 	checkPid := os.Getpid()
 	for i := 0; i < b.N; i++ {
