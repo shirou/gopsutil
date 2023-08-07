@@ -30,6 +30,10 @@ const prioProcess = 0 // linux/resource.h
 
 var clockTicks = 100 // default value
 
+type bootTimeContextKeyType string
+
+const bootTimeContextKey = bootTimeContextKeyType("host_boot_time")
+
 func init() {
 	clkTck, err := sysconf.Sysconf(sysconf.SC_CLK_TCK)
 	// ignore errors
@@ -1072,7 +1076,13 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 		Iowait: iotime / float64(clockTicks),
 	}
 
-	bootTime, _ := common.BootTimeWithContext(ctx)
+	var bootTime uint64
+	if bt, ok := ctx.Value(bootTimeContextKey).(uint64); ok {
+		bootTime = bt
+	} else {
+		bootTime, _ = common.BootTimeWithContext(ctx)
+	}
+
 	t, err := strconv.ParseUint(fields[22], 10, 64)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
@@ -1136,6 +1146,12 @@ func ProcessesWithContext(ctx context.Context) ([]*Process, error) {
 	pids, err := PidsWithContext(ctx)
 	if err != nil {
 		return out, err
+	}
+
+	if bootTime, err := common.BootTimeWithContext(ctx); err == nil {
+		// Save the current value of boot time in the context -- to be used in
+		// fillFromTIDStatWithContext for each PID.
+		ctx = context.WithValue(ctx, bootTimeContextKey, bootTime)
 	}
 
 	for _, pid := range pids {
