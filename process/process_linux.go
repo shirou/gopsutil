@@ -30,9 +30,23 @@ const prioProcess = 0 // linux/resource.h
 
 var clockTicks = 100 // default value
 
-type bootTimeContextKeyType string
+type BootTimeContextKeyType string
 
-const bootTimeContextKey = bootTimeContextKeyType("host_boot_time")
+// Context key for user-specified system boot time value.
+//
+// On Linux the system boot time is used when calculating process creation times.
+// Functions which create Process instances, namely NewProcess, Processes and
+// Children, will obtain the boot time for each Process instance created.
+// Obtaining the boot time involves parsing the /proc/stat file, which can incur
+// some overhead.
+//
+// To reuse the boot time across a number of calls the user can provide the boot
+// time inside the context object. For example:
+//
+//	ctx := context.Background()
+//	bootTime, err := host.BootTimeWithContext(ctx)
+//	processes, err := process.ProcessesWithContext(context.WithValue(ctx, process.BootTimeContextKey, bootTime))
+const BootTimeContextKey = BootTimeContextKeyType("host_boot_time")
 
 func init() {
 	clkTck, err := sysconf.Sysconf(sysconf.SC_CLK_TCK)
@@ -1077,7 +1091,7 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 	}
 
 	var bootTime uint64
-	if bt, ok := ctx.Value(bootTimeContextKey).(uint64); ok {
+	if bt, ok := ctx.Value(BootTimeContextKey).(uint64); ok {
 		bootTime = bt
 	} else {
 		bootTime, _ = common.BootTimeWithContext(ctx)
@@ -1146,12 +1160,6 @@ func ProcessesWithContext(ctx context.Context) ([]*Process, error) {
 	pids, err := PidsWithContext(ctx)
 	if err != nil {
 		return out, err
-	}
-
-	if bootTime, err := common.BootTimeWithContext(ctx); err == nil {
-		// Save the current value of boot time in the context -- to be used in
-		// fillFromTIDStatWithContext for each PID.
-		ctx = context.WithValue(ctx, bootTimeContextKey, bootTime)
 	}
 
 	for _, pid := range pids {
