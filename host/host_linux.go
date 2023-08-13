@@ -138,13 +138,13 @@ func getlsbStruct(ctx context.Context) (*lsbStruct, error) {
 			}
 			switch field[0] {
 			case "DISTRIB_ID":
-				ret.ID = field[1]
+				ret.ID = strings.ReplaceAll(field[1], `"`, ``)
 			case "DISTRIB_RELEASE":
-				ret.Release = field[1]
+				ret.Release = strings.ReplaceAll(field[1], `"`, ``)
 			case "DISTRIB_CODENAME":
-				ret.Codename = field[1]
+				ret.Codename = strings.ReplaceAll(field[1], `"`, ``)
 			case "DISTRIB_DESCRIPTION":
-				ret.Description = field[1]
+				ret.Description = strings.ReplaceAll(field[1], `"`, ``)
 			}
 		}
 	} else if common.PathExists("/usr/bin/lsb_release") {
@@ -159,13 +159,13 @@ func getlsbStruct(ctx context.Context) (*lsbStruct, error) {
 			}
 			switch field[0] {
 			case "Distributor ID":
-				ret.ID = field[1]
+				ret.ID = strings.ReplaceAll(field[1], `"`, ``)
 			case "Release":
-				ret.Release = field[1]
+				ret.Release = strings.ReplaceAll(field[1], `"`, ``)
 			case "Codename":
-				ret.Codename = field[1]
+				ret.Codename = strings.ReplaceAll(field[1], `"`, ``)
 			case "Description":
-				ret.Description = field[1]
+				ret.Description = strings.ReplaceAll(field[1], `"`, ``)
 			}
 		}
 
