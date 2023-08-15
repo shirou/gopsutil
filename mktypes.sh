@@ -20,6 +20,9 @@ case $ARCH in
 	arm)
 		GOARCH="arm"
 		;;
+	arm64)
+		GOARCH="arm64"
+		;;
 	*)
 		echo "unknown arch: $ARCH"
 		exit 1

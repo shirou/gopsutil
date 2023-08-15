@@ -23,6 +23,7 @@ package process
 #define _DARWIN_USE_64_BIT_INODE
 #include <dirent.h>
 #include <fcntl.h>
+#include <stdint.h>
 #include <signal.h>
 #include <termios.h>
 #include <unistd.h>
