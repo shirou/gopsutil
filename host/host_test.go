@@ -29,6 +29,7 @@ func TestHostInfo(t *testing.T) {
 	if v.Procs == 0 {
 		t.Errorf("Could not determine the number of host processes")
 	}
+	t.Log(v)
 }
 
 func TestUptime(t *testing.T) {

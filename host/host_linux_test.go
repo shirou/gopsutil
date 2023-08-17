@@ -4,7 +4,10 @@
 package host
 
 import (
+	"context"
 	"testing"
+
+	"github.com/shirou/gopsutil/v3/common"
 )
 
 func TestGetRedhatishVersion(t *testing.T) {
@@ -58,5 +61,47 @@ func TestGetRedhatishPlatform(t *testing.T) {
 	ret = getRedhatishPlatform(c)
 	if ret != "" {
 		t.Errorf("Could not get platform with no value: %v", ret)
+	}
+}
+
+func Test_getlsbStruct(t *testing.T) {
+	cases := []struct {
+		root        string
+		id          string
+		release     string
+		codename    string
+		description string
+	}{
+		{"arch", "Arch", "rolling", "", "Arch Linux"},
+		{"ubuntu_22_04", "Ubuntu", "22.04", "jammy", "Ubuntu 22.04.2 LTS"},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.root, func(t *testing.T) {
+			ctx := context.WithValue(context.Background(),
+				common.EnvKey,
+				common.EnvMap{common.HostEtcEnvKey: "./testdata/linux/lsbStruct/" + tt.root},
+			)
+
+			v, err := getlsbStruct(ctx)
+			if err != nil {
+				t.Errorf("error %v", err)
+			}
+			if v.ID != tt.id {
+				t.Errorf("ID: want %v, got %v", tt.id, v.ID)
+			}
+			if v.Release != tt.release {
+				t.Errorf("Release: want %v, got %v", tt.release, v.Release)
+			}
+			if v.Codename != tt.codename {
+				t.Errorf("Codename: want %v, got %v", tt.codename, v.Codename)
+			}
+			if v.Description != tt.description {
+				t.Errorf("Description: want %v, got %v", tt.description, v.Description)
+			}
+
+			t.Log(v)
+		})
 	}
 }
