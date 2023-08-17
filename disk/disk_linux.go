@@ -478,7 +478,7 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 		// Since `name`` here is already a basename, re-add a hardcoded /dev path.
 		// This is not ideal, but we may break the API by changing how SerialNumberWithContext
 		// works.
-		d.SerialNumber, _ = SerialNumberWithContext(ctx, "/dev/"+name)
+		d.SerialNumber, _ = SerialNumberWithContext(ctx, common.HostDevWithContext(ctx, name))
 		d.Label, _ = LabelWithContext(ctx, name)
 
 		ret[name] = d
