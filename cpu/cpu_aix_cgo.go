@@ -5,6 +5,7 @@ package cpu
 
 import (
 	"context"
+	"time"
 
 	"github.com/power-devops/perfstat"
 )
@@ -27,7 +28,7 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 			ret = append(ret, *ct)
 		}
 	} else {
-		c, err := perfstat.CpuUtilTotalStat()
+		c, err := perfstat.CpuUtilStat(1 * time.Second)
 		if err != nil {
 			return nil, err
 		}
