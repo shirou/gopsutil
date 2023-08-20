@@ -8,7 +8,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/chrisswanson/gopsutil/v3/internal/common"
 )
 
 // PartitionsWithContext returns disk partition.
@@ -28,7 +28,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 	// On 10.14, and possibly other OS versions, the actual count may
 	// be less than from the first call. Truncate to the returned count
 	// to prevent accessing uninitialized entries.
-	// https://github.com/shirou/gopsutil/issues/1390
+	// https://github.com/chrisswanson/gopsutil/issues/1390
 	fs = fs[:count]
 	for _, stat := range fs {
 		opts := []string{"rw"}

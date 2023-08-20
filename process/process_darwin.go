@@ -13,8 +13,8 @@ import (
 	"github.com/tklauser/go-sysconf"
 	"golang.org/x/sys/unix"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
-	"github.com/shirou/gopsutil/v3/net"
+	"github.com/chrisswanson/gopsutil/v3/internal/common"
+	"github.com/chrisswanson/gopsutil/v3/net"
 )
 
 // copied from sys/sysctl.h
@@ -110,7 +110,7 @@ func (p *Process) StatusWithContext(ctx context.Context) ([]string, error) {
 }
 
 func (p *Process) ForegroundWithContext(ctx context.Context) (bool, error) {
-	// see https://github.com/shirou/gopsutil/issues/596#issuecomment-432707831 for implementation details
+	// see https://github.com/chrisswanson/gopsutil/issues/596#issuecomment-432707831 for implementation details
 	pid := p.Pid
 	out, err := invoke.CommandWithContext(ctx, "ps", "-o", "stat=", "-p", strconv.Itoa(int(pid)))
 	if err != nil {

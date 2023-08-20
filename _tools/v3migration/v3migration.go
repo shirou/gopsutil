@@ -13,7 +13,7 @@ import (
 	"golang.org/x/tools/go/ast/astutil"
 )
 
-// https://github.com/shirou/gopsutil/issues/429
+// https://github.com/chrisswanson/gopsutil/issues/429
 func issue429() error {
 	f := func(filename string) error {
 		fset := token.NewFileSet()

@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/chrisswanson/gopsutil/v3/internal/common"
 	"golang.org/x/sys/unix"
 )
 

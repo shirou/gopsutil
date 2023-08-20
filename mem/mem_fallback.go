@@ -6,7 +6,7 @@ package mem
 import (
 	"context"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/chrisswanson/gopsutil/v3/internal/common"
 )
 
 func VirtualMemory() (*VirtualMemoryStat, error) {
