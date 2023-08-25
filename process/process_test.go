@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/stretchr/testify/require"
 )
 
 var mu sync.Mutex
@@ -861,4 +862,10 @@ func BenchmarkProcessPpid(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		p.Ppid()
 	}
+}
+
+func BenchmarkProcesses(b *testing.B) {
+	ps, err := Processes()
+	require.NoError(b, err)
+	require.Greater(b, len(ps), 0)
 }
