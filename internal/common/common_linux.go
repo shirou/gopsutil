@@ -73,24 +73,24 @@ func BootTimeWithContext(ctx context.Context) (uint64, error) {
 
 	if useStatFile {
 		return readBootTimeStat(ctx)
-	} else {
-		filename := HostProcWithContext(ctx, "uptime")
-		lines, err := ReadLines(filename)
-		if err != nil {
-			return handleBootTimeFileReadErr(err)
-		}
-		if len(lines) != 1 {
-			return 0, fmt.Errorf("wrong uptime format")
-		}
-		f := strings.Fields(lines[0])
-		b, err := strconv.ParseFloat(f[0], 64)
-		if err != nil {
-			return 0, err
-		}
-		currentTime := float64(time.Now().UnixNano()) / float64(time.Second)
-		t := currentTime - b
-		return uint64(t), nil
 	}
+
+	filename := HostProcWithContext(ctx, "uptime")
+	lines, err := ReadLines(filename)
+	if err != nil {
+		return handleBootTimeFileReadErr(err)
+	}
+	if len(lines) != 1 {
+		return 0, fmt.Errorf("wrong uptime format")
+	}
+	f := strings.Fields(lines[0])
+	b, err := strconv.ParseFloat(f[0], 64)
+	if err != nil {
+		return 0, err
+	}
+	currentTime := float64(time.Now().UnixNano()) / float64(time.Second)
+	t := currentTime - b
+	return uint64(t), nil
 }
 
 func handleBootTimeFileReadErr(err error) (uint64, error) {
@@ -102,7 +102,7 @@ func handleBootTimeFileReadErr(err error) (uint64, error) {
 		}
 
 		currentTime := time.Now().UnixNano() / int64(time.Second)
-		t := currentTime - info.Uptime
+		t := currentTime - int64(info.Uptime)
 		return uint64(t), nil
 	}
 	return 0, err

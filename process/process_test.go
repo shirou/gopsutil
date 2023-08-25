@@ -19,9 +19,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/shirou/gopsutil/v3/internal/common"
-	"github.com/stretchr/testify/require"
 )
 
 var mu sync.Mutex
