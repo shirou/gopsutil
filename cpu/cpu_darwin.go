@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+    "github.com/shoenig/go-m1cpu"
+    "github.com/tklauser/go-sysconf"
 	"golang.org/x/sys/unix"
 )
 

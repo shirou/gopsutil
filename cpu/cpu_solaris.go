@@ -9,6 +9,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+    "github.com/tklauser/go-sysconf"
 )
 
 var ClocksPerSec = float64(128)
