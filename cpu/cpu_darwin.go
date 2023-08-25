@@ -8,19 +8,17 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/shoenig/go-m1cpu"
-	"github.com/tklauser/go-sysconf"
 	"golang.org/x/sys/unix"
 )
 
 // sys/resource.h
 const (
-	CPUser    = 0
-	cpNice    = 1
-	cpSys     = 2
-	cpIntr    = 3
-	cpIdle    = 4
-	cpUStates = 5
+	CPUser = iota
+	cpNice
+	cpSys
+	cpIntr
+	cpIdle
+	cpUStates
 )
 
 // default value. from time.h

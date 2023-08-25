@@ -9,8 +9,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-
-	"github.com/tklauser/go-sysconf"
 )
 
 var ClocksPerSec = float64(128)
@@ -169,15 +167,15 @@ func parseISAInfo(cmdOutput string) ([]string, error) {
 var psrInfoMatch = regexp.MustCompile(`The physical processor has (?:([\d]+) virtual processors? \(([\d-]+)\)|([\d]+) cores and ([\d]+) virtual processors[^\n]+)\n(?:\s+ The core has.+\n)*\s+.+ \((\w+) ([\S]+) family (.+) model (.+) step (.+) clock (.+) MHz\)\n[\s]*(.*)`)
 
 const (
-	psrNumCoresOffset   = 1
-	psrNumCoresHTOffset = 3
-	psrNumHTOffset      = 4
-	psrVendorIDOffset   = 5
-	psrFamilyOffset     = 7
-	psrModelOffset      = 8
-	psrStepOffset       = 9
-	psrClockOffset      = 10
-	psrModelNameOffset  = 11
+	psrNumCoresOffset = iota + 1
+	psrNumCoresHTOffset
+	psrNumHTOffset
+	psrVendorIDOffset
+	psrFamilyOffset
+	psrModelOffset
+	psrStepOffset
+	psrClockOffset
+	psrModelNameOffset
 )
 
 func parseProcessorInfo(cmdOutput string) ([]InfoStat, error) {
