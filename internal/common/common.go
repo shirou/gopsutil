@@ -128,6 +128,7 @@ func ReadLine(filename string, prefix string) (string, error) {
 			if err == io.EOF {
 				break
 			}
+			return "", err
 		}
 		if strings.HasPrefix(line, prefix) {
 			return line, nil
