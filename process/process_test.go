@@ -865,7 +865,9 @@ func BenchmarkProcessPpid(b *testing.B) {
 }
 
 func BenchmarkProcesses(b *testing.B) {
-	ps, err := Processes()
-	require.NoError(b, err)
-	require.Greater(b, len(ps), 0)
+	for i := 0; i < b.N; i++ {
+		ps, err := Processes()
+		require.NoError(b, err)
+		require.Greater(b, len(ps), 0)
+	}
 }
