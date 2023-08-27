@@ -862,3 +862,9 @@ func BenchmarkProcessPpid(b *testing.B) {
 		p.Ppid()
 	}
 }
+
+func BenchmarkProcesses(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		Processes()
+	}
+}

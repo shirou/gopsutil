@@ -109,9 +109,14 @@ func ReadFile(filename string) (string, error) {
 }
 
 // ReadLines reads contents from a file and splits them by new lines.
-// A convenience wrapper to ReadLinesOffsetN(filename, 0, -1).
+// Please do not use this function on Windows platform.
 func ReadLines(filename string) ([]string, error) {
-	return ReadLinesOffsetN(filename, 0, -1)
+	bytes, err := os.ReadFile(filename)
+	if err != nil {
+		return []string{""}, err
+	}
+	lines := strings.Split(strings.Trim(string(bytes), "\n"), "\n")
+	return lines, nil
 }
 
 // ReadLinesOffsetN reads contents from file and splits them by new line.

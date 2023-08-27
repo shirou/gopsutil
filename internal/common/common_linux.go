@@ -89,7 +89,8 @@ func BootTimeWithContext(ctx context.Context) (uint64, error) {
 	}
 
 	if statFile == "stat" {
-		for _, line := range lines {
+		for i := len(lines) - 1; i > 0; i-- {
+			line := lines[i]
 			if strings.HasPrefix(line, "btime") {
 				f := strings.Fields(line)
 				if len(f) != 2 {
