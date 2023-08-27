@@ -1,0 +1,33 @@
+Before:
+goos: linux
+goarch: arm64
+pkg: github.com/shirou/gopsutil/v3/process
+BenchmarkProcesses
+BenchmarkProcesses-80    	       4	 252089573 ns/op
+PASS
+
+Process finished with the exit code 0
+
+After:
+goos: linux
+goarch: arm64
+pkg: github.com/shirou/gopsutil/v3/process
+BenchmarkProcesses
+BenchmarkProcesses-80    	       6	 203633386 ns/op
+PASS
+
+Process finished with the exit code 0
+
+
+goos: linux
+goarch: arm64
+pkg: github.com/shirou/gopsutil/v3/process
+                              │   old.txt   │               new.txt               │
+                              │   sec/op    │   sec/op     vs base                │
+_fillFromCommWithContext-80     9.546µ ± 4%   9.679µ ± 3%   +1.40% (p=0.045 n=10)
+_fillFromStatusWithContext-80   25.41µ ± 3%   26.01µ ± 5%        ~ (p=0.247 n=10)
+NewProcess-80                   140.4µ ± 4%   128.2µ ± 2%   -8.66% (p=0.000 n=10)
+ProcessName-80                  3.099n ± 0%   2.904n ± 0%   -6.29% (p=0.000 n=10)
+ProcessPpid-80                  131.1µ ± 3%   118.8µ ± 2%   -9.36% (p=0.000 n=10)
+Processes-80                    255.8m ± 2%   215.6m ± 3%  -15.70% (p=0.000 n=10)
+geomean                         39.03µ        36.59µ        -6.25%
