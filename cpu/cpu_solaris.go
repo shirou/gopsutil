@@ -226,7 +226,11 @@ func parseProcessorInfo(cmdOutput string) ([]InfoStat, error) {
 					Family:     physicalCPU[psrFamilyOffset],
 					Model:      physicalCPU[psrModelOffset],
 					Stepping:   step,
-					Mhz:        clock,
+					Mhz: Mhz{
+						current: clock,
+						max:     0,
+						min:     0,
+					},
 				})
 				infoStatCount++
 			}
@@ -252,7 +256,11 @@ func parseProcessorInfo(cmdOutput string) ([]InfoStat, error) {
 					Family:     physicalCPU[psrFamilyOffset],
 					Model:      physicalCPU[psrModelOffset],
 					Stepping:   step,
-					Mhz:        clock,
+					Mhz: Mhz{
+						current: clock,
+						max:     0,
+						min:     0,
+					},
 				})
 				infoStatCount++
 			}

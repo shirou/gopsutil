@@ -40,10 +40,16 @@ type InfoStat struct {
 	CoreID     string   `json:"coreId"`
 	Cores      int32    `json:"cores"`
 	ModelName  string   `json:"modelName"`
-	Mhz        float64  `json:"mhz"`
+	Mhz        Mhz      `json:"mhz"`
 	CacheSize  int32    `json:"cacheSize"`
 	Flags      []string `json:"flags"`
 	Microcode  string   `json:"microcode"`
+}
+
+type Mhz struct {
+	current float64 `json:"current"` //from cpuinfo or cpufreq/cpuinfo_cur_freq
+	max     float64 `json:"max"`     //from cpufreq/cpuinfo_max_freq
+	min     float64 `json:"min"`     //from cpufreq/cpuinfo_min_freq
 }
 
 type lastPercent struct {

@@ -70,14 +70,16 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 				if t, err := strconv.ParseFloat(p[3], 64); err == nil {
 					switch strings.ToUpper(p[4]) {
 					case "MHZ":
-						ret.Mhz = t
+						ret.Mhz.current = t
 					case "GHZ":
-						ret.Mhz = t * 1000.0
+						ret.Mhz.current = t * 1000.0
 					case "KHZ":
-						ret.Mhz = t / 1000.0
+						ret.Mhz.current = t / 1000.0
 					default:
-						ret.Mhz = t
+						ret.Mhz.current = t
 					}
+					ret.Mhz.min = 0
+					ret.Mhz.max = 0
 				}
 			}
 			break

@@ -133,7 +133,6 @@ func sysCPUPath(ctx context.Context, cpu int32, relPath string) string {
 func finishCPUInfo(ctx context.Context, c *InfoStat) {
 	var lines []string
 	var err error
-	var value float64
 
 	if len(c.CoreID) == 0 {
 		lines, err = common.ReadLines(sysCPUPath(ctx, c.CPU, "topology/core_id"))
@@ -142,23 +141,35 @@ func finishCPUInfo(ctx context.Context, c *InfoStat) {
 		}
 	}
 
-	// override the value of c.Mhz with cpufreq/cpuinfo_max_freq regardless
-	// of the value from /proc/cpuinfo because we want to report the maximum
-	// clock-speed of the CPU for c.Mhz, matching the behaviour of Windows
-	lines, err = common.ReadLines(sysCPUPath(ctx, c.CPU, "cpufreq/cpuinfo_max_freq"))
-	// if we encounter errors below such as there are no cpuinfo_max_freq file,
-	// we just ignore. so let Mhz is 0.
-	if err != nil || len(lines) == 0 {
-		return
+	c.Mhz.current = fillMhz(ctx, "current", c)
+	c.Mhz.min = fillMhz(ctx, "min", c)
+	c.Mhz.max = fillMhz(ctx, "max", c)
+
+}
+
+func fillMhz(ctx context.Context, value string, c *InfoStat) float64 {
+	var lines []string
+	var err error
+	var line float64
+	var mhz float64 = 0
+
+	if value == "min" || value == "max" || value == "current" {
+		lines, err = common.ReadLines(sysCPUPath(ctx, c.CPU, fmt.Sprintf("cpufreq/cpuinfo_%s_freq", value)))
+		// if we encounter errors below such as there are no cpuinfo_max_freq file,
+		// we just ignore. so let Mhz is 0.
+		if err != nil || len(lines) == 0 {
+			return mhz
+		}
+		line, err = strconv.ParseFloat(lines[0], 64)
+		if err != nil {
+			return mhz
+		}
+		mhz = line / 1000.0 // value is in kHz
+		if mhz > 9999 {
+			mhz = mhz / 1000.0 // value in Hz
+		}
 	}
-	value, err = strconv.ParseFloat(lines[0], 64)
-	if err != nil {
-		return
-	}
-	c.Mhz = value / 1000.0 // value is in kHz
-	if c.Mhz > 9999 {
-		c.Mhz = c.Mhz / 1000.0 // value in Hz
-	}
+	return 0
 }
 
 // CPUInfo on linux will return 1 item per physical thread.
@@ -279,7 +290,7 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 		case "cpu MHz", "clock", "cpu MHz dynamic":
 			// treat this as the fallback value, thus we ignore error
 			if t, err := strconv.ParseFloat(strings.Replace(value, "MHz", "", 1), 64); err == nil {
-				c.Mhz = t
+				c.Mhz.current = t
 			}
 		case "cache size":
 			t, err := strconv.ParseInt(strings.Replace(value, " KB", "", 1), 10, 64)

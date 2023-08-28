@@ -87,13 +87,17 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 	c.VendorID, _ = unix.Sysctl("machdep.cpu.vendor")
 
 	if m1cpu.IsAppleSilicon() {
-		c.Mhz = float64(m1cpu.PCoreHz() / 1_000_000)
+		c.Mhz.current = float64(m1cpu.PCoreHz() / 1_000_000)
+		c.Mhz.max = 0
+		c.Mhz.min = 0
 	} else {
 		// Use the rated frequency of the CPU. This is a static value and does not
 		// account for low power or Turbo Boost modes.
 		cpuFrequency, err := unix.SysctlUint64("hw.cpufrequency")
 		if err == nil {
-			c.Mhz = float64(cpuFrequency) / 1000000.0
+			c.Mhz.current = float64(cpuFrequency) / 1000000.0
+			c.Mhz.max = 0
+			c.Mhz.min = 0
 		}
 	}
 
