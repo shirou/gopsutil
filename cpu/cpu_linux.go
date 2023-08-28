@@ -169,7 +169,7 @@ func fillMhz(ctx context.Context, value string, c *InfoStat) float64 {
 			mhz = mhz / 1000.0 // value in Hz
 		}
 	}
-	return 0
+	return mhz
 }
 
 // CPUInfo on linux will return 1 item per physical thread.
