@@ -141,7 +141,7 @@ func finishCPUInfo(ctx context.Context, c *InfoStat) {
 		}
 	}
 
-	c.Mhz.Current = fillMhz(ctx, "current", c)
+	c.Mhz.Current = fillMhz(ctx, "cur", c)
 	c.Mhz.Min = fillMhz(ctx, "min", c)
 	c.Mhz.Max = fillMhz(ctx, "max", c)
 
@@ -153,7 +153,7 @@ func fillMhz(ctx context.Context, value string, c *InfoStat) float64 {
 	var line float64
 	var mhz float64 = 0
 
-	if value == "min" || value == "max" || value == "current" {
+	if value == "min" || value == "max" || value == "cur" {
 		lines, err = common.ReadLines(sysCPUPath(ctx, c.CPU, fmt.Sprintf("cpufreq/cpuinfo_%s_freq", value)))
 		// if we encounter errors below such as there are no cpuinfo_max_freq file,
 		// we just ignore. so let Mhz is 0.
