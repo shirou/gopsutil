@@ -103,9 +103,9 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 	if u32, err = unix.SysctlUint32("hw.clockrate"); err != nil {
 		return nil, err
 	}
-	c.Mhz.current = float64(u32)
-	c.Mhz.min = 0
-	c.Mhz.max = 0
+	c.Mhz.Current = float64(u32)
+	c.Mhz.Min = 0
+	c.Mhz.Max = 0
 
 	if u32, err = unix.SysctlUint32("hw.ncpu"); err != nil {
 		return nil, err

@@ -47,9 +47,9 @@ type InfoStat struct {
 }
 
 type Mhz struct {
-	current float64 `json:"current"` //from cpuinfo or cpufreq/cpuinfo_cur_freq
-	max     float64 `json:"max"`     //from cpufreq/cpuinfo_max_freq
-	min     float64 `json:"min"`     //from cpufreq/cpuinfo_min_freq
+	Current float64 `json:"current"` //from cpuinfo or cpufreq/cpuinfo_cur_freq
+	Max     float64 `json:"max"`     //from cpufreq/cpuinfo_max_freq
+	Min     float64 `json:"min"`     //from cpufreq/cpuinfo_min_freq
 }
 
 type lastPercent struct {
