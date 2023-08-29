@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/shirou/gopsutil/v3/internal/common"
 )
@@ -860,5 +861,13 @@ func BenchmarkProcessPpid(b *testing.B) {
 	p := testGetProcess()
 	for i := 0; i < b.N; i++ {
 		p.Ppid()
+	}
+}
+
+func BenchmarkProcesses(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		ps, err := Processes()
+		require.NoError(b, err)
+		require.Greater(b, len(ps), 0)
 	}
 }

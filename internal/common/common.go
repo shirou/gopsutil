@@ -114,6 +114,30 @@ func ReadLines(filename string) ([]string, error) {
 	return ReadLinesOffsetN(filename, 0, -1)
 }
 
+// ReadLine reads a file and returns the first occurrence of a line that is prefixed with prefix.
+func ReadLine(filename string, prefix string) (string, error) {
+	f, err := os.Open(filename)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+	r := bufio.NewReader(f)
+	for {
+		line, err := r.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return "", err
+		}
+		if strings.HasPrefix(line, prefix) {
+			return line, nil
+		}
+	}
+
+	return "", nil
+}
+
 // ReadLinesOffsetN reads contents from file and splits them by new line.
 // The offset tells at which line number to start.
 // The count determines the number of lines to read (starting from offset):
