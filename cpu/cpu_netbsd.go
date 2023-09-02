@@ -1,5 +1,5 @@
-//go:build openbsd
-// +build openbsd
+//go:build netbsd
+// +build netbsd
 
 package cpu
 
@@ -89,7 +89,7 @@ func TimesWithContext(ctx context.Context, percpu bool) (ret []TimesStat, err er
 	return ret, nil
 }
 
-// Returns only one (minimal) CPUInfoStat on OpenBSD
+// Returns only one (minimal) CPUInfoStat on NetBSD
 func Info() ([]InfoStat, error) {
 	return InfoWithContext(context.Background())
 }
