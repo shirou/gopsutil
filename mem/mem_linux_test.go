@@ -108,6 +108,16 @@ var virtualMemoryTests = []struct {
 			HugePageSize:   0,
 		},
 	},
+	{
+		"anonhugepages", &VirtualMemoryStat{
+			Total:         260799420 * 1024,
+			Available:     127880216 * 1024,
+			Free:          119443248 * 1024,
+			AnonHugePages: 50409472 * 1024,
+			Used:          144748720128,
+			UsedPercent:   54.20110673559013,
+		},
+	},
 }
 
 func TestVirtualMemoryLinux(t *testing.T) {
