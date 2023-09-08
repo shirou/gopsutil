@@ -72,7 +72,7 @@ func Test_Process_splitProcStat_fromFile(t *testing.T) {
 		if _, err := os.Stat(statFile); err != nil {
 			continue
 		}
-		contents, err := ioutil.ReadFile(statFile)
+		contents, err := os.ReadFile(statFile)
 		assert.NoError(t, err)
 
 		pidStr := strconv.Itoa(int(pid))

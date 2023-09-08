@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
 	"os"
@@ -571,7 +572,7 @@ func Test_Connections(t *testing.T) {
 		defer conn.Close()
 
 		serverEstablished <- struct{}{}
-		_, err = ioutil.ReadAll(conn)
+		_, err = io.ReadAll(conn)
 		if err != nil {
 			panic(err)
 		}
