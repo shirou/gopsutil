@@ -1,5 +1,5 @@
-//go:build darwin || freebsd || openbsd
-// +build darwin freebsd openbsd
+//go:build darwin || freebsd || openbsd || netbsd
+// +build darwin freebsd openbsd netbsd
 
 package host
 
