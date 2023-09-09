@@ -111,32 +111,40 @@ func parseDiskstats(buf []byte) (Diskstats, error) {
 }
 
 func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
-	stat := unix.Statfs_t{}
-	err := unix.Statfs(path, &stat)
-	if err != nil {
-		return nil, err
-	}
-	bsize := stat.F_bsize
+    stat := Statvfs{}
+    flag := uint64(1) // ST_WAIT/MNT_WAIT, see sys/fstypes.h
 
+    // request agian to get desired mount data
+    ret, _, err = unix.Syscall6(
+        485, // SYS___fstatvfs190, see sys/syscall.h
+        uintptr(unsafe.Pointer(&path)),
+        uintptr(unsafe.Pointer(&stat)),
+        uintptr(unsafe.Pointer(&flag)),
+    )
+    if err != nil {
+        return ret, err
+    }
+
+    bsize := stat.Bsize
 	ret := &UsageStat{
 		Path:        path,
 		Fstype:      getFsType(stat),
-		Total:       (uint64(stat.F_blocks) * uint64(bsize)),
-		Free:        (uint64(stat.F_bavail) * uint64(bsize)),
-		InodesTotal: (uint64(stat.F_files)),
-		InodesFree:  (uint64(stat.F_ffree)),
+		Total:       (uint64(stat.Blocks) * uint64(bsize)),
+		Free:        (uint64(stat.Bavail) * uint64(bsize)),
+		InodesTotal: (uint64(stat.Files)),
+		InodesFree:  (uint64(stat.Ffree)),
 	}
 
 	ret.InodesUsed = (ret.InodesTotal - ret.InodesFree)
 	ret.InodesUsedPercent = (float64(ret.InodesUsed) / float64(ret.InodesTotal)) * 100.0
-	ret.Used = (uint64(stat.F_blocks) - uint64(stat.F_bfree)) * uint64(bsize)
+	ret.Used = (uint64(stat.Blocks) - uint64(stat.Bfree)) * uint64(bsize)
 	ret.UsedPercent = (float64(ret.Used) / float64(ret.Total)) * 100.0
 
 	return ret, nil
 }
 
-func getFsType(stat unix.Statfs_t) string {
-	return common.ByteToString(stat.F_fstypename[:])
+func getFsType(stat Statvfs) string {
+	return common.ByteToString(stat.Fstypename[:])
 }
 
 func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
