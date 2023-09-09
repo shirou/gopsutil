@@ -14,23 +14,41 @@ import (
 
 func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {
 	var ret []PartitionStat
+    
+    flag := uint64(1) // ST_WAIT/MNT_WAIT, see sys/fstypes.h
 
     // get required buffer size
     r, _, err = unix.Syscall6(
         483, // SYS___getvfsstat90 syscall 
         nil,
         0,
-        1, // ST_WAIT/MNT_WAIT, see sys/fstypes.h
+        uintptr(unsafe.Pointer(&flag)), 
     )
     if err != nil {
         return ret, err
     }
     mountedFsCount := uint64(r)
 
+    // calculate the buffer size
+    bufSize := sizeOfStatvfs * mountedFsCount
+    buf := make([]Statvfs, bufSize)
+
+    // request agian to get desired mount data
+    _, _, err = unix.Syscall6(
+        483,
+        uintptr(unsafe.Pointer(&buf[0])),
+        uintptr(unsafe.Pointer(&bufSize)),
+        uintptr(unsafe.Pointer(&flag)),
+    )
+    if err != nil {
+        return ret, err
+    }
+
+    for _, stat := range buf {
 		d := PartitionStat{
-			Device:     common.ByteToString(stat.F_mntfromname[:]),
-			Mountpoint: common.ByteToString(stat.F_mntonname[:]),
-			Fstype:     common.ByteToString(stat.F_fstypename[:]),
+			Device:     common.ByteToString([]byte(stat.Mntfromname[:])),
+			Mountpoint: common.ByteToString([]byte(stat.Mntonname[:])),
+			Fstype:     common.ByteToString([]byte(stat.Fstypename[:])),
 			Opts:       opts,
 		}
 
