@@ -60,54 +60,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 
 func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOCountersStat, error) {
 	ret := make(map[string]IOCountersStat)
-
-	r, err := unix.SysctlRaw("hw.diskstats")
-	if err != nil {
-		return nil, err
-	}
-	buf := []byte(r)
-	length := len(buf)
-
-	count := int(uint64(length) / uint64(sizeOfDiskstats))
-
-	// parse buf to Diskstats
-	for i := 0; i < count; i++ {
-		b := buf[i*sizeOfDiskstats : i*sizeOfDiskstats+sizeOfDiskstats]
-		d, err := parseDiskstats(b)
-		if err != nil {
-			continue
-		}
-		name := common.IntToString(d.Name[:])
-
-		if len(names) > 0 && !common.StringsHas(names, name) {
-			continue
-		}
-
-		ds := IOCountersStat{
-			ReadCount:  d.Rxfer,
-			WriteCount: d.Wxfer,
-			ReadBytes:  d.Rbytes,
-			WriteBytes: d.Wbytes,
-			Name:       name,
-		}
-		ret[name] = ds
-	}
-
-	return ret, nil
-}
-
-// BT2LD(time)     ((long double)(time).sec + (time).frac * BINTIME_SCALE)
-
-func parseDiskstats(buf []byte) (Diskstats, error) {
-	var ds Diskstats
-	br := bytes.NewReader(buf)
-	//	err := binary.Read(br, binary.LittleEndian, &ds)
-	err := common.Read(br, binary.LittleEndian, &ds)
-	if err != nil {
-		return ds, err
-	}
-
-	return ds, nil
+	return ret, common.ErrNotImplementedError
 }
 
 func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
