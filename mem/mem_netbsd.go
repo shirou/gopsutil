@@ -4,13 +4,10 @@
 package mem
 
 import (
-	"bytes"
 	"context"
-	"encoding/binary"
 	"errors"
 	"fmt"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
 	"golang.org/x/sys/unix"
 )
 
@@ -51,7 +48,10 @@ func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
 	ret.UsedPercent = float64(ret.Used) / float64(ret.Total) * 100.0
 
     // Get buffers from vm.bufmem sysctl
-	ret.Buffers = unix.SysctlUint64("vm.bufmem")
+	ret.Buffers, err = unix.SysctlUint64("vm.bufmem")
+	if err != nil {
+		return nil, err
+	}
 
 	return ret, nil
 }
