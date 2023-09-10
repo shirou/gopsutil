@@ -138,7 +138,7 @@ func VirtualizationWithContext(ctx context.Context) (string, string, error) {
 
 // Find distribution name from /etc/release
 func parseReleaseFile() (string, error) {
-	b, err := ioutil.ReadFile("/etc/release")
+	b, err := os.ReadFile("/etc/release")
 	if err != nil {
 		return "", err
 	}

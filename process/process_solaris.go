@@ -3,7 +3,6 @@ package process
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -232,7 +231,7 @@ func (p *Process) fillFromPathAOutWithContext(ctx context.Context) (string, erro
 func (p *Process) fillFromExecnameWithContext(ctx context.Context) (string, error) {
 	pid := p.Pid
 	execNamePath := common.HostProcWithContext(ctx, strconv.Itoa(int(pid)), "execname")
-	exe, err := ioutil.ReadFile(execNamePath)
+	exe, err := os.ReadFile(execNamePath)
 	if err != nil {
 		return "", err
 	}
@@ -242,7 +241,7 @@ func (p *Process) fillFromExecnameWithContext(ctx context.Context) (string, erro
 func (p *Process) fillFromCmdlineWithContext(ctx context.Context) (string, error) {
 	pid := p.Pid
 	cmdPath := common.HostProcWithContext(ctx, strconv.Itoa(int(pid)), "cmdline")
-	cmdline, err := ioutil.ReadFile(cmdPath)
+	cmdline, err := os.ReadFile(cmdPath)
 	if err != nil {
 		return "", err
 	}
@@ -259,7 +258,7 @@ func (p *Process) fillFromCmdlineWithContext(ctx context.Context) (string, error
 func (p *Process) fillSliceFromCmdlineWithContext(ctx context.Context) ([]string, error) {
 	pid := p.Pid
 	cmdPath := common.HostProcWithContext(ctx, strconv.Itoa(int(pid)), "cmdline")
-	cmdline, err := ioutil.ReadFile(cmdPath)
+	cmdline, err := os.ReadFile(cmdPath)
 	if err != nil {
 		return nil, err
 	}
