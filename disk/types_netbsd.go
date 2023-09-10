@@ -1,7 +1,7 @@
 //go:build ignore
 // +build ignore
 
-// Hand writing: _Ctype_struct_statvfs
+// Hand writing: _Ctype_struct___0
 
 /*
 Input to cgo -godefs.
@@ -17,7 +17,7 @@ package disk
 #include <sys/stdint.h>
 #include <machine/ansi.h>
 #include <sys/ansi.h>
-#include <sys/fstypes.h>
+
 */
 import "C"
 
