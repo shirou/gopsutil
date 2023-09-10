@@ -4,9 +4,7 @@
 package disk
 
 import (
-	"bytes"
 	"context"
-	"encoding/binary"
     "unsafe"
 
 	"github.com/shirou/gopsutil/v3/internal/common"
@@ -106,15 +104,14 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
     stat := Statvfs{}
     flag := uint64(1) // ST_WAIT/MNT_WAIT, see sys/fstypes.h
 
-    // request agian to get desired mount data
-    ret, _, err := unix.Syscall(
+    _, _, err := unix.Syscall(
         485, // SYS___fstatvfs190, see sys/syscall.h
         uintptr(unsafe.Pointer(&path)),
         uintptr(unsafe.Pointer(&stat)),
         uintptr(unsafe.Pointer(&flag)),
     )
     if err != 0 {
-        return ret, err
+        return nil, err
     }
 
     bsize := stat.Bsize
