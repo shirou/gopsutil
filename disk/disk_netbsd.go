@@ -26,13 +26,15 @@ const (
 func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {
 	var ret []PartitionStat
     
+    trap := 483 // SYS___getvfsstat90 syscall 
     flag := uint64(1) // ST_WAIT/MNT_WAIT, see sys/fstypes.h
 
     // get required buffer size
+    emptyBufSize := 0
     r, _, err := unix.Syscall(
-        483, // SYS___getvfsstat90 syscall 
-        0,
-        0,
+        uintptr(unsafe.Pointer(&trap)), 
+        uintptr(unsafe.Pointer(nil)),
+        uintptr(unsafe.Pointer(&emptyBufSize)),
         uintptr(unsafe.Pointer(&flag)),
     )
     if err != 0 {
@@ -46,7 +48,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 
     // request agian to get desired mount data
     _, _, err = unix.Syscall(
-        483,
+        uintptr(unsafe.Pointer(&flag)),
         uintptr(unsafe.Pointer(&buf[0])),
         uintptr(unsafe.Pointer(&bufSize)),
         uintptr(unsafe.Pointer(&flag)),
@@ -102,10 +104,11 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 
 func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
     stat := Statvfs{}
+    trap := 485 // SYS___fstatvfs190, see sys/syscall.h
     flag := uint64(1) // ST_WAIT/MNT_WAIT, see sys/fstypes.h
 
     _, _, err := unix.Syscall(
-        485, // SYS___fstatvfs190, see sys/syscall.h
+        uintptr(unsafe.Pointer(&trap)),
         uintptr(unsafe.Pointer(&path)),
         uintptr(unsafe.Pointer(&stat)),
         uintptr(unsafe.Pointer(&flag)),
