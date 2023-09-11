@@ -58,7 +58,7 @@ func Test_Process_splitProcStat(t *testing.T) {
 }
 
 func Test_Process_splitProcStat_fromFile(t *testing.T) {
-	pids, err := ioutil.ReadDir("testdata/linux/")
+	pids, err := os.ReadDir("testdata/linux/")
 	if err != nil {
 		t.Error(err)
 	}
@@ -94,7 +94,7 @@ func Test_Process_splitProcStat_fromFile(t *testing.T) {
 }
 
 func Test_fillFromCommWithContext(t *testing.T) {
-	pids, err := ioutil.ReadDir("testdata/linux/")
+	pids, err := os.ReadDir("testdata/linux/")
 	if err != nil {
 		t.Error(err)
 	}
@@ -115,7 +115,7 @@ func Test_fillFromCommWithContext(t *testing.T) {
 }
 
 func Test_fillFromStatusWithContext(t *testing.T) {
-	pids, err := ioutil.ReadDir("testdata/linux/")
+	pids, err := os.ReadDir("testdata/linux/")
 	if err != nil {
 		t.Error(err)
 	}
