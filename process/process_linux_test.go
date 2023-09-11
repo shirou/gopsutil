@@ -153,7 +153,7 @@ func Benchmark_fillFromStatusWithContext(b *testing.B) {
 }
 
 func Test_fillFromTIDStatWithContext_lx_brandz(t *testing.T) {
-	pids, err := ioutil.ReadDir("testdata/lx_brandz/")
+	pids, err := os.ReadDir("testdata/lx_brandz/")
 	if err != nil {
 		t.Error(err)
 	}
