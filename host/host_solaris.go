@@ -7,7 +7,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"regexp"
 	"strconv"
@@ -60,7 +59,7 @@ func HostIDWithContext(ctx context.Context) (string, error) {
 
 // Count number of processes based on the number of entries in /proc
 func numProcs(ctx context.Context) (uint64, error) {
-	dirs, err := ioutil.ReadDir("/proc")
+	dirs, err := os.ReadDir("/proc")
 	if err != nil {
 		return 0, err
 	}

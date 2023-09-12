@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
@@ -303,7 +302,7 @@ func Test_Process_Name(t *testing.T) {
 }
 
 func Test_Process_Long_Name_With_Spaces(t *testing.T) {
-	tmpdir, err := ioutil.TempDir("", "")
+	tmpdir, err := os.MkdirTemp("", "")
 	if err != nil {
 		t.Fatalf("unable to create temp dir %v", err)
 	}
@@ -349,7 +348,7 @@ func Test_Process_Long_Name_With_Spaces(t *testing.T) {
 }
 
 func Test_Process_Long_Name(t *testing.T) {
-	tmpdir, err := ioutil.TempDir("", "")
+	tmpdir, err := os.MkdirTemp("", "")
 	if err != nil {
 		t.Fatalf("unable to create temp dir %v", err)
 	}
@@ -406,7 +405,7 @@ func Test_Process_Name_Against_Python(t *testing.T) {
 		t.Skipf("psutil not found for %s: %s", py3Path, out)
 	}
 
-	tmpdir, err := ioutil.TempDir("", "")
+	tmpdir, err := os.MkdirTemp("", "")
 	if err != nil {
 		t.Fatalf("unable to create temp dir %v", err)
 	}
@@ -775,7 +774,7 @@ func Test_IsRunning(t *testing.T) {
 }
 
 func Test_Process_Environ(t *testing.T) {
-	tmpdir, err := ioutil.TempDir("", "")
+	tmpdir, err := os.MkdirTemp("", "")
 	if err != nil {
 		t.Fatalf("unable to create temp dir %v", err)
 	}
