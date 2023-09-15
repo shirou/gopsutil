@@ -41,5 +41,5 @@ type (
 )
 
 type _Ctype_struct___0 struct {
-    FsidVal     [32]int32
+    FsidVal     [2]int32
 }
