@@ -14,14 +14,6 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-type cpuTimes struct {
-    User uint64
-	Nice uint64
-	Sys  uint64
-    Intr uint64
-	Idle uint64
-}
-
 const (
 	// sys/sysctl.h
 	ctlKern      = 1  // "high kernel": proc, limits
