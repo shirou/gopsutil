@@ -47,7 +47,7 @@ func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
 	ret.Used = ret.Total - ret.Available
 	ret.UsedPercent = float64(ret.Used) / float64(ret.Total) * 100.0
 
-    // Get buffers from vm.bufmem sysctl
+	// Get buffers from vm.bufmem sysctl
 	ret.Buffers, err = unix.SysctlUint64("vm.bufmem")
 	if err != nil {
 		return nil, err

@@ -16,9 +16,9 @@ import (
 
 const (
 	// sys/sysctl.h
-	ctlKern      = 1  // "high kernel": proc, limits
-	ctlHw        = 6  // CTL_HW
-	kernCpTime   = 51 // KERN_CPTIME
+	ctlKern    = 1  // "high kernel": proc, limits
+	ctlHw      = 6  // CTL_HW
+	kernCpTime = 51 // KERN_CPTIME
 )
 
 var ClocksPerSec = float64(100)
@@ -67,7 +67,7 @@ func TimesWithContext(ctx context.Context, percpu bool) (ret []TimesStat, err er
 			return ret, err
 		}
 
-        stats := (*cpuTimes)(unsafe.Pointer(&buf[0]))
+		stats := (*cpuTimes)(unsafe.Pointer(&buf[0]))
 		ret = append(ret, TimesStat{
 			CPU:    fmt.Sprintf("cpu%d", i),
 			User:   float64(stats.User),
@@ -96,7 +96,7 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 	if err != nil {
 		return nil, err
 	}
-    _, err = fmt.Sscanf(mhz, "%f", &c.Mhz)
+	_, err = fmt.Sscanf(mhz, "%f", &c.Mhz)
 	if err != nil {
 		return nil, err
 	}
