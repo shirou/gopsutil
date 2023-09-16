@@ -111,7 +111,7 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
     }
 
     _, _, err := unix.Syscall(
-        484, // SYS___fstatvfs190, see sys/syscall.h
+        484, // SYS___statvfs190, see sys/syscall.h
         uintptr(unsafe.Pointer(_path)),
         uintptr(unsafe.Pointer(&stat)),
         uintptr(unsafe.Pointer(&flag)),
@@ -120,7 +120,8 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
         return nil, err
     }
 
-    bsize := stat.Bsize
+    // frsize is the real block size on NetBSD. See discuss here: https://bugzilla.samba.org/show_bug.cgi?id=11810
+    bsize := stat.Frsize
 	ret := &UsageStat{
 		Path:        path,
 		Fstype:      getFsType(stat),
