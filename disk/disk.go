@@ -9,6 +9,8 @@ import (
 
 var invoke common.Invoker = common.Invoke{}
 
+type Warnings = common.Warnings
+
 type UsageStat struct {
 	Path              string  `json:"path"`
 	Fstype            string  `json:"fstype"`

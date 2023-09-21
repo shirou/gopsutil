@@ -4,7 +4,6 @@
 package mem
 
 import (
-	"os"
 	"reflect"
 	"testing"
 )
@@ -27,14 +26,9 @@ var virtualMemoryTests = []struct {
 }
 
 func TestVirtualMemoryPlan9(t *testing.T) {
-	origProc := os.Getenv("HOST_ROOT")
-	t.Cleanup(func() {
-		os.Setenv("HOST_ROOT", origProc)
-	})
-
 	for _, tt := range virtualMemoryTests {
 		t.Run(tt.mockedRootFS, func(t *testing.T) {
-			os.Setenv("HOST_ROOT", "testdata/plan9/virtualmemory/")
+			t.Setenv("HOST_ROOT", "testdata/plan9/virtualmemory/")
 
 			stat, err := VirtualMemory()
 			skipIfNotImplementedErr(t, err)
@@ -62,14 +56,9 @@ var swapMemoryTests = []struct {
 }
 
 func TestSwapMemoryPlan9(t *testing.T) {
-	origProc := os.Getenv("HOST_ROOT")
-	t.Cleanup(func() {
-		os.Setenv("HOST_ROOT", origProc)
-	})
-
 	for _, tt := range swapMemoryTests {
 		t.Run(tt.mockedRootFS, func(t *testing.T) {
-			os.Setenv("HOST_ROOT", "testdata/plan9/virtualmemory/")
+			t.Setenv("HOST_ROOT", "testdata/plan9/virtualmemory/")
 
 			swap, err := SwapMemory()
 			skipIfNotImplementedErr(t, err)

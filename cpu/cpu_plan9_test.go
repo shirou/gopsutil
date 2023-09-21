@@ -4,7 +4,6 @@
 package cpu
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -30,13 +29,9 @@ var timesTests = []struct {
 }
 
 func TestTimesPlan9(t *testing.T) {
-	origRoot := os.Getenv("HOST_ROOT")
-	t.Cleanup(func() {
-		os.Setenv("HOST_ROOT", origRoot)
-	})
 	for _, tt := range timesTests {
 		t.Run(tt.mockedRootFS, func(t *testing.T) {
-			os.Setenv("HOST_ROOT", filepath.Join("testdata/plan9", tt.mockedRootFS))
+			t.Setenv("HOST_ROOT", filepath.Join("testdata/plan9", tt.mockedRootFS))
 			stats, err := Times(false)
 			skipIfNotImplementedErr(t, err)
 			if err != nil {

@@ -46,7 +46,7 @@ func CgroupCPUDocker(containerid string) (*CgroupCPUStat, error) {
 }
 
 func CgroupCPUDockerWithContext(ctx context.Context, containerid string) (*CgroupCPUStat, error) {
-	return CgroupCPU(containerid, common.HostSys("fs/cgroup/cpuacct/docker"))
+	return CgroupCPUWithContext(ctx, containerid, common.HostSysWithContext(ctx, "fs/cgroup/cpuacct/docker"))
 }
 
 func CgroupMem(containerid string, base string) (*CgroupMemStat, error) {
@@ -62,5 +62,5 @@ func CgroupMemDocker(containerid string) (*CgroupMemStat, error) {
 }
 
 func CgroupMemDockerWithContext(ctx context.Context, containerid string) (*CgroupMemStat, error) {
-	return CgroupMem(containerid, common.HostSys("fs/cgroup/memory/docker"))
+	return CgroupMemWithContext(ctx, containerid, common.HostSysWithContext(ctx, "fs/cgroup/memory/docker"))
 }

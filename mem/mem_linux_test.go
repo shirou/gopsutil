@@ -4,7 +4,7 @@
 package mem
 
 import (
-	"os"
+	"context"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -111,12 +111,9 @@ var virtualMemoryTests = []struct {
 }
 
 func TestVirtualMemoryLinux(t *testing.T) {
-	origProc := os.Getenv("HOST_PROC")
-	defer os.Setenv("HOST_PROC", origProc)
-
 	for _, tt := range virtualMemoryTests {
 		t.Run(tt.mockedRootFS, func(t *testing.T) {
-			os.Setenv("HOST_PROC", filepath.Join("testdata/linux/virtualmemory/", tt.mockedRootFS, "proc"))
+			t.Setenv("HOST_PROC", filepath.Join("testdata/linux/virtualmemory/", tt.mockedRootFS, "proc"))
 
 			stat, err := VirtualMemory()
 			skipIfNotImplementedErr(t, err)
@@ -142,7 +139,7 @@ const invalidFile = `INVALID				Type		Size		Used		Priority
 
 func TestParseSwapsFile_ValidFile(t *testing.T) {
 	assert := assert.New(t)
-	stats, err := parseSwapsFile(strings.NewReader(validFile))
+	stats, err := parseSwapsFile(context.Background(), strings.NewReader(validFile))
 	assert.NoError(err)
 
 	assert.Equal(*stats[0], SwapDevice{
@@ -159,11 +156,11 @@ func TestParseSwapsFile_ValidFile(t *testing.T) {
 }
 
 func TestParseSwapsFile_InvalidFile(t *testing.T) {
-	_, err := parseSwapsFile(strings.NewReader(invalidFile))
+	_, err := parseSwapsFile(context.Background(), strings.NewReader(invalidFile))
 	assert.Error(t, err)
 }
 
 func TestParseSwapsFile_EmptyFile(t *testing.T) {
-	_, err := parseSwapsFile(strings.NewReader(""))
+	_, err := parseSwapsFile(context.Background(), strings.NewReader(""))
 	assert.Error(t, err)
 }

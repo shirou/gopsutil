@@ -11,6 +11,8 @@ import (
 	"github.com/shirou/gopsutil/v3/internal/common"
 )
 
+type Warnings = common.Warnings
+
 var invoke common.Invoker = common.Invoke{}
 
 // A HostInfoStat describes the host status.
@@ -154,4 +156,8 @@ func SensorsTemperatures() ([]TemperatureStat, error) {
 
 func timeSince(ts uint64) uint64 {
 	return uint64(time.Now().Unix()) - ts
+}
+
+func timeSinceMillis(ts uint64) uint64 {
+	return uint64(time.Now().UnixMilli()) - ts
 }

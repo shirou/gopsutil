@@ -3,13 +3,19 @@ issues:
   exclude-rules: 
   - linters: 
     - gosec
-    text:  "G204"
+    text: "G204"
   - linters: 
     - revive
-    text:  "var-naming"
+    text: "var-naming"
   - linters: 
     - revive
-    text:  "exported"
+    text: "exported"
+  - linters: 
+    - revive
+    text: "empty-block"
+  - linters: 
+    - revive
+    text: "unused-parameter"
 linters:
   enable:
     - asciicheck
@@ -40,3 +46,10 @@ linters:
     - structcheck
     - unused
     - varcheck
+
+linters-settings:
+  gci:
+    sections:
+    - standard
+    - default
+    - prefix(github.com/shirou)

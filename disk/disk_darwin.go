@@ -6,8 +6,9 @@ package disk
 import (
 	"context"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
 	"golang.org/x/sys/unix"
+
+	"github.com/shirou/gopsutil/v3/internal/common"
 )
 
 // PartitionsWithContext returns disk partition.
@@ -20,9 +21,15 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 		return ret, err
 	}
 	fs := make([]unix.Statfs_t, count)
-	if _, err = unix.Getfsstat(fs, unix.MNT_WAIT); err != nil {
+	count, err = unix.Getfsstat(fs, unix.MNT_WAIT)
+	if err != nil {
 		return ret, err
 	}
+	// On 10.14, and possibly other OS versions, the actual count may
+	// be less than from the first call. Truncate to the returned count
+	// to prevent accessing uninitialized entries.
+	// https://github.com/shirou/gopsutil/issues/1390
+	fs = fs[:count]
 	for _, stat := range fs {
 		opts := []string{"rw"}
 		if stat.Flags&unix.MNT_RDONLY != 0 {

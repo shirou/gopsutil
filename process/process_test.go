@@ -1,6 +1,7 @@
 package process
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -17,8 +18,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/shirou/gopsutil/v3/internal/common"
 )
 
 var mu sync.Mutex
@@ -294,7 +297,7 @@ func Test_Process_Name(t *testing.T) {
 		t.Errorf("getting name error %v", err)
 	}
 	if !strings.Contains(n, "process.test") {
-		t.Errorf("invalid Exe %s", n)
+		t.Errorf("invalid Name %s", n)
 	}
 }
 
@@ -390,6 +393,62 @@ func Test_Process_Long_Name(t *testing.T) {
 	cmd.Process.Kill()
 }
 
+func Test_Process_Name_Against_Python(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("only applies to posix")
+	}
+	py3Path, err := exec.LookPath("python3")
+	if err != nil {
+		t.Skipf("python3 not found: %s", err)
+	}
+	if out, err := exec.Command(py3Path, "-c", "import psutil").CombinedOutput(); err != nil {
+		t.Skipf("psutil not found for %s: %s", py3Path, out)
+	}
+
+	tmpdir, err := ioutil.TempDir("", "")
+	if err != nil {
+		t.Fatalf("unable to create temp dir %v", err)
+	}
+	defer os.RemoveAll(tmpdir) // clean up
+	tmpfilepath := filepath.Join(tmpdir, "looooooooooooooooooooong.py")
+	tmpfile, err := os.Create(tmpfilepath)
+	if err != nil {
+		t.Fatalf("unable to create temp file %v", err)
+	}
+	tmpfilecontent := []byte("#!" + py3Path + "\nimport psutil, time\nprint(psutil.Process().name(), flush=True)\nwhile True:\n\ttime.sleep(1)")
+	if _, err := tmpfile.Write(tmpfilecontent); err != nil {
+		tmpfile.Close()
+		t.Fatalf("unable to write temp file %v", err)
+	}
+	if err := tmpfile.Chmod(0o744); err != nil {
+		t.Fatalf("unable to chmod u+x temp file %v", err)
+	}
+	if err := tmpfile.Close(); err != nil {
+		t.Fatalf("unable to close temp file %v", err)
+	}
+	cmd := exec.Command(tmpfilepath)
+	outPipe, _ := cmd.StdoutPipe()
+	scanner := bufio.NewScanner(outPipe)
+	cmd.Start()
+	defer cmd.Process.Kill()
+	scanner.Scan()
+	pyName := scanner.Text() // first line printed by py3 script, its name
+	t.Logf("pyName %s", pyName)
+	p, err := NewProcess(int32(cmd.Process.Pid))
+	skipIfNotImplementedErr(t, err)
+	if err != nil {
+		t.Fatalf("getting process error %v", err)
+	}
+	name, err := p.Name()
+	skipIfNotImplementedErr(t, err)
+	if err != nil {
+		t.Fatalf("getting name error %v", err)
+	}
+	if pyName != name {
+		t.Fatalf("psutil and gopsutil process.Name() results differ: expected %s, got %s", pyName, name)
+	}
+}
+
 func Test_Process_Exe(t *testing.T) {
 	p := testGetProcess()
 
@@ -443,7 +502,7 @@ func Test_Process_CpuPercentLoop(t *testing.T) {
 }
 
 func Test_Process_CreateTime(t *testing.T) {
-	if os.Getenv("CIRCLECI") == "true" {
+	if os.Getenv("CI") == "true" {
 		t.Skip("Skip CI")
 	}
 
@@ -784,60 +843,6 @@ func Test_Process_Cwd(t *testing.T) {
 	t.Log(pidCwd)
 }
 
-func Test_AllProcesses_cmdLine(t *testing.T) {
-	procs, err := Processes()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Fatalf("getting processes error %v", err)
-	}
-	for _, proc := range procs {
-		var exeName string
-		var cmdLine string
-
-		exeName, _ = proc.Exe()
-		cmdLine, err = proc.Cmdline()
-		if err != nil {
-			cmdLine = "Error: " + err.Error()
-		}
-
-		t.Logf("Process #%v: Name: %v / CmdLine: %v\n", proc.Pid, exeName, cmdLine)
-	}
-}
-
-func Test_AllProcesses_environ(t *testing.T) {
-	procs, err := Processes()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Fatalf("getting processes error %v", err)
-	}
-	for _, proc := range procs {
-		exeName, _ := proc.Exe()
-		environ, err := proc.Environ()
-		if err != nil {
-			environ = []string{"Error: " + err.Error()}
-		}
-
-		t.Logf("Process #%v: Name: %v / Environment Variables: %v\n", proc.Pid, exeName, environ)
-	}
-}
-
-func Test_AllProcesses_Cwd(t *testing.T) {
-	procs, err := Processes()
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Fatalf("getting processes error %v", err)
-	}
-	for _, proc := range procs {
-		exeName, _ := proc.Exe()
-		cwd, err := proc.Cwd()
-		if err != nil {
-			cwd = "Error: " + err.Error()
-		}
-
-		t.Logf("Process #%v: Name: %v / Current Working Directory: %s\n", proc.Pid, exeName, cwd)
-	}
-}
-
 func BenchmarkNewProcess(b *testing.B) {
 	checkPid := os.Getpid()
 	for i := 0; i < b.N; i++ {
@@ -856,5 +861,13 @@ func BenchmarkProcessPpid(b *testing.B) {
 	p := testGetProcess()
 	for i := 0; i < b.N; i++ {
 		p.Ppid()
+	}
+}
+
+func BenchmarkProcesses(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		ps, err := Processes()
+		require.NoError(b, err)
+		require.Greater(b, len(ps), 0)
 	}
 }

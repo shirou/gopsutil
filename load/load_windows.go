@@ -26,7 +26,7 @@ var (
 // TODO instead of this goroutine, we can register a Win32 counter just as psutil does
 // see https://psutil.readthedocs.io/en/latest/#psutil.getloadavg
 // code https://github.com/giampaolo/psutil/blob/8415355c8badc9c94418b19bdf26e622f06f0cce/psutil/arch/windows/wmi.c
-func loadAvgGoroutine() {
+func loadAvgGoroutine(ctx context.Context) {
 	var (
 		samplingFrequency time.Duration = 5 * time.Second
 		loadAvgFactor1M   float64       = 1 / math.Exp(samplingFrequency.Seconds()/time.Minute.Seconds())
@@ -46,12 +46,20 @@ func loadAvgGoroutine() {
 		}
 
 		loadAvgMutex.Lock()
-		loadErr = err
 		loadAvg1M = loadAvg1M*loadAvgFactor1M + currentLoad*(1-loadAvgFactor1M)
 		loadAvg5M = loadAvg5M*loadAvgFactor5M + currentLoad*(1-loadAvgFactor5M)
 		loadAvg15M = loadAvg15M*loadAvgFactor15M + currentLoad*(1-loadAvgFactor15M)
 		loadAvgMutex.Unlock()
-		<-tick
+	}
+
+	f() // run first time
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-tick:
+			f()
+		}
 	}
 }
 
@@ -62,7 +70,7 @@ func Avg() (*AvgStat, error) {
 
 func AvgWithContext(ctx context.Context) (*AvgStat, error) {
 	loadAvgGoroutineOnce.Do(func() {
-		go loadAvgGoroutine()
+		go loadAvgGoroutine(ctx)
 	})
 	loadAvgMutex.RLock()
 	defer loadAvgMutex.RUnlock()

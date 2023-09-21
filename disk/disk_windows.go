@@ -50,6 +50,7 @@ func init() {
 	key, err := registry.OpenKey(registry.LOCAL_MACHINE, `SYSTEM\CurrentControlSet\Services\PartMgr`, registry.SET_VALUE)
 	if err == nil {
 		key.SetDWordValue("EnableCounterForIoctl", 1)
+		key.Close()
 	}
 }
 
@@ -79,66 +80,105 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 	return ret, nil
 }
 
+// PartitionsWithContext returns disk partitions.
+// Since GetVolumeInformation doesn't have a timeout, this method uses context to set deadline by users.
 func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {
-	var ret []PartitionStat
-	lpBuffer := make([]byte, 254)
-	diskret, _, err := procGetLogicalDriveStringsW.Call(
-		uintptr(len(lpBuffer)),
-		uintptr(unsafe.Pointer(&lpBuffer[0])))
-	if diskret == 0 {
-		return ret, err
+	warnings := Warnings{
+		Verbose: true,
 	}
-	for _, v := range lpBuffer {
-		if v >= 65 && v <= 90 {
-			path := string(v) + ":"
-			typepath, _ := windows.UTF16PtrFromString(path)
-			typeret, _, _ := procGetDriveType.Call(uintptr(unsafe.Pointer(typepath)))
-			if typeret == 0 {
-				return ret, windows.GetLastError()
-			}
-			// 2: DRIVE_REMOVABLE 3: DRIVE_FIXED 4: DRIVE_REMOTE 5: DRIVE_CDROM
 
-			if typeret == 2 || typeret == 3 || typeret == 4 || typeret == 5 {
-				lpVolumeNameBuffer := make([]byte, 256)
-				lpVolumeSerialNumber := int64(0)
-				lpMaximumComponentLength := int64(0)
-				lpFileSystemFlags := int64(0)
-				lpFileSystemNameBuffer := make([]byte, 256)
-				volpath, _ := windows.UTF16PtrFromString(string(v) + ":/")
-				driveret, _, err := procGetVolumeInformation.Call(
-					uintptr(unsafe.Pointer(volpath)),
-					uintptr(unsafe.Pointer(&lpVolumeNameBuffer[0])),
-					uintptr(len(lpVolumeNameBuffer)),
-					uintptr(unsafe.Pointer(&lpVolumeSerialNumber)),
-					uintptr(unsafe.Pointer(&lpMaximumComponentLength)),
-					uintptr(unsafe.Pointer(&lpFileSystemFlags)),
-					uintptr(unsafe.Pointer(&lpFileSystemNameBuffer[0])),
-					uintptr(len(lpFileSystemNameBuffer)))
-				if driveret == 0 {
-					if typeret == 5 || typeret == 2 {
-						continue // device is not ready will happen if there is no disk in the drive
+	var errLogicalDrives error
+	retChan := make(chan PartitionStat)
+	quitChan := make(chan struct{})
+	defer close(quitChan)
+
+	getPartitions := func() {
+		defer close(retChan)
+
+		lpBuffer := make([]byte, 254)
+
+		diskret, _, err := procGetLogicalDriveStringsW.Call(
+			uintptr(len(lpBuffer)),
+			uintptr(unsafe.Pointer(&lpBuffer[0])))
+		if diskret == 0 {
+			errLogicalDrives = err
+			return
+		}
+		for _, v := range lpBuffer {
+			if v >= 65 && v <= 90 {
+				path := string(v) + ":"
+				typepath, _ := windows.UTF16PtrFromString(path)
+				typeret, _, _ := procGetDriveType.Call(uintptr(unsafe.Pointer(typepath)))
+				if typeret == 0 {
+					err := windows.GetLastError()
+					warnings.Add(err)
+					continue
+				}
+				// 2: DRIVE_REMOVABLE 3: DRIVE_FIXED 4: DRIVE_REMOTE 5: DRIVE_CDROM
+
+				if typeret == 2 || typeret == 3 || typeret == 4 || typeret == 5 {
+					lpVolumeNameBuffer := make([]byte, 256)
+					lpVolumeSerialNumber := int64(0)
+					lpMaximumComponentLength := int64(0)
+					lpFileSystemFlags := int64(0)
+					lpFileSystemNameBuffer := make([]byte, 256)
+					volpath, _ := windows.UTF16PtrFromString(string(v) + ":/")
+					driveret, _, err := procGetVolumeInformation.Call(
+						uintptr(unsafe.Pointer(volpath)),
+						uintptr(unsafe.Pointer(&lpVolumeNameBuffer[0])),
+						uintptr(len(lpVolumeNameBuffer)),
+						uintptr(unsafe.Pointer(&lpVolumeSerialNumber)),
+						uintptr(unsafe.Pointer(&lpMaximumComponentLength)),
+						uintptr(unsafe.Pointer(&lpFileSystemFlags)),
+						uintptr(unsafe.Pointer(&lpFileSystemNameBuffer[0])),
+						uintptr(len(lpFileSystemNameBuffer)))
+					if driveret == 0 {
+						if typeret == 5 || typeret == 2 {
+							continue // device is not ready will happen if there is no disk in the drive
+						}
+						warnings.Add(err)
+						continue
 					}
-					return ret, err
-				}
-				opts := []string{"rw"}
-				if lpFileSystemFlags&fileReadOnlyVolume != 0 {
-					opts = []string{"ro"}
-				}
-				if lpFileSystemFlags&fileFileCompression != 0 {
-					opts = append(opts, "compress")
-				}
+					opts := []string{"rw"}
+					if lpFileSystemFlags&fileReadOnlyVolume != 0 {
+						opts = []string{"ro"}
+					}
+					if lpFileSystemFlags&fileFileCompression != 0 {
+						opts = append(opts, "compress")
+					}
 
-				d := PartitionStat{
-					Mountpoint: path,
-					Device:     path,
-					Fstype:     string(bytes.Replace(lpFileSystemNameBuffer, []byte("\x00"), []byte(""), -1)),
-					Opts:       opts,
+					select {
+					case retChan <- PartitionStat{
+						Mountpoint: path,
+						Device:     path,
+						Fstype:     string(bytes.ReplaceAll(lpFileSystemNameBuffer, []byte("\x00"), []byte(""))),
+						Opts:       opts,
+					}:
+					case <-quitChan:
+						return
+					}
 				}
-				ret = append(ret, d)
 			}
 		}
 	}
-	return ret, nil
+
+	go getPartitions()
+
+	var ret []PartitionStat
+	for {
+		select {
+		case p, ok := <-retChan:
+			if !ok {
+				if errLogicalDrives != nil {
+					return ret, errLogicalDrives
+				}
+				return ret, warnings.Reference()
+			}
+			ret = append(ret, p)
+		case <-ctx.Done():
+			return ret, ctx.Err()
+		}
+	}
 }
 
 func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOCountersStat, error) {

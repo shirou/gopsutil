@@ -8,8 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/shirou/gopsutil/v3/internal/common"
 )
 
 func skipIfNotImplementedErr(t *testing.T, err error) {
@@ -137,8 +138,8 @@ func testCPUPercent(t *testing.T, percpu bool) {
 		if err != nil {
 			t.Errorf("error %v", err)
 		}
-		// Skip CircleCI which CPU num is different
-		if os.Getenv("CIRCLECI") != "true" {
+		// Skip CI which CPU num is different
+		if os.Getenv("CI") != "true" {
 			if (percpu && len(v) != numcpu) || (!percpu && len(v) != 1) {
 				t.Fatalf("wrong number of entries from CPUPercent: %v", v)
 			}
@@ -171,8 +172,8 @@ func testCPUPercentLastUsed(t *testing.T, percpu bool) {
 		if err != nil {
 			t.Errorf("error %v", err)
 		}
-		// Skip CircleCI which CPU num is different
-		if os.Getenv("CIRCLECI") != "true" {
+		// Skip CI which CPU num is different
+		if os.Getenv("CI") != "true" {
 			if (percpu && len(v) != numcpu) || (!percpu && len(v) != 1) {
 				t.Fatalf("wrong number of entries from CPUPercent: %v", v)
 			}

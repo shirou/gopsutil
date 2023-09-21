@@ -90,8 +90,24 @@ environment variable.
 You can set an alternative location to `/dev` by setting the `HOST_DEV`
 environment variable.
 
+You can set an alternative location to `/` by setting the `HOST_ROOT`
+environment variable.
+
 You can set an alternative location to `/proc/N/mountinfo` by setting the
 `HOST_PROC_MOUNTINFO` environment variable.
+
+### Adding settings using `context` (from v3.23.6)
+
+As of v3.23.6, it is now possible to pass a path location using `context`: import `"github.com/shirou/gopsutil/v3/common"` and pass a context with `common.EnvMap` set to `common.EnvKey`, and the location will be used within each function.
+
+```
+	ctx := context.WithValue(context.Background(), 
+		common.EnvKey, common.EnvMap{common.HostProcEnvKey: "/myproc"},
+	)
+	v, err := mem.VirtualMemoryWithContext(ctx)
+```
+
+First priority is given to the value set in `context`, then the value from the environment variable, and finally the default location.
 
 ## Documentation
 
@@ -151,7 +167,7 @@ will provide useful information.
   - system wide stats on netfilter conntrack module
   - sourced from /proc/sys/net/netfilter/nf_conntrack_count
 
-Some code is ported from Ohai. many thanks.
+Some code is ported from Ohai. Many thanks.
 
 ## Current Status
 
@@ -216,9 +232,9 @@ Some code is ported from Ohai. many thanks.
 |rlimit              |x      |         |         |       |         |
 |num\_handlers       |       |         |         |       |         |
 |threads             |x      |         |         |       |         |
-|cpu\_percent        |x      |         |x        |x      |         |
+|cpu\_percent        |x      |         |x        |x      |x        |
 |cpu\_affinity       |       |         |         |       |         |
-|memory\_percent     |       |         |         |       |         |
+|memory\_percent     |x      |         |         |       |x        |
 |parent              |x      |         |x        |x      |x        |
 |children            |x      |x        |x        |x      |x        |
 |connections         |x      |         |x        |x      |         |
