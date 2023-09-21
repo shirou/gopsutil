@@ -36,7 +36,8 @@ func loadAvgGoroutine(ctx context.Context) {
 	)
 
 	tick := time.NewTicker(samplingFrequency).C
-	for {
+
+	f := func() {
 		// calling this because common.ProcessorQueueLengthCounter() returns zero values all time
 		w, err := common.GetSystemProcessInformation()
 		if err != nil {
