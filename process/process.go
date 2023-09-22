@@ -341,12 +341,7 @@ func (p *Process) CPUPercent() (float64, error) {
 }
 
 func (p *Process) CPUPercentWithContext(ctx context.Context) (float64, error) {
-	crt_time, err := p.createTimeWithContext(ctx)
-	if err != nil {
-		return 0, err
-	}
-
-	cput, err := p.TimesWithContext(ctx)
+	_, _, cput, crt_time, _, _, _, err := p.fillFromStatWithContext(ctx)
 	if err != nil {
 		return 0, err
 	}
