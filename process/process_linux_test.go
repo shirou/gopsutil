@@ -6,7 +6,6 @@ package process
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -58,7 +57,7 @@ func Test_Process_splitProcStat(t *testing.T) {
 }
 
 func Test_Process_splitProcStat_fromFile(t *testing.T) {
-	pids, err := ioutil.ReadDir("testdata/linux/")
+	pids, err := os.ReadDir("testdata/linux/")
 	if err != nil {
 		t.Error(err)
 	}
@@ -72,7 +71,7 @@ func Test_Process_splitProcStat_fromFile(t *testing.T) {
 		if _, err := os.Stat(statFile); err != nil {
 			continue
 		}
-		contents, err := ioutil.ReadFile(statFile)
+		contents, err := os.ReadFile(statFile)
 		assert.NoError(t, err)
 
 		pidStr := strconv.Itoa(int(pid))
@@ -94,7 +93,7 @@ func Test_Process_splitProcStat_fromFile(t *testing.T) {
 }
 
 func Test_fillFromCommWithContext(t *testing.T) {
-	pids, err := ioutil.ReadDir("testdata/linux/")
+	pids, err := os.ReadDir("testdata/linux/")
 	if err != nil {
 		t.Error(err)
 	}
@@ -115,7 +114,7 @@ func Test_fillFromCommWithContext(t *testing.T) {
 }
 
 func Test_fillFromStatusWithContext(t *testing.T) {
-	pids, err := ioutil.ReadDir("testdata/linux/")
+	pids, err := os.ReadDir("testdata/linux/")
 	if err != nil {
 		t.Error(err)
 	}
@@ -154,7 +153,7 @@ func Benchmark_fillFromStatusWithContext(b *testing.B) {
 }
 
 func Test_fillFromTIDStatWithContext_lx_brandz(t *testing.T) {
-	pids, err := ioutil.ReadDir("testdata/lx_brandz/")
+	pids, err := os.ReadDir("testdata/lx_brandz/")
 	if err != nil {
 		t.Error(err)
 	}

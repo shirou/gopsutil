@@ -89,7 +89,7 @@ func TestVirtualMemoryStat_String(t *testing.T) {
 		Free:        40,
 	}
 	t.Log(v)
-	e := `{"total":10,"available":20,"used":30,"usedPercent":30.1,"free":40,"active":0,"inactive":0,"wired":0,"laundry":0,"buffers":0,"cached":0,"writeBack":0,"dirty":0,"writeBackTmp":0,"shared":0,"slab":0,"sreclaimable":0,"sunreclaim":0,"pageTables":0,"swapCached":0,"commitLimit":0,"committedAS":0,"highTotal":0,"highFree":0,"lowTotal":0,"lowFree":0,"swapTotal":0,"swapFree":0,"mapped":0,"vmallocTotal":0,"vmallocUsed":0,"vmallocChunk":0,"hugePagesTotal":0,"hugePagesFree":0,"hugePagesRsvd":0,"hugePagesSurp":0,"hugePageSize":0}`
+	e := `{"total":10,"available":20,"used":30,"usedPercent":30.1,"free":40,"active":0,"inactive":0,"wired":0,"laundry":0,"buffers":0,"cached":0,"writeBack":0,"dirty":0,"writeBackTmp":0,"shared":0,"slab":0,"sreclaimable":0,"sunreclaim":0,"pageTables":0,"swapCached":0,"commitLimit":0,"committedAS":0,"highTotal":0,"highFree":0,"lowTotal":0,"lowFree":0,"swapTotal":0,"swapFree":0,"mapped":0,"vmallocTotal":0,"vmallocUsed":0,"vmallocChunk":0,"hugePagesTotal":0,"hugePagesFree":0,"hugePagesRsvd":0,"hugePagesSurp":0,"hugePageSize":0,"anonHugePages":0}`
 	if e != fmt.Sprintf("%v", v) {
 		t.Errorf("VirtualMemoryStat string is invalid: %v", v)
 	}

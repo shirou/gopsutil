@@ -311,6 +311,12 @@ func fillFromMeminfoWithContext(ctx context.Context) (*VirtualMemoryStat, *Virtu
 				return ret, retEx, err
 			}
 			ret.HugePageSize = t * 1024
+		case "AnonHugePages":
+			t, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return ret, retEx, err
+			}
+			ret.AnonHugePages = t * 1024
 		}
 	}
 

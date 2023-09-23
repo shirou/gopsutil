@@ -33,7 +33,7 @@ func TestHostInfo(t *testing.T) {
 }
 
 func TestUptime(t *testing.T) {
-	if os.Getenv("CIRCLECI") == "true" {
+	if os.Getenv("CI") == "true" {
 		t.Skip("Skip CI")
 	}
 
@@ -48,7 +48,7 @@ func TestUptime(t *testing.T) {
 }
 
 func TestBoot_time(t *testing.T) {
-	if os.Getenv("CIRCLECI") == "true" {
+	if os.Getenv("CI") == "true" {
 		t.Skip("Skip CI")
 	}
 	v, err := BootTime()

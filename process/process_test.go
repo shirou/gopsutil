@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"os"
 	"os/exec"
@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/shirou/gopsutil/v3/internal/common"
 )
@@ -301,7 +302,7 @@ func Test_Process_Name(t *testing.T) {
 }
 
 func Test_Process_Long_Name_With_Spaces(t *testing.T) {
-	tmpdir, err := ioutil.TempDir("", "")
+	tmpdir, err := os.MkdirTemp("", "")
 	if err != nil {
 		t.Fatalf("unable to create temp dir %v", err)
 	}
@@ -347,7 +348,7 @@ func Test_Process_Long_Name_With_Spaces(t *testing.T) {
 }
 
 func Test_Process_Long_Name(t *testing.T) {
-	tmpdir, err := ioutil.TempDir("", "")
+	tmpdir, err := os.MkdirTemp("", "")
 	if err != nil {
 		t.Fatalf("unable to create temp dir %v", err)
 	}
@@ -404,7 +405,7 @@ func Test_Process_Name_Against_Python(t *testing.T) {
 		t.Skipf("psutil not found for %s: %s", py3Path, out)
 	}
 
-	tmpdir, err := ioutil.TempDir("", "")
+	tmpdir, err := os.MkdirTemp("", "")
 	if err != nil {
 		t.Fatalf("unable to create temp dir %v", err)
 	}
@@ -501,7 +502,7 @@ func Test_Process_CpuPercentLoop(t *testing.T) {
 }
 
 func Test_Process_CreateTime(t *testing.T) {
-	if os.Getenv("CIRCLECI") == "true" {
+	if os.Getenv("CI") == "true" {
 		t.Skip("Skip CI")
 	}
 
@@ -570,7 +571,7 @@ func Test_Connections(t *testing.T) {
 		defer conn.Close()
 
 		serverEstablished <- struct{}{}
-		_, err = ioutil.ReadAll(conn)
+		_, err = io.ReadAll(conn)
 		if err != nil {
 			panic(err)
 		}
@@ -773,7 +774,7 @@ func Test_IsRunning(t *testing.T) {
 }
 
 func Test_Process_Environ(t *testing.T) {
-	tmpdir, err := ioutil.TempDir("", "")
+	tmpdir, err := os.MkdirTemp("", "")
 	if err != nil {
 		t.Fatalf("unable to create temp dir %v", err)
 	}
@@ -860,5 +861,13 @@ func BenchmarkProcessPpid(b *testing.B) {
 	p := testGetProcess()
 	for i := 0; i < b.N; i++ {
 		p.Ppid()
+	}
+}
+
+func BenchmarkProcesses(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		ps, err := Processes()
+		require.NoError(b, err)
+		require.Greater(b, len(ps), 0)
 	}
 }
