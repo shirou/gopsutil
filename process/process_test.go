@@ -227,6 +227,11 @@ func Test_Process_NumCtx(t *testing.T) {
 func Test_Process_Nice(t *testing.T) {
 	p := testGetProcess()
 
+	// https://github.com/shirou/gopsutil/issues/1532
+	if os.Getenv("CI") == "true" && runtime.GOOS == "darwin" {
+		t.Skip("Skip CI")
+	}
+
 	n, err := p.Nice()
 	skipIfNotImplementedErr(t, err)
 	if err != nil {
