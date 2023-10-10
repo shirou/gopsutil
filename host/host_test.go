@@ -89,6 +89,7 @@ func TestUsers(t *testing.T) {
 		if u == empty {
 			t.Errorf("Could not Users %v", v)
 		}
+		t.Log(u)
 	}
 }
 
