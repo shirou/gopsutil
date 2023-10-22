@@ -64,6 +64,9 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 		return ret, err
 	}
 
+	// Skip macOS utmpx header part
+	buf = buf[604:]
+
 	u := Utmpx{}
 	entrySize := int(unsafe.Sizeof(u))
 	count := len(buf) / entrySize
