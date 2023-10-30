@@ -5,7 +5,6 @@ package load
 
 import (
 	"context"
-	"log"
 	"math"
 	"sync"
 	"time"
@@ -37,7 +36,6 @@ func loadAvgGoroutine(ctx context.Context) {
 
 	counter, err := common.ProcessorQueueLengthCounter()
 	if err != nil || counter == nil {
-		log.Printf("unexpected processor queue length counter error, %v\n", err)
 		return
 	}
 
