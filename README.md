@@ -190,7 +190,7 @@ Some code is ported from Ohai. Many thanks.
 |users                 |x      |x        |x        |x       |x        |         |         |
 |pids                  |x      |x        |x        |x       |x        |         |         |
 |pid\_exists           |x      |x        |x        |x       |x        |         |         |
-|net\_connections      |x      |         |x        |x       |         |         |         |
+|net\_connections      |x      |x        |x        |x       |         |         |         |
 |net\_protocols        |x      |         |         |        |         |         |         |
 |net\_if\_addrs        |       |         |         |        |         |         |         |
 |net\_if\_stats        |       |         |         |        |         |         |         |
