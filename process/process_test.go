@@ -467,6 +467,16 @@ func Test_Process_Exe(t *testing.T) {
 	}
 }
 
+func Test_Process_Cgroup(t *testing.T) {
+	p := testGetProcess()
+
+	_, err := p.Cgroup()
+	skipIfNotImplementedErr(t, err)
+	if err != nil {
+		t.Errorf("getting cgroup error %v", err)
+	}
+}
+
 func Test_Process_CpuPercent(t *testing.T) {
 	p := testGetProcess()
 	_, err := p.Percent(0)
@@ -859,6 +869,13 @@ func BenchmarkProcessName(b *testing.B) {
 	p := testGetProcess()
 	for i := 0; i < b.N; i++ {
 		p.Name()
+	}
+}
+
+func BenchmarkProcessCgroup(b *testing.B) {
+	p := testGetProcess()
+	for i := 0; i < b.N; i++ {
+		p.Cgroup()
 	}
 }
 

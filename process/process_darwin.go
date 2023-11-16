@@ -89,6 +89,10 @@ func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 	return name, nil
 }
 
+func (p *Process) CgroupWithContext(ctx context.Context) (string, error) {
+	return "", common.ErrNotImplementedError
+}
+
 func (p *Process) createTimeWithContext(ctx context.Context) (int64, error) {
 	k, err := p.getKProc()
 	if err != nil {

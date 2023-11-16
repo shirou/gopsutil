@@ -90,6 +90,15 @@ func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 	return p.name, nil
 }
 
+func (p *Process) CgroupWithContext(ctx context.Context) (string, error) {
+	if p.cgroup == "" {
+		if err := p.fillCgroupWithContext(ctx); err != nil {
+			return "", err
+		}
+	}
+	return p.cgroup, nil
+}
+
 func (p *Process) TgidWithContext(ctx context.Context) (int32, error) {
 	if p.tgid == 0 {
 		if err := p.fillFromStatusWithContext(ctx); err != nil {
@@ -807,6 +816,19 @@ func (p *Process) fillFromCommWithContext(ctx context.Context) error {
 	}
 
 	p.name = strings.TrimSuffix(string(contents), "\n")
+	return nil
+}
+
+// Get cgroup from /proc/(pid)/cgroup
+func (p *Process) fillCgroupWithContext(ctx context.Context) error {
+	pid := p.Pid
+	statPath := common.HostProcWithContext(ctx, strconv.Itoa(int(pid)), "cgroup")
+	contents, err := os.ReadFile(statPath)
+	if err != nil {
+		return err
+	}
+
+	p.cgroup = strings.TrimSuffix(string(contents), "\n")
 	return nil
 }
 

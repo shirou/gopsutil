@@ -26,6 +26,7 @@ type Process struct {
 	Pid            int32 `json:"pid"`
 	name           string
 	status         string
+	cgroup         string
 	parent         int32
 	parentMutex    sync.RWMutex // for windows ppid cache
 	numCtxSwitches *NumCtxSwitchesStat
@@ -373,6 +374,11 @@ func (p *Process) Ppid() (int32, error) {
 // Name returns name of the process.
 func (p *Process) Name() (string, error) {
 	return p.NameWithContext(context.Background())
+}
+
+// Cgroup returns cgroup of the process.
+func (p *Process) Cgroup() (string, error) {
+	return p.CgroupWithContext(context.Background())
 }
 
 // Exe returns executable path of the process.

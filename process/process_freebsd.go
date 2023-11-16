@@ -62,6 +62,10 @@ func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 	return name, nil
 }
 
+func (p *Process) CgroupWithContext(ctx context.Context) (string, error) {
+	return "", common.ErrNotImplementedError
+}
+
 func (p *Process) CwdWithContext(ctx context.Context) (string, error) {
 	return "", common.ErrNotImplementedError
 }

@@ -335,6 +335,10 @@ func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 	return filepath.Base(exe), nil
 }
 
+func (p *Process) CgroupWithContext(ctx context.Context) (string, error) {
+	return "", common.ErrNotImplementedError
+}
+
 func (p *Process) TgidWithContext(ctx context.Context) (int32, error) {
 	return 0, common.ErrNotImplementedError
 }
