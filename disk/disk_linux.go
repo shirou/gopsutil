@@ -5,7 +5,6 @@ package disk
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -485,25 +484,35 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 	return ret, nil
 }
 
-func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
-	var stat unix.Stat_t
-	err := unix.Stat(name, &stat)
-	if err != nil {
-		return "", err
-	}
-	major := unix.Major(uint64(stat.Rdev))
-	minor := unix.Minor(uint64(stat.Rdev))
-
-	// Try to get the serial from udev data
+func udevData(ctx context.Context, major uint32, minor uint32, name string) (string, error) {
 	udevDataPath := common.HostRunWithContext(ctx, fmt.Sprintf("udev/data/b%d:%d", major, minor))
-	if udevdata, err := os.ReadFile(udevDataPath); err == nil {
-		scanner := bufio.NewScanner(bytes.NewReader(udevdata))
+	if f, err := os.Open(udevDataPath); err == nil {
+		defer f.Close()
+		scanner := bufio.NewScanner(f)
 		for scanner.Scan() {
-			values := strings.Split(scanner.Text(), "=")
-			if len(values) == 2 && values[0] == "E:ID_SERIAL" {
+			values := strings.SplitN(scanner.Text(), "=", 3)
+			if len(values) == 2 && values[0] == name {
 				return values[1], nil
 			}
 		}
+		return "", scanner.Err()
+	} else if !os.IsNotExist(err) {
+		return "", err
+	}
+	return "", nil
+}
+
+func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
+	var stat unix.Stat_t
+	if err := unix.Stat(name, &stat); err != nil {
+		return "", err
+	}
+	major := unix.Major(stat.Rdev)
+	minor := unix.Minor(stat.Rdev)
+
+	sserial, _ := udevData(ctx, major, minor, "E:ID_SERIAL")
+	if sserial != "" {
+		return sserial, nil
 	}
 
 	// Try to get the serial from sysfs, look at the disk device (minor 0) directly
@@ -520,16 +529,26 @@ func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
 func LabelWithContext(ctx context.Context, name string) (string, error) {
 	// Try label based on devicemapper name
 	dmname_filename := common.HostSysWithContext(ctx, fmt.Sprintf("block/%s/dm/name", name))
-
-	if !common.PathExists(dmname_filename) {
-		return "", nil
+	// Could errors.Join errs with Go >= 1.20
+	if common.PathExists(dmname_filename) {
+		dmname, err := os.ReadFile(dmname_filename)
+		if err == nil {
+			return strings.TrimSpace(string(dmname)), nil
+		}
 	}
+	// Try udev data
+	var stat unix.Stat_t
+	if err := unix.Stat(common.HostDevWithContext(ctx, name), &stat); err != nil {
+		return "", err
+	}
+	major := unix.Major(stat.Rdev)
+	minor := unix.Minor(stat.Rdev)
 
-	dmname, err := os.ReadFile(dmname_filename)
+	label, err := udevData(ctx, major, minor, "E:ID_FS_LABEL")
 	if err != nil {
 		return "", err
 	}
-	return strings.TrimSpace(string(dmname)), nil
+	return label, nil
 }
 
 func getFsType(stat unix.Statfs_t) string {
