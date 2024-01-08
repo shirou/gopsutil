@@ -11,7 +11,6 @@ import (
 	"unicode/utf16"
 	"unsafe"
 
-	"github.com/pkg/errors"
 	"github.com/shirou/gopsutil/v3/internal/common"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
@@ -110,7 +109,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 			uintptr(unsafe.Pointer(&volNameBuf[0])),
 			uintptr(volumeNameBufferLength))
 		if windows.Handle(nextVolHandle) == windows.InvalidHandle {
-			errFirstVol = errors.WithMessagef(err, "failed to get first-volume")
+			errFirstVol = fmt.Errorf("failed to get first-volume: %w", err)
 			return
 		}
 		defer procFindVolumeClose.Call(nextVolHandle)
@@ -128,14 +127,14 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 					if errno, ok := err.(syscall.Errno); ok && errno == windows.ERROR_NO_MORE_FILES {
 						break
 					}
-					warnings.Add(errors.WithMessagef(err, "failed to find next volume"))
+					warnings.Add(fmt.Errorf("failed to find next volume: %w", err))
 					continue
 				}
 			}
 
 			firstVolume = false
 			if volPaths, err = getVolumePaths(volNameBuf); err != nil {
-				warnings.Add(errors.WithMessagef(err, "failed to find paths for volume %s", windows.UTF16ToString(volNameBuf)))
+				warnings.Add(fmt.Errorf("failed to find paths for volume %s", windows.UTF16ToString(volNameBuf)))
 				continue
 			}
 
@@ -154,7 +153,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 						volNameBuf := make([]uint16, 256)
 						volSerialNum := uint32(0)
 						maxComponentLen := uint32(0)
-						if driveRet, _, err := procGetVolumeInformationW.Call(
+						driveRet, _, err := procGetVolumeInformationW.Call(
 							uintptr(unsafe.Pointer(rootPathPtr)),
 							uintptr(unsafe.Pointer(&volNameBuf[0])),
 							uintptr(len(volNameBuf)),
@@ -162,11 +161,12 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 							uintptr(unsafe.Pointer(&maxComponentLen)),
 							uintptr(unsafe.Pointer(&fsFlags)),
 							uintptr(unsafe.Pointer(&fsNameBuf[0])),
-							uintptr(len(fsNameBuf))); err != nil && driveRet == 0 {
-							if driveType == windows.DRIVE_CDROM && driveType == windows.DRIVE_REMOVABLE {
+							uintptr(len(fsNameBuf)))
+						if err != nil && driveRet == 0 {
+							if driveType == windows.DRIVE_CDROM || driveType == windows.DRIVE_REMOVABLE {
 								continue
 							}
-							warnings.Add(errors.WithMessagef(err, "failed to get volume information"))
+							warnings.Add(fmt.Errorf("failed to get volume information: %w", err))
 							continue
 						}
 						opts := []string{"rw"}
