@@ -127,16 +127,20 @@ func uptimeMillis() (uint64, error) {
 var cachedBootTime uint64
 
 func BootTimeWithContext(ctx context.Context) (uint64, error) {
-	t := atomic.LoadUint64(&cachedBootTime)
-	if t != 0 {
-		return t, nil
+	if enableBootTimeCache {
+		t := atomic.LoadUint64(&cachedBootTime)
+		if t != 0 {
+			return t, nil
+		}
 	}
 	up, err := uptimeMillis()
 	if err != nil {
 		return 0, err
 	}
-	t = uint64((time.Duration(timeSinceMillis(up)) * time.Millisecond).Seconds())
-	atomic.StoreUint64(&cachedBootTime, t)
+	t := uint64((time.Duration(timeSinceMillis(up)) * time.Millisecond).Seconds())
+	if enableBootTimeCache {
+		atomic.StoreUint64(&cachedBootTime, t)
+	}
 	return t, nil
 }
 

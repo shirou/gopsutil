@@ -14,16 +14,20 @@ import (
 var cachedBootTime uint64
 
 func BootTimeWithContext(ctx context.Context) (uint64, error) {
-	t := atomic.LoadUint64(&cachedBootTime)
-	if t != 0 {
-		return t, nil
+	if enableBootTimeCache {
+		t := atomic.LoadUint64(&cachedBootTime)
+		if t != 0 {
+			return t, nil
+		}
 	}
 	tv, err := unix.SysctlTimeval("kern.boottime")
 	if err != nil {
 		return 0, err
 	}
 
-	atomic.StoreUint64(&cachedBootTime, uint64(tv.Sec))
+	if enableBootTimeCache {
+		atomic.StoreUint64(&cachedBootTime, uint64(tv.Sec))
+	}
 
 	return uint64(tv.Sec), nil
 }
