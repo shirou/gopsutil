@@ -507,8 +507,8 @@ func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
 	if err := unix.Stat(name, &stat); err != nil {
 		return "", err
 	}
-	major := unix.Major(stat.Rdev)
-	minor := unix.Minor(stat.Rdev)
+	major := unix.Major(uint64(stat.Rdev))
+	minor := unix.Minor(uint64(stat.Rdev))
 
 	sserial, _ := udevData(ctx, major, minor, "E:ID_SERIAL")
 	if sserial != "" {
@@ -541,8 +541,8 @@ func LabelWithContext(ctx context.Context, name string) (string, error) {
 	if err := unix.Stat(common.HostDevWithContext(ctx, name), &stat); err != nil {
 		return "", err
 	}
-	major := unix.Major(stat.Rdev)
-	minor := unix.Minor(stat.Rdev)
+	major := unix.Major(uint64(stat.Rdev))
+	minor := unix.Minor(uint64(stat.Rdev))
 
 	label, err := udevData(ctx, major, minor, "E:ID_FS_LABEL")
 	if err != nil {
