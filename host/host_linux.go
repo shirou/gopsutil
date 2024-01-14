@@ -71,7 +71,7 @@ func numProcs(ctx context.Context) (uint64, error) {
 }
 
 func BootTimeWithContext(ctx context.Context) (uint64, error) {
-	return common.BootTimeWithContext(ctx)
+	return common.BootTimeWithContext(ctx, enableBootTimeCache)
 }
 
 func UptimeWithContext(ctx context.Context) (uint64, error) {

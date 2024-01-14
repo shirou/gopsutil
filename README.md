@@ -109,6 +109,17 @@ As of v3.23.6, it is now possible to pass a path location using `context`: impor
 
 First priority is given to the value set in `context`, then the value from the environment variable, and finally the default location.
 
+### Caching
+
+As of v3.24.1, it is now possible to cached some values. These values default to false, not cached. 
+
+Be very careful that enabling the cache may cause inconsistencies. For example, if you enable caching of boottime on Linux, be aware that unintended values may be returned if [the boottime is changed by NTP after booted](https://github.com/shirou/gopsutil/issues/1070#issuecomment-842512782).
+
+- `host`
+  - EnableBootTimeCache
+- `process`
+  - EnableBootTimeCache
+
 ## Documentation
 
 See https://pkg.go.dev/github.com/shirou/gopsutil/v3 or https://godocs.io/github.com/shirou/gopsutil/v3
