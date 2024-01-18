@@ -229,47 +229,47 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 				version = contents[0]
 			}
 		}
-	} else if common.PathExists(common.HostEtcWithContext(ctx, "neokylin-release")) {
+	} else if common.PathExistsWithContents(common.HostEtcWithContext(ctx, "neokylin-release")) {
 		contents, err := common.ReadLines(common.HostEtcWithContext(ctx, "neokylin-release"))
 		if err == nil {
 			version = getRedhatishVersion(contents)
 			platform = getRedhatishPlatform(contents)
 		}
-	} else if common.PathExists(common.HostEtcWithContext(ctx, "redhat-release")) {
+	} else if common.PathExistsWithContents(common.HostEtcWithContext(ctx, "redhat-release")) {
 		contents, err := common.ReadLines(common.HostEtcWithContext(ctx, "redhat-release"))
 		if err == nil {
 			version = getRedhatishVersion(contents)
 			platform = getRedhatishPlatform(contents)
 		}
-	} else if common.PathExists(common.HostEtcWithContext(ctx, "system-release")) {
+	} else if common.PathExistsWithContents(common.HostEtcWithContext(ctx, "system-release")) {
 		contents, err := common.ReadLines(common.HostEtcWithContext(ctx, "system-release"))
 		if err == nil {
 			version = getRedhatishVersion(contents)
 			platform = getRedhatishPlatform(contents)
 		}
-	} else if common.PathExists(common.HostEtcWithContext(ctx, "gentoo-release")) {
+	} else if common.PathExistsWithContents(common.HostEtcWithContext(ctx, "gentoo-release")) {
 		platform = "gentoo"
 		contents, err := common.ReadLines(common.HostEtcWithContext(ctx, "gentoo-release"))
 		if err == nil {
 			version = getRedhatishVersion(contents)
 		}
-	} else if common.PathExists(common.HostEtcWithContext(ctx, "SuSE-release")) {
+	} else if common.PathExistsWithContents(common.HostEtcWithContext(ctx, "SuSE-release")) {
 		contents, err := common.ReadLines(common.HostEtcWithContext(ctx, "SuSE-release"))
 		if err == nil {
 			version = getSuseVersion(contents)
 			platform = getSusePlatform(contents)
 		}
 		// TODO: slackware detecion
-	} else if common.PathExists(common.HostEtcWithContext(ctx, "arch-release")) {
+	} else if common.PathExistsWithContents(common.HostEtcWithContext(ctx, "arch-release")) {
 		platform = "arch"
 		version = lsb.Release
-	} else if common.PathExists(common.HostEtcWithContext(ctx, "alpine-release")) {
+	} else if common.PathExistsWithContents(common.HostEtcWithContext(ctx, "alpine-release")) {
 		platform = "alpine"
 		contents, err := common.ReadLines(common.HostEtcWithContext(ctx, "alpine-release"))
 		if err == nil && len(contents) > 0 && contents[0] != "" {
 			version = contents[0]
 		}
-	} else if common.PathExists(common.HostEtcWithContext(ctx, "os-release")) {
+	} else if common.PathExistsWithContents(common.HostEtcWithContext(ctx, "os-release")) {
 		p, v, err := common.GetOSReleaseWithContext(ctx)
 		if err == nil {
 			platform = p
