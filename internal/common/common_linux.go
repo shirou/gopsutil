@@ -329,7 +329,7 @@ func GetOSReleaseWithContext(ctx context.Context) (platform string, version stri
 		switch field[0] {
 		case "ID": // use ID for lowercase
 			platform = trimQuotes(field[1])
-		case "VERSION":
+		case "VERSION_ID":
 			version = trimQuotes(field[1])
 		}
 	}
