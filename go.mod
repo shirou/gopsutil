@@ -9,7 +9,7 @@ require (
 	github.com/shoenig/go-m1cpu v0.1.6
 	github.com/stretchr/testify v1.8.4
 	github.com/tklauser/go-sysconf v0.3.12
-	github.com/yusufpapurcu/wmi v1.2.3
+	github.com/yusufpapurcu/wmi v1.2.4
 	golang.org/x/sys v0.17.0
 )
 
