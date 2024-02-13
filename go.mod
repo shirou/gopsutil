@@ -1,6 +1,6 @@
-module github.com/shirou/gopsutil/v3
+module github.com/shirou/gopsutil/v4
 
-go 1.15
+go 1.20
 
 require (
 	github.com/google/go-cmp v0.6.0
