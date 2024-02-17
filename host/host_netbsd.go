@@ -45,10 +45,6 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 	return ret, common.ErrNotImplementedError
 }
 
-func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
-	return []TemperatureStat{}, common.ErrNotImplementedError
-}
-
 func KernelVersionWithContext(ctx context.Context) (string, error) {
 	_, _, version, err := PlatformInformationWithContext(ctx)
 	return version, err
