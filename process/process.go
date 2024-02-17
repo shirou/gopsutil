@@ -30,8 +30,8 @@ type Process struct {
 	parent         int32
 	parentMutex    sync.RWMutex // for windows ppid cache
 	numCtxSwitches *NumCtxSwitchesStat
-	uids           []int32
-	gids           []int32
+	uids           []uint32
+	gids           []uint32
 	groups         []uint32
 	numThreads     int32
 	memInfo        *MemoryInfoStat
@@ -434,12 +434,12 @@ func (p *Process) Foreground() (bool, error) {
 }
 
 // Uids returns user ids of the process as a slice of the int
-func (p *Process) Uids() ([]int32, error) {
+func (p *Process) Uids() ([]uint32, error) {
 	return p.UidsWithContext(context.Background())
 }
 
 // Gids returns group ids of the process as a slice of the int
-func (p *Process) Gids() ([]int32, error) {
+func (p *Process) Gids() ([]uint32, error) {
 	return p.GidsWithContext(context.Background())
 }
 
