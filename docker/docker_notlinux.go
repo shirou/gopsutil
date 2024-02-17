@@ -1,12 +1,12 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build !linux
-// +build !linux
 
 package docker
 
 import (
 	"context"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 // GetDockerStat returns a list of Docker basic stats.

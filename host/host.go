@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 package host
 
 import (
@@ -8,7 +9,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 type Warnings = common.Warnings

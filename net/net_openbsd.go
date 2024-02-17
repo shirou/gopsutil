@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build openbsd
-// +build openbsd
 
 package net
 
@@ -12,7 +12,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 var portMatch = regexp.MustCompile(`(.*)\.(\d+)$`)

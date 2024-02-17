@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build darwin && cgo
-// +build darwin,cgo
 
 package process
 
@@ -20,7 +20,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v4/cpu"
 )
 
 var (

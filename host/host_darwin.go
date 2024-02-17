@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build darwin
-// +build darwin
 
 package host
 
@@ -15,8 +15,8 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
-	"github.com/shirou/gopsutil/v3/process"
+	"github.com/shirou/gopsutil/v4/internal/common"
+	"github.com/shirou/gopsutil/v4/process"
 )
 
 // from utmpx.h

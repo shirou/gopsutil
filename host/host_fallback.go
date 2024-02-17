@@ -1,12 +1,12 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build !darwin && !linux && !freebsd && !openbsd && !netbsd && !solaris && !windows && !aix
-// +build !darwin,!linux,!freebsd,!openbsd,!netbsd,!solaris,!windows,!aix
 
 package host
 
 import (
 	"context"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func HostIDWithContext(ctx context.Context) (string, error) {

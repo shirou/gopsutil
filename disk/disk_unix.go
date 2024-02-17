@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build freebsd || linux || darwin
-// +build freebsd linux darwin
 
 package disk
 

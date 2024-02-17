@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build linux && s390x
-// +build linux,s390x
 
 // Created by cgo -godefs - DO NOT EDIT
 // cgo -godefs types_linux.go

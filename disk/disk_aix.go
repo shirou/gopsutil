@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build aix
-// +build aix
 
 package disk
 
@@ -8,7 +8,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOCountersStat, error) {
