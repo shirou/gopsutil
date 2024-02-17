@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build freebsd
-// +build freebsd
 
 package process
 
@@ -10,9 +10,9 @@ import (
 	"strconv"
 	"strings"
 
-	cpu "github.com/shirou/gopsutil/v3/cpu"
-	"github.com/shirou/gopsutil/v3/internal/common"
-	net "github.com/shirou/gopsutil/v3/net"
+	cpu "github.com/shirou/gopsutil/v4/cpu"
+	"github.com/shirou/gopsutil/v4/internal/common"
+	net "github.com/shirou/gopsutil/v4/net"
 	"golang.org/x/sys/unix"
 )
 

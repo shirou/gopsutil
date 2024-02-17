@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 package process
 
 import (
@@ -7,9 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/shirou/gopsutil/v3/cpu"
-	"github.com/shirou/gopsutil/v3/internal/common"
-	"github.com/shirou/gopsutil/v3/net"
+	"github.com/shirou/gopsutil/v4/cpu"
+	"github.com/shirou/gopsutil/v4/internal/common"
+	"github.com/shirou/gopsutil/v4/net"
 )
 
 type MemoryMapsStat struct {

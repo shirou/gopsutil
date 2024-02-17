@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build linux || freebsd
-// +build linux freebsd
 
 package process
 

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 package host
 
 import (
@@ -7,7 +8,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func skipIfNotImplementedErr(t *testing.T, err error) {

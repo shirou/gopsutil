@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build darwin && cgo
-// +build darwin,cgo
 
 package cpu
 

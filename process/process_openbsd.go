@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build openbsd
-// +build openbsd
 
 package process
 
@@ -14,10 +14,10 @@ import (
 	"strings"
 	"unsafe"
 
-	cpu "github.com/shirou/gopsutil/v3/cpu"
-	"github.com/shirou/gopsutil/v3/internal/common"
-	mem "github.com/shirou/gopsutil/v3/mem"
-	net "github.com/shirou/gopsutil/v3/net"
+	cpu "github.com/shirou/gopsutil/v4/cpu"
+	"github.com/shirou/gopsutil/v4/internal/common"
+	mem "github.com/shirou/gopsutil/v4/mem"
+	net "github.com/shirou/gopsutil/v4/net"
 	"golang.org/x/sys/unix"
 )
 

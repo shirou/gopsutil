@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build ignore
-// +build ignore
 
 // plus hand editing about timeval
 
