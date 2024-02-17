@@ -117,26 +117,26 @@ func (p *Process) ForegroundWithContext(ctx context.Context) (bool, error) {
 	return strings.IndexByte(string(out), '+') != -1, nil
 }
 
-func (p *Process) UidsWithContext(ctx context.Context) ([]int32, error) {
+func (p *Process) UidsWithContext(ctx context.Context) ([]uint32, error) {
 	k, err := p.getKProc()
 	if err != nil {
 		return nil, err
 	}
 
 	// See: http://unix.superglobalmegacorp.com/Net2/newsrc/sys/ucred.h.html
-	userEffectiveUID := int32(k.Eproc.Ucred.Uid)
+	userEffectiveUID := uint32(k.Eproc.Ucred.Uid)
 
-	return []int32{userEffectiveUID}, nil
+	return []uint32{userEffectiveUID}, nil
 }
 
-func (p *Process) GidsWithContext(ctx context.Context) ([]int32, error) {
+func (p *Process) GidsWithContext(ctx context.Context) ([]uint32, error) {
 	k, err := p.getKProc()
 	if err != nil {
 		return nil, err
 	}
 
-	gids := make([]int32, 0, 3)
-	gids = append(gids, int32(k.Eproc.Pcred.P_rgid), int32(k.Eproc.Pcred.P_rgid), int32(k.Eproc.Pcred.P_svgid))
+	gids := make([]uint32, 0, 3)
+	gids = append(gids, uint32(k.Eproc.Pcred.P_rgid), uint32(k.Eproc.Pcred.P_rgid), uint32(k.Eproc.Pcred.P_svgid))
 
 	return gids, nil
 }
