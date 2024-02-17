@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build darwin
-// +build darwin
 
 package process
 
@@ -13,8 +13,8 @@ import (
 	"github.com/tklauser/go-sysconf"
 	"golang.org/x/sys/unix"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
-	"github.com/shirou/gopsutil/v3/net"
+	"github.com/shirou/gopsutil/v4/internal/common"
+	"github.com/shirou/gopsutil/v4/net"
 )
 
 // copied from sys/sysctl.h

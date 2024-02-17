@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 package host
 
 import (
@@ -12,7 +13,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func HostIDWithContext(ctx context.Context) (string, error) {

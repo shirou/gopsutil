@@ -6,7 +6,7 @@ GOOS=$(go env GOOS)
 GOARCH=$(go env GOARCH)
 GOARCH=$(go env GOARCH)
 
-for DIR in . v3
+for DIR in .
 do
         (cd "$DIR" || exit
         for PKG in $PKGS

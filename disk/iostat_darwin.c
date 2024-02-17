@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Copyright (c) 2017, kadota kyohei
 // https://github.com/lufia/iostat/blob/9f7362b77ad333b26c01c99de52a11bdb650ded2/iostat_darwin.c
 #include <stdint.h>
 #include <CoreFoundation/CoreFoundation.h>

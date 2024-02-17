@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build darwin || freebsd || openbsd || netbsd
-// +build darwin freebsd openbsd netbsd
 
 package host
 
