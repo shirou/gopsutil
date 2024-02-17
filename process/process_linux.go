@@ -148,18 +148,18 @@ func (p *Process) ForegroundWithContext(ctx context.Context) (bool, error) {
 	return pgid == tpgid, nil
 }
 
-func (p *Process) UidsWithContext(ctx context.Context) ([]int32, error) {
+func (p *Process) UidsWithContext(ctx context.Context) ([]uint32, error) {
 	err := p.fillFromStatusWithContext(ctx)
 	if err != nil {
-		return []int32{}, err
+		return []uint32{}, err
 	}
 	return p.uids, nil
 }
 
-func (p *Process) GidsWithContext(ctx context.Context) ([]int32, error) {
+func (p *Process) GidsWithContext(ctx context.Context) ([]uint32, error) {
 	err := p.fillFromStatusWithContext(ctx)
 	if err != nil {
-		return []int32{}, err
+		return []uint32{}, err
 	}
 	return p.gids, nil
 }
@@ -866,22 +866,22 @@ func (p *Process) fillFromStatusWithContext(ctx context.Context) error {
 			}
 			p.tgid = int32(pval)
 		case "Uid":
-			p.uids = make([]int32, 0, 4)
+			p.uids = make([]uint32, 0, 4)
 			for _, i := range strings.Split(value, "\t") {
 				v, err := strconv.ParseInt(i, 10, 32)
 				if err != nil {
 					return err
 				}
-				p.uids = append(p.uids, int32(v))
+				p.uids = append(p.uids, uint32(v))
 			}
 		case "Gid":
-			p.gids = make([]int32, 0, 4)
+			p.gids = make([]uint32, 0, 4)
 			for _, i := range strings.Split(value, "\t") {
 				v, err := strconv.ParseInt(i, 10, 32)
 				if err != nil {
 					return err
 				}
-				p.gids = append(p.gids, int32(v))
+				p.gids = append(p.gids, uint32(v))
 			}
 		case "Groups":
 			groups := strings.Fields(value)
