@@ -41,10 +41,6 @@ func PlatformInformationWithContext(ctx context.Context) (string, string, string
 	return "", "", "", common.ErrNotImplementedError
 }
 
-func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
-	return []TemperatureStat{}, common.ErrNotImplementedError
-}
-
 func KernelArch() (string, error) {
 	return "", common.ErrNotImplementedError
 }
