@@ -13,7 +13,7 @@ jobs:
         run: |
           versions=$(curl -s 'https://go.dev/dl/?mode=json' | jq -c 'map(.version[2:])')
           echo "::set-output name=value::${versions}"
-  test_v3_module:
+  test:
     needs: go-versions
     strategy:
       fail-fast: false
