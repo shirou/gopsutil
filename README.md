@@ -218,7 +218,7 @@ Some code is ported from Ohai. Many thanks.
 |cmdline             |x      |x        |         |x      |x        |
 |create\_time        |x      |         |         |x      |x        |
 |status              |x      |x        |x        |x      |         |
-|cwd                 |x      |         |         |x      |         |
+|cwd                 |x      |         |         |x      |x        |
 |exe                 |x      |x        |x        |       |x        |
 |uids                |x      |x        |x        |x      |         |
 |gids                |x      |x        |x        |x      |         |
