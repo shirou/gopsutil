@@ -9,7 +9,6 @@ import (
 	"unsafe"
 
 	"github.com/shirou/gopsutil/v3/internal/common"
-	"github.com/yusufpapurcu/wmi"
 	"golang.org/x/sys/windows"
 )
 
@@ -117,8 +116,12 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 			ModelName:  l.Name,
 			Cores:      int32(l.NumberOfLogicalProcessors),
 			PhysicalID: procID,
-			Mhz:        float64(l.MaxClockSpeed),
-			Flags:      []string{},
+			Mhz: Mhz{
+				current: float64(l.MaxClockSpeed),
+				max:     float64(l.MaxClockSpeed),
+				min:     0,
+			},
+			Flags: []string{},
 		}
 		ret = append(ret, cpu)
 	}

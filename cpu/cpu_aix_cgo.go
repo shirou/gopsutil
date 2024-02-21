@@ -49,8 +49,12 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 		return nil, err
 	}
 	info := InfoStat{
-		CPU:   0,
-		Mhz:   float64(c.ProcessorHz / 1000000),
+		CPU: 0,
+		Mhz: Mhz{
+			current: float64(c.ProcessorHz / 1000000),
+			max:     0,
+			min:     0,
+		},
 		Cores: int32(c.NCpusCfg),
 	}
 	result := []InfoStat{info}
