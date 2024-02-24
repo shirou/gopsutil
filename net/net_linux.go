@@ -552,7 +552,7 @@ func getProcInodes(root string, pid int32, max int) (map[string][]inodeMap, erro
 		return ret, err
 	}
 	defer f.Close()
-	dirEntries, err := readDir(f, max)
+	dirEntries, err := f.ReadDir(max)
 	if err != nil {
 		return ret, err
 	}
