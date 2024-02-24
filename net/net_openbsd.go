@@ -18,7 +18,8 @@ import (
 var portMatch = regexp.MustCompile(`(.*)\.(\d+)$`)
 
 func ParseNetstat(output string, mode string,
-	iocs map[string]IOCountersStat) error {
+	iocs map[string]IOCountersStat,
+) error {
 	lines := strings.Split(output, "\n")
 
 	exists := make([]string, 0, len(lines)-1)
