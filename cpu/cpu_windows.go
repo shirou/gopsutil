@@ -13,9 +13,7 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-var (
-	procGetNativeSystemInfo = common.Modkernel32.NewProc("GetNativeSystemInfo")
-)
+var procGetNativeSystemInfo = common.Modkernel32.NewProc("GetNativeSystemInfo")
 
 type win32_Processor struct {
 	Family                    uint16
