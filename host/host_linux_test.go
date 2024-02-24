@@ -64,7 +64,7 @@ func TestGetRedhatishPlatform(t *testing.T) {
 	}
 }
 
-func Test_getlsbStruct(t *testing.T) {
+func TestGetlsbStruct(t *testing.T) {
 	cases := []struct {
 		root        string
 		id          string

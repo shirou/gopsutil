@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func Test_Process_Ppid_Race(t *testing.T) {
+func TestPpid_Race(t *testing.T) {
 	wg := sync.WaitGroup{}
 	testCount := 10
 	p := testGetProcess()
