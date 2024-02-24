@@ -33,5 +33,7 @@ type Timeval struct {
 	Usec int64
 }
 
-type Diskstat struct{}
-type bintime struct{}
+type (
+	Diskstat struct{}
+	bintime  struct{}
+)
