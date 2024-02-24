@@ -13,8 +13,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestVirtualMemoryEx(t *testing.T) {
-	v, err := VirtualMemoryEx()
+func TestExVirtualMemory(t *testing.T) {
+	ex := NewExLinux()
+
+	v, err := ex.VirtualMemory()
 	if err != nil {
 		t.Error(err)
 	}
