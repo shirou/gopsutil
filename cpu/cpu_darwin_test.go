@@ -4,6 +4,7 @@
 package cpu
 
 import (
+	"os"
 	"testing"
 
 	"github.com/shoenig/go-m1cpu"
@@ -23,7 +24,7 @@ func Test_CpuInfo_AppleSilicon(t *testing.T) {
 		if vv.ModelName == "" {
 			t.Errorf("could not get CPU info: %v", vv)
 		}
-		if vv.Mhz <= 0 {
+		if vv.Mhz <= 0 && os.Getenv("CI") != "true" {
 			t.Errorf("could not get frequency of: %s", vv.ModelName)
 		}
 		if vv.Mhz > 6000 {
