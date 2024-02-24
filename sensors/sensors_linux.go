@@ -5,6 +5,7 @@ package sensors
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -19,34 +20,20 @@ const (
 )
 
 func TemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
-	var err error
-
-	var files []string
-
-	temperatures := make([]TemperatureStat, 0)
-
-	// Only the temp*_input file provides current temperature
-	// value in millidegree Celsius as reported by the temperature to the device:
-	// https://www.kernel.org/doc/Documentation/hwmon/sysfs-interface
-	if files, err = filepath.Glob(common.HostSysWithContext(ctx, "/class/hwmon/hwmon*/temp*_input")); err != nil {
-		return temperatures, err
-	}
-
-	if len(files) == 0 {
-		// CentOS has an intermediate /device directory:
-		// https://github.com/giampaolo/psutil/issues/971
-		if files, err = filepath.Glob(common.HostSysWithContext(ctx, "/class/hwmon/hwmon*/device/temp*_input")); err != nil {
-			return temperatures, err
-		}
-	}
-
 	var warns Warnings
+
+	files, err := getTemperatureFiles(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tempreteure files, %w", err)
+	}
 
 	if len(files) == 0 { // handle distributions without hwmon, like raspbian #391, parse legacy thermal_zone files
 		files, err = filepath.Glob(common.HostSysWithContext(ctx, "/class/thermal/thermal_zone*/"))
 		if err != nil {
-			return temperatures, err
+			return nil, err
 		}
+		temperatures := make([]TemperatureStat, 0, len(files))
+
 		for _, file := range files {
 			// Get the name of the temperature you are reading
 			name, err := os.ReadFile(filepath.Join(file, "type"))
@@ -74,7 +61,7 @@ func TemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
 		return temperatures, warns.Reference()
 	}
 
-	temperatures = make([]TemperatureStat, 0, len(files))
+	temperatures := make([]TemperatureStat, 0, len(files))
 
 	// example directory
 	// device/           temp1_crit_alarm  temp2_crit_alarm  temp3_crit_alarm  temp4_crit_alarm  temp5_crit_alarm  temp6_crit_alarm  temp7_crit_alarm
@@ -137,6 +124,29 @@ func TemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
 	}
 
 	return temperatures, warns.Reference()
+}
+
+func getTemperatureFiles(ctx context.Context) ([]string, error) {
+	var files []string
+	var err error
+
+	// Only the temp*_input file provides current temperature
+	// value in millidegree Celsius as reported by the temperature to the device:
+	// https://www.kernel.org/doc/Documentation/hwmon/sysfs-interface
+	if files, err = filepath.Glob(common.HostSysWithContext(ctx, "/class/hwmon/hwmon*/temp*_input")); err != nil {
+		return nil, err
+	}
+
+	if len(files) == 0 {
+		// CentOS has an intermediate /device directory:
+		// https://github.com/giampaolo/psutil/issues/971
+		if files, err = filepath.Glob(common.HostSysWithContext(ctx, "/class/hwmon/hwmon*/device/temp*_input")); err != nil {
+			return nil, err
+		}
+	}
+
+	return files, nil
+
 }
 
 func optionalValueReadFromFile(filename string) float64 {
