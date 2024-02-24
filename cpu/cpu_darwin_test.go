@@ -10,7 +10,7 @@ import (
 	"github.com/shoenig/go-m1cpu"
 )
 
-func Test_CpuInfo_AppleSilicon(t *testing.T) {
+func TestInfo_AppleSilicon(t *testing.T) {
 	if !m1cpu.IsAppleSilicon() {
 		t.Skip("wrong cpu type")
 	}

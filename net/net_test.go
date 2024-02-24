@@ -26,7 +26,7 @@ func TestAddrString(t *testing.T) {
 	}
 }
 
-func TestNetIOCountersStatString(t *testing.T) {
+func TestIOCountersStatString(t *testing.T) {
 	v := IOCountersStat{
 		Name:      "test",
 		BytesSent: 100,
@@ -37,7 +37,7 @@ func TestNetIOCountersStatString(t *testing.T) {
 	}
 }
 
-func TestNetProtoCountersStatString(t *testing.T) {
+func TestProtoCountersStatString(t *testing.T) {
 	v := ProtoCountersStat{
 		Protocol: "tcp",
 		Stats: map[string]int64{
@@ -52,7 +52,7 @@ func TestNetProtoCountersStatString(t *testing.T) {
 	}
 }
 
-func TestNetConnectionStatString(t *testing.T) {
+func TestConnectionStatString(t *testing.T) {
 	v := ConnectionStat{
 		Fd:     10,
 		Family: 10,
@@ -65,7 +65,7 @@ func TestNetConnectionStatString(t *testing.T) {
 	}
 }
 
-func TestNetIOCountersAll(t *testing.T) {
+func TestIOCountersAll(t *testing.T) {
 	v, err := IOCounters(false)
 	skipIfNotImplementedErr(t, err)
 	if err != nil {
@@ -103,7 +103,7 @@ func TestNetIOCountersAll(t *testing.T) {
 	}
 }
 
-func TestNetIOCountersPerNic(t *testing.T) {
+func TestIOCountersPerNic(t *testing.T) {
 	v, err := IOCounters(true)
 	skipIfNotImplementedErr(t, err)
 	if err != nil {
@@ -152,7 +152,7 @@ func TestGetNetIOCountersAll(t *testing.T) {
 	}
 }
 
-func TestNetInterfaces(t *testing.T) {
+func TestInterfaces(t *testing.T) {
 	v, err := Interfaces()
 	skipIfNotImplementedErr(t, err)
 	if err != nil {
@@ -168,7 +168,7 @@ func TestNetInterfaces(t *testing.T) {
 	}
 }
 
-func TestNetProtoCountersStatsAll(t *testing.T) {
+func TestProtoCountersStatsAll(t *testing.T) {
 	v, err := ProtoCounters(nil)
 	skipIfNotImplementedErr(t, err)
 	if err != nil {
@@ -187,7 +187,7 @@ func TestNetProtoCountersStatsAll(t *testing.T) {
 	}
 }
 
-func TestNetProtoCountersStats(t *testing.T) {
+func TestProtoCountersStats(t *testing.T) {
 	v, err := ProtoCounters([]string{"tcp", "ip"})
 	skipIfNotImplementedErr(t, err)
 	if err != nil {
@@ -209,8 +209,8 @@ func TestNetProtoCountersStats(t *testing.T) {
 	}
 }
 
-func TestNetConnections(t *testing.T) {
-	if ci := os.Getenv("CI"); ci != "" { // skip if test on drone.io
+func TestConnections(t *testing.T) {
+	if ci := os.Getenv("CI"); ci != "" { // skip if test on CI
 		return
 	}
 
@@ -229,8 +229,8 @@ func TestNetConnections(t *testing.T) {
 	}
 }
 
-func TestNetFilterCounters(t *testing.T) {
-	if ci := os.Getenv("CI"); ci != "" { // skip if test on drone.io
+func TestFilterCounters(t *testing.T) {
+	if ci := os.Getenv("CI"); ci != "" { // skip if test on CI
 		return
 	}
 

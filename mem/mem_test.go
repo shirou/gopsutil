@@ -18,7 +18,7 @@ func skipIfNotImplementedErr(t *testing.T, err error) {
 	}
 }
 
-func TestVirtual_memory(t *testing.T) {
+func TestVirtualMemory(t *testing.T) {
 	if runtime.GOOS == "solaris" || runtime.GOOS == "illumos" {
 		t.Skip("Only .Total .Available are supported on Solaris/illumos")
 	}
@@ -67,7 +67,7 @@ func TestVirtual_memory(t *testing.T) {
 		"UsedPercent should be how many percent of Total is Used: %v", v)
 }
 
-func TestSwap_memory(t *testing.T) {
+func TestSwapMemory(t *testing.T) {
 	v, err := SwapMemory()
 	skipIfNotImplementedErr(t, err)
 	if err != nil {

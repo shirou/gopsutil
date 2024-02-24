@@ -39,7 +39,7 @@ func testGetProcess() Process {
 	return *ret
 }
 
-func Test_Pids(t *testing.T) {
+func TestPids(t *testing.T) {
 	ret, err := Pids()
 	skipIfNotImplementedErr(t, err)
 	if err != nil {
@@ -50,7 +50,7 @@ func Test_Pids(t *testing.T) {
 	}
 }
 
-func Test_Pid_exists(t *testing.T) {
+func TestPid_exists(t *testing.T) {
 	checkPid := os.Getpid()
 
 	ret, err := PidExists(int32(checkPid))
@@ -64,7 +64,7 @@ func Test_Pid_exists(t *testing.T) {
 	}
 }
 
-func Test_NewProcess(t *testing.T) {
+func TestNewProcess(t *testing.T) {
 	checkPid := os.Getpid()
 
 	ret, err := NewProcess(int32(checkPid))
@@ -80,7 +80,7 @@ func Test_NewProcess(t *testing.T) {
 	}
 }
 
-func Test_Process_memory_maps(t *testing.T) {
+func TestMemoryMaps(t *testing.T) {
 	checkPid := os.Getpid()
 
 	ret, err := NewProcess(int32(checkPid))
@@ -116,7 +116,7 @@ func Test_Process_memory_maps(t *testing.T) {
 	}
 }
 
-func Test_Process_MemoryInfo(t *testing.T) {
+func TestMemoryInfo(t *testing.T) {
 	p := testGetProcess()
 
 	v, err := p.MemoryInfo()
@@ -130,7 +130,7 @@ func Test_Process_MemoryInfo(t *testing.T) {
 	}
 }
 
-func Test_Process_CmdLine(t *testing.T) {
+func TestCmdLine(t *testing.T) {
 	p := testGetProcess()
 
 	v, err := p.Cmdline()
@@ -143,7 +143,7 @@ func Test_Process_CmdLine(t *testing.T) {
 	}
 }
 
-func Test_Process_CmdLineSlice(t *testing.T) {
+func TestCmdLineSlice(t *testing.T) {
 	p := testGetProcess()
 
 	v, err := p.CmdlineSlice()
@@ -156,7 +156,7 @@ func Test_Process_CmdLineSlice(t *testing.T) {
 	}
 }
 
-func Test_Process_Ppid(t *testing.T) {
+func TestPpid(t *testing.T) {
 	p := testGetProcess()
 
 	v, err := p.Ppid()
@@ -173,7 +173,7 @@ func Test_Process_Ppid(t *testing.T) {
 	}
 }
 
-func Test_Process_Status(t *testing.T) {
+func TestStatus(t *testing.T) {
 	p := testGetProcess()
 
 	v, err := p.Status()
@@ -189,7 +189,7 @@ func Test_Process_Status(t *testing.T) {
 	}
 }
 
-func Test_Process_Terminal(t *testing.T) {
+func TestTerminal(t *testing.T) {
 	p := testGetProcess()
 
 	_, err := p.Terminal()
@@ -199,7 +199,7 @@ func Test_Process_Terminal(t *testing.T) {
 	}
 }
 
-func Test_Process_IOCounters(t *testing.T) {
+func TestIOCounters(t *testing.T) {
 	p := testGetProcess()
 
 	v, err := p.IOCounters()
@@ -214,7 +214,7 @@ func Test_Process_IOCounters(t *testing.T) {
 	}
 }
 
-func Test_Process_NumCtx(t *testing.T) {
+func TestNumCtx(t *testing.T) {
 	p := testGetProcess()
 
 	_, err := p.NumCtxSwitches()
@@ -225,7 +225,7 @@ func Test_Process_NumCtx(t *testing.T) {
 	}
 }
 
-func Test_Process_Nice(t *testing.T) {
+func TestNice(t *testing.T) {
 	p := testGetProcess()
 
 	// https://github.com/shirou/gopsutil/issues/1532
@@ -243,7 +243,7 @@ func Test_Process_Nice(t *testing.T) {
 	}
 }
 
-func Test_Process_Groups(t *testing.T) {
+func TestGroups(t *testing.T) {
 	p := testGetProcess()
 
 	v, err := p.Groups()
@@ -259,7 +259,7 @@ func Test_Process_Groups(t *testing.T) {
 	}
 }
 
-func Test_Process_NumThread(t *testing.T) {
+func TestNumThread(t *testing.T) {
 	p := testGetProcess()
 
 	n, err := p.NumThreads()
@@ -272,7 +272,7 @@ func Test_Process_NumThread(t *testing.T) {
 	}
 }
 
-func Test_Process_Threads(t *testing.T) {
+func TestThreads(t *testing.T) {
 	p := testGetProcess()
 
 	n, err := p.NumThreads()
@@ -294,7 +294,7 @@ func Test_Process_Threads(t *testing.T) {
 	}
 }
 
-func Test_Process_Name(t *testing.T) {
+func TestName(t *testing.T) {
 	p := testGetProcess()
 
 	n, err := p.Name()
@@ -307,7 +307,7 @@ func Test_Process_Name(t *testing.T) {
 	}
 }
 
-func Test_Process_Long_Name_With_Spaces(t *testing.T) {
+func TestLong_Name_With_Spaces(t *testing.T) {
 	tmpdir, err := os.MkdirTemp("", "")
 	if err != nil {
 		t.Fatalf("unable to create temp dir %v", err)
@@ -353,7 +353,7 @@ func Test_Process_Long_Name_With_Spaces(t *testing.T) {
 	cmd.Process.Kill()
 }
 
-func Test_Process_Long_Name(t *testing.T) {
+func TestLong_Name(t *testing.T) {
 	tmpdir, err := os.MkdirTemp("", "")
 	if err != nil {
 		t.Fatalf("unable to create temp dir %v", err)
@@ -399,7 +399,7 @@ func Test_Process_Long_Name(t *testing.T) {
 	cmd.Process.Kill()
 }
 
-func Test_Process_Name_Against_Python(t *testing.T) {
+func TestName_Against_Python(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("only applies to posix")
 	}
@@ -455,7 +455,7 @@ func Test_Process_Name_Against_Python(t *testing.T) {
 	}
 }
 
-func Test_Process_Exe(t *testing.T) {
+func TestExe(t *testing.T) {
 	p := testGetProcess()
 
 	n, err := p.Exe()
@@ -468,7 +468,7 @@ func Test_Process_Exe(t *testing.T) {
 	}
 }
 
-func Test_Process_CpuPercent(t *testing.T) {
+func TestCpuPercent(t *testing.T) {
 	p := testGetProcess()
 	_, err := p.Percent(0)
 	skipIfNotImplementedErr(t, err)
@@ -489,7 +489,7 @@ func Test_Process_CpuPercent(t *testing.T) {
 	}
 }
 
-func Test_Process_CpuPercentLoop(t *testing.T) {
+func TestCpuPercentLoop(t *testing.T) {
 	p := testGetProcess()
 	numcpu := runtime.NumCPU()
 
@@ -507,7 +507,7 @@ func Test_Process_CpuPercentLoop(t *testing.T) {
 	}
 }
 
-func Test_Process_CreateTime(t *testing.T) {
+func TestCreateTime(t *testing.T) {
 	if os.Getenv("CI") == "true" {
 		t.Skip("Skip CI")
 	}
@@ -532,7 +532,7 @@ func Test_Process_CreateTime(t *testing.T) {
 	}
 }
 
-func Test_Parent(t *testing.T) {
+func TestParent(t *testing.T) {
 	p := testGetProcess()
 
 	c, err := p.Parent()
@@ -548,7 +548,7 @@ func Test_Parent(t *testing.T) {
 	}
 }
 
-func Test_Connections(t *testing.T) {
+func TestConnections(t *testing.T) {
 	p := testGetProcess()
 
 	addr, err := net.ResolveTCPAddr("tcp", "localhost:0") // dynamically get a random open port from OS
@@ -631,7 +631,7 @@ func Test_Connections(t *testing.T) {
 	}
 }
 
-func Test_Children(t *testing.T) {
+func TestChildren(t *testing.T) {
 	p := testGetProcess()
 
 	var cmd *exec.Cmd
@@ -663,7 +663,7 @@ func Test_Children(t *testing.T) {
 	}
 }
 
-func Test_Username(t *testing.T) {
+func TestUsername(t *testing.T) {
 	myPid := os.Getpid()
 	currentUser, _ := user.Current()
 	myUsername := currentUser.Username
@@ -676,7 +676,7 @@ func Test_Username(t *testing.T) {
 	t.Log(pidUsername)
 }
 
-func Test_CPUTimes(t *testing.T) {
+func TestCPUTimes(t *testing.T) {
 	pid := os.Getpid()
 	process, err := NewProcess(int32(pid))
 	skipIfNotImplementedErr(t, err)
@@ -708,7 +708,7 @@ func Test_CPUTimes(t *testing.T) {
 	assert.True(t, measuredElapsed < float64(spinSeconds)*5, message)
 }
 
-func Test_OpenFiles(t *testing.T) {
+func TestOpenFiles(t *testing.T) {
 	fp, err := os.Open("process_test.go")
 	assert.Nil(t, err)
 	defer func() {
@@ -731,7 +731,7 @@ func Test_OpenFiles(t *testing.T) {
 	}
 }
 
-func Test_Kill(t *testing.T) {
+func TestKill(t *testing.T) {
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
 		cmd = exec.Command("ping", "localhost", "-n", "4")
@@ -749,7 +749,7 @@ func Test_Kill(t *testing.T) {
 	cmd.Wait()
 }
 
-func Test_IsRunning(t *testing.T) {
+func TestIsRunning(t *testing.T) {
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
 		cmd = exec.Command("ping", "localhost", "-n", "2")
@@ -779,7 +779,7 @@ func Test_IsRunning(t *testing.T) {
 	}
 }
 
-func Test_Process_Environ(t *testing.T) {
+func TestEnviron(t *testing.T) {
 	tmpdir, err := os.MkdirTemp("", "")
 	if err != nil {
 		t.Fatalf("unable to create temp dir %v", err)
@@ -833,7 +833,7 @@ func Test_Process_Environ(t *testing.T) {
 	}
 }
 
-func Test_Process_Cwd(t *testing.T) {
+func TestCwd(t *testing.T) {
 	myPid := os.Getpid()
 	currentWorkingDirectory, _ := os.Getwd()
 

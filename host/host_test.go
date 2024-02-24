@@ -17,7 +17,7 @@ func skipIfNotImplementedErr(t *testing.T, err error) {
 	}
 }
 
-func TestHostInfo(t *testing.T) {
+func TestInfo(t *testing.T) {
 	v, err := Info()
 	skipIfNotImplementedErr(t, err)
 	if err != nil {
@@ -48,7 +48,7 @@ func TestUptime(t *testing.T) {
 	}
 }
 
-func TestBoot_time(t *testing.T) {
+func TestBootTime(t *testing.T) {
 	if os.Getenv("CI") == "true" {
 		t.Skip("Skip CI")
 	}
@@ -94,7 +94,7 @@ func TestUsers(t *testing.T) {
 	}
 }
 
-func TestHostInfoStat_String(t *testing.T) {
+func TestInfoStat_String(t *testing.T) {
 	v := InfoStat{
 		Hostname:   "test",
 		Uptime:     3000,
@@ -124,7 +124,7 @@ func TestUserStat_String(t *testing.T) {
 	}
 }
 
-func TestHostGuid(t *testing.T) {
+func TestGuid(t *testing.T) {
 	id, err := HostID()
 	skipIfNotImplementedErr(t, err)
 	if err != nil {
