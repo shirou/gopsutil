@@ -146,7 +146,6 @@ func getTemperatureFiles(ctx context.Context) ([]string, error) {
 	}
 
 	return files, nil
-
 }
 
 func optionalValueReadFromFile(filename string) float64 {
