@@ -14,7 +14,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"os/exec"
@@ -87,7 +86,7 @@ func (i FakeInvoke) Command(name string, arg ...string) ([]byte, error) {
 		fpath += "_" + i.Suffix
 	}
 	if PathExists(fpath) {
-		return ioutil.ReadFile(fpath)
+		return os.ReadFile(fpath)
 	}
 	return []byte{}, fmt.Errorf("could not find testdata: %s", fpath)
 }
@@ -100,7 +99,7 @@ var ErrNotImplementedError = errors.New("not implemented yet")
 
 // ReadFile reads contents from a file
 func ReadFile(filename string) (string, error) {
-	content, err := ioutil.ReadFile(filename)
+	content, err := os.ReadFile(filename)
 	if err != nil {
 		return "", err
 	}
@@ -344,7 +343,7 @@ func PathExistsWithContents(filename string) bool {
 	if err != nil {
 		return false
 	}
-	return info.Size() > 4 // at least 4 bytes
+	return info.Size() > 4 && !info.IsDir() // at least 4 bytes
 }
 
 // GetEnvWithContext retrieves the environment variable key. If it does not exist it returns the default.

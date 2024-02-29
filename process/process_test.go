@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"os"
 	"os/exec"
@@ -227,6 +227,11 @@ func Test_Process_NumCtx(t *testing.T) {
 func Test_Process_Nice(t *testing.T) {
 	p := testGetProcess()
 
+	// https://github.com/shirou/gopsutil/issues/1532
+	if os.Getenv("CI") == "true" && runtime.GOOS == "darwin" {
+		t.Skip("Skip CI")
+	}
+
 	n, err := p.Nice()
 	skipIfNotImplementedErr(t, err)
 	if err != nil {
@@ -302,7 +307,7 @@ func Test_Process_Name(t *testing.T) {
 }
 
 func Test_Process_Long_Name_With_Spaces(t *testing.T) {
-	tmpdir, err := ioutil.TempDir("", "")
+	tmpdir, err := os.MkdirTemp("", "")
 	if err != nil {
 		t.Fatalf("unable to create temp dir %v", err)
 	}
@@ -348,7 +353,7 @@ func Test_Process_Long_Name_With_Spaces(t *testing.T) {
 }
 
 func Test_Process_Long_Name(t *testing.T) {
-	tmpdir, err := ioutil.TempDir("", "")
+	tmpdir, err := os.MkdirTemp("", "")
 	if err != nil {
 		t.Fatalf("unable to create temp dir %v", err)
 	}
@@ -405,7 +410,7 @@ func Test_Process_Name_Against_Python(t *testing.T) {
 		t.Skipf("psutil not found for %s: %s", py3Path, out)
 	}
 
-	tmpdir, err := ioutil.TempDir("", "")
+	tmpdir, err := os.MkdirTemp("", "")
 	if err != nil {
 		t.Fatalf("unable to create temp dir %v", err)
 	}
@@ -571,7 +576,7 @@ func Test_Connections(t *testing.T) {
 		defer conn.Close()
 
 		serverEstablished <- struct{}{}
-		_, err = ioutil.ReadAll(conn)
+		_, err = io.ReadAll(conn)
 		if err != nil {
 			panic(err)
 		}
@@ -774,7 +779,7 @@ func Test_IsRunning(t *testing.T) {
 }
 
 func Test_Process_Environ(t *testing.T) {
-	tmpdir, err := ioutil.TempDir("", "")
+	tmpdir, err := os.MkdirTemp("", "")
 	if err != nil {
 		t.Fatalf("unable to create temp dir %v", err)
 	}

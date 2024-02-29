@@ -5,7 +5,6 @@ package load
 
 import (
 	"context"
-	"log"
 	"math"
 	"sync"
 	"time"
@@ -47,6 +46,7 @@ func loadAvgGoroutine(ctx context.Context) {
 		}
 
 		loadAvgMutex.Lock()
+		loadErr = err
 		loadAvg1M = loadAvg1M*loadAvgFactor1M + currentLoad*(1-loadAvgFactor1M)
 		loadAvg5M = loadAvg5M*loadAvgFactor5M + currentLoad*(1-loadAvgFactor5M)
 		loadAvg15M = loadAvg15M*loadAvgFactor15M + currentLoad*(1-loadAvgFactor15M)

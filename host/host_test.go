@@ -89,6 +89,7 @@ func TestUsers(t *testing.T) {
 		if u == empty {
 			t.Errorf("Could not Users %v", v)
 		}
+		t.Log(u)
 	}
 }
 
@@ -193,4 +194,18 @@ func TestPlatformInformation(t *testing.T) {
 	}
 
 	t.Logf("PlatformInformation(): %v, %v, %v", platform, family, version)
+}
+
+func BenchmarkBootTimeWithCache(b *testing.B) {
+	EnableBootTimeCache(true)
+	for i := 0; i < b.N; i++ {
+		BootTime()
+	}
+}
+
+func BenchmarkBootTimeWithoutCache(b *testing.B) {
+	EnableBootTimeCache(false)
+	for i := 0; i < b.N; i++ {
+		BootTime()
+	}
 }

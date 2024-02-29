@@ -19,21 +19,21 @@ jobs:
       fail-fast: false
       matrix:
         go-version: ${{fromJson(needs.go-versions.outputs.versions)}}
-        os: [ubuntu-22.04, ubuntu-20.04, windows-2022, windows-2019, macos-11, macos-12]
+        os: [ubuntu-22.04, ubuntu-20.04, windows-2022, windows-2019, macos-11, macos-12, macos-13, macos-14]
     runs-on: ${{ matrix.os }}
     steps:
     - name: Install Go
-      uses: actions/setup-go@93397bea11091df50f3d7e59dc26a7711a8bcfbe # v4.1.0
+      uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
       with:
         go-version: ${{ matrix.go-version }}
     - name: Checkout code
-      uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
     - id: go-env
       run: |
         echo "::set-output name=cache::$(go env GOCACHE)"
         echo "::set-output name=mod-cache::$(go env GOMODCACHE)"
     - name: Cache go modules
-      uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+      uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
       with:
         path: |
           ${{ steps.go-env.outputs.cache }}

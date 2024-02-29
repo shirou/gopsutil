@@ -1,5 +1,5 @@
-//go:build !darwin && !linux && !freebsd && !openbsd && !windows && !solaris && !aix
-// +build !darwin,!linux,!freebsd,!openbsd,!windows,!solaris,!aix
+//go:build !darwin && !linux && !freebsd && !openbsd && !netbsd && !windows && !solaris && !aix 
+// +build !darwin,!linux,!freebsd,!openbsd,!netbsd,!windows,!solaris,!aix
 
 package disk
 

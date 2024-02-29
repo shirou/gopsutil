@@ -8,7 +8,7 @@ import (
 	"context"
 	"encoding/binary"
 	"errors"
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 	"unsafe"
@@ -59,10 +59,13 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 	}
 	defer file.Close()
 
-	buf, err := ioutil.ReadAll(file)
+	buf, err := io.ReadAll(file)
 	if err != nil {
 		return ret, err
 	}
+
+	// Skip macOS utmpx header part
+	buf = buf[604:]
 
 	u := Utmpx{}
 	entrySize := int(unsafe.Sizeof(u))

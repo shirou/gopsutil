@@ -20,6 +20,7 @@ build_test:  ## test only buildable
 	GOOS=linux GOARCH=loong64 go test ./... | $(BUILD_FAIL_PATTERN)
 	GOOS=linux GOARCH=riscv64 go test ./... | $(BUILD_FAIL_PATTERN)
 	GOOS=linux GOARCH=s390x go test ./... | $(BUILD_FAIL_PATTERN)
+	GOOS=linux GOARCH=mips go test ./... | $(BUILD_FAIL_PATTERN)
 	GOOS=freebsd GOARCH=amd64 go test ./... | $(BUILD_FAIL_PATTERN)
 	GOOS=freebsd GOARCH=386 go test ./... | $(BUILD_FAIL_PATTERN)
 	GOOS=freebsd GOARCH=arm go test ./... | $(BUILD_FAIL_PATTERN)

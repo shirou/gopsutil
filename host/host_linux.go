@@ -8,7 +8,7 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -71,7 +71,7 @@ func numProcs(ctx context.Context) (uint64, error) {
 }
 
 func BootTimeWithContext(ctx context.Context) (uint64, error) {
-	return common.BootTimeWithContext(ctx)
+	return common.BootTimeWithContext(ctx, enableBootTimeCache)
 }
 
 func UptimeWithContext(ctx context.Context) (uint64, error) {
@@ -91,7 +91,7 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 	}
 	defer file.Close()
 
-	buf, err := ioutil.ReadAll(file)
+	buf, err := io.ReadAll(file)
 	if err != nil {
 		return nil, err
 	}
@@ -212,6 +212,12 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 		} else if lsb.ID == `"Cumulus Linux"` {
 			platform = "cumuluslinux"
 			version = lsb.Release
+		} else if lsb.ID == "uos" {
+			platform = "uos"
+			version = lsb.Release
+		} else if lsb.ID == "Deepin" {
+			platform = "Deepin"
+			version = lsb.Release
 		} else {
 			if common.PathExistsWithContents("/usr/bin/raspi-config") {
 				platform = "raspbian"
@@ -223,47 +229,47 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 				version = contents[0]
 			}
 		}
-	} else if common.PathExists(common.HostEtcWithContext(ctx, "neokylin-release")) {
+	} else if common.PathExistsWithContents(common.HostEtcWithContext(ctx, "neokylin-release")) {
 		contents, err := common.ReadLines(common.HostEtcWithContext(ctx, "neokylin-release"))
 		if err == nil {
 			version = getRedhatishVersion(contents)
 			platform = getRedhatishPlatform(contents)
 		}
-	} else if common.PathExists(common.HostEtcWithContext(ctx, "redhat-release")) {
+	} else if common.PathExistsWithContents(common.HostEtcWithContext(ctx, "redhat-release")) {
 		contents, err := common.ReadLines(common.HostEtcWithContext(ctx, "redhat-release"))
 		if err == nil {
 			version = getRedhatishVersion(contents)
 			platform = getRedhatishPlatform(contents)
 		}
-	} else if common.PathExists(common.HostEtcWithContext(ctx, "system-release")) {
+	} else if common.PathExistsWithContents(common.HostEtcWithContext(ctx, "system-release")) {
 		contents, err := common.ReadLines(common.HostEtcWithContext(ctx, "system-release"))
 		if err == nil {
 			version = getRedhatishVersion(contents)
 			platform = getRedhatishPlatform(contents)
 		}
-	} else if common.PathExists(common.HostEtcWithContext(ctx, "gentoo-release")) {
+	} else if common.PathExistsWithContents(common.HostEtcWithContext(ctx, "gentoo-release")) {
 		platform = "gentoo"
 		contents, err := common.ReadLines(common.HostEtcWithContext(ctx, "gentoo-release"))
 		if err == nil {
 			version = getRedhatishVersion(contents)
 		}
-	} else if common.PathExists(common.HostEtcWithContext(ctx, "SuSE-release")) {
+	} else if common.PathExistsWithContents(common.HostEtcWithContext(ctx, "SuSE-release")) {
 		contents, err := common.ReadLines(common.HostEtcWithContext(ctx, "SuSE-release"))
 		if err == nil {
 			version = getSuseVersion(contents)
 			platform = getSusePlatform(contents)
 		}
 		// TODO: slackware detecion
-	} else if common.PathExists(common.HostEtcWithContext(ctx, "arch-release")) {
+	} else if common.PathExistsWithContents(common.HostEtcWithContext(ctx, "arch-release")) {
 		platform = "arch"
 		version = lsb.Release
-	} else if common.PathExists(common.HostEtcWithContext(ctx, "alpine-release")) {
+	} else if common.PathExistsWithContents(common.HostEtcWithContext(ctx, "alpine-release")) {
 		platform = "alpine"
 		contents, err := common.ReadLines(common.HostEtcWithContext(ctx, "alpine-release"))
 		if err == nil && len(contents) > 0 && contents[0] != "" {
 			version = contents[0]
 		}
-	} else if common.PathExists(common.HostEtcWithContext(ctx, "os-release")) {
+	} else if common.PathExistsWithContents(common.HostEtcWithContext(ctx, "os-release")) {
 		p, v, err := common.GetOSReleaseWithContext(ctx)
 		if err == nil {
 			platform = p
@@ -289,7 +295,7 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 	platform = strings.Trim(platform, `"`)
 
 	switch platform {
-	case "debian", "ubuntu", "linuxmint", "raspbian", "Kylin", "cumuluslinux":
+	case "debian", "ubuntu", "linuxmint", "raspbian", "Kylin", "cumuluslinux", "uos", "Deepin":
 		family = "debian"
 	case "fedora":
 		family = "fedora"
@@ -333,13 +339,15 @@ func getSlackwareVersion(contents []string) string {
 	return c
 }
 
+var redhatishReleaseMatch = regexp.MustCompile(`release (\w[\d.]*)`)
+
 func getRedhatishVersion(contents []string) string {
 	c := strings.ToLower(strings.Join(contents, ""))
 
 	if strings.Contains(c, "rawhide") {
 		return "rawhide"
 	}
-	if matches := regexp.MustCompile(`release (\w[\d.]*)`).FindStringSubmatch(c); matches != nil {
+	if matches := redhatishReleaseMatch.FindStringSubmatch(c); matches != nil {
 		return matches[1]
 	}
 	return ""
@@ -356,12 +364,17 @@ func getRedhatishPlatform(contents []string) string {
 	return f[0]
 }
 
+var (
+	suseVersionMatch    = regexp.MustCompile(`VERSION = ([\d.]+)`)
+	susePatchLevelMatch = regexp.MustCompile(`PATCHLEVEL = (\d+)`)
+)
+
 func getSuseVersion(contents []string) string {
 	version := ""
 	for _, line := range contents {
-		if matches := regexp.MustCompile(`VERSION = ([\d.]+)`).FindStringSubmatch(line); matches != nil {
+		if matches := suseVersionMatch.FindStringSubmatch(line); matches != nil {
 			version = matches[1]
-		} else if matches := regexp.MustCompile(`PATCHLEVEL = ([\d]+)`).FindStringSubmatch(line); matches != nil {
+		} else if matches = susePatchLevelMatch.FindStringSubmatch(line); matches != nil {
 			version = version + "." + matches[1]
 		}
 	}
@@ -411,13 +424,13 @@ func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, err
 		}
 		for _, file := range files {
 			// Get the name of the temperature you are reading
-			name, err := ioutil.ReadFile(filepath.Join(file, "type"))
+			name, err := os.ReadFile(filepath.Join(file, "type"))
 			if err != nil {
 				warns.Add(err)
 				continue
 			}
 			// Get the temperature reading
-			current, err := ioutil.ReadFile(filepath.Join(file, "temp"))
+			current, err := os.ReadFile(filepath.Join(file, "temp"))
 			if err != nil {
 				warns.Add(err)
 				continue
@@ -461,13 +474,13 @@ func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, err
 		// Get the label of the temperature you are reading
 		label := ""
 
-		if raw, _ = ioutil.ReadFile(basepath + "_label"); len(raw) != 0 {
+		if raw, _ = os.ReadFile(basepath + "_label"); len(raw) != 0 {
 			// Format the label from "Core 0" to "core_0"
 			label = strings.Join(strings.Split(strings.TrimSpace(strings.ToLower(string(raw))), " "), "_")
 		}
 
 		// Get the name of the temperature you are reading
-		if raw, err = ioutil.ReadFile(filepath.Join(directory, "name")); err != nil {
+		if raw, err = os.ReadFile(filepath.Join(directory, "name")); err != nil {
 			warns.Add(err)
 			continue
 		}
@@ -479,7 +492,7 @@ func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, err
 		}
 
 		// Get the temperature reading
-		if raw, err = ioutil.ReadFile(file); err != nil {
+		if raw, err = os.ReadFile(file); err != nil {
 			warns.Add(err)
 			continue
 		}
@@ -513,7 +526,7 @@ func optionalValueReadFromFile(filename string) float64 {
 		return 0
 	}
 
-	if raw, err = ioutil.ReadFile(filename); err != nil {
+	if raw, err = os.ReadFile(filename); err != nil {
 		return 0
 	}
 
