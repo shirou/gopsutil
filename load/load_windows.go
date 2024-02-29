@@ -5,6 +5,7 @@ package load
 
 import (
 	"context"
+    "log"
 	"math"
 	"sync"
 	"time"
