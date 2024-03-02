@@ -23,10 +23,10 @@ type (
 	utmp struct {
 		Type              int16
 		Pid               int32
-		Line              [32]uint8
-		Id                [4]uint8
-		User              [32]uint8
-		Host              [256]uint8
+		Line              [32]int8  // changed by hand #1603
+		Id                [4]int8   // changed by hand
+		User              [32]int8  // changed by hand
+		Host              [256]int8 // changed by hand
 		Exit              exit_status
 		Session           int64
 		Tv                timeval
