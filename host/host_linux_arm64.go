@@ -22,8 +22,9 @@ type (
 type (
 	utmp struct {
 		Type              int16
+		Pad_cgo_0         [2]byte // changed by hand #1603
 		Pid               int32
-		Line              [32]int8  // changed by hand #1603
+		Line              [32]int8  // changed by hand
 		Id                [4]int8   // changed by hand
 		User              [32]int8  // changed by hand
 		Host              [256]int8 // changed by hand
@@ -32,7 +33,7 @@ type (
 		Tv                timeval
 		Addr_v6           [4]int32
 		X__glibc_reserved [20]uint8
-		Pad_cgo_0         [4]byte
+		Pad_cgo_1         [4]byte
 	}
 	exit_status struct {
 		Termination int16
