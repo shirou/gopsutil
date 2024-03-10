@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 package cpu
 
 import (
@@ -10,7 +11,7 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 	"github.com/tklauser/go-sysconf"
 	"golang.org/x/sys/unix"
 )

@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build aix && !cgo
-// +build aix,!cgo
 
 package mem
 
@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {

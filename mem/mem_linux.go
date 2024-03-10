@@ -1,12 +1,11 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build linux
-// +build linux
 
 package mem
 
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"math"
@@ -16,21 +15,8 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
-
-type VirtualMemoryExStat struct {
-	ActiveFile   uint64 `json:"activefile"`
-	InactiveFile uint64 `json:"inactivefile"`
-	ActiveAnon   uint64 `json:"activeanon"`
-	InactiveAnon uint64 `json:"inactiveanon"`
-	Unevictable  uint64 `json:"unevictable"`
-}
-
-func (v VirtualMemoryExStat) String() string {
-	s, _ := json.Marshal(v)
-	return string(s)
-}
 
 func VirtualMemory() (*VirtualMemoryStat, error) {
 	return VirtualMemoryWithContext(context.Background())
@@ -44,19 +30,7 @@ func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
 	return vm, nil
 }
 
-func VirtualMemoryEx() (*VirtualMemoryExStat, error) {
-	return VirtualMemoryExWithContext(context.Background())
-}
-
-func VirtualMemoryExWithContext(ctx context.Context) (*VirtualMemoryExStat, error) {
-	_, vmEx, err := fillFromMeminfoWithContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return vmEx, nil
-}
-
-func fillFromMeminfoWithContext(ctx context.Context) (*VirtualMemoryStat, *VirtualMemoryExStat, error) {
+func fillFromMeminfoWithContext(ctx context.Context) (*VirtualMemoryStat, *ExVirtualMemory, error) {
 	filename := common.HostProcWithContext(ctx, "meminfo")
 	lines, _ := common.ReadLines(filename)
 
@@ -67,7 +41,7 @@ func fillFromMeminfoWithContext(ctx context.Context) (*VirtualMemoryStat, *Virtu
 	sReclaimable := false // "Sreclaimable:" not available: 2.6.19 / Nov 2006
 
 	ret := &VirtualMemoryStat{}
-	retEx := &VirtualMemoryExStat{}
+	retEx := &ExVirtualMemory{}
 
 	for _, line := range lines {
 		fields := strings.Split(line, ":")
@@ -409,7 +383,7 @@ func SwapMemoryWithContext(ctx context.Context) (*SwapMemoryStat, error) {
 // calculateAvailVmem is a fallback under kernel 3.14 where /proc/meminfo does not provide
 // "MemAvailable:" column. It reimplements an algorithm from the link below
 // https://github.com/giampaolo/psutil/pull/890
-func calculateAvailVmem(ctx context.Context, ret *VirtualMemoryStat, retEx *VirtualMemoryExStat) uint64 {
+func calculateAvailVmem(ctx context.Context, ret *VirtualMemoryStat, retEx *ExVirtualMemory) uint64 {
 	var watermarkLow uint64
 
 	fn := common.HostProcWithContext(ctx, "zoneinfo")

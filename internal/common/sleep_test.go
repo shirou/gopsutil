@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 package common_test
 
 import (
@@ -6,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func TestSleep(test *testing.T) {

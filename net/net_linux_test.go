@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 package net
 
 import (
@@ -11,7 +12,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func TestIOCountersByFileParsing(t *testing.T) {

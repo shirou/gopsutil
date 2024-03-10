@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build freebsd
-// +build freebsd
 
 package process
 
@@ -10,9 +10,9 @@ import (
 	"strconv"
 	"strings"
 
-	cpu "github.com/shirou/gopsutil/v3/cpu"
-	"github.com/shirou/gopsutil/v3/internal/common"
-	net "github.com/shirou/gopsutil/v3/net"
+	cpu "github.com/shirou/gopsutil/v4/cpu"
+	"github.com/shirou/gopsutil/v4/internal/common"
+	net "github.com/shirou/gopsutil/v4/net"
 	"golang.org/x/sys/unix"
 )
 
@@ -157,40 +157,40 @@ func (p *Process) ForegroundWithContext(ctx context.Context) (bool, error) {
 	return strings.IndexByte(string(out), '+') != -1, nil
 }
 
-func (p *Process) UidsWithContext(ctx context.Context) ([]int32, error) {
+func (p *Process) UidsWithContext(ctx context.Context) ([]uint32, error) {
 	k, err := p.getKProc()
 	if err != nil {
 		return nil, err
 	}
 
-	uids := make([]int32, 0, 3)
+	uids := make([]uint32, 0, 3)
 
-	uids = append(uids, int32(k.Ruid), int32(k.Uid), int32(k.Svuid))
+	uids = append(uids, uint32(k.Ruid), uint32(k.Uid), uint32(k.Svuid))
 
 	return uids, nil
 }
 
-func (p *Process) GidsWithContext(ctx context.Context) ([]int32, error) {
+func (p *Process) GidsWithContext(ctx context.Context) ([]uint32, error) {
 	k, err := p.getKProc()
 	if err != nil {
 		return nil, err
 	}
 
-	gids := make([]int32, 0, 3)
-	gids = append(gids, int32(k.Rgid), int32(k.Ngroups), int32(k.Svgid))
+	gids := make([]uint32, 0, 3)
+	gids = append(gids, uint32(k.Rgid), uint32(k.Ngroups), uint32(k.Svgid))
 
 	return gids, nil
 }
 
-func (p *Process) GroupsWithContext(ctx context.Context) ([]int32, error) {
+func (p *Process) GroupsWithContext(ctx context.Context) ([]uint32, error) {
 	k, err := p.getKProc()
 	if err != nil {
 		return nil, err
 	}
 
-	groups := make([]int32, k.Ngroups)
+	groups := make([]uint32, k.Ngroups)
 	for i := int16(0); i < k.Ngroups; i++ {
-		groups[i] = int32(k.Groups[i])
+		groups[i] = uint32(k.Groups[i])
 	}
 
 	return groups, nil

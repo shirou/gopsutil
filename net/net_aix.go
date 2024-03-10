@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build aix
-// +build aix
 
 package net
 
@@ -11,7 +11,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func IOCounters(pernic bool) ([]IOCountersStat, error) {

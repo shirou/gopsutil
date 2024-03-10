@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 // ATTENTION - FILE MANUAL FIXED AFTER CGO.
 // Fixed line: Tv		_Ctype_struct_timeval -> Tv		UtTv
 // Created by cgo -godefs, MANUAL FIXED

@@ -1,11 +1,12 @@
+// SPDX-License-Identifier: BSD-3-Clause
 package docker
 
 import (
 	"encoding/json"
 	"errors"
 
-	"github.com/shirou/gopsutil/v3/cpu"
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/cpu"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 var (

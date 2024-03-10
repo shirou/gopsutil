@@ -1,12 +1,12 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build !aix && !darwin && !linux && !freebsd && !openbsd && !windows && !solaris
-// +build !aix,!darwin,!linux,!freebsd,!openbsd,!windows,!solaris
 
 package net
 
 import (
 	"context"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func IOCounters(pernic bool) ([]IOCountersStat, error) {

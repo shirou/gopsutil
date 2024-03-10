@@ -1,15 +1,15 @@
+// SPDX-License-Identifier: BSD-3-Clause
 package common
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"reflect"
 	"runtime"
 	"strings"
 	"testing"
 
-	"github.com/shirou/gopsutil/v3/common"
+	"github.com/shirou/gopsutil/v4/common"
 )
 
 func TestReadlines(t *testing.T) {
@@ -17,17 +17,16 @@ func TestReadlines(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if !strings.Contains(ret[0], "package common") {
+	if !strings.Contains(ret[1], "package common") {
 		t.Error("could not read correctly")
 	}
 }
 
 func TestReadLinesOffsetN(t *testing.T) {
-	ret, err := ReadLinesOffsetN("common_test.go", 2, 1)
+	ret, err := ReadLinesOffsetN("common_test.go", 3, 1)
 	if err != nil {
 		t.Error(err)
 	}
-	fmt.Println(ret[0])
 	if !strings.Contains(ret[0], `import (`) {
 		t.Error("could not read correctly")
 	}

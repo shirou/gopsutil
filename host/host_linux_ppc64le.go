@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build linux && ppc64le
-// +build linux,ppc64le
 
 // Created by cgo -godefs - DO NOT EDIT
 // cgo -godefs types_linux.go

@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build (windows && amd64) || (windows && arm64)
-// +build windows,amd64 windows,arm64
 
 package process
 
@@ -7,7 +7,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 	"golang.org/x/sys/windows"
 )
 

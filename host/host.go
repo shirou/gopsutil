@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 package host
 
 import (
@@ -8,7 +9,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 type Warnings = common.Warnings
@@ -40,13 +41,6 @@ type UserStat struct {
 	Started  int    `json:"started"`
 }
 
-type TemperatureStat struct {
-	SensorKey   string  `json:"sensorKey"`
-	Temperature float64 `json:"temperature"`
-	High        float64 `json:"sensorHigh"`
-	Critical    float64 `json:"sensorCritical"`
-}
-
 func (h InfoStat) String() string {
 	s, _ := json.Marshal(h)
 	return string(s)
@@ -54,11 +48,6 @@ func (h InfoStat) String() string {
 
 func (u UserStat) String() string {
 	s, _ := json.Marshal(u)
-	return string(s)
-}
-
-func (t TemperatureStat) String() string {
-	s, _ := json.Marshal(t)
 	return string(s)
 }
 
@@ -155,10 +144,6 @@ func Virtualization() (string, string, error) {
 
 func KernelVersion() (string, error) {
 	return KernelVersionWithContext(context.Background())
-}
-
-func SensorsTemperatures() ([]TemperatureStat, error) {
-	return SensorsTemperaturesWithContext(context.Background())
 }
 
 func timeSince(ts uint64) uint64 {

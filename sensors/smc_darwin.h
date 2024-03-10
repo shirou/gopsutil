@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 #ifndef __SMC_H__
 #define __SMC_H__ 1
 

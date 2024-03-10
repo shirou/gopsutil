@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 package disk
 
 import (
@@ -7,7 +8,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func skipIfNotImplementedErr(t *testing.T, err error) {
@@ -16,7 +17,7 @@ func skipIfNotImplementedErr(t *testing.T, err error) {
 	}
 }
 
-func TestDisk_usage(t *testing.T) {
+func TestUsage(t *testing.T) {
 	path := "/"
 	if runtime.GOOS == "windows" {
 		path = "C:"
@@ -31,7 +32,7 @@ func TestDisk_usage(t *testing.T) {
 	}
 }
 
-func TestDisk_partitions(t *testing.T) {
+func TestPartitions(t *testing.T) {
 	ret, err := Partitions(false)
 	skipIfNotImplementedErr(t, err)
 	if err != nil || len(ret) == 0 {
@@ -49,7 +50,7 @@ func TestDisk_partitions(t *testing.T) {
 	}
 }
 
-func TestDisk_io_counters(t *testing.T) {
+func TestIOCounters(t *testing.T) {
 	ret, err := IOCounters()
 	skipIfNotImplementedErr(t, err)
 	if err != nil {
@@ -68,7 +69,7 @@ func TestDisk_io_counters(t *testing.T) {
 }
 
 // https://github.com/shirou/gopsutil/issues/560 regression test
-func TestDisk_io_counters_concurrency_on_darwin_cgo(t *testing.T) {
+func TestIOCounters_concurrency_on_darwin_cgo(t *testing.T) {
 	if runtime.GOOS != "darwin" {
 		t.Skip("darwin only")
 	}
@@ -84,7 +85,7 @@ func TestDisk_io_counters_concurrency_on_darwin_cgo(t *testing.T) {
 	wg.Wait()
 }
 
-func TestDiskUsageStat_String(t *testing.T) {
+func TestUsageStat_String(t *testing.T) {
 	v := UsageStat{
 		Path:              "/",
 		Total:             1000,
@@ -103,7 +104,7 @@ func TestDiskUsageStat_String(t *testing.T) {
 	}
 }
 
-func TestDiskPartitionStat_String(t *testing.T) {
+func TestPartitionStat_String(t *testing.T) {
 	v := PartitionStat{
 		Device:     "sd01",
 		Mountpoint: "/",
@@ -116,7 +117,7 @@ func TestDiskPartitionStat_String(t *testing.T) {
 	}
 }
 
-func TestDiskIOCountersStat_String(t *testing.T) {
+func TestIOCountersStat_String(t *testing.T) {
 	v := IOCountersStat{
 		Name:         "sd01",
 		ReadCount:    100,

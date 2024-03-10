@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build freebsd
-// +build freebsd
 
 package mem
 
@@ -8,7 +8,7 @@ import (
 	"errors"
 	"unsafe"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 	"golang.org/x/sys/unix"
 )
 

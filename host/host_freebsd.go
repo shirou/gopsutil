@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build freebsd
-// +build freebsd
 
 package host
 
@@ -13,8 +13,8 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
-	"github.com/shirou/gopsutil/v3/process"
+	"github.com/shirou/gopsutil/v4/internal/common"
+	"github.com/shirou/gopsutil/v4/process"
 	"golang.org/x/sys/unix"
 )
 
@@ -139,10 +139,6 @@ func getUsersFromUtmp(utmpfile string) ([]UserStat, error) {
 	}
 
 	return ret, nil
-}
-
-func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
-	return []TemperatureStat{}, common.ErrNotImplementedError
 }
 
 func KernelVersionWithContext(ctx context.Context) (string, error) {

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 // Created by cgo -godefs - DO NOT EDIT
 // cgo -godefs types_linux.go | sed "s/uint8/int8/g"
 

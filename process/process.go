@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 package process
 
 import (
@@ -9,10 +10,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/shirou/gopsutil/v3/cpu"
-	"github.com/shirou/gopsutil/v3/internal/common"
-	"github.com/shirou/gopsutil/v3/mem"
-	"github.com/shirou/gopsutil/v3/net"
+	"github.com/shirou/gopsutil/v4/cpu"
+	"github.com/shirou/gopsutil/v4/internal/common"
+	"github.com/shirou/gopsutil/v4/mem"
+	"github.com/shirou/gopsutil/v4/net"
 )
 
 var (
@@ -29,9 +30,9 @@ type Process struct {
 	parent         int32
 	parentMutex    sync.RWMutex // for windows ppid cache
 	numCtxSwitches *NumCtxSwitchesStat
-	uids           []int32
-	gids           []int32
-	groups         []int32
+	uids           []uint32
+	gids           []uint32
+	groups         []uint32
 	numThreads     int32
 	memInfo        *MemoryInfoStat
 	sigInfo        *SignalInfoStat
@@ -368,7 +369,7 @@ func (p *Process) CPUPercentWithContext(ctx context.Context) (float64, error) {
 }
 
 // Groups returns all group IDs(include supplementary groups) of the process as a slice of the int
-func (p *Process) Groups() ([]int32, error) {
+func (p *Process) Groups() ([]uint32, error) {
 	return p.GroupsWithContext(context.Background())
 }
 
@@ -433,12 +434,12 @@ func (p *Process) Foreground() (bool, error) {
 }
 
 // Uids returns user ids of the process as a slice of the int
-func (p *Process) Uids() ([]int32, error) {
+func (p *Process) Uids() ([]uint32, error) {
 	return p.UidsWithContext(context.Background())
 }
 
 // Gids returns group ids of the process as a slice of the int
-func (p *Process) Gids() ([]int32, error) {
+func (p *Process) Gids() ([]uint32, error) {
 	return p.GidsWithContext(context.Background())
 }
 

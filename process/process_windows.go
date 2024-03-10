@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build windows
-// +build windows
 
 package process
 
@@ -18,9 +18,9 @@ import (
 	"unicode/utf16"
 	"unsafe"
 
-	"github.com/shirou/gopsutil/v3/cpu"
-	"github.com/shirou/gopsutil/v3/internal/common"
-	"github.com/shirou/gopsutil/v3/net"
+	"github.com/shirou/gopsutil/v4/cpu"
+	"github.com/shirou/gopsutil/v4/internal/common"
+	"github.com/shirou/gopsutil/v4/net"
 	"golang.org/x/sys/windows"
 )
 
@@ -466,15 +466,15 @@ func (p *Process) UsernameWithContext(ctx context.Context) (string, error) {
 	return domain + "\\" + user, err
 }
 
-func (p *Process) UidsWithContext(ctx context.Context) ([]int32, error) {
+func (p *Process) UidsWithContext(ctx context.Context) ([]uint32, error) {
 	return nil, common.ErrNotImplementedError
 }
 
-func (p *Process) GidsWithContext(ctx context.Context) ([]int32, error) {
+func (p *Process) GidsWithContext(ctx context.Context) ([]uint32, error) {
 	return nil, common.ErrNotImplementedError
 }
 
-func (p *Process) GroupsWithContext(ctx context.Context) ([]int32, error) {
+func (p *Process) GroupsWithContext(ctx context.Context) ([]uint32, error) {
 	return nil, common.ErrNotImplementedError
 }
 

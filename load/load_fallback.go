@@ -1,12 +1,12 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build !darwin && !linux && !freebsd && !openbsd && !windows && !solaris && !aix
-// +build !darwin,!linux,!freebsd,!openbsd,!windows,!solaris,!aix
 
 package load
 
 import (
 	"context"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func Avg() (*AvgStat, error) {
