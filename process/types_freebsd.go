@@ -12,11 +12,11 @@ Input to cgo -godefs.
 // +godefs map struct_proc int64 /* proc */
 // +godefs map struct_user int64 /* user */
 // +godefs map struct_vnode int64 /* vnode */
-// +godefs map struct_vnode int64 /* vnode */
 // +godefs map struct_filedesc int64 /* filedesc */
 // +godefs map struct_vmspace int64 /* vmspace */
 // +godefs map struct_pcb int64 /* pcb */
 // +godefs map struct_thread int64 /* thread */
+// +godefs map struct_pwddesc int64 /* pwddesc, not accurate */
 // +godefs map struct___sigset [16]byte /* sigset */
 
 package process
