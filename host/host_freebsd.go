@@ -4,12 +4,15 @@
 package host
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/binary"
 	"io"
 	"math"
 	"os"
+	"os/exec"
+	"strconv"
 	"strings"
 	"unsafe"
 
@@ -142,7 +145,59 @@ func getUsersFromUtmp(utmpfile string) ([]UserStat, error) {
 }
 
 func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
-	return []TemperatureStat{}, common.ErrNotImplementedError
+	sysctl, err := exec.LookPath("sysctl")
+	var ret []TemperatureStat
+	if err != nil {
+		return ret, err
+	}
+
+	out, err := invoke.CommandWithContext(context.WithValue(ctx, common.InvokerCtxKeyEnv, []string{"LC_ALL=C"}), sysctl, "-a")
+	if err != nil {
+		return ret, err
+	}
+
+	tjmaxs := make(map[string]float64)
+
+	var warns Warnings
+
+	sc := bufio.NewScanner(bytes.NewReader(out))
+	for sc.Scan() {
+		// hw.acpi.thermal.tz1.temperature: 29.9C
+		// dev.cpu.7.temperature: 28.0C
+		// dev.cpu.7.coretemp.tjmax: 100.0C
+		flds := strings.SplitN(sc.Text(), ":", 2)
+		if len(flds) != 2 ||
+			!(strings.HasSuffix(flds[0], ".temperature") ||
+				strings.HasSuffix(flds[0], ".coretemp.tjmax")) ||
+			!strings.HasSuffix(flds[1], "C") {
+			continue
+		}
+		v, err := strconv.ParseFloat(strings.TrimSuffix(strings.TrimSpace(flds[1]), "C"), 64)
+		if err != nil {
+			warns.Add(err)
+			continue
+		}
+		k := strings.TrimSuffix(flds[0], ".temperature")
+		if k == flds[0] {
+			k = strings.TrimSuffix(flds[0], ".coretemp.tjmax")
+			tjmaxs[k] = v
+			continue
+		}
+		ts := TemperatureStat{
+			SensorKey:   k,
+			Temperature: v,
+		}
+		ret = append(ret, ts)
+	}
+
+	for i, ts := range ret[:] {
+		if tjmax, ok := tjmaxs[ts.SensorKey]; ok {
+			ts.Critical = tjmax
+			ret[i] = ts
+		}
+	}
+
+	return ret, warns.Reference()
 }
 
 func KernelVersionWithContext(ctx context.Context) (string, error) {
