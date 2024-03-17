@@ -5,6 +5,8 @@ package net
 
 import (
 	"context"
+	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -80,6 +82,10 @@ func IOCountersWithContext(ctx context.Context, pernic bool) ([]IOCountersStat, 
 			BytesSent:   parsed[6],
 			Dropout:     parsed[7],
 		}
+		err := parseIfconfigOutput(&n)
+		if err != nil {
+			return nil, err
+		}
 		ret = append(ret, n)
 	}
 
@@ -88,6 +94,27 @@ func IOCountersWithContext(ctx context.Context, pernic bool) ([]IOCountersStat, 
 	}
 
 	return ret, nil
+}
+
+func parseIfconfigOutput(istat *IOCountersStat) error {
+	cmd := exec.Command("ifconfig", istat.Name)
+	out, err := cmd.Output()
+	if err != nil {
+		return err
+	}
+
+	re := regexp.MustCompile(`media:\s+.*\((\d+)baseT`)
+	match := re.FindStringSubmatch(string(out))
+	if len(match) >= 2 {
+		speed, err := strconv.ParseUint(match[1], 10, 64)
+		if err != nil {
+			speed = 0
+		}
+		istat.TransmitSpeed = speed
+		istat.ReceiveSpeed = speed
+	}
+
+	return nil
 }
 
 // IOCountersByFile exists just for compatibility with Linux.
