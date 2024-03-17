@@ -503,36 +503,50 @@ func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, err
 		}
 
 		// Add discovered temperature sensor to the list
+		optional := optionalProperties(filepath.Join(directory, basename))
 		temperatures = append(temperatures, TemperatureStat{
 			SensorKey:   name,
 			Temperature: temperature / hostTemperatureScale,
-			High:        optionalValueReadFromFile(basepath+"_max") / hostTemperatureScale,
-			Critical:    optionalValueReadFromFile(basepath+"_crit") / hostTemperatureScale,
+			High:        optional["max"],
+			Critical:    optional["crit"],
+			Optional:    optional,
 		})
 	}
 
 	return temperatures, warns.Reference()
 }
 
-func optionalValueReadFromFile(filename string) float64 {
-	var raw []byte
-
-	var err error
-
-	var value float64
-
-	// Check if file exists
-	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		return 0
+func optionalProperties(basename string) map[string]float64 {
+	// Determine all files with the base-prefix
+	matches, err := filepath.Glob(basename + "_*")
+	if err != nil {
+		return map[string]float64{}
 	}
 
-	if raw, err = os.ReadFile(filename); err != nil {
-		return 0
+	// Collect the information from all files that are not already handled
+	// with the exception of "max" and "crit" to keep an indicator if those
+	// actually exist
+	values := make(map[string]float64)
+	for _, fn := range matches {
+		// Skip already handles files
+		suffix := strings.Split(fn, "_")
+		property := suffix[len(suffix)-1]
+		switch property {
+		case "label", "input":
+			continue
+		}
+
+		// Read and parse the file and keep the property on success
+		raw, err := os.ReadFile(fn)
+		if err != nil {
+			continue
+		}
+		value, err := strconv.ParseFloat(strings.TrimSpace(string(raw)), 64)
+		if err != nil {
+			continue
+		}
+		values[property] = value / hostTemperatureScale
 	}
 
-	if value, err = strconv.ParseFloat(strings.TrimSpace(string(raw)), 64); err != nil {
-		return 0
-	}
-
-	return value
+	return values
 }
