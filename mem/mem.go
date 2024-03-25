@@ -80,6 +80,11 @@ type VirtualMemoryStat struct {
 	HugePagesSurp  uint64 `json:"hugePagesSurp"`
 	HugePageSize   uint64 `json:"hugePageSize"`
 	AnonHugePages  uint64 `json:"anonHugePages"`
+
+	// Windows specific numbers
+	// https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/ns-sysinfoapi-memorystatusex
+	VirtualTotal uint64 `json:"virtualTotal"`
+	VirtualAvail uint64 `json:"virtualAvail"`
 }
 
 type SwapMemoryStat struct {
