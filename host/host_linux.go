@@ -506,6 +506,7 @@ func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, err
 		temperatures = append(temperatures, TemperatureStat{
 			SensorKey:   name,
 			Temperature: temperature / hostTemperatureScale,
+			Low:         optionalValueReadFromFile(basepath+"_min") / hostTemperatureScale,
 			High:        optionalValueReadFromFile(basepath+"_max") / hostTemperatureScale,
 			Critical:    optionalValueReadFromFile(basepath+"_crit") / hostTemperatureScale,
 		})
