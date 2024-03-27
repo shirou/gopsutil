@@ -178,6 +178,12 @@ func EnableBootTimeCache(enable bool) {
 	enableBootTimeCache = enable
 }
 
+// RefreshBootTimeCache manually refreshes the cached BootTime value.
+func RefreshBootTimeCache(ctx context.Context) error {
+	_, err := common.BootTimeWithContext(ctx, false)
+	return err
+}
+
 // Pids returns a slice of process ID list which are running now.
 func Pids() ([]int32, error) {
 	return PidsWithContext(context.Background())
