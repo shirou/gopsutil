@@ -491,6 +491,10 @@ func (p *Process) EnvironWithContext(ctx context.Context) ([]string, error) {
 	return strings.Split(string(environContent), "\000"), nil
 }
 
+func BootTimeWithContext(ctx context.Context) (uint64, error) {
+	return common.BootTimeWithContext(ctx, enableBootTimeCache)
+}
+
 /**
 ** Internal functions
 **/
@@ -1071,7 +1075,7 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 		Iowait: iotime / float64(clockTicks),
 	}
 
-	bootTime, _ := common.BootTimeWithContext(ctx, enableBootTimeCache)
+	bootTime, _ := BootTimeWithContext(ctx)
 	t, err := strconv.ParseUint(fields[22], 10, 64)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
