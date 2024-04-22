@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 package cpu
 
 import (
@@ -11,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 // TimesStat contains the amounts of time the CPU has spent performing different

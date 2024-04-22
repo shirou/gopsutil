@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build linux
-// +build linux
 
 package process
 
@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_Process_splitProcStat(t *testing.T) {
+func TestSplitProcStat(t *testing.T) {
 	expectedFieldsNum := 53
 	statLineContent := make([]string, expectedFieldsNum-1)
 	for i := 0; i < expectedFieldsNum-1; i++ {
@@ -56,7 +56,7 @@ func Test_Process_splitProcStat(t *testing.T) {
 	}
 }
 
-func Test_Process_splitProcStat_fromFile(t *testing.T) {
+func TestSplitProcStat_fromFile(t *testing.T) {
 	pids, err := os.ReadDir("testdata/linux/")
 	if err != nil {
 		t.Error(err)
@@ -92,7 +92,7 @@ func Test_Process_splitProcStat_fromFile(t *testing.T) {
 	}
 }
 
-func Test_fillFromCommWithContext(t *testing.T) {
+func TestFillFromCommWithContext(t *testing.T) {
 	pids, err := os.ReadDir("testdata/linux/")
 	if err != nil {
 		t.Error(err)
@@ -113,7 +113,7 @@ func Test_fillFromCommWithContext(t *testing.T) {
 	}
 }
 
-func Test_fillFromStatusWithContext(t *testing.T) {
+func TestFillFromStatusWithContext(t *testing.T) {
 	pids, err := os.ReadDir("testdata/linux/")
 	if err != nil {
 		t.Error(err)
@@ -152,7 +152,7 @@ func Benchmark_fillFromStatusWithContext(b *testing.B) {
 	}
 }
 
-func Test_fillFromTIDStatWithContext_lx_brandz(t *testing.T) {
+func TestFillFromTIDStatWithContext_lx_brandz(t *testing.T) {
 	pids, err := os.ReadDir("testdata/lx_brandz/")
 	if err != nil {
 		t.Error(err)

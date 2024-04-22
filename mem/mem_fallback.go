@@ -1,12 +1,12 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build !darwin && !linux && !freebsd && !openbsd && !solaris && !windows && !plan9 && !aix && !netbsd
-// +build !darwin,!linux,!freebsd,!openbsd,!solaris,!windows,!plan9,!aix,!netbsd
 
 package mem
 
 import (
 	"context"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func VirtualMemory() (*VirtualMemoryStat, error) {

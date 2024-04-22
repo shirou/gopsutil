@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build openbsd
-// +build openbsd
 
 package net
 
@@ -12,13 +12,14 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 var portMatch = regexp.MustCompile(`(.*)\.(\d+)$`)
 
 func ParseNetstat(output string, mode string,
-	iocs map[string]IOCountersStat) error {
+	iocs map[string]IOCountersStat,
+) error {
 	lines := strings.Split(output, "\n")
 
 	exists := make([]string, 0, len(lines)-1)

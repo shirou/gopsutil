@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 package cpu
 
 import (
@@ -20,7 +21,7 @@ func TestTimesEmpty(t *testing.T) {
 	}
 }
 
-func TestCPUparseStatLine_424(t *testing.T) {
+func TestParseStatLine_424(t *testing.T) {
 	t.Setenv("HOST_PROC", "testdata/linux/424/proc")
 	{
 		l, err := Times(true)
@@ -38,7 +39,7 @@ func TestCPUparseStatLine_424(t *testing.T) {
 	}
 }
 
-func TestCPUCountsAgainstLscpu(t *testing.T) {
+func TestCountsAgainstLscpu(t *testing.T) {
 	cmd := exec.Command("lscpu")
 	cmd.Env = []string{"LC_ALL=C"}
 	out, err := cmd.Output()
@@ -93,7 +94,7 @@ func TestCPUCountsAgainstLscpu(t *testing.T) {
 	}
 }
 
-func TestCPUCountsLogicalAndroid_1037(t *testing.T) { // https://github.com/shirou/gopsutil/issues/1037
+func TestCountsLogicalAndroid_1037(t *testing.T) { // https://github.com/shirou/gopsutil/issues/1037
 	t.Setenv("HOST_PROC", "testdata/linux/1037/proc")
 
 	count, err := Counts(true)

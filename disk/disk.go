@@ -1,10 +1,11 @@
+// SPDX-License-Identifier: BSD-3-Clause
 package disk
 
 import (
 	"context"
 	"encoding/json"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 var invoke common.Invoker = common.Invoke{}

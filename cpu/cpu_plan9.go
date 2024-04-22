@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build plan9
-// +build plan9
 
 package cpu
 
@@ -9,7 +9,7 @@ import (
 	"runtime"
 
 	stats "github.com/lufia/plan9stats"
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func Times(percpu bool) ([]TimesStat, error) {
