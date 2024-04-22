@@ -17,6 +17,18 @@ func skipIfNotImplementedErr(t *testing.T, err error) {
 	}
 }
 
+func TestHostID(t *testing.T) {
+	v, err := HostID()
+	skipIfNotImplementedErr(t, err)
+	if err != nil {
+		t.Errorf("error %v", err)
+	}
+	if v == "" {
+		t.Errorf("Could not get host id %v", v)
+	}
+	t.Log(v)
+}
+
 func TestInfo(t *testing.T) {
 	v, err := Info()
 	skipIfNotImplementedErr(t, err)
