@@ -4,7 +4,6 @@ PKGS="cpu disk docker host load mem net process"
 
 GOOS=$(go env GOOS)
 GOARCH=$(go env GOARCH)
-GOARCH=$(go env GOARCH)
 
 for DIR in . v3
 do
