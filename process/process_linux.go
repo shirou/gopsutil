@@ -727,8 +727,12 @@ func (p *Process) fillFromIOWithContext(ctx context.Context) (*IOCountersStat, e
 		case "syscw":
 			ret.WriteCount = t
 		case "read_bytes":
-			ret.ReadBytes = t
+			ret.DiskReadBytes = t
 		case "write_bytes":
+			ret.DiskWriteBytes = t
+		case "rchar":
+			ret.ReadBytes = t
+		case "wchar":
 			ret.WriteBytes = t
 		}
 	}
