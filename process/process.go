@@ -106,6 +106,8 @@ type IOCountersStat struct {
 	WriteCount uint64 `json:"writeCount"`
 	ReadBytes  uint64 `json:"readBytes"`
 	WriteBytes uint64 `json:"writeBytes"`
+	ReadChars  uint64 `json:"readChars"`
+	WriteChars uint64 `json:"writeChars"`
 }
 
 type NumCtxSwitchesStat struct {
