@@ -19,7 +19,7 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 			return nil, err
 		}
 		lines := strings.Split(string(per_out), "\n")
-		if len(lines) < 5 {
+		if len(lines) < 6 {
 			return []TimesStat{}, common.ErrNotImplementedError
 		}
 
