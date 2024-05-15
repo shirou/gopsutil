@@ -1,0 +1,7 @@
+
+AIX aix72-dylan 2 7 000000000000    05/15/24
+
+System configuration: lcpu=4 ent=4.00 mode=Capped 
+
+11:19:44    %usr    %sys    %wio   %idle   physc   %entc
+11:19:54       0       3       0      96    4.00   100.0
