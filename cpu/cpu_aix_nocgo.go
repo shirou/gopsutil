@@ -14,7 +14,7 @@ import (
 func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 	var ret []TimesStat
 	if percpu {
-		per_out, err := invoke.CommandWithContext(ctx, "sar", "-u", "10", "1")
+		per_out, err := invoke.CommandWithContext(ctx, "sar", "-u", "-P", "ALL", "10", "1")
 		if err != nil {
 			return nil, err
 		}
