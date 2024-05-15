@@ -129,6 +129,20 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 				}
 			}
 			break
+		} else if strings.HasPrefix(line, "System Model:") {
+			p := strings.Split(string(line), ":")
+			if p != nil {
+				ret.VendorID = strings.TrimSpace(p[1])
+			}
+		} else if strings.HasPrefix(line, "Processor Type:") {
+			p := strings.Split(string(line), ":")
+			if p != nil {
+				c := strings.Split(string(p[1]), "_")
+				if c != nil {
+					ret.Family = strings.TrimSpace(c[0])
+					ret.Model = strings.TrimSpace(c[1])
+				}
+			}
 		}
 	}
 	return []InfoStat{ret}, nil
