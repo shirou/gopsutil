@@ -6,6 +6,7 @@ package disk
 import (
 	"context"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/shirou/gopsutil/v3/internal/common"
@@ -78,4 +79,106 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 
 func getFsType(stat unix.Statfs_t) string {
 	return FSType[int(stat.Vfstype)]
+}
+
+func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
+	var ret []UsageStat
+	out, err := invoke.CommandWithContext(ctx, "df", "-v")
+	if err != nil {
+		return nil, err
+	}
+
+	blocksize := uint64(512)
+	lines := strings.Split(string(out), "\n")
+	if len(lines) < 2 {
+		return []UsageStat{}, common.ErrNotImplementedError
+	}
+
+	hf := strings.Fields(strings.Replace(lines[0], "Mounted on", "Path", -1)) // headers
+	for line := 1; line < len(lines); line++ {
+		fs := strings.Fields(lines[line]) // values
+		us := &UsageStat{}
+		for i, header := range hf {
+			// We're done in any of these use cases
+			if i >= len(fs) {
+				break
+			}
+
+			switch header {
+			case `Filesystem`:
+				// This is not a valid fs for us to parse
+				if fs[i] == "/proc" || fs[i] == "/ahafs" {
+					continue
+				}
+
+				us.Fstype, err = GetMountFSType(fs[i])
+				if err != nil {
+					return nil, err
+				}
+			case `Path`:
+				us.Path = fs[i]
+			case `512-blocks`:
+				us.Total, err = strconv.Atoi(fs[i])
+				if err != nil {
+					return nil, err
+				}
+			case `Used`:
+				us.Used, err = strconv.Atoi(fs[i])
+				if err != nil {
+					return nil, err
+				}
+			case `Free`:
+				us.Free, err = strconv.Atoi(fs[i])
+				if err != nil {
+					return nil, err
+				}
+			case `%Used`:
+				us.UsedPercent, err = strconv.ParseFloat(fs[i])
+				if err != nil {
+					return nil, err
+				}
+			case `Ifree`:
+				us.InodesFree, err = strconv.Atoi(fs[i])
+				if err != nil {
+					return nil, err
+				}
+			case `Iused`:
+				us.InodesUsed, err = strconv.Atoi(fs[i])
+				if err != nil {
+					return nil, err
+				}
+			case `%Iused`:
+				us.InodesUsedPercent, err = strconv.ParseFloat(fs[i])
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+
+		// Calculated value, since it isn't returned by the command
+		us.InodesTotal = us.InodesUsed + us.InodesFree
+
+		// Valid Usage data, so append it
+		ret = append(ret, *us)
+	}
+
+	return *ret, nil
+}
+
+func GetMountFSType(mp string) (string, error) {
+	out, err := invoke.CommandWithContext(ctx, "mount")
+	if err != nil {
+		return "", err
+	}
+
+	// Kind of inefficient, but it works
+	lines := strings.Split(string(out[:]), "\n")
+	for line := 1; line < len(lines); line++ {
+		fields := strings.Fields(lines[line])
+		if strings.TrimSpace(fields[0]) == mp {
+			return fields[2], nil
+		}
+	}
+
+	return "", nil
 }
