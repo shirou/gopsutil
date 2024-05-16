@@ -4,9 +4,7 @@
 package host
 
 import (
-	"bytes"
 	"context"
-	"encoding/binary"
 	"errors"
 	"strconv"
 	"strings"
@@ -81,30 +79,40 @@ func UptimeWithContext(ctx context.Context) (uint64, error) {
 	return uint64(total_time), nil
 }
 
-// This is probably broken, it doesn't seem to work even with CGO
+// This is a weak implementation due to the limitations on retrieving this data in AIX
 func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 	var ret []UserStat
-	ut, err := invoke.CommandWithContext(ctx, "w").Output()
+	out, err := invoke.CommandWithContext(ctx, "w").Output()
+	if err != nil {
+		return nil, err
+	}
+	lines := strings.Split(string(out), "\n")
+	if len(lines) < 3 {
+		return []UserStat{}, common.ErrNotImplementedError
+	}
 
-	for i := 0; i < count; i++ {
-		b := buf[i*sizeOfUtmp : (i+1)*sizeOfUtmp]
+	hf := strings.Fields(lines[1]) // headers
+	for l := 2; l < len(lines)-1; l++ {
+		v := strings.Fields(lines[l]) // values
+		us := &UserStat{}
+		for i, header := range hf {
+			// We're done in any of these use cases
+			if i >= len(v) || v[0] == "-" {
+				break
+			}
 
-		var u utmp
-		br := bytes.NewReader(b)
-		err := binary.Read(br, binary.LittleEndian, &u)
-		if err != nil {
-			continue
+			if t, err := strconv.ParseFloat(v[i], 64); err == nil {
+				switch header {
+				case `User`:
+					us.User = t
+				case `tty`:
+					us.Terminal = t
+				}
+			}
 		}
-		if u.Type != user_PROCESS {
-			continue
-		}
-		user := UserStat{
-			User:     common.IntToString(u.User[:]),
-			Terminal: common.IntToString(u.Line[:]),
-			Host:     common.IntToString(u.Host[:]),
-			Started:  int(u.Tv.Sec),
-		}
-		ret = append(ret, user)
+
+		// Valid User data, so append it
+		ret = append(ret, *us)
 	}
 
 	return ret, nil
