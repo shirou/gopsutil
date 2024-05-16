@@ -25,6 +25,7 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 
 		hp := strings.Fields(lines[5]) // headers
 		for l := 6; l < len(lines)-1; l++ {
+			ct := &TimesStat{}
 			v := strings.Fields(lines[l]) // values
 			for i, header := range hp {
 				// We're done in any of these use cases
@@ -43,8 +44,8 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 				if pos < 0 {
 					continue
 				}
-				ct := &TimesStat{}
-				if t, err := strconv.ParseFloat(v[i], 64); err == nil {
+
+				if t, err := strconv.ParseFloat(v[pos], 64); err == nil {
 					switch header {
 					case `cpu`:
 						ct.CPU = t
@@ -58,10 +59,9 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 						ct.Idle = t
 					}
 				}
-
-				// Valid CPU data, so append it
-				ret = append(ret, *ct)
 			}
+			// Valid CPU data, so append it
+			ret = append(ret, *ct)
 		}
 	} else {
 		out, err := invoke.CommandWithContext(ctx, "sar", "-u", "10", "1")
