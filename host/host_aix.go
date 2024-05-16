@@ -92,7 +92,7 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 	}
 
 	hf := strings.Fields(lines[1]) // headers
-	for l := 2; l < len(lines)-1; l++ {
+	for l := 2; l < len(lines); l++ {
 		v := strings.Fields(lines[l]) // values
 		us := &UserStat{}
 		for i, header := range hf {
