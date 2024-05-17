@@ -5,10 +5,12 @@ package disk
 
 import (
 	"context"
+	"errors"
 	"regexp"
 	"strconv"
 	"strings"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/errors"
 	"github.com/shirou/gopsutil/v3/internal/common"
 	"golang.org/x/sys/unix"
 )
@@ -181,4 +183,41 @@ func GetMountFSType(mp string) (string, error) {
 	}
 
 	return "", nil
+}
+
+// Using lscfg and a device name, we can get the device information
+// # lscfg -vl hdisk2
+//   hdisk2           U8284.22A.21D72DW-V19-C22-T1-W500507680304A7D2-L2000000000000  MPIO FC 2145
+
+// Manufacturer................IBM
+// Machine Type and Model......2145
+// ROS Level and ID............0000
+// Device Specific.(Z0)........0000063268181002
+// Device Specific.(Z1)........00c0204
+// Serial Number...............600507630081029F5000000000000015
+func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
+	// This isn't linux, these aren't actual disk devices
+	if strings.HasPrefix(name, "/dev/") {
+		return "", errors.New("devices on /dev are not physical disks on aix")
+	}
+	out, err := invoke.CommandWithContext(ctx, "lscfg", "-vl", name)
+	if err != nil {
+		return "", err
+	}
+
+	ret := ""
+	// Kind of inefficient, but it works
+	lines := strings.Split(string(out[:]), "\n")
+	for line := 1; line < len(lines); line++ {
+		v := strings.TrimSpace(lines[line])
+		if strings.HasPrefix(v, "Serial Number...............") {
+			ret = strings.TrimPrefix(v, "Serial Number...............")
+			if ret == "" {
+				return "", errors.New("empty eerial for disk")
+			}
+			return ret, nil
+		}
+	}
+
+	sreturn ret, errors.New("serial entry not found for disk")
 }

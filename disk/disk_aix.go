@@ -13,10 +13,6 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 	return nil, common.ErrNotImplementedError
 }
 
-func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
-	return "", common.ErrNotImplementedError
-}
-
 func LabelWithContext(ctx context.Context, name string) (string, error) {
 	return "", common.ErrNotImplementedError
 }
