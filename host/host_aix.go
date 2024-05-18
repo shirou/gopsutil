@@ -47,6 +47,10 @@ func BootTimeWithContext(ctx context.Context) (btime uint64, err error) {
 	return timeSince(ut), nil
 }
 
+//11:54AM   up 13 mins,  1 user,  load average: 2.78, 2.62, 1.79
+//12:41PM   up 1 hr,  1 user,  load average: 2.47, 2.85, 2.83
+//07:43PM   up 5 hrs,  1 user,  load average: 3.27, 2.91, 2.72
+//11:18:23  up 83 days, 18:29,  4 users,  load average: 0.16, 0.03, 0.01
 func UptimeWithContext(ctx context.Context) (uint64, error) {
 	out, err := invoke.CommandWithContext(ctx, "uptime").Output()
 	if err != nil {
@@ -56,27 +60,53 @@ func UptimeWithContext(ctx context.Context) (uint64, error) {
 	// Convert our uptime to a series of fields we can extract
 	ut := strings.Fields(string(out[:]))
 
-	// Convert the second field "Days" value to integer and roll it to minutes
-	days, err := strconv.Atoi(ut[2])
-	if err != nil {
-		return 0, err
-	}
+	// Convert the second field value to integer
+	var days uint64 = 0
+	var hours uint64 = 0
+	var minutes uint64 = 0
+	if ut[3] == "days," {
+		days, err = strconv.ParseUint(ut[2], 10, 64)
+		if err != nil {
+			return 0, err
+		}
 
-	// Split field 4 into hours and minutes
-	hm := strings.Split(ut[4], ":")
-	hours, err := strconv.Atoi(hm[0])
-	if err != nil {
-		return 0, err
-	}
-	minutes, err := strconv.Atoi(strings.Replace(hm[1], ",", "", -1))
-	if err != nil {
-		return 0, err
+		// Split field 4 into hours and minutes
+		hm := strings.Split(ut[4], ":")
+		hours, err = strconv.ParseUint(hm[0], 10, 64)
+		if err != nil {
+			return 0, err
+		}
+		minutes, err = strconv.ParseUint(strings.Replace(hm[1], ",", "", -1), 10, 64)
+		if err != nil {
+			return 0, err
+		}
+	} else if ut[3] == "hr," || ut[3] == "hrs," {
+		hours, err = strconv.ParseUint(ut[2], 10, 64)
+		if err != nil {
+			return 0, err
+		}
+	} else if ut[3] == "mins," {
+		minutes, err = strconv.ParseUint(ut[2], 10, 64)
+		if err != nil {
+			return 0, err
+		}
+	} else if _, err := strconv.ParseInt(ut[3], 10, 64); err == nil && strings.Contains(ut[2], ":") {
+		// Split field 2 into hours and minutes
+		hm := strings.Split(ut[2], ":")
+		hours, err = strconv.ParseUint(hm[0], 10, 64)
+		if err != nil {
+			return 0, err
+		}
+		minutes, err = strconv.ParseUint(strings.Replace(hm[1], ",", "", -1), 10, 64)
+		if err != nil {
+			return 0, err
+		}
 	}
 
 	// Stack them all together as minutes
 	total_time := (days * 24 * 60) + (hours * 60) + minutes
 
-	return uint64(total_time), nil
+	return total_time, nil
 }
 
 // This is a weak implementation due to the limitations on retrieving this data in AIX
