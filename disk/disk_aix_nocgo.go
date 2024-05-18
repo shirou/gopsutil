@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/errors"
 	"github.com/shirou/gopsutil/v3/internal/common"
 	"golang.org/x/sys/unix"
 )
