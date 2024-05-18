@@ -41,7 +41,7 @@ type (
 		Busy_from     bintime
 		Dev_links     _Ctype_struct___0
 		Device_number uint32
-		Device_name   [16]uint8
+		Device_name   [16]int8
 		Unit_number   int32
 		Bytes         [4]uint64
 		Operations    [4]uint64
@@ -62,3 +62,7 @@ type (
 		Frac uint64
 	}
 )
+
+type _Ctype_struct___0 struct {
+	Empty uint64
+}
