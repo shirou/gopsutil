@@ -83,22 +83,22 @@ func getFsType(stat unix.Statfs_t) string {
 }
 
 func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
-	var ret []UsageStat
 	out, err := invoke.CommandWithContext(ctx, "df", "-v")
 	if err != nil {
 		return nil, err
 	}
 
+	ret := &UsageStat{}
+
 	blocksize := uint64(512)
 	lines := strings.Split(string(out), "\n")
 	if len(lines) < 2 {
-		return []UsageStat{}, common.ErrNotImplementedError
+		return &UsageStat{}, common.ErrNotImplementedError
 	}
 
 	hf := strings.Fields(strings.Replace(lines[0], "Mounted on", "Path", -1)) // headers
 	for line := 1; line < len(lines); line++ {
 		fs := strings.Fields(lines[line]) // values
-		us := &UsageStat{}
 		for i, header := range hf {
 			// We're done in any of these use cases
 			if i >= len(fs) {
@@ -108,65 +108,68 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 			switch header {
 			case `Filesystem`:
 				// This is not a valid fs for us to parse
-				if fs[i] == "/proc" || fs[i] == "/ahafs" {
-					continue
+				if fs[i] == "/proc" || fs[i] == "/ahafs" || fs[i] != path {
+					break
 				}
 
-				us.Fstype, err = GetMountFSType(fs[i])
+				ret.Fstype, err = GetMountFSTypeWithContext(ctx, fs[i])
 				if err != nil {
 					return nil, err
 				}
 			case `Path`:
-				us.Path = fs[i]
+				ret.Path = fs[i]
 			case `512-blocks`:
-				us.Total, err = strconv.Atoi(fs[i])
+				total, err := strconv.ParseUint(fs[i], 10, 64)
+				ret.Total = total * blocksize
 				if err != nil {
 					return nil, err
 				}
 			case `Used`:
-				us.Used, err = strconv.Atoi(fs[i])
+				ret.Used, err = strconv.ParseUint(fs[i], 10, 64)
 				if err != nil {
 					return nil, err
 				}
 			case `Free`:
-				us.Free, err = strconv.Atoi(fs[i])
+				ret.Free, err = strconv.ParseUint(fs[i], 10, 64)
 				if err != nil {
 					return nil, err
 				}
 			case `%Used`:
-				us.UsedPercent, err = strconv.ParseFloat(fs[i])
+				val, err := strconv.Atoi(strings.Replace(fs[i], "%", "", -1))
 				if err != nil {
 					return nil, err
 				}
+				ret.UsedPercent = float64(val) / float64(100)
 			case `Ifree`:
-				us.InodesFree, err = strconv.Atoi(fs[i])
+				ret.InodesFree, err = strconv.ParseUint(fs[i], 10, 64)
 				if err != nil {
 					return nil, err
 				}
 			case `Iused`:
-				us.InodesUsed, err = strconv.Atoi(fs[i])
+				ret.InodesUsed, err = strconv.ParseUint(fs[i], 10, 64)
 				if err != nil {
 					return nil, err
 				}
 			case `%Iused`:
-				us.InodesUsedPercent, err = strconv.ParseFloat(fs[i])
+				val, err := strconv.Atoi(strings.Replace(fs[i], "%", "", -1))
 				if err != nil {
 					return nil, err
 				}
+				ret.InodesUsedPercent = float64(val) / float64(100)
 			}
 		}
 
 		// Calculated value, since it isn't returned by the command
-		us.InodesTotal = us.InodesUsed + us.InodesFree
+		ret.InodesTotal = ret.InodesUsed + ret.InodesFree
 
 		// Valid Usage data, so append it
-		ret = append(ret, *us)
+		return ret, nil
 	}
 
-	return *ret, nil
+	return ret, nil
 }
 
-func GetMountFSType(mp string) (string, error) {
+func GetMountFSTypeWithContext(ctx context.Context, mp string) (string, error) {
 	out, err := invoke.CommandWithContext(ctx, "mount")
 	if err != nil {
 		return "", err
@@ -212,11 +215,11 @@ func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
 		if strings.HasPrefix(v, "Serial Number...............") {
 			ret = strings.TrimPrefix(v, "Serial Number...............")
 			if ret == "" {
-				return "", errors.New("empty eerial for disk")
+				return "", errors.New("empty serial for disk")
 			}
 			return ret, nil
 		}
 	}
 
-	sreturn ret, errors.New("serial entry not found for disk")
+	return ret, errors.New("serial entry not found for disk")
 }

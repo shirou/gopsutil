@@ -48,7 +48,7 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 				if t, err := strconv.ParseFloat(v[pos], 64); err == nil {
 					switch header {
 					case `cpu`:
-						ct.CPU = t
+						ct.CPU = strconv.FormatFloat(t, 'f', -1, 64)
 					case `%usr`:
 						ct.User = t
 					case `%sys`:

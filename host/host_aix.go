@@ -26,11 +26,11 @@ func HostIDWithContext(ctx context.Context) (string, error) {
 	}
 
 	// The command always returns an extra newline, so we make use of Split() to get only the first line
-	return strings.Split(string(out[:]), "\n")[0]
+	return strings.Split(string(out[:]), "\n")[0], nil
 }
 
 func numProcs(ctx context.Context) (uint64, error) {
-	return common.NumProcsWithContext(ctx)
+	return 0, common.ErrNotImplementedError
 }
 
 func BootTimeWithContext(ctx context.Context) (btime uint64, err error) {
@@ -52,7 +52,7 @@ func BootTimeWithContext(ctx context.Context) (btime uint64, err error) {
 //07:43PM   up 5 hrs,  1 user,  load average: 3.27, 2.91, 2.72
 //11:18:23  up 83 days, 18:29,  4 users,  load average: 0.16, 0.03, 0.01
 func UptimeWithContext(ctx context.Context) (uint64, error) {
-	out, err := invoke.CommandWithContext(ctx, "uptime").Output()
+	out, err := invoke.CommandWithContext(ctx, "uptime")
 	if err != nil {
 		return 0, err
 	}
@@ -112,7 +112,7 @@ func UptimeWithContext(ctx context.Context) (uint64, error) {
 // This is a weak implementation due to the limitations on retrieving this data in AIX
 func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 	var ret []UserStat
-	out, err := invoke.CommandWithContext(ctx, "w").Output()
+	out, err := invoke.CommandWithContext(ctx, "w")
 	if err != nil {
 		return nil, err
 	}
@@ -134,9 +134,9 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 			if t, err := strconv.ParseFloat(v[i], 64); err == nil {
 				switch header {
 				case `User`:
-					us.User = t
+					us.User = strconv.FormatFloat(t, 'f', 1, 64)
 				case `tty`:
-					us.Terminal = t
+					us.Terminal = strconv.FormatFloat(t, 'f', 1, 64)
 				}
 			}
 		}
@@ -151,46 +151,49 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 // Much of this function could be static. However, to be future proofed, I've made it call the OS for the information in all instances.
 func PlatformInformationWithContext(ctx context.Context) (platform string, family string, version string, err error) {
 	// Set the platform (which should always, and only be, "AIX") from `uname -s`
-	out, err := invoke.CommandWithContext(ctx, "uname", "-s").Output()
+	out, err := invoke.CommandWithContext(ctx, "uname", "-s")
 	if err != nil {
 		return "", "", "", err
 	}
-	platform = string(out[:])
+	platform = strings.TrimRight(string(out[:]), "\n")
 
 	// Set the family
-	out, err = invoke.CommandWithContext(ctx, "bootinfo", "-p").Output()
-	if err != nil {
-		return "", "", "", err
-	}
-	// Family seems to always be the second field from this uname, so pull that out
-	family = string(out[:])
+	family = strings.TrimRight(string(out[:]), "\n")
 
 	// Set the version
-	out, err = invoke.CommandWithContext(ctx, "oslevel").Output()
+	out, err = invoke.CommandWithContext(ctx, "oslevel")
 	if err != nil {
 		return "", "", "", err
 	}
-	version = string(out[:])
+	version = strings.TrimRight(string(out[:]), "\n")
 
 	return platform, family, version, nil
 }
 
 func KernelVersionWithContext(ctx context.Context) (version string, err error) {
-	out, err := invoke.CommandWithContext(ctx, "oslevel", "-s").Output()
+	out, err := invoke.CommandWithContext(ctx, "oslevel", "-s")
 	if err != nil {
 		return "", err
 	}
-	version = string(out[:])
+	version = strings.TrimRight(string(out[:]), "\n")
 
 	return version, nil
 }
 
 func KernelArch() (arch string, err error) {
-	out, err := invoke.CommandWithContext(ctx, "bootinfo", "-y").Output()
+	out, err := invoke.Command("bootinfo", "-y")
 	if err != nil {
 		return "", err
 	}
-	arch = string(out[:])
+	arch = strings.TrimRight(string(out[:]), "\n")
 
 	return arch, nil
+}
+
+func VirtualizationWithContext(ctx context.Context) (string, string, error) {
+	return "", "", common.ErrNotImplementedError
+}
+
+func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
+	return nil, common.ErrNotImplementedError
 }
