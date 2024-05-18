@@ -1,5 +1,5 @@
-//go:build aix && ppc64
-// +build aix,ppc64
+//go:build aix && ppc64 && cgo
+// +build aix,ppc64,cgo
 
 // Guessed at from the following document:
 // https://www.ibm.com/docs/sl/ibm-mq/9.2?topic=platforms-standard-data-types-aix-linux-windows
@@ -7,7 +7,7 @@
 package host
 
 const (
-	sizeofPtr      = 0x
+	sizeofPtr      = 0x8
 	sizeofShort    = 0x2
 	sizeofInt      = 0x4
 	sizeofLong     = 0x8
