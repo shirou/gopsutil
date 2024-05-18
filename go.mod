@@ -1,8 +1,6 @@
 module github.com/shirou/gopsutil/v3
 
-go 1.21.0
-
-toolchain go1.22.3
+go 1.18
 
 require (
 	github.com/google/go-cmp v0.6.0
