@@ -140,7 +140,7 @@ type KinfoProc struct {
 	Wmesg          [9]uint8
 	Login          [18]uint8
 	Lockname       [9]uint8
-	Comm           [20]uint8
+	Comm           [20]int8
 	Emul           [17]uint8
 	Loginclass     [18]uint8
 	Moretdname     [4]uint8
