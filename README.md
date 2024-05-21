@@ -126,7 +126,7 @@ See https://pkg.go.dev/github.com/shirou/gopsutil/v3 or https://godocs.io/github
 
 ## Requirements
 
-- go1.16 or above is required.
+- go1.18 or above is required.
 
 ## More Info
 
