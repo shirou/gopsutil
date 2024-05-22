@@ -47,10 +47,13 @@ func BootTimeWithContext(ctx context.Context) (btime uint64, err error) {
 	return timeSince(ut), nil
 }
 
-//11:54AM   up 13 mins,  1 user,  load average: 2.78, 2.62, 1.79
-//12:41PM   up 1 hr,  1 user,  load average: 2.47, 2.85, 2.83
-//07:43PM   up 5 hrs,  1 user,  load average: 3.27, 2.91, 2.72
-//11:18:23  up 83 days, 18:29,  4 users,  load average: 0.16, 0.03, 0.01
+// This function takes multiple formats of output frmo the uptime
+// command and converts the data into minutes.
+// Some examples of uptime output that this command handles:
+// 11:54AM   up 13 mins,  1 user,  load average: 2.78, 2.62, 1.79
+// 12:41PM   up 1 hr,  1 user,  load average: 2.47, 2.85, 2.83
+// 07:43PM   up 5 hrs,  1 user,  load average: 3.27, 2.91, 2.72
+// 11:18:23  up 83 days, 18:29,  4 users,  load average: 0.16, 0.03, 0.01
 func UptimeWithContext(ctx context.Context) (uint64, error) {
 	out, err := invoke.CommandWithContext(ctx, "uptime")
 	if err != nil {

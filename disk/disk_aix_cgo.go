@@ -8,7 +8,6 @@ import (
 	"fmt"
 
 	"github.com/power-devops/perfstat"
-	"github.com/shirou/gopsutil/v3/internal/common"
 )
 
 var FSType map[int]string
@@ -74,8 +73,4 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 		}
 	}
 	return nil, fmt.Errorf("mountpoint %s not found", path)
-}
-
-func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
-	return "", common.ErrNotImplementedError
 }
