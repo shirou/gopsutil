@@ -1,11 +1,14 @@
 package host
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"sync"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/shirou/gopsutil/v3/internal/common"
 )
@@ -147,6 +150,33 @@ func TestTemperatureStat_String(t *testing.T) {
 	if s != fmt.Sprintf("%v", v) {
 		t.Errorf("TemperatureStat string is invalid, %v", fmt.Sprintf("%v", v))
 	}
+}
+
+func TestTemperatureStat_StringNotSet(t *testing.T) {
+	v := TemperatureStat{
+		SensorKey:   "CPU",
+		Temperature: 1.1,
+	}
+	expected := `{"sensorKey":"CPU","temperature":1.1,"sensorHigh":0,"sensorCritical":0}`
+	require.Equalf(t, expected, v.String(), "TemperatureStat string is invalid, %s", v)
+}
+
+func TestTemperatureStat_StringOptional(t *testing.T) {
+	v := TemperatureStat{
+		SensorKey:   "CPU",
+		Temperature: 1.1,
+		High:        30.1,
+		Critical:    0.1,
+		Optional: map[string]float64{
+			"min":   -273.1,
+			"max":   30.1,
+			"crit":  0.1,
+			"alarm": 80.3,
+		},
+	}
+	var actual TemperatureStat
+	require.NoError(t, json.Unmarshal([]byte(v.String()), &actual))
+	require.EqualValues(t, v, actual)
 }
 
 func TestVirtualization(t *testing.T) {
