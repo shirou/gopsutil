@@ -126,7 +126,7 @@ See https://pkg.go.dev/github.com/shirou/gopsutil/v3 or https://godocs.io/github
 
 ## Requirements
 
-- go1.16 or above is required.
+- go1.18 or above is required.
 
 ## More Info
 
@@ -184,28 +184,29 @@ Some code is ported from Ohai. Many thanks.
 
 - x: works
 - b: almost works, but something is broken
+- c: works in CGO only
 
-|name                  |Linux  |FreeBSD  |OpenBSD  |macOS   |Windows  |Solaris  |Plan 9   |
-|----------------------|-------|---------|---------|--------|---------|---------|---------|
-|cpu\_times            |x      |x        |x        |x       |x        |         |b        |
-|cpu\_count            |x      |x        |x        |x       |x        |         |x        |
-|cpu\_percent          |x      |x        |x        |x       |x        |         |         |
-|cpu\_times\_percent   |x      |x        |x        |x       |x        |         |         |
-|virtual\_memory       |x      |x        |x        |x       |x        | b       |x        |
-|swap\_memory          |x      |x        |x        |x       |         |         |x        |
-|disk\_partitions      |x      |x        |x        |x       |x        |         |         |
-|disk\_io\_counters    |x      |x        |x        |        |         |         |         |
-|disk\_usage           |x      |x        |x        |x       |x        |         |         |
-|net\_io\_counters     |x      |x        |x        |b       |x        |         |         |
-|boot\_time            |x      |x        |x        |x       |x        |         |         |
-|users                 |x      |x        |x        |x       |x        |         |         |
-|pids                  |x      |x        |x        |x       |x        |         |         |
-|pid\_exists           |x      |x        |x        |x       |x        |         |         |
-|net\_connections      |x      |x        |x        |x       |         |         |         |
-|net\_protocols        |x      |         |         |        |         |         |         |
-|net\_if\_addrs        |       |         |         |        |         |         |         |
-|net\_if\_stats        |       |         |         |        |         |         |         |
-|netfilter\_conntrack  |x      |         |         |        |         |         |         |
+|name                  |Linux  |FreeBSD  |OpenBSD  |macOS   |Windows  |Solaris  |Plan 9   |AIX      |
+|----------------------|-------|---------|---------|--------|---------|---------|---------|---------|
+|cpu\_times            |x      |x        |x        |x       |x        |         |b        |x        |
+|cpu\_count            |x      |x        |x        |x       |x        |         |x        |x        |
+|cpu\_percent          |x      |x        |x        |x       |x        |         |         |x        |
+|cpu\_times\_percent   |x      |x        |x        |x       |x        |         |         |x        |
+|virtual\_memory       |x      |x        |x        |x       |x        | b       |x        |x        |
+|swap\_memory          |x      |x        |x        |x       |         |         |x        |X        |
+|disk\_partitions      |x      |x        |x        |x       |x        |         |         |x        |
+|disk\_io\_counters    |x      |x        |x        |        |         |         |         |         |
+|disk\_usage           |x      |x        |x        |x       |x        |         |         |x        |
+|net\_io\_counters     |x      |x        |x        |b       |x        |         |         |         |
+|boot\_time            |x      |x        |x        |x       |x        |         |         |X        |
+|users                 |x      |x        |x        |x       |x        |         |         |x        |
+|pids                  |x      |x        |x        |x       |x        |         |         |         |
+|pid\_exists           |x      |x        |x        |x       |x        |         |         |         |
+|net\_connections      |x      |x        |x        |x       |         |         |         |x        |
+|net\_protocols        |x      |         |         |        |         |         |         |x        |
+|net\_if\_addrs        |       |         |         |        |         |         |         |x        |
+|net\_if\_stats        |       |         |         |        |         |         |         |x        |
+|netfilter\_conntrack  |x      |         |         |        |         |         |         |         |
 
 
 ### Process class
@@ -254,37 +255,37 @@ Some code is ported from Ohai. Many thanks.
 
 ### Original Metrics
 
-|item             |Linux  |FreeBSD  |OpenBSD  |macOS   |Windows |Solaris  |
-|-----------------|-------|---------|---------|--------|--------|---------|
-|**HostInfo**     |       |         |         |        |        |         |
-|hostname         |x      |x        |x        |x       |x       |x        |
-|uptime           |x      |x        |x        |x       |        |x        |
-|process          |x      |x        |x        |        |        |x        |
-|os               |x      |x        |x        |x       |x       |x        |
-|platform         |x      |x        |x        |x       |        |x        |
-|platformfamily   |x      |x        |x        |x       |        |x        |
-|virtualization   |x      |         |         |        |        |         |
-|**CPU**          |       |         |         |        |        |         |
-|VendorID         |x      |x        |x        |x       |x       |x        |
-|Family           |x      |x        |x        |x       |x       |x        |
-|Model            |x      |x        |x        |x       |x       |x        |
-|Stepping         |x      |x        |x        |x       |x       |x        |
-|PhysicalID       |x      |         |         |        |        |x        |
-|CoreID           |x      |         |         |        |        |x        |
-|Cores            |x      |         |         |        |x       |x        |
-|ModelName        |x      |x        |x        |x       |x       |x        |
-|Microcode        |x      |         |         |        |        |x        |
-|**LoadAvg**      |       |         |         |        |        |         |
-|Load1            |x      |x        |x        |x       |        |         |
-|Load5            |x      |x        |x        |x       |        |         |
-|Load15           |x      |x        |x        |x       |        |         |
-|**GetDockerID**  |       |         |         |        |        |         |
-|container id     |x      |no       |no       |no      |no      |         |
-|**CgroupsCPU**   |       |         |         |        |        |         |
-|user             |x      |no       |no       |no      |no      |         |
-|system           |x      |no       |no       |no      |no      |         |
-|**CgroupsMem**   |       |         |         |        |        |         |
-|various          |x      |no       |no       |no      |no      |         |
+|item             |Linux  |FreeBSD  |OpenBSD  |macOS   |Windows |Solaris  |AIX      |
+|-----------------|-------|---------|---------|--------|--------|---------|---------|
+|**HostInfo**     |       |         |         |        |        |         |         |
+|hostname         |x      |x        |x        |x       |x       |x        |X        |
+|uptime           |x      |x        |x        |x       |        |x        |x        |
+|process          |x      |x        |x        |        |        |x        |         |
+|os               |x      |x        |x        |x       |x       |x        |x        |
+|platform         |x      |x        |x        |x       |        |x        |x        |
+|platformfamily   |x      |x        |x        |x       |        |x        |x        |
+|virtualization   |x      |         |         |        |        |         |         |
+|**CPU**          |       |         |         |        |        |         |         |
+|VendorID         |x      |x        |x        |x       |x       |x        |x        |
+|Family           |x      |x        |x        |x       |x       |x        |x        |
+|Model            |x      |x        |x        |x       |x       |x        |x        |
+|Stepping         |x      |x        |x        |x       |x       |x        |         |
+|PhysicalID       |x      |         |         |        |        |x        |         |
+|CoreID           |x      |         |         |        |        |x        |         |
+|Cores            |x      |         |         |        |x       |x        |x        |
+|ModelName        |x      |x        |x        |x       |x       |x        |x        |
+|Microcode        |x      |         |         |        |        |x        |         |
+|**LoadAvg**      |       |         |         |        |        |         |         |
+|Load1            |x      |x        |x        |x       |        |         |x        |
+|Load5            |x      |x        |x        |x       |        |         |x        |
+|Load15           |x      |x        |x        |x       |        |         |x        |
+|**GetDockerID**  |       |         |         |        |        |         |         |
+|container id     |x      |no       |no       |no      |no      |         |         |
+|**CgroupsCPU**   |       |         |         |        |        |         |         |
+|user             |x      |no       |no       |no      |no      |         |         |
+|system           |x      |no       |no       |no      |no      |         |         |
+|**CgroupsMem**   |       |         |         |        |        |         |         |
+|various          |x      |no       |no       |no      |no      |         |         |
 
 - future work
   - process_iter
@@ -292,6 +293,7 @@ Some code is ported from Ohai. Many thanks.
   - Process class
     - as_dict
     - wait
+  - AIX processes
 
 ## License
 
