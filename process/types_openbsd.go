@@ -44,6 +44,7 @@ const (
 	KernProcProc     = 8  // only return procs
 	KernProcPathname = 12 // path to executable
 	KernProcArgs     = 55 // get/set arguments/proctitle
+	KernProcCwd      = 78 // get current working directory
 	KernProcArgv     = 1
 	KernProcEnv      = 3
 )
