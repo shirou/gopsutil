@@ -34,13 +34,13 @@ func TemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
 	}
 	var temperatures []TemperatureStat
 
-	C.gopsutil_v3_open_smc()
-	defer C.gopsutil_v3_close_smc()
+	C.gopsutil_v4_open_smc()
+	defer C.gopsutil_v4_close_smc()
 
 	for _, key := range temperatureKeys {
 		temperatures = append(temperatures, TemperatureStat{
 			SensorKey:   key,
-			Temperature: float64(C.gopsutil_v3_get_temperature(C.CString(key))),
+			Temperature: float64(C.gopsutil_v4_get_temperature(C.CString(key))),
 		})
 	}
 	return temperatures, nil
