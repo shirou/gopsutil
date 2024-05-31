@@ -11,11 +11,6 @@ challenge is porting all psutil functions on some architectures.
 
 See v4 release note.
 
-### v3 migration
-
-From v3.20.10, gopsutil becomes v3 which breaks backwards compatibility.
-See [v3Changes.md](_tools/v3migration/v3Changes.md) for more detailed changes.
-
 ## Tag semantics
 
 gopsutil tag policy is almost same as Semantic Versioning, but
@@ -39,16 +34,14 @@ can be skipped.
 - Windows i386/amd64/arm/arm64
 - Darwin amd64/arm64
 - OpenBSD i386/amd64/armv7/arm64/riscv64 (Thank you @mpfz0r!)
-- Solaris amd64 (developed and tested on SmartOS/Illumos, Thank you
-  @jen20!)
+- Solaris amd64 (developed and tested on SmartOS/Illumos, Thank you @jen20!)
 
 These have partial support:
 
 - CPU on DragonFly BSD (#893, Thank you @gballet!)
 - host on Linux RISC-V (#896, Thank you @tklauser!)
 
-All works are implemented without cgo by porting C structs to golang
-structs.
+All works are implemented without cgo by porting C structs to golang structs.
 
 ## Usage
 
@@ -59,7 +52,6 @@ import (
     "fmt"
 
     "github.com/shirou/gopsutil/v4/mem"
-    // "github.com/shirou/gopsutil/mem"  // to use v2
 )
 
 func main() {
@@ -328,5 +320,4 @@ I have been influenced by the following great works:
 4.  Push to the branch (git push origin my-new-feature)
 5.  Create new Pull Request
 
-English is not my native language, so PRs correcting grammar or spelling
-are welcome and appreciated.
+English is not my native language, so PRs correcting grammar or spelling are welcome and appreciated.
