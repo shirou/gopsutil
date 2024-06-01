@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 package process
 
 import (
@@ -9,10 +10,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/shirou/gopsutil/v3/cpu"
-	"github.com/shirou/gopsutil/v3/internal/common"
-	"github.com/shirou/gopsutil/v3/mem"
-	"github.com/shirou/gopsutil/v3/net"
+	"github.com/shirou/gopsutil/v4/cpu"
+	"github.com/shirou/gopsutil/v4/internal/common"
+	"github.com/shirou/gopsutil/v4/mem"
+	"github.com/shirou/gopsutil/v4/net"
 )
 
 var (
@@ -29,9 +30,9 @@ type Process struct {
 	parent         int32
 	parentMutex    sync.RWMutex // for windows ppid cache
 	numCtxSwitches *NumCtxSwitchesStat
-	uids           []int32
-	gids           []int32
-	groups         []int32
+	uids           []uint32
+	gids           []uint32
+	groups         []uint32
 	numThreads     int32
 	memInfo        *MemoryInfoStat
 	sigInfo        *SignalInfoStat
@@ -102,10 +103,18 @@ type RlimitStat struct {
 }
 
 type IOCountersStat struct {
-	ReadCount  uint64 `json:"readCount"`
+	// ReadCount is a number of read I/O operations such as syscalls.
+	ReadCount uint64 `json:"readCount"`
+	// WriteCount is a number of read I/O operations such as syscalls.
 	WriteCount uint64 `json:"writeCount"`
-	ReadBytes  uint64 `json:"readBytes"`
+	// ReadBytes is a number of all I/O read in bytes. This includes disk I/O on Linux and Windows.
+	ReadBytes uint64 `json:"readBytes"`
+	// WriteBytes is a number of all I/O write in bytes. This includes disk I/O on Linux and Windows.
 	WriteBytes uint64 `json:"writeBytes"`
+	// DiskReadBytes is a number of disk I/O write in bytes. Currently only Linux has this value.
+	DiskReadBytes uint64 `json:"diskReadBytes"`
+	// DiskWriteBytes is a number of disk I/O read in bytes.  Currently only Linux has this value.
+	DiskWriteBytes uint64 `json:"diskWriteBytes"`
 }
 
 type NumCtxSwitchesStat struct {
@@ -368,7 +377,7 @@ func (p *Process) CPUPercentWithContext(ctx context.Context) (float64, error) {
 }
 
 // Groups returns all group IDs(include supplementary groups) of the process as a slice of the int
-func (p *Process) Groups() ([]int32, error) {
+func (p *Process) Groups() ([]uint32, error) {
 	return p.GroupsWithContext(context.Background())
 }
 
@@ -433,12 +442,12 @@ func (p *Process) Foreground() (bool, error) {
 }
 
 // Uids returns user ids of the process as a slice of the int
-func (p *Process) Uids() ([]int32, error) {
+func (p *Process) Uids() ([]uint32, error) {
 	return p.UidsWithContext(context.Background())
 }
 
 // Gids returns group ids of the process as a slice of the int
-func (p *Process) Gids() ([]int32, error) {
+func (p *Process) Gids() ([]uint32, error) {
 	return p.GidsWithContext(context.Background())
 }
 

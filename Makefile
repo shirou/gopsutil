@@ -84,7 +84,7 @@ macos_test:
 init_tools:
 	go get github.com/golang/dep/cmd/dep
 
-TAG=$(shell date +'v3.%y.%-m' --date='last Month')
+TAG=$(shell date +'v4.%y.%-m' --date='last Month')
 
 release:
 	git tag $(TAG)

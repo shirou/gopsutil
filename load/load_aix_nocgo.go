@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build aix && !cgo
-// +build aix,!cgo
 
 package load
 
@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 var separator = regexp.MustCompile(`,?\s+`)
@@ -26,7 +26,7 @@ func AvgWithContext(ctx context.Context) (*AvgStat, error) {
 	}
 	ret := &AvgStat{}
 
-	p := separator.Split(string(line[idx:len(line)]), 5)
+	p := separator.Split(string(line[idx:]), 5)
 	if 4 < len(p) && p[0] == "load" && p[1] == "average:" {
 		if t, err := strconv.ParseFloat(p[2], 64); err == nil {
 			ret.Load1 = t

@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build darwin || freebsd || openbsd
-// +build darwin freebsd openbsd
 
 package process
 
@@ -8,8 +8,8 @@ import (
 	"context"
 	"encoding/binary"
 
-	"github.com/shirou/gopsutil/v3/cpu"
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/cpu"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 type MemoryInfoExStat struct{}

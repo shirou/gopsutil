@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build darwin && !cgo
-// +build darwin,!cgo
 
 package process
 
@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/shirou/gopsutil/v3/cpu"
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/cpu"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func (p *Process) CwdWithContext(ctx context.Context) (string, error) {

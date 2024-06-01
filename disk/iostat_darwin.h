@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Copyright (c) 2017, kadota kyohei
 // https://github.com/lufia/iostat/blob/9f7362b77ad333b26c01c99de52a11bdb650ded2/iostat_darwin.h
 typedef struct DriveStats DriveStats;
 typedef struct CPUStats CPUStats;
@@ -29,4 +31,4 @@ struct CPUStats {
 	natural_t idle;
 };
 
-extern int gopsutil_v3_readdrivestat(DriveStats a[], int n);
+extern int gopsutil_v4_readdrivestat(DriveStats a[], int n);

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Copyright (c) 2017, kadota kyohei
 // https://github.com/lufia/iostat/blob/9f7362b77ad333b26c01c99de52a11bdb650ded2/iostat_darwin.c
 #include <stdint.h>
 #include <CoreFoundation/CoreFoundation.h>
@@ -16,7 +18,7 @@ static int getdrivestat(io_registry_entry_t d, DriveStats *stat);
 static int fillstat(io_registry_entry_t d, DriveStats *stat);
 
 int
-gopsutil_v3_readdrivestat(DriveStats a[], int n)
+gopsutil_v4_readdrivestat(DriveStats a[], int n)
 {
 	CFMutableDictionaryRef match;
 	io_iterator_t drives;

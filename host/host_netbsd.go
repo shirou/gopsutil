@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build netbsd
-// +build netbsd
 
 package host
 
@@ -7,7 +7,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 	"golang.org/x/sys/unix"
 )
 
@@ -43,10 +43,6 @@ func VirtualizationWithContext(ctx context.Context) (string, string, error) {
 func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 	var ret []UserStat
 	return ret, common.ErrNotImplementedError
-}
-
-func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
-	return []TemperatureStat{}, common.ErrNotImplementedError
 }
 
 func KernelVersionWithContext(ctx context.Context) (string, error) {

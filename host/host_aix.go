@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build aix
-// +build aix
 
 package host
 
@@ -9,14 +9,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 // from https://www.ibm.com/docs/en/aix/7.2?topic=files-utmph-file
 const (
 	user_PROCESS = 7
-
-	hostTemperatureScale = 1000.0 // Not part of the linked file, but kept just in case it becomes relevant
 )
 
 func HostIDWithContext(ctx context.Context) (string, error) {
@@ -195,8 +193,4 @@ func KernelArch() (arch string, err error) {
 
 func VirtualizationWithContext(ctx context.Context) (string, string, error) {
 	return "", "", common.ErrNotImplementedError
-}
-
-func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
-	return nil, common.ErrNotImplementedError
 }

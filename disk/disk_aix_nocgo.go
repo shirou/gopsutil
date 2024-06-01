@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build aix && !cgo
-// +build aix,!cgo
 
 package disk
 
@@ -9,19 +9,21 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 	"golang.org/x/sys/unix"
 )
 
 var startBlank = regexp.MustCompile(`^\s+`)
 
-var ignoreFSType = map[string]bool{"procfs": true}
-var FSType = map[int]string{
-	0: "jfs2", 1: "namefs", 2: "nfs", 3: "jfs", 5: "cdrom", 6: "proc",
-	16: "special-fs", 17: "cache-fs", 18: "nfs3", 19: "automount-fs", 20: "pool-fs", 32: "vxfs",
-	33: "veritas-fs", 34: "udfs", 35: "nfs4", 36: "nfs4-pseudo", 37: "smbfs", 38: "mcr-pseudofs",
-	39: "ahafs", 40: "sterm-nfs", 41: "asmfs",
-}
+var (
+	ignoreFSType = map[string]bool{"procfs": true}
+	FSType       = map[int]string{
+		0: "jfs2", 1: "namefs", 2: "nfs", 3: "jfs", 5: "cdrom", 6: "proc",
+		16: "special-fs", 17: "cache-fs", 18: "nfs3", 19: "automount-fs", 20: "pool-fs", 32: "vxfs",
+		33: "veritas-fs", 34: "udfs", 35: "nfs4", 36: "nfs4-pseudo", 37: "smbfs", 38: "mcr-pseudofs",
+		39: "ahafs", 40: "sterm-nfs", 41: "asmfs",
+	}
+)
 
 func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {
 	var ret []PartitionStat

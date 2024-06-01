@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build linux
-// +build linux
 
 package load
 
@@ -10,7 +10,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func Avg() (*AvgStat, error) {

@@ -1,4 +1,4 @@
-module github.com/shirou/gopsutil/v3
+module github.com/shirou/gopsutil/v4
 
 go 1.18
 
@@ -21,4 +21,10 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-retract v3.22.11
+require (
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/go-ole/go-ole v1.2.6 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/tklauser/numcpus v0.6.1 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
+)

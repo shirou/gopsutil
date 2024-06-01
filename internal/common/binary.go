@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 package common
 
 // Copyright 2009 The Go Authors.  All rights reserved.
