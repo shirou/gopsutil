@@ -9,7 +9,7 @@ challenge is porting all psutil functions on some architectures.
 
 ### v4 migration
 
-See v4 release note.
+There are some breaking changes. Please see [v4 release note](https://github.com/shirou/gopsutil/releases/tag/v4.24.5).
 
 ## Tag semantics
 
@@ -117,6 +117,31 @@ Be very careful that enabling the cache may cause inconsistencies. For example, 
   - EnableBootTimeCache
 - `process`
   - EnableBootTimeCache
+
+### `Ex` struct (from v4.24.5)
+
+gopsutil is designed to work across multiple platforms. However, there are differences in the information available on different platforms, such as memory information that exists on Linux but not on Windows.
+
+As of v4.24.5, to access this platform-specific information, gopsutil provides functions named `Ex` within the package. Currently, these functions are available in the mem and sensor packages.
+
+The Ex structs are specific to each platform. For example, on Linux, there is an `ExLinux` struct, which can be obtained using the `mem.NewExLinux()` function. On Windows, it's `mem.ExWindows()`. These Ex structs provide platform-specific information.
+
+```
+ex := NewExWindows()
+v, err := ex.VirtualMemory()
+if err != nil {
+    panic(err)
+}
+
+fmt.Println(v.VirtualAvail)
+fmt.Println(v.VirtualTotal)
+
+// Output:
+// 140731958648832
+// 140737488224256
+```
+
+gopsutil aims to minimize platform differences by offering common functions. However, there are many requests to obtain unique information for each platform. The Ex structs are designed to meet those requests. Additional functionalities might be added in the future. The use of these structures makes it clear that the information they provide is specific to each platform, which is why they have been designed in this way.
 
 ## Documentation
 
