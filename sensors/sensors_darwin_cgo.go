@@ -6,7 +6,10 @@ package sensors
 // #cgo LDFLAGS: -framework IOKit
 // #include "smc_darwin.h"
 import "C"
-import "context"
+import (
+	"context"
+	"unsafe"
+)
 
 func TemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
 	temperatureKeys := []string{
@@ -38,9 +41,11 @@ func TemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
 	defer C.gopsutil_v4_close_smc()
 
 	for _, key := range temperatureKeys {
+		ckey := C.CString(key)
+		defer C.free(unsafe.Pointer(ckey))
 		temperatures = append(temperatures, TemperatureStat{
 			SensorKey:   key,
-			Temperature: float64(C.gopsutil_v4_get_temperature(C.CString(key))),
+			Temperature: float64(C.gopsutil_v4_get_temperature(ckey)),
 		})
 	}
 	return temperatures, nil
