@@ -52,6 +52,7 @@ func BootTimeWithContext(ctx context.Context) (btime uint64, err error) {
 // 12:41PM   up 1 hr,  1 user,  load average: 2.47, 2.85, 2.83
 // 07:43PM   up 5 hrs,  1 user,  load average: 3.27, 2.91, 2.72
 // 11:18:23  up 83 days, 18:29,  4 users,  load average: 0.16, 0.03, 0.01
+// 08:47PM   up 2 days, 20 hrs, 1 user, load average: 2.47, 2.17, 2.17
 func UptimeWithContext(ctx context.Context) (uint64, error) {
 	out, err := invoke.CommandWithContext(ctx, "uptime")
 	if err != nil {
@@ -61,62 +62,50 @@ func UptimeWithContext(ctx context.Context) (uint64, error) {
 	// Convert our uptime to a series of fields we can extract
 	ut := strings.Fields(string(out[:]))
 
-	// Convert the second field value to integer
-	var days uint64 = 0
-	var hours uint64 = 0
-	var minutes uint64 = 0
+	// Initialise variables
+	var days, hours, minutes uint64
 
+	// Check if days are specified and parse them
 	if ut[3] == "day," || ut[3] == "days," {
 		days, err = strconv.ParseUint(ut[2], 10, 64)
 		if err != nil {
 			return 0, err
 		}
+	}
 
-		// Split field 4 into hours and minutes
-		hm := strings.Split(ut[4], ":")
-		if len(hm) < 2 {
-			return 0, fmt.Errorf("expected 'hours:minutes,' format but got '%s'", ut[4])
-		}
-
-		// Parse hours
-		hours, err = strconv.ParseUint(hm[0], 10, 64)
-		if err != nil {
-			return 0, err
-		}
-
-		// Remove trailing comma from minutes and parse
-		minutes, err = strconv.ParseUint(strings.Replace(hm[1], ",", "", -1), 10, 64)
-		if err != nil {
-			return 0, err
-		}
-
-	} else if ut[3] == "hr," || ut[3] == "hrs," {
+	// Identify and parse hours and minutes based on the format present
+	switch {
+	case ut[4] == "hrs," || ut[4] == "hr,":
+		// Only hours are given, and they are placed in ut[4]
 		hours, err = strconv.ParseUint(ut[2], 10, 64)
 		if err != nil {
 			return 0, err
 		}
-	} else if ut[3] == "mins," {
-		minutes, err = strconv.ParseUint(ut[2], 10, 64)
-		if err != nil {
-			return 0, err
-		}
-	} else if _, err := strconv.ParseInt(ut[3], 10, 64); err == nil && strings.Contains(ut[2], ":") {
-		// Split field 2 into hours and minutes
-		hm := strings.Split(ut[2], ":")
+	case strings.Contains(ut[4], ":"):
+		// Hours and minutes are specified in the format "hours:minutes"
+		hm := strings.Split(ut[4], ":")
 		hours, err = strconv.ParseUint(hm[0], 10, 64)
 		if err != nil {
 			return 0, err
 		}
-		minutes, err = strconv.ParseUint(strings.Replace(hm[1], ",", "", -1), 10, 64)
+		minutes, err = strconv.ParseUint(strings.Trim(hm[1], ","), 10, 64)
 		if err != nil {
 			return 0, err
 		}
+	default:
+		// No explicit hours or "hours:minutes" format after days, check if minutes are given directly
+		if ut[3] == "mins," {
+			minutes, err = strconv.ParseUint(ut[2], 10, 64)
+			if err != nil {
+				return 0, err
+			}
+		}
 	}
 
-	// Stack them all together as minutes
-	total_time := (days * 24 * 60) + (hours * 60) + minutes
+	// Calculate total time in minutes
+	totalTime := (days * 24 * 60) + (hours * 60) + minutes
 
-	return total_time, nil
+	return totalTime, nil
 }
 
 // This is a weak implementation due to the limitations on retrieving this data in AIX
