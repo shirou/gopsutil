@@ -65,6 +65,7 @@ func UptimeWithContext(ctx context.Context) (uint64, error) {
 	var days uint64 = 0
 	var hours uint64 = 0
 	var minutes uint64 = 0
+
 	if ut[3] == "day," || ut[3] == "days," {
 		days, err = strconv.ParseUint(ut[2], 10, 64)
 		if err != nil {
@@ -73,14 +74,20 @@ func UptimeWithContext(ctx context.Context) (uint64, error) {
 
 		// Split field 4 into hours and minutes
 		hm := strings.Split(ut[4], ":")
+		if len(hm) < 2 {
+			return 0, fmt.Errorf("expected 'hours:minutes,' format but got '%s'", ut[4])
+		}
+
 		hours, err = strconv.ParseUint(hm[0], 10, 64)
 		if err != nil {
 			return 0, err
 		}
+
 		minutes, err = strconv.ParseUint(strings.Replace(hm[1], ",", "", -1), 10, 64)
 		if err != nil {
 			return 0, err
 		}
+
 	} else if ut[3] == "hr," || ut[3] == "hrs," {
 		hours, err = strconv.ParseUint(ut[2], 10, 64)
 		if err != nil {
