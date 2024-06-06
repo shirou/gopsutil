@@ -78,11 +78,13 @@ func UptimeWithContext(ctx context.Context) (uint64, error) {
 			return 0, fmt.Errorf("expected 'hours:minutes,' format but got '%s'", ut[4])
 		}
 
+		// Parse hours
 		hours, err = strconv.ParseUint(hm[0], 10, 64)
 		if err != nil {
 			return 0, err
 		}
 
+		// Remove trailing comma from minutes and parse
 		minutes, err = strconv.ParseUint(strings.Replace(hm[1], ",", "", -1), 10, 64)
 		if err != nil {
 			return 0, err
