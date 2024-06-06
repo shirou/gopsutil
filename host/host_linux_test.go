@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build linux
-// +build linux
 
 package host
 
@@ -7,7 +7,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/shirou/gopsutil/v3/common"
+	"github.com/shirou/gopsutil/v4/common"
 )
 
 func TestGetRedhatishVersion(t *testing.T) {
@@ -64,7 +64,7 @@ func TestGetRedhatishPlatform(t *testing.T) {
 	}
 }
 
-func Test_getlsbStruct(t *testing.T) {
+func TestGetlsbStruct(t *testing.T) {
 	cases := []struct {
 		root        string
 		id          string

@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 //go:build darwin && cgo && !ios
-// +build darwin,cgo,!ios
 
 package disk
 
@@ -14,12 +14,12 @@ import "C"
 import (
 	"context"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOCountersStat, error) {
 	var buf [C.NDRIVE]C.DriveStats
-	n, err := C.gopsutil_v3_readdrivestat(&buf[0], C.int(len(buf)))
+	n, err := C.gopsutil_v4_readdrivestat(&buf[0], C.int(len(buf)))
 	if err != nil {
 		return nil, err
 	}

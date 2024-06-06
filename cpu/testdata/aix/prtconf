@@ -1,0 +1,68 @@
+System Model: IBM pSeries (emulated by qemu)
+Machine Serial Number: Not Available
+Processor Type: PowerPC_POWER8
+Processor Implementation Mode: POWER 8
+Processor Version: PV_8_Compat
+Number Of Processors: 4
+Processor Clock Speed: 1000 MHz
+CPU Type: 64-bit
+Kernel Type: 64-bit
+LPAR Info: 0 aix_7200-04-02-2027
+Memory Size: 4096 MB
+Good Memory Size: 4096 MB
+Platform Firmware level: Not Available
+Firmware Version: SLOF,HEAD
+Console Login: enable
+Auto Restart: true
+Full Core: false
+NX Crypto Acceleration: Not Capable
+In-Core Crypto Acceleration: Capable, but not Enabled
+ 
+en0
+Network Information
+	Host Name: aix72-dylan
+	IP Address: 192.168.124.53
+	Sub Netmask: 
+	Gateway: 192.168.124.1
+	Name Server: 
+	Domain Name: 
+ 
+Paging Space Information
+	Total Paging Space: 512MB
+	Percent Used: 1%
+ 
+Volume Groups Information
+============================================================================== 
+Active VGs
+============================================================================== 
+rootvg:
+PV_NAME           PV STATE          TOTAL PPs   FREE PPs    FREE DISTRIBUTION
+hdisk0            active            999         809         199..193..17..200..200
+============================================================================== 
+ 
+INSTALLED RESOURCE LIST
+
+The following resources are installed on the machine.
++/- = Added or deleted from Resource List.
+*   = Diagnostic support not available.
+	
+  Model Architecture: chrp
+  Model Implementation: Uni-Processor, PCI bus
+	
++ sys0                                                     System Object
++ sysplanar0                                               System Planar
+* vio0                                                     Virtual I/O Bus
+* ent0                                                     Virtual I/O Ethernet Adapter (l-lan)
+* vscsi0                                                   Virtual SCSI Client Adapter
+* cd0                                                      Virtual SCSI Optical Served by VIO Server
+* vsa0                                                     LPAR Virtual Serial Adapter
+* vty0                                                     Asynchronous Terminal
+* pci0                                                     PCI Bus
+* scsi0            qemu_virtio-scsi-pci:0000:00:02.0       Virtio SCSI Client Adapter (f41a0800)
+* hdisk0           qemu_virtio-scsi-pci:0000:00:02.0-LW_0  MPIO Other Virtio SCSI Disk Drive
++ L2cache0                                                 L2 Cache
++ mem0                                                     Memory
++ proc0                                                    Processor
++ proc1                                                    Processor
++ proc2                                                    Processor
++ proc3                                                    Processor

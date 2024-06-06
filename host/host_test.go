@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 package host
 
 import (
@@ -7,7 +8,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func skipIfNotImplementedErr(t *testing.T, err error) {
@@ -16,7 +17,19 @@ func skipIfNotImplementedErr(t *testing.T, err error) {
 	}
 }
 
-func TestHostInfo(t *testing.T) {
+func TestHostID(t *testing.T) {
+	v, err := HostID()
+	skipIfNotImplementedErr(t, err)
+	if err != nil {
+		t.Errorf("error %v", err)
+	}
+	if v == "" {
+		t.Errorf("Could not get host id %v", v)
+	}
+	t.Log(v)
+}
+
+func TestInfo(t *testing.T) {
 	v, err := Info()
 	skipIfNotImplementedErr(t, err)
 	if err != nil {
@@ -47,7 +60,7 @@ func TestUptime(t *testing.T) {
 	}
 }
 
-func TestBoot_time(t *testing.T) {
+func TestBootTime(t *testing.T) {
 	if os.Getenv("CI") == "true" {
 		t.Skip("Skip CI")
 	}
@@ -93,7 +106,7 @@ func TestUsers(t *testing.T) {
 	}
 }
 
-func TestHostInfoStat_String(t *testing.T) {
+func TestInfoStat_String(t *testing.T) {
 	v := InfoStat{
 		Hostname:   "test",
 		Uptime:     3000,
@@ -123,7 +136,7 @@ func TestUserStat_String(t *testing.T) {
 	}
 }
 
-func TestHostGuid(t *testing.T) {
+func TestGuid(t *testing.T) {
 	id, err := HostID()
 	skipIfNotImplementedErr(t, err)
 	if err != nil {
@@ -133,19 +146,6 @@ func TestHostGuid(t *testing.T) {
 		t.Error("Host id is empty")
 	} else {
 		t.Logf("Host id value: %v", id)
-	}
-}
-
-func TestTemperatureStat_String(t *testing.T) {
-	v := TemperatureStat{
-		SensorKey:   "CPU",
-		Temperature: 1.1,
-		High:        30.1,
-		Critical:    0.1,
-	}
-	s := `{"sensorKey":"CPU","temperature":1.1,"sensorHigh":30.1,"sensorCritical":0.1}`
-	if s != fmt.Sprintf("%v", v) {
-		t.Errorf("TemperatureStat string is invalid, %v", fmt.Sprintf("%v", v))
 	}
 }
 

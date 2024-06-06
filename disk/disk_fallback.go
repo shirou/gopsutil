@@ -1,12 +1,12 @@
-//go:build !darwin && !linux && !freebsd && !openbsd && !netbsd && !windows && !solaris && !aix 
-// +build !darwin,!linux,!freebsd,!openbsd,!netbsd,!windows,!solaris,!aix
+// SPDX-License-Identifier: BSD-3-Clause
+//go:build !darwin && !linux && !freebsd && !openbsd && !netbsd && !windows && !solaris && !aix
 
 package disk
 
 import (
 	"context"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOCountersStat, error) {

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 #ifndef __SMC_H__
 #define __SMC_H__ 1
 
@@ -25,8 +26,8 @@
 #define THUNDERBOLT_1          "TI1P"
 #define WIRELESS_MODULE        "TW0P"
 
-kern_return_t gopsutil_v3_open_smc(void);
-kern_return_t gopsutil_v3_close_smc(void);
-double gopsutil_v3_get_temperature(char *);
+kern_return_t gopsutil_v4_open_smc(void);
+kern_return_t gopsutil_v4_close_smc(void);
+double gopsutil_v4_get_temperature(char *);
 
 #endif // __SMC_H__

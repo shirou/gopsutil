@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 package load
 
 import (
@@ -5,7 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func skipIfNotImplementedErr(t testing.TB, err error) {
@@ -14,7 +15,7 @@ func skipIfNotImplementedErr(t testing.TB, err error) {
 	}
 }
 
-func TestLoad(t *testing.T) {
+func TestAvg(t *testing.T) {
 	v, err := Avg()
 	skipIfNotImplementedErr(t, err)
 	if err != nil {
@@ -28,7 +29,7 @@ func TestLoad(t *testing.T) {
 	t.Log(v)
 }
 
-func TestLoadAvgStat_String(t *testing.T) {
+func TestAvgStat_String(t *testing.T) {
 	v := AvgStat{
 		Load1:  10.1,
 		Load5:  20.1,

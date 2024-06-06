@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 package cpu
 
 import (
@@ -10,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/shirou/gopsutil/v3/internal/common"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func skipIfNotImplementedErr(t *testing.T, err error) {
@@ -19,7 +20,7 @@ func skipIfNotImplementedErr(t *testing.T, err error) {
 	}
 }
 
-func TestCpu_times(t *testing.T) {
+func TestTimes(t *testing.T) {
 	v, err := Times(false)
 	skipIfNotImplementedErr(t, err)
 	if err != nil {
@@ -77,7 +78,7 @@ func TestCpu_times(t *testing.T) {
 	}
 }
 
-func TestCpu_counts(t *testing.T) {
+func TestCounts(t *testing.T) {
 	v, err := Counts(true)
 	skipIfNotImplementedErr(t, err)
 	if err != nil {
@@ -98,7 +99,7 @@ func TestCpu_counts(t *testing.T) {
 	t.Logf("physical cores: %d", v)
 }
 
-func TestCPUTimeStat_String(t *testing.T) {
+func TestTimeStat_String(t *testing.T) {
 	v := TimesStat{
 		CPU:    "cpu0",
 		User:   100.1,
@@ -111,7 +112,7 @@ func TestCPUTimeStat_String(t *testing.T) {
 	}
 }
 
-func TestCpuInfo(t *testing.T) {
+func TestInfo(t *testing.T) {
 	v, err := Info()
 	skipIfNotImplementedErr(t, err)
 	if err != nil {
@@ -127,7 +128,7 @@ func TestCpuInfo(t *testing.T) {
 	}
 }
 
-func testCPUPercent(t *testing.T, percpu bool) {
+func testPercent(t *testing.T, percpu bool) {
 	numcpu := runtime.NumCPU()
 	testCount := 3
 
@@ -161,7 +162,7 @@ func testCPUPercent(t *testing.T, percpu bool) {
 	}
 }
 
-func testCPUPercentLastUsed(t *testing.T, percpu bool) {
+func testPercentLastUsed(t *testing.T, percpu bool) {
 	numcpu := runtime.NumCPU()
 	testCount := 10
 
@@ -195,18 +196,18 @@ func testCPUPercentLastUsed(t *testing.T, percpu bool) {
 	}
 }
 
-func TestCPUPercent(t *testing.T) {
-	testCPUPercent(t, false)
+func TestPercent(t *testing.T) {
+	testPercent(t, false)
 }
 
-func TestCPUPercentPerCpu(t *testing.T) {
-	testCPUPercent(t, true)
+func TestPercentPerCpu(t *testing.T) {
+	testPercent(t, true)
 }
 
-func TestCPUPercentIntervalZero(t *testing.T) {
-	testCPUPercentLastUsed(t, false)
+func TestPercentIntervalZero(t *testing.T) {
+	testPercentLastUsed(t, false)
 }
 
-func TestCPUPercentIntervalZeroPerCPU(t *testing.T) {
-	testCPUPercentLastUsed(t, true)
+func TestPercentIntervalZeroPerCPU(t *testing.T) {
+	testPercentLastUsed(t, true)
 }

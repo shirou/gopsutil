@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 #include <stdio.h>
 #include <string.h>
 #include "smc_darwin.h"
@@ -68,7 +69,7 @@ typedef struct {
 static const int SMC_KEY_SIZE = 4; // number of characters in an SMC key.
 static io_connect_t conn;          // our connection to the SMC.
 
-kern_return_t gopsutil_v3_open_smc(void) {
+kern_return_t gopsutil_v4_open_smc(void) {
   kern_return_t result;
   io_service_t service;
 
@@ -85,7 +86,7 @@ kern_return_t gopsutil_v3_open_smc(void) {
   return result;
 }
 
-kern_return_t gopsutil_v3_close_smc(void) { return IOServiceClose(conn); }
+kern_return_t gopsutil_v4_close_smc(void) { return IOServiceClose(conn); }
 
 static uint32_t to_uint32(char *key) {
   uint32_t ans = 0;
@@ -154,7 +155,7 @@ static kern_return_t read_smc(char *key, smc_return_t *result_smc) {
   return result;
 }
 
-double gopsutil_v3_get_temperature(char *key) {
+double gopsutil_v4_get_temperature(char *key) {
   kern_return_t result;
   smc_return_t result_smc;
 
