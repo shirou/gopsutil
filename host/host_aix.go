@@ -65,14 +65,6 @@ func UptimeWithContext(ctx context.Context) (uint64, error) {
 	// Initialise variables
 	var days, hours, mins uint64
 
-	// Check if days are specified and parse them
-	if ut[3] == "day," || ut[3] == "days," {
-		days, err = strconv.ParseUint(ut[2], 10, 64)
-		if err != nil {
-			return 0, err
-		}
-	}
-
 	switch {
 	case ut[3] == "day," || ut[3] == "days,":
 		days, err = strconv.ParseUint(ut[2], 10, 64)
