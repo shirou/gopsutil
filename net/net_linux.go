@@ -82,6 +82,18 @@ func IOCountersByFileWithContext(ctx context.Context, pernic bool, filename stri
 			continue
 		}
 
+		speed, err := common.ReadLines(common.HostSys(fmt.Sprintf("class/net/%s/speed", interfaceName)))
+		if err != nil {
+			if strings.Contains(err.Error(), "no such file or directory") {
+				speed = []string{"0"}
+			} else {
+				return ret, err
+			}
+		}
+		if len(speed) == 0 || speed[0] == "-1" {
+			speed = []string{"0"}
+		}
+
 		fields := strings.Fields(strings.TrimSpace(parts[1]))
 		bytesRecv, err := strconv.ParseUint(fields[0], 10, 64)
 		if err != nil {
@@ -123,19 +135,29 @@ func IOCountersByFileWithContext(ctx context.Context, pernic bool, filename stri
 		if err != nil {
 			return ret, err
 		}
+		transmitSpeed, err := strconv.ParseUint(speed[0], 10, 64)
+		if err != nil {
+			return ret, err
+		}
+		receiveSpeed, err := strconv.ParseUint(speed[0], 10, 64)
+		if err != nil {
+			return ret, err
+		}
 
 		nic := IOCountersStat{
-			Name:        interfaceName,
-			BytesRecv:   bytesRecv,
-			PacketsRecv: packetsRecv,
-			Errin:       errIn,
-			Dropin:      dropIn,
-			Fifoin:      fifoIn,
-			BytesSent:   bytesSent,
-			PacketsSent: packetsSent,
-			Errout:      errOut,
-			Dropout:     dropOut,
-			Fifoout:     fifoOut,
+			Name:          interfaceName,
+			BytesRecv:     bytesRecv,
+			PacketsRecv:   packetsRecv,
+			Errin:         errIn,
+			Dropin:        dropIn,
+			Fifoin:        fifoIn,
+			BytesSent:     bytesSent,
+			PacketsSent:   packetsSent,
+			Errout:        errOut,
+			Dropout:       dropOut,
+			Fifoout:       fifoOut,
+			TransmitSpeed: transmitSpeed,
+			ReceiveSpeed:  receiveSpeed,
 		}
 		ret = append(ret, nic)
 	}
