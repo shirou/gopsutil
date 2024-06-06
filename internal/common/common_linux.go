@@ -100,7 +100,7 @@ func BootTimeWithContext(ctx context.Context, enableCache bool) (uint64, error) 
 		return handleBootTimeFileReadErr(err)
 	}
 	currentTime := float64(time.Now().UnixNano()) / float64(time.Second)
-	
+
 	if len(lines) != 1 {
 		return 0, fmt.Errorf("wrong uptime format")
 	}
