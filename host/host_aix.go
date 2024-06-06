@@ -63,7 +63,7 @@ func UptimeWithContext(ctx context.Context) (uint64, error) {
 	ut := strings.Fields(string(out[:]))
 
 	// Initialise variables
-	var days, hours, minutes uint64
+	var days, hours, mins uint64
 
 	// Check if days are specified and parse them
 	if ut[3] == "day," || ut[3] == "days," {
@@ -73,39 +73,53 @@ func UptimeWithContext(ctx context.Context) (uint64, error) {
 		}
 	}
 
-	// Identify and parse hours and minutes based on the format present
 	switch {
-	case ut[4] == "hrs," || ut[4] == "hr,":
-		// Only hours are given, and they are placed in ut[4]
-		hours, err = strconv.ParseUint(ut[2], 10, 64)
+	case ut[3] == "day," || ut[3] == "days,":
+		days, err = strconv.ParseUint(ut[2], 10, 64)
 		if err != nil {
 			return 0, err
 		}
-	case strings.Contains(ut[4], ":"):
-		// Hours and minutes are specified in the format "hours:minutes"
-		hm := strings.Split(ut[4], ":")
-		hours, err = strconv.ParseUint(hm[0], 10, 64)
-		if err != nil {
-			return 0, err
-		}
-		minutes, err = strconv.ParseUint(strings.Trim(hm[1], ","), 10, 64)
-		if err != nil {
-			return 0, err
-		}
-	default:
-		// No explicit hours or "hours:minutes" format after days, check if minutes are given directly
-		if ut[3] == "mins," {
-			minutes, err = strconv.ParseUint(ut[2], 10, 64)
+
+		// day provided along with a single hour or hours
+		// ie: up 2 days, 20 hrs
+		if ut[5] == "hr," || ut[5] == "hrs," {
+			hours, err = strconv.ParseUint(ut[4], 10, 64)
 			if err != nil {
 				return 0, err
 			}
 		}
+
+		// alternatively day provided with hh:mm
+		// ie: up 83 days, 18:29
+		if strings.Contains(ut[4], ":") {
+			hm := strings.Split(ut[4], ":")
+			hours, err = strconv.ParseUint(hm[0], 10, 64)
+			if err != nil {
+				return 0, err
+			}
+			mins, err = strconv.ParseUint(strings.Trim(hm[1], ","), 10, 64)
+			if err != nil {
+				return 0, err
+			}
+		}
+	case ut[3] == "hr," || ut[3] == "hrs,":
+		hours, err = strconv.ParseUint(ut[2], 10, 64)
+		if err != nil {
+			return 0, err
+		}
+	case ut[3] == "mins," || ut[3] == "mins,":
+		mins, err = strconv.ParseUint(ut[2], 10, 64)
+		if err != nil {
+			return 0, err
+		}
 	}
 
-	// Calculate total time in minutes
-	totalTime := (days * 24 * 60) + (hours * 60) + minutes
+	total_time := (days * 24 * 60) + (hours * 60) + mins
 
-	return totalTime, nil
+	// Calculate total time in minutes
+	log.Println("days / hrs / mins ", days, hours, mins, total_time)
+
+	return total_time, nil
 }
 
 // This is a weak implementation due to the limitations on retrieving this data in AIX
