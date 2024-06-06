@@ -114,10 +114,8 @@ func UptimeWithContext(ctx context.Context) (uint64, error) {
 		}
 	}
 
-	total_time := (days * 24 * 60) + (hours * 60) + mins
-
 	// Calculate total time in minutes
-	log.Println("days / hrs / mins ", days, hours, mins, total_time)
+	total_time := (days * 24 * 60) + (hours * 60) + mins
 
 	return total_time, nil
 }
