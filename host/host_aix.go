@@ -45,8 +45,7 @@ func BootTimeWithContext(ctx context.Context) (btime uint64, err error) {
 	return timeSince(ut), nil
 }
 
-// This function takes multiple formats of output frmo the uptime
-// command and converts the data into minutes.
+// Parses result from uptime into minutes
 // Some examples of uptime output that this command handles:
 // 11:54AM   up 13 mins,  1 user,  load average: 2.78, 2.62, 1.79
 // 12:41PM   up 1 hr,  1 user,  load average: 2.47, 2.85, 2.83
@@ -59,17 +58,19 @@ func UptimeWithContext(ctx context.Context) (uint64, error) {
 		return 0, err
 	}
 
-	// Convert our uptime to a series of fields we can extract
-	ut := strings.Fields(string(out[:]))
+	return parseUptime(string(out[:])), nil
+}
 
-	// Initialise variables
+func parseUptime(uptime string) uint64 {
+	ut := strings.Fields(uptime)
 	var days, hours, mins uint64
+	var err error
 
 	switch {
 	case ut[3] == "day," || ut[3] == "days,":
 		days, err = strconv.ParseUint(ut[2], 10, 64)
 		if err != nil {
-			return 0, err
+			return 0
 		}
 
 		// day provided along with a single hour or hours
@@ -77,7 +78,7 @@ func UptimeWithContext(ctx context.Context) (uint64, error) {
 		if ut[5] == "hr," || ut[5] == "hrs," {
 			hours, err = strconv.ParseUint(ut[4], 10, 64)
 			if err != nil {
-				return 0, err
+				return 0
 			}
 		}
 
@@ -87,29 +88,26 @@ func UptimeWithContext(ctx context.Context) (uint64, error) {
 			hm := strings.Split(ut[4], ":")
 			hours, err = strconv.ParseUint(hm[0], 10, 64)
 			if err != nil {
-				return 0, err
+				return 0
 			}
 			mins, err = strconv.ParseUint(strings.Trim(hm[1], ","), 10, 64)
 			if err != nil {
-				return 0, err
+				return 0
 			}
 		}
 	case ut[3] == "hr," || ut[3] == "hrs,":
 		hours, err = strconv.ParseUint(ut[2], 10, 64)
 		if err != nil {
-			return 0, err
+			return 0
 		}
 	case ut[3] == "mins," || ut[3] == "mins,":
 		mins, err = strconv.ParseUint(ut[2], 10, 64)
 		if err != nil {
-			return 0, err
+			return 0
 		}
 	}
 
-	// Calculate total time in minutes
-	total_time := (days * 24 * 60) + (hours * 60) + mins
-
-	return total_time, nil
+	return (days * 24 * 60) + (hours * 60) + mins
 }
 
 // This is a weak implementation due to the limitations on retrieving this data in AIX
