@@ -52,6 +52,7 @@ func BootTimeWithContext(ctx context.Context) (btime uint64, err error) {
 // 07:43PM   up 5 hrs,  1 user,  load average: 3.27, 2.91, 2.72
 // 11:18:23  up 83 days, 18:29,  4 users,  load average: 0.16, 0.03, 0.01
 // 08:47PM   up 2 days, 20 hrs, 1 user, load average: 2.47, 2.17, 2.17
+// 01:16AM   up 4 days, 29 mins,  1 user,  load average: 2.29, 2.31, 2.21
 func UptimeWithContext(ctx context.Context) (uint64, error) {
 	out, err := invoke.CommandWithContext(ctx, "uptime")
 	if err != nil {
@@ -74,9 +75,18 @@ func parseUptime(uptime string) uint64 {
 		}
 
 		// day provided along with a single hour or hours
-		// ie: up 2 days, 20 hrs
+		// ie: up 2 days, 20 hrs,
 		if ut[5] == "hr," || ut[5] == "hrs," {
 			hours, err = strconv.ParseUint(ut[4], 10, 64)
+			if err != nil {
+				return 0
+			}
+		}
+
+		// mins provided along with a single min or mins
+		// ie: up 4 days, 29 mins,
+		if ut[5] == "min," || ut[5] == "mins," {
+			mins, err = strconv.ParseUint(ut[4], 10, 64)
 			if err != nil {
 				return 0
 			}

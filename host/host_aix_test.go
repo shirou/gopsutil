@@ -17,6 +17,7 @@ func TestParseUptimeValidInput(t *testing.T) {
 		{"07:43PM   up 5 hrs,  1 user,  load average: 3.27, 2.91, 2.72", 300},
 		{"11:18:23  up 83 days, 18:29,  4 users,  load average: 0.16, 0.03, 0.01", 120629},
 		{"08:47PM   up 2 days, 20 hrs, 1 user, load average: 2.47, 2.17, 2.17", 4080},
+		{"01:16AM   up 4 days, 29 mins,  1 user,  load average: 2.29, 2.31, 2.21", 5789},
 	}
 	for _, tc := range testCases {
 		got := parseUptime(tc.input)
