@@ -12,11 +12,11 @@ func TestParseUptimeValidInput(t *testing.T) {
 		input    string
 		expected uint64
 	}{
-		{"11:54AM   up 13 mins,  1 user,  load average: 2.78, 2.62, 1.79", 10},
-		{"12:41PM   up 1 hr,  1 user,  load average: 2.47, 2.85, 2.83", 180},
-		{"07:43PM   up 5 hrs,  1 user,  load average: 3.27, 2.91, 2.72", 2},
-		{"11:18:23  up 83 days, 18:29,  4 users,  load average: 0.16, 0.03, 0.01", 2},
-		{"08:47PM   up 2 days, 20 hrs, 1 user, load average: 2.47, 2.17, 2.17", 2},
+		{"11:54AM   up 13 mins,  1 user,  load average: 2.78, 2.62, 1.79", 13},
+		{"12:41PM   up 1 hr,  1 user,  load average: 2.47, 2.85, 2.83", 60},
+		{"07:43PM   up 5 hrs,  1 user,  load average: 3.27, 2.91, 2.72", 300},
+		{"11:18:23  up 83 days, 18:29,  4 users,  load average: 0.16, 0.03, 0.01", 120629},
+		{"08:47PM   up 2 days, 20 hrs, 1 user, load average: 2.47, 2.17, 2.17", 4080},
 	}
 	for _, tc := range testCases {
 		got := parseUptime(tc.input)
