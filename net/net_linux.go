@@ -14,8 +14,9 @@ import (
 	"syscall"
 
 	"github.com/florianl/go-diag"
-	"github.com/shirou/gopsutil/v4/internal/common"
 	"golang.org/x/sys/unix"
+
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 const ( // Conntrack Column numbers
@@ -824,7 +825,7 @@ func processUnixDiagWithContext(nl *diag.Diag, inodes map[uint32][]inodeMap, fil
 	return ret, nil
 }
 
-func updateMap(src map[uint32][]inodeMap, add map[uint32][]inodeMap) map[uint32][]inodeMap {
+func updateMap(src, add map[uint32][]inodeMap) map[uint32][]inodeMap {
 	for key, value := range add {
 		a, exists := src[key]
 		if !exists {

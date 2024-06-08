@@ -1,7 +1,5 @@
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/florianl/go-diag v0.0.1 h1:NjjG/z0eQ7J6+KrIv3hv5weH6Lxq+KBr45HPc/qdRQo=
-github.com/florianl/go-diag v0.0.1/go.mod h1:Rkjs8DWYe7g4wuw4BQbYXBuUU7vaf1s2ym8N+QpCZt0=
 github.com/florianl/go-diag v0.0.2 h1:4zqTkVM4egFpsEbWVh9ZAam+maGEjPIuzEAcXXsSSl4=
 github.com/florianl/go-diag v0.0.2/go.mod h1:Rkjs8DWYe7g4wuw4BQbYXBuUU7vaf1s2ym8N+QpCZt0=
 github.com/go-ole/go-ole v1.2.6 h1:/Fpf6oFPoeFik9ty7siob0G6Ke8QvQEuVcuChpwXzpY=
