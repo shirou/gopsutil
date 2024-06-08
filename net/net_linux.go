@@ -472,10 +472,10 @@ func connectionsPidMaxWithoutUidsWithContext(ctx context.Context, kind string, p
 	if err != nil {
 		return nil, fmt.Errorf("could not get pid(s), %d: %w", pid, err)
 	}
-	return statsFromInodesWithContext(ctx, root, pid, tmap, inodes, skipUids)
+	return statsFromInodesWithContext(ctx, pid, tmap, inodes, skipUids)
 }
 
-func statsFromInodesWithContext(ctx context.Context, root string, pid int32, tmap []netConnectionKindType, inodes map[uint32][]inodeMap, skipUids bool) ([]ConnectionStat, error) {
+func statsFromInodesWithContext(ctx context.Context, pid int32, tmap []netConnectionKindType, inodes map[uint32][]inodeMap, skipUids bool) ([]ConnectionStat, error) {
 	dupCheckMap := make(map[string]struct{})
 	var ret []ConnectionStat
 
