@@ -7,12 +7,29 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"encoding/json"
 
 	"github.com/shirou/gopsutil/v4/cpu"
 	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
-type MemoryInfoExStat struct{}
+type MemoryInfoExStat struct {
+	RSS       uint64 `json:"rss"`       // bytes
+	VMS       uint64 `json:"vms"`       // bytes
+	HWM       uint64 `json:"hwm"`       // bytes
+	Data      uint64 `json:"data"`      // bytes
+	Stack     uint64 `json:"stack"`     // bytes
+	Locked    uint64 `json:"locked"`    // bytes
+	Swap      uint64 `json:"swap"`      // bytes
+	Footprint uint64 `json:"footprint"` // bytes
+	Wired     uint64 `json:"wired"`     // bytes
+	Resident  uint64 `json:"resident"`  // bytes
+}
+
+func (m MemoryInfoExStat) String() string {
+	s, _ := json.Marshal(m)
+	return string(s)
+}
 
 type MemoryMapsStat struct{}
 
@@ -44,9 +61,9 @@ func (p *Process) CPUAffinityWithContext(ctx context.Context) ([]int32, error) {
 	return nil, common.ErrNotImplementedError
 }
 
-func (p *Process) MemoryInfoExWithContext(ctx context.Context) (*MemoryInfoExStat, error) {
-	return nil, common.ErrNotImplementedError
-}
+// func (p *Process) MemoryInfoExWithContext(ctx context.Context) (*MemoryInfoExStat, error) {
+// 	return nil, common.ErrNotImplementedError
+// }
 
 func (p *Process) PageFaultsWithContext(ctx context.Context) (*PageFaultsStat, error) {
 	return nil, common.ErrNotImplementedError
