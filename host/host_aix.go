@@ -45,69 +45,79 @@ func BootTimeWithContext(ctx context.Context) (btime uint64, err error) {
 	return timeSince(ut), nil
 }
 
-// This function takes multiple formats of output frmo the uptime
-// command and converts the data into minutes.
+// Parses result from uptime into minutes
 // Some examples of uptime output that this command handles:
 // 11:54AM   up 13 mins,  1 user,  load average: 2.78, 2.62, 1.79
 // 12:41PM   up 1 hr,  1 user,  load average: 2.47, 2.85, 2.83
 // 07:43PM   up 5 hrs,  1 user,  load average: 3.27, 2.91, 2.72
 // 11:18:23  up 83 days, 18:29,  4 users,  load average: 0.16, 0.03, 0.01
+// 08:47PM   up 2 days, 20 hrs, 1 user, load average: 2.47, 2.17, 2.17
+// 01:16AM   up 4 days, 29 mins,  1 user,  load average: 2.29, 2.31, 2.21
 func UptimeWithContext(ctx context.Context) (uint64, error) {
 	out, err := invoke.CommandWithContext(ctx, "uptime")
 	if err != nil {
 		return 0, err
 	}
 
-	// Convert our uptime to a series of fields we can extract
-	ut := strings.Fields(string(out[:]))
+	return parseUptime(string(out[:])), nil
+}
 
-	// Convert the second field value to integer
-	var days uint64 = 0
-	var hours uint64 = 0
-	var minutes uint64 = 0
-	if ut[3] == "day," || ut[3] == "days," {
+func parseUptime(uptime string) uint64 {
+	ut := strings.Fields(uptime)
+	var days, hours, mins uint64
+	var err error
+
+	switch {
+	case ut[3] == "day," || ut[3] == "days,":
 		days, err = strconv.ParseUint(ut[2], 10, 64)
 		if err != nil {
-			return 0, err
+			return 0
 		}
 
-		// Split field 4 into hours and minutes
-		hm := strings.Split(ut[4], ":")
-		hours, err = strconv.ParseUint(hm[0], 10, 64)
-		if err != nil {
-			return 0, err
+		// day provided along with a single hour or hours
+		// ie: up 2 days, 20 hrs,
+		if ut[5] == "hr," || ut[5] == "hrs," {
+			hours, err = strconv.ParseUint(ut[4], 10, 64)
+			if err != nil {
+				return 0
+			}
 		}
-		minutes, err = strconv.ParseUint(strings.Replace(hm[1], ",", "", -1), 10, 64)
-		if err != nil {
-			return 0, err
+
+		// mins provided along with a single min or mins
+		// ie: up 4 days, 29 mins,
+		if ut[5] == "min," || ut[5] == "mins," {
+			mins, err = strconv.ParseUint(ut[4], 10, 64)
+			if err != nil {
+				return 0
+			}
 		}
-	} else if ut[3] == "hr," || ut[3] == "hrs," {
+
+		// alternatively day provided with hh:mm
+		// ie: up 83 days, 18:29
+		if strings.Contains(ut[4], ":") {
+			hm := strings.Split(ut[4], ":")
+			hours, err = strconv.ParseUint(hm[0], 10, 64)
+			if err != nil {
+				return 0
+			}
+			mins, err = strconv.ParseUint(strings.Trim(hm[1], ","), 10, 64)
+			if err != nil {
+				return 0
+			}
+		}
+	case ut[3] == "hr," || ut[3] == "hrs,":
 		hours, err = strconv.ParseUint(ut[2], 10, 64)
 		if err != nil {
-			return 0, err
+			return 0
 		}
-	} else if ut[3] == "mins," {
-		minutes, err = strconv.ParseUint(ut[2], 10, 64)
+	case ut[3] == "mins," || ut[3] == "mins,":
+		mins, err = strconv.ParseUint(ut[2], 10, 64)
 		if err != nil {
-			return 0, err
-		}
-	} else if _, err := strconv.ParseInt(ut[3], 10, 64); err == nil && strings.Contains(ut[2], ":") {
-		// Split field 2 into hours and minutes
-		hm := strings.Split(ut[2], ":")
-		hours, err = strconv.ParseUint(hm[0], 10, 64)
-		if err != nil {
-			return 0, err
-		}
-		minutes, err = strconv.ParseUint(strings.Replace(hm[1], ",", "", -1), 10, 64)
-		if err != nil {
-			return 0, err
+			return 0
 		}
 	}
 
-	// Stack them all together as minutes
-	total_time := (days * 24 * 60) + (hours * 60) + minutes
-
-	return total_time, nil
+	return (days * 24 * 60) + (hours * 60) + mins
 }
 
 // This is a weak implementation due to the limitations on retrieving this data in AIX
