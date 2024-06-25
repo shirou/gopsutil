@@ -4,17 +4,17 @@
 package net
 
 import (
-	"bytes"
 	"context"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"os"
 	"strconv"
 	"strings"
 	"syscall"
+
+	"github.com/florianl/go-diag"
+	"golang.org/x/sys/unix"
 
 	"github.com/shirou/gopsutil/v4/internal/common"
 )
@@ -305,24 +305,24 @@ func conntrackStatsFromFile(filename string, percpu bool) ([]ConntrackStat, erro
 }
 
 // http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
-var tcpStatuses = map[string]string{
-	"01": "ESTABLISHED",
-	"02": "SYN_SENT",
-	"03": "SYN_RECV",
-	"04": "FIN_WAIT1",
-	"05": "FIN_WAIT2",
-	"06": "TIME_WAIT",
-	"07": "CLOSE",
-	"08": "CLOSE_WAIT",
-	"09": "LAST_ACK",
-	"0A": "LISTEN",
-	"0B": "CLOSING",
+var tcpStatuses = map[uint8]string{
+	1:  "ESTABLISHED",
+	2:  "SYN_SENT",
+	3:  "SYN_RECV",
+	4:  "FIN_WAIT1",
+	5:  "FIN_WAIT2",
+	6:  "TIME_WAIT",
+	7:  "CLOSE",
+	8:  "CLOSE_WAIT",
+	9:  "LAST_ACK",
+	10: "LISTEN",
+	11: "CLOSING",
 }
 
 type netConnectionKindType struct {
+	filename string
 	family   uint32
 	sockType uint32
-	filename string
 }
 
 var kindTCP4 = netConnectionKindType{
@@ -374,15 +374,15 @@ type inodeMap struct {
 }
 
 type connTmp struct {
-	fd       uint32
-	family   uint32
-	sockType uint32
+	status   string
+	path     string
 	laddr    Addr
 	raddr    Addr
-	status   string
+	fd       uint32
+	sockType uint32
 	pid      int32
 	boundPid int32
-	path     string
+	family   uint8
 }
 
 // Return a list of network connections opened.
@@ -460,7 +460,7 @@ func connectionsPidMaxWithoutUidsWithContext(ctx context.Context, kind string, p
 	}
 	root := common.HostProcWithContext(ctx)
 	var err error
-	var inodes map[string][]inodeMap
+	var inodes map[uint32][]inodeMap
 	if pid == 0 {
 		inodes, err = getProcInodesAllWithContext(ctx, root, max)
 	} else {
@@ -473,36 +473,34 @@ func connectionsPidMaxWithoutUidsWithContext(ctx context.Context, kind string, p
 	if err != nil {
 		return nil, fmt.Errorf("could not get pid(s), %d: %w", pid, err)
 	}
-	return statsFromInodesWithContext(ctx, root, pid, tmap, inodes, skipUids)
+	return statsFromInodesWithContext(ctx, pid, tmap, inodes, skipUids)
 }
 
-func statsFromInodes(root string, pid int32, tmap []netConnectionKindType, inodes map[string][]inodeMap, skipUids bool) ([]ConnectionStat, error) {
-	return statsFromInodesWithContext(context.Background(), root, pid, tmap, inodes, skipUids)
-}
-
-func statsFromInodesWithContext(ctx context.Context, root string, pid int32, tmap []netConnectionKindType, inodes map[string][]inodeMap, skipUids bool) ([]ConnectionStat, error) {
+func statsFromInodesWithContext(ctx context.Context, pid int32, tmap []netConnectionKindType, inodes map[uint32][]inodeMap, skipUids bool) ([]ConnectionStat, error) {
 	dupCheckMap := make(map[string]struct{})
 	var ret []ConnectionStat
 
-	var err error
+	// open a netlink socket
+	nl, err := diag.Open(&diag.Config{})
+	if err != nil {
+		return nil, err
+	}
+	defer nl.Close()
+
 	for _, t := range tmap {
-		var path string
 		var connKey string
 		var ls []connTmp
-		if pid == 0 {
-			path = fmt.Sprintf("%s/net/%s", root, t.filename)
-		} else {
-			path = fmt.Sprintf("%s/%d/net/%s", root, pid, t.filename)
-		}
+
 		switch t.family {
 		case syscall.AF_INET, syscall.AF_INET6:
-			ls, err = processInetWithContext(ctx, path, t, inodes, pid)
+			ls, err = processNetDiagWithContext(nl, t, inodes, pid)
 		case syscall.AF_UNIX:
-			ls, err = processUnix(path, t, inodes, pid)
+			ls, err = processUnixDiagWithContext(nl, inodes, pid)
 		}
 		if err != nil {
 			return nil, err
 		}
+
 		for _, c := range ls {
 			// Build TCP key to id the connection uniquely
 			// socket type, src ip, src port, dst ip, dst port and state should be enough
@@ -514,8 +512,8 @@ func statsFromInodesWithContext(ctx context.Context, root string, pid int32, tma
 
 			conn := ConnectionStat{
 				Fd:     c.fd,
-				Family: c.family,
-				Type:   c.sockType,
+				Family: uint32(c.family),
+				Type:   uint32(c.sockType),
 				Laddr:  c.laddr,
 				Raddr:  c.raddr,
 				Status: c.status,
@@ -543,8 +541,8 @@ func statsFromInodesWithContext(ctx context.Context, root string, pid int32, tma
 }
 
 // getProcInodes returns fd of the pid.
-func getProcInodes(root string, pid int32, max int) (map[string][]inodeMap, error) {
-	ret := make(map[string][]inodeMap)
+func getProcInodes(root string, pid int32, max int) (map[uint32][]inodeMap, error) {
+	ret := make(map[uint32][]inodeMap)
 
 	dir := fmt.Sprintf("%s/%d/fd", root, pid)
 	f, err := os.Open(dir)
@@ -559,16 +557,21 @@ func getProcInodes(root string, pid int32, max int) (map[string][]inodeMap, erro
 	for _, dirEntry := range dirEntries {
 		inodePath := fmt.Sprintf("%s/%d/fd/%s", root, pid, dirEntry.Name())
 
-		inode, err := os.Readlink(inodePath)
+		inodeStr, err := os.Readlink(inodePath)
 		if err != nil {
 			continue
 		}
-		if !strings.HasPrefix(inode, "socket:[") {
+		if !strings.HasPrefix(inodeStr, "socket:[") {
 			continue
 		}
 		// the process is using a socket
-		l := len(inode)
-		inode = inode[8 : l-1]
+		l := len(inodeStr)
+		inodeStr = inodeStr[8 : l-1]
+		tmp, err := strconv.Atoi(inodeStr)
+		if err != nil {
+			return ret, err
+		}
+		inode := uint32(tmp)
 		_, ok := ret[inode]
 		if !ok {
 			ret[inode] = make([]inodeMap, 0)
@@ -625,8 +628,8 @@ func PidsWithContext(ctx context.Context) ([]int32, error) {
 // FIXME: Import process occures import cycle.
 // see remarks on pids()
 type process struct {
-	Pid  int32 `json:"pid"`
 	uids []int32
+	Pid  int32 `json:"pid"`
 }
 
 // Uids returns user ids of the process as a slice of the int
@@ -668,16 +671,16 @@ func (p *process) fillFromStatus(ctx context.Context) error {
 	return nil
 }
 
-func getProcInodesAll(root string, max int) (map[string][]inodeMap, error) {
+func getProcInodesAll(root string, max int) (map[uint32][]inodeMap, error) {
 	return getProcInodesAllWithContext(context.Background(), root, max)
 }
 
-func getProcInodesAllWithContext(ctx context.Context, root string, max int) (map[string][]inodeMap, error) {
+func getProcInodesAllWithContext(ctx context.Context, root string, max int) (map[uint32][]inodeMap, error) {
 	pids, err := PidsWithContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	ret := make(map[string][]inodeMap)
+	ret := make(map[uint32][]inodeMap)
 
 	for _, pid := range pids {
 		t, err := getProcInodes(root, pid, max)
@@ -697,48 +700,6 @@ func getProcInodesAllWithContext(ctx context.Context, root string, max int) (map
 	return ret, nil
 }
 
-// decodeAddress decode addresse represents addr in proc/net/*
-// ex:
-// "0500000A:0016" -> "10.0.0.5", 22
-// "0085002452100113070057A13F025401:0035" -> "2400:8500:1301:1052:a157:7:154:23f", 53
-func decodeAddress(family uint32, src string) (Addr, error) {
-	return decodeAddressWithContext(context.Background(), family, src)
-}
-
-func decodeAddressWithContext(ctx context.Context, family uint32, src string) (Addr, error) {
-	t := strings.Split(src, ":")
-	if len(t) != 2 {
-		return Addr{}, fmt.Errorf("does not contain port, %s", src)
-	}
-	addr := t[0]
-	port, err := strconv.ParseUint(t[1], 16, 16)
-	if err != nil {
-		return Addr{}, fmt.Errorf("invalid port, %s", src)
-	}
-	decoded, err := hex.DecodeString(addr)
-	if err != nil {
-		return Addr{}, fmt.Errorf("decode error, %w", err)
-	}
-	var ip net.IP
-
-	if family == syscall.AF_INET {
-		if common.IsLittleEndian() {
-			ip = net.IP(ReverseWithContext(ctx, decoded))
-		} else {
-			ip = net.IP(decoded)
-		}
-	} else { // IPv6
-		ip, err = parseIPv6HexStringWithContext(ctx, decoded)
-		if err != nil {
-			return Addr{}, err
-		}
-	}
-	return Addr{
-		IP:   ip.String(),
-		Port: uint32(port),
-	}, nil
-}
-
 // Reverse reverses array of bytes.
 func Reverse(s []byte) []byte {
 	return ReverseWithContext(context.Background(), s)
@@ -751,59 +712,32 @@ func ReverseWithContext(ctx context.Context, s []byte) []byte {
 	return s
 }
 
-// parseIPv6HexString parse array of bytes to IPv6 string
-func parseIPv6HexString(src []byte) (net.IP, error) {
-	return parseIPv6HexStringWithContext(context.Background(), src)
-}
+func processNetDiagWithContext(nl *diag.Diag, kind netConnectionKindType, inodes map[uint32][]inodeMap, filterPid int32) ([]connTmp, error) {
+	var ret []connTmp
 
-func parseIPv6HexStringWithContext(ctx context.Context, src []byte) (net.IP, error) {
-	if len(src) != 16 {
-		return nil, fmt.Errorf("invalid IPv6 string")
+	opt := &diag.NetOption{
+		Family: uint8(kind.family),
+		State:  ^uint32(0),
 	}
 
-	buf := make([]byte, 0, 16)
-	for i := 0; i < len(src); i += 4 {
-		r := ReverseWithContext(ctx, src[i:i+4])
-		buf = append(buf, r...)
-	}
-	return net.IP(buf), nil
-}
-
-func processInet(file string, kind netConnectionKindType, inodes map[string][]inodeMap, filterPid int32) ([]connTmp, error) {
-	return processInetWithContext(context.Background(), file, kind, inodes, filterPid)
-}
-
-func processInetWithContext(ctx context.Context, file string, kind netConnectionKindType, inodes map[string][]inodeMap, filterPid int32) ([]connTmp, error) {
-	if strings.HasSuffix(file, "6") && !common.PathExists(file) {
-		// IPv6 not supported, return empty.
-		return []connTmp{}, nil
+	switch kind.sockType {
+	case 1:
+		opt.Protocol = unix.IPPROTO_TCP
+	case 2:
+		opt.Protocol = unix.IPPROTO_UDP
+	default:
+		return nil, fmt.Errorf("unhandled socket type")
 	}
 
-	// Read the contents of the /proc file with a single read sys call.
-	// This minimizes duplicates in the returned connections
-	// For more info:
-	// https://github.com/shirou/gopsutil/pull/361
-	contents, err := os.ReadFile(file)
+	conns, err := nl.NetDump(opt)
 	if err != nil {
 		return nil, err
 	}
 
-	lines := bytes.Split(contents, []byte("\n"))
-
-	var ret []connTmp
-	// skip first line
-	for _, line := range lines[1:] {
-		l := strings.Fields(string(line))
-		if len(l) < 10 {
-			continue
-		}
-		laddr := l[1]
-		raddr := l[2]
-		status := l[3]
-		inode := l[9]
+	for _, conn := range conns {
 		pid := int32(0)
 		fd := uint32(0)
-		i, exists := inodes[inode]
+		i, exists := inodes[conn.INode]
 		if exists {
 			pid = i[0].pid
 			fd = i[0].fd
@@ -811,62 +745,56 @@ func processInetWithContext(ctx context.Context, file string, kind netConnection
 		if filterPid > 0 && filterPid != pid {
 			continue
 		}
+
+		src, err := diag.ToNetipAddrWithFamily(conn.DiagMsg.Family, conn.ID.Src)
+		if err != nil {
+			continue
+		}
+		srcPort := diag.Ntohs(conn.ID.SPort)
+		dst, err := diag.ToNetipAddrWithFamily(conn.DiagMsg.Family, conn.ID.Dst)
+		if err != nil {
+			continue
+		}
+		dstPort := diag.Ntohs(conn.ID.DPort)
+
+		status := "NONE"
 		if kind.sockType == syscall.SOCK_STREAM {
-			status = tcpStatuses[status]
-		} else {
-			status = "NONE"
-		}
-		la, err := decodeAddressWithContext(ctx, kind.family, laddr)
-		if err != nil {
-			continue
-		}
-		ra, err := decodeAddressWithContext(ctx, kind.family, raddr)
-		if err != nil {
-			continue
+			status = tcpStatuses[conn.State]
 		}
 
 		ret = append(ret, connTmp{
 			fd:       fd,
-			family:   kind.family,
+			family:   conn.Family,
 			sockType: kind.sockType,
-			laddr:    la,
-			raddr:    ra,
-			status:   status,
-			pid:      pid,
+			laddr: Addr{
+				IP:   src.String(),
+				Port: uint32(srcPort),
+			},
+			raddr: Addr{
+				IP:   dst.String(),
+				Port: uint32(dstPort),
+			},
+			pid:    pid,
+			status: status,
 		})
 	}
 
 	return ret, nil
 }
 
-func processUnix(file string, kind netConnectionKindType, inodes map[string][]inodeMap, filterPid int32) ([]connTmp, error) {
-	// Read the contents of the /proc file with a single read sys call.
-	// This minimizes duplicates in the returned connections
-	// For more info:
-	// https://github.com/shirou/gopsutil/pull/361
-	contents, err := os.ReadFile(file)
+func processUnixDiagWithContext(nl *diag.Diag, inodes map[uint32][]inodeMap, filterPid int32) ([]connTmp, error) {
+	var ret []connTmp
+
+	conns, err := nl.UnixDump(&diag.UnixOption{
+		State: ^uint32(0),
+		Show:  ^uint32(0),
+	})
 	if err != nil {
 		return nil, err
 	}
-
-	lines := bytes.Split(contents, []byte("\n"))
-
-	var ret []connTmp
-	// skip first line
-	for _, line := range lines[1:] {
-		tokens := strings.Fields(string(line))
-		if len(tokens) < 6 {
-			continue
-		}
-		st, err := strconv.Atoi(tokens[4])
-		if err != nil {
-			return nil, err
-		}
-
-		inode := tokens[6]
-
+	for _, conn := range conns {
 		var pairs []inodeMap
-		pairs, exists := inodes[inode]
+		pairs, exists := inodes[conn.Ino]
 		if !exists {
 			pairs = []inodeMap{
 				{},
@@ -877,13 +805,13 @@ func processUnix(file string, kind netConnectionKindType, inodes map[string][]in
 				continue
 			}
 			var path string
-			if len(tokens) == 8 {
-				path = tokens[len(tokens)-1]
+			if conn.Name != nil {
+				path = *conn.Name
 			}
 			ret = append(ret, connTmp{
 				fd:       pair.fd,
-				family:   kind.family,
-				sockType: uint32(st),
+				family:   conn.Family,
+				sockType: uint32(conn.Type),
 				laddr: Addr{
 					IP: path,
 				},
@@ -897,7 +825,7 @@ func processUnix(file string, kind netConnectionKindType, inodes map[string][]in
 	return ret, nil
 }
 
-func updateMap(src map[string][]inodeMap, add map[string][]inodeMap) map[string][]inodeMap {
+func updateMap(src, add map[uint32][]inodeMap) map[uint32][]inodeMap {
 	for key, value := range add {
 		a, exists := src[key]
 		if !exists {
