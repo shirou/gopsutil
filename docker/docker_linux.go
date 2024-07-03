@@ -193,9 +193,9 @@ func CgroupMemWithContext(ctx context.Context, containerID string, base string) 
 			ret.Cache = v
 		case "rss":
 			ret.RSS = v
-		case "rssHuge":
+		case "rssHuge", "rss_huge":
 			ret.RSSHuge = v
-		case "mappedFile":
+		case "mappedFile", "mapped_file":
 			ret.MappedFile = v
 		case "pgpgin":
 			ret.Pgpgin = v
