@@ -3,15 +3,57 @@
 
 package sensors
 
-// #cgo LDFLAGS: -framework IOKit
+// #cgo CFLAGS: -x objective-c
+// #cgo LDFLAGS: -framework Foundation -framework IOKit
 // #include "smc_darwin.h"
+// #include "darwin_arm_sensors.h"
 import "C"
 import (
+	"bufio"
 	"context"
+	"math"
+	"runtime"
+	"strconv"
+	"strings"
 	"unsafe"
 )
 
+func ReadTemperaturesArm() []TemperatureStat {
+	cStr := C.getThermals()
+	defer C.free(unsafe.Pointer(cStr))
+
+	var stats []TemperatureStat
+	goStr := C.GoString(cStr)
+	scanner := bufio.NewScanner(strings.NewReader(goStr))
+	for scanner.Scan() {
+		split := strings.Split(scanner.Text(), ":")
+		if len(split) != 2 {
+			continue
+		}
+
+		val, err := strconv.ParseFloat(split[1], 32)
+		if err != nil {
+			continue
+		}
+
+		sensorKey := strings.Split(split[0], " ")[0]
+
+		val = math.Abs(val)
+
+		stats = append(stats, TemperatureStat{
+			SensorKey:   sensorKey,
+			Temperature: float64(val),
+		})
+	}
+
+	return stats
+}
+
 func TemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
+	if runtime.GOARCH == "arm64" {
+		return ReadTemperaturesArm(), nil
+	}
+
 	temperatureKeys := []string{
 		C.AMBIENT_AIR_0,
 		C.AMBIENT_AIR_1,
@@ -48,5 +90,6 @@ func TemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
 			Temperature: float64(C.gopsutil_v4_get_temperature(ckey)),
 		})
 	}
+
 	return temperatures, nil
 }
