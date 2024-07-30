@@ -15,6 +15,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/url"
 	"os"
 	"os/exec"
@@ -462,4 +463,12 @@ func getSysctrlEnv(env []string) []string {
 		env = append(env, "LC_ALL=C")
 	}
 	return env
+}
+
+// Round places rounds the number 'val' to 'n' decimal places
+func Round(val float64, n int) float64 {
+	// Calculate the power of 10 to the n
+	pow10 := math.Pow(10, float64(n))
+	// Multiply the value by pow10, round it, then divide it by pow10
+	return math.Round(val*pow10) / pow10
 }
