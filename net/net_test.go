@@ -31,7 +31,7 @@ func TestIOCountersStatString(t *testing.T) {
 		Name:      "test",
 		BytesSent: 100,
 	}
-	e := `{"name":"test","bytesSent":100,"bytesRecv":0,"packetsSent":0,"packetsRecv":0,"errin":0,"errout":0,"dropin":0,"dropout":0,"fifoin":0,"fifoout":0}`
+	e := `{"name":"test","bytesSent":100,"bytesRecv":0,"packetsSent":0,"packetsRecv":0,"errin":0,"errout":0,"dropin":0,"dropout":0,"fifoin":0,"fifoout":0,"transmitSpeed":0,"receiveSpeed":0}`
 	if e != fmt.Sprintf("%v", v) {
 		t.Errorf("NetIOCountersStat string is invalid: %v", v)
 	}
