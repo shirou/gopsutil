@@ -218,14 +218,17 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 			if err != nil {
 				return drivemap, err
 			}
-			drivemap[path] = IOCountersStat{
-				ReadBytes:  uint64(diskPerformance.BytesRead),
-				WriteBytes: uint64(diskPerformance.BytesWritten),
-				ReadCount:  uint64(diskPerformance.ReadCount),
-				WriteCount: uint64(diskPerformance.WriteCount),
-				ReadTime:   uint64(diskPerformance.ReadTime / 10000 / 1000), // convert to ms: https://github.com/giampaolo/psutil/issues/1012
-				WriteTime:  uint64(diskPerformance.WriteTime / 10000 / 1000),
-				Name:       path,
+
+			if len(names) == 0 || common.StringsHas(names, path) {
+				drivemap[path] = IOCountersStat{
+					ReadBytes:  uint64(diskPerformance.BytesRead),
+					WriteBytes: uint64(diskPerformance.BytesWritten),
+					ReadCount:  uint64(diskPerformance.ReadCount),
+					WriteCount: uint64(diskPerformance.WriteCount),
+					ReadTime:   uint64(diskPerformance.ReadTime / 10000 / 1000), // convert to ms: https://github.com/giampaolo/psutil/issues/1012
+					WriteTime:  uint64(diskPerformance.WriteTime / 10000 / 1000),
+					Name:       path,
+				}
 			}
 		}
 	}
