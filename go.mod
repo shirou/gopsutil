@@ -10,7 +10,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/tklauser/go-sysconf v0.3.12
 	github.com/yusufpapurcu/wmi v1.2.4
-	golang.org/x/sys v0.22.0
+	golang.org/x/sys v0.24.0
 )
 
 require (
