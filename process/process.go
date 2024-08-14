@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"runtime"
 	"sort"
 	"sync"
 	"time"
@@ -278,9 +277,11 @@ func (p *Process) PercentWithContext(ctx context.Context, interval time.Duration
 		}
 	}
 
-	numcpu := runtime.NumCPU()
-	delta := (now.Sub(p.lastCPUTime).Seconds()) * float64(numcpu)
-	ret := calculatePercent(p.lastCPUTimes, cpuTimes, delta, numcpu)
+	delta := now.Sub(p.lastCPUTime).Seconds()
+	if delta == 0 {
+		return 0, nil
+	}
+	ret := (cpuTimes.Total() - p.lastCPUTimes.Total()) * 100 / delta
 	p.lastCPUTimes = cpuTimes
 	p.lastCPUTime = now
 	return ret, nil
@@ -319,15 +320,6 @@ func (p *Process) CreateTimeWithContext(ctx context.Context) (int64, error) {
 	createTime, err := p.createTimeWithContext(ctx)
 	p.createTime = createTime
 	return p.createTime, err
-}
-
-func calculatePercent(t1, t2 *cpu.TimesStat, delta float64, numcpu int) float64 {
-	if delta == 0 {
-		return 0
-	}
-	delta_proc := t2.Total() - t1.Total()
-	overall_percent := ((delta_proc / delta) * 100) * float64(numcpu)
-	return overall_percent
 }
 
 // MemoryPercent returns how many percent of the total RAM this process uses
