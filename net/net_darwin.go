@@ -124,6 +124,44 @@ func parseNetstatOutput(output string) ([]netstatInterface, error) {
 	return interfaces, nil
 }
 
+func parseIfconfigBlock(block string) uint64 {
+
+	re := regexp.MustCompile(`media:\s+.*\((\d+)baseT`)
+	match := re.FindStringSubmatch(block)
+
+	if len(match) >= 2 {
+		speed, err := strconv.ParseUint(match[1], 10, 64)
+		if err != nil {
+			speed = 0
+		}
+		
+		return speed
+	}
+
+	return 0
+
+}
+
+func parseIfconfigOutput(output string, stats []IOCountersStat) error {
+
+	re := regexp.MustCompile(`(?m)^(\w+):.*(?:\n\t.+)*`)
+	
+	matches := re.FindAllStringSubmatch(output, -1)
+	ifconfigBlock := map[string]string{}
+
+	for _, match := range matches {
+		ifconfigBlock[match[1]] = match[0]
+	}
+
+	for i, _ := range stats {
+		speed := parseIfconfigBlock(ifconfigBlock[stats[i].Name])
+		stats[i].TransmitSpeed = speed
+		stats[i].ReceiveSpeed = speed
+	}
+
+	return nil
+}
+
 // map that hold the name of a network interface and the number of usage
 type mapInterfaceNameUsage map[string]uint
 
@@ -245,6 +283,15 @@ func IOCountersWithContext(ctx context.Context, pernic bool) ([]IOCountersStat, 
 				}
 			}
 		}
+	}
+
+	out, err = invoke.CommandWithContext(ctx, "ifconfig", "-a")
+	if err != nil {
+		return nil, err
+	}
+	err = parseIfconfigOutput(string(out), ret)
+	if err != nil {
+		return nil, err
 	}
 
 	if pernic == false {

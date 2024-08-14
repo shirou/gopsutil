@@ -167,6 +167,8 @@ func IOCountersWithContext(ctx context.Context, pernic bool) ([]IOCountersStat, 
 			c.Errout = uint64(row.OutErrors)
 			c.Dropin = uint64(row.InDiscards)
 			c.Dropout = uint64(row.OutDiscards)
+			c.TransmitSpeed = uint64(row.TransmitLinkSpeed) / 1e6
+			c.ReceiveSpeed = uint64(row.ReceiveLinkSpeed) / 1e6
 
 			counters = append(counters, c)
 		}
@@ -189,6 +191,8 @@ func IOCountersWithContext(ctx context.Context, pernic bool) ([]IOCountersStat, 
 			c.Errout = uint64(row.OutErrors)
 			c.Dropin = uint64(row.InDiscards)
 			c.Dropout = uint64(row.OutDiscards)
+			c.TransmitSpeed = uint64(row.Speed) / 1e6
+			c.ReceiveSpeed = uint64(row.Speed) / 1e6
 
 			counters = append(counters, c)
 		}
