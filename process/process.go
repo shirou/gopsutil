@@ -321,11 +321,23 @@ func (p *Process) CreateTimeWithContext(ctx context.Context) (int64, error) {
 	return p.createTime, err
 }
 
+// https://github.com/giampaolo/psutil/blob/550c825c95b537e9c3fee8452e5e1cd4fe5c704a/psutil/__init__.py#L1664-L1677
+func calculateBusyTime(t *cpu.TimesStat) float64 {
+	tot := t.Total()
+	if runtime.GOOS == "linux" {
+		tot -= t.Guest     // Linux 2.6.24+
+		tot -= t.GuestNice // Linux 3.2.0+
+	}
+	tot -= t.Idle
+	tot -= t.Iowait
+	return tot
+}
+
 func calculatePercent(t1, t2 *cpu.TimesStat, delta float64, numcpu int) float64 {
 	if delta == 0 {
 		return 0
 	}
-	delta_proc := t2.Total() - t1.Total()
+	delta_proc := calculateBusyTime(t2) - calculateBusyTime(t1)
 	overall_percent := ((delta_proc / delta) * 100) * float64(numcpu)
 	return overall_percent
 }
