@@ -338,6 +338,9 @@ func calculatePercent(t1, t2 *cpu.TimesStat, delta float64, numcpu int) float64 
 		return 0
 	}
 	delta_proc := calculateBusyTime(t2) - calculateBusyTime(t1)
+	if delta_proc <= 0 {
+		return 0
+	}
 	overall_percent := ((delta_proc / delta) * 100) * float64(numcpu)
 	return overall_percent
 }
