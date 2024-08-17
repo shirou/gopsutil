@@ -113,8 +113,8 @@ func TestConnectionsMax(t *testing.T) {
 		t.Skip("Skip CI")
 	}
 
-	max := 10
-	v, err := ConnectionsMax("tcp", max)
+	maxConn := 10
+	v, err := ConnectionsMax("tcp", maxConn)
 	assert.Nil(t, err)
 	assert.NotEmpty(t, v)
 
@@ -125,7 +125,7 @@ func TestConnectionsMax(t *testing.T) {
 		}
 	}
 	for _, c := range cxByPid {
-		assert.True(t, c <= max)
+		assert.True(t, c <= maxConn)
 	}
 }
 
