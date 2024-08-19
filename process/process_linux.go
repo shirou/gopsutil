@@ -400,7 +400,7 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 	getBlock := func(firstLine []string, block []string) (MemoryMapsStat, error) {
 		m := MemoryMapsStat{}
 		if len(firstLine) >= 6 {
-			m.Path = firstLine[5]
+			m.Path = strings.Join(firstLine[5:], " ")
 		}
 
 		for _, line := range block {
