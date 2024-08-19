@@ -10,10 +10,11 @@ import (
 	"strconv"
 	"strings"
 
+	"golang.org/x/sys/unix"
+
 	cpu "github.com/shirou/gopsutil/v4/cpu"
 	"github.com/shirou/gopsutil/v4/internal/common"
 	net "github.com/shirou/gopsutil/v4/net"
-	"golang.org/x/sys/unix"
 )
 
 func pidsWithContext(ctx context.Context) ([]int32, error) {
@@ -83,10 +84,7 @@ func (p *Process) CmdlineWithContext(ctx context.Context) (string, error) {
 		return "", err
 	}
 	ret := strings.FieldsFunc(string(buf), func(r rune) bool {
-		if r == '\u0000' {
-			return true
-		}
-		return false
+		return r == '\u0000'
 	})
 
 	return strings.Join(ret, " "), nil
@@ -289,8 +287,8 @@ func (p *Process) ConnectionsWithContext(ctx context.Context) ([]net.ConnectionS
 	return net.ConnectionsPidWithContext(ctx, "all", p.Pid)
 }
 
-func (p *Process) ConnectionsMaxWithContext(ctx context.Context, max int) ([]net.ConnectionStat, error) {
-	return net.ConnectionsPidMaxWithContext(ctx, "all", p.Pid, max)
+func (p *Process) ConnectionsMaxWithContext(ctx context.Context, maxConn int) ([]net.ConnectionStat, error) {
+	return net.ConnectionsPidMaxWithContext(ctx, "all", p.Pid, maxConn)
 }
 
 func ProcessesWithContext(ctx context.Context) ([]*Process, error) {

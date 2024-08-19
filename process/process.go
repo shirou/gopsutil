@@ -547,8 +547,8 @@ func (p *Process) Connections() ([]net.ConnectionStat, error) {
 }
 
 // ConnectionsMax returns a slice of net.ConnectionStat used by the process at most `max`.
-func (p *Process) ConnectionsMax(max int) ([]net.ConnectionStat, error) {
-	return p.ConnectionsMaxWithContext(context.Background(), max)
+func (p *Process) ConnectionsMax(maxConn int) ([]net.ConnectionStat, error) {
+	return p.ConnectionsMaxWithContext(context.Background(), maxConn)
 }
 
 // MemoryMaps get memory maps from /proc/(pid)/smaps
