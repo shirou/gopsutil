@@ -252,8 +252,8 @@ func (p *Process) ConnectionsWithContext(ctx context.Context) ([]net.ConnectionS
 	return net.ConnectionsPidWithContext(ctx, "all", p.Pid)
 }
 
-func (p *Process) ConnectionsMaxWithContext(ctx context.Context, max int) ([]net.ConnectionStat, error) {
-	return net.ConnectionsPidMaxWithContext(ctx, "all", p.Pid, max)
+func (p *Process) ConnectionsMaxWithContext(ctx context.Context, maxConn int) ([]net.ConnectionStat, error) {
+	return net.ConnectionsPidMaxWithContext(ctx, "all", p.Pid, maxConn)
 }
 
 func ProcessesWithContext(ctx context.Context) ([]*Process, error) {
