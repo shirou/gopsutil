@@ -6,6 +6,7 @@ package process
 import (
 	"bytes"
 	"context"
+	"errors"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -329,7 +330,7 @@ func (p *Process) getKProc() (*KinfoProc, error) {
 		return nil, err
 	}
 	if length != sizeOfKinfoProc {
-		return nil, err
+		return nil, errors.New("unexpected size of KinfoProc")
 	}
 
 	k, err := parseKinfoProc(buf)
