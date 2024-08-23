@@ -3,19 +3,19 @@ issues:
   exclude-rules:
     - linters:
         - gosec
-      text: "G204"
+      text: G115
     - linters:
         - revive
-      text: "var-naming"
+      text: var-naming
     - linters:
         - revive
-      text: "exported"
+      text: exported
     - linters:
         - revive
-      text: "empty-block"
+      text: empty-block
     - linters:
         - revive
-      text: "unused-parameter"
+      text: unused-parameter
 linters:
   enable:
     - asciicheck
@@ -30,7 +30,6 @@ linters:
     - gosec
     - gosimple
     - importas
-    - megacheck
     - misspell
     - nakedret
     - nolintlint
@@ -39,14 +38,11 @@ linters:
     - typecheck
     - unparam
   disable:
-    - deadcode
     - errcheck
     - govet
     - ineffassign
     - staticcheck
-    - structcheck
     - unused
-    - varcheck
 linters-settings:
   gci:
     sections:

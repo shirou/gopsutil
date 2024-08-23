@@ -117,7 +117,7 @@ func parseNetstatAddr(local string, remote string, family uint32) (laddr Addr, r
 				return Addr{}, fmt.Errorf("unknown family, %d", family)
 			}
 		}
-		lport, err := strconv.Atoi(port)
+		lport, err := strconv.ParseInt(port, 10, 32)
 		if err != nil {
 			return Addr{}, err
 		}

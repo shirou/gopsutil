@@ -181,7 +181,7 @@ func platformInformation(ctx context.Context) (platform, family, version, displa
 			err = windows.RegQueryValueEx(h, windows.StringToUTF16Ptr(`CurrentBuildNumber`), nil, &valType, (*byte)(unsafe.Pointer(&regBuf[0])), &bufLen)
 			if err == nil {
 				buildNumberStr := windows.UTF16ToString(regBuf[:])
-				if buildNumber, err := strconv.Atoi(buildNumberStr); err == nil && buildNumber >= 22000 {
+				if buildNumber, err := strconv.ParseInt(buildNumberStr, 10, 32); err == nil && buildNumber >= 22000 {
 					platform = strings.Replace(platform, "Windows 10", "Windows 11", 1)
 				}
 			}

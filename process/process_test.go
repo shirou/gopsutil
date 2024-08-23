@@ -307,6 +307,7 @@ func TestName(t *testing.T) {
 	}
 }
 
+// #nosec G204
 func TestLong_Name_With_Spaces(t *testing.T) {
 	tmpdir, err := os.MkdirTemp("", "")
 	if err != nil {
@@ -353,6 +354,7 @@ func TestLong_Name_With_Spaces(t *testing.T) {
 	cmd.Process.Kill()
 }
 
+// #nosec G204
 func TestLong_Name(t *testing.T) {
 	tmpdir, err := os.MkdirTemp("", "")
 	if err != nil {
@@ -779,6 +781,7 @@ func TestIsRunning(t *testing.T) {
 	}
 }
 
+// #nosec G204
 func TestEnviron(t *testing.T) {
 	tmpdir, err := os.MkdirTemp("", "")
 	if err != nil {
