@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSplitProcStat(t *testing.T) {
@@ -173,4 +174,70 @@ func TestFillFromTIDStatWithContext_lx_brandz(t *testing.T) {
 		}
 		assert.Equal(t, float64(0), cpuTimes.Iowait)
 	}
+}
+
+func TestProcessMemoryMaps(t *testing.T) {
+	t.Setenv("HOST_PROC", "testdata/linux")
+	pid := 1
+	p, err := NewProcess(int32(pid))
+	require.NoError(t, err)
+	maps, err := p.MemoryMaps(false)
+	require.NoError(t, err)
+
+	expected := &[]MemoryMapsStat{
+		{
+			"[vvar]",
+			0,
+			1,
+			0,
+			3,
+			4,
+			5,
+			6,
+			7,
+			8,
+			9,
+		},
+		{
+			"",
+			0,
+			1,
+			2,
+			3,
+			4,
+			0,
+			6,
+			7,
+			8,
+			9,
+		},
+		{
+			"[vdso]",
+			0,
+			1,
+			2,
+			3,
+			4,
+			5,
+			0,
+			7,
+			8,
+			9,
+		},
+		{
+			"/usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1",
+			0,
+			1,
+			2,
+			3,
+			4,
+			5,
+			6,
+			7,
+			0,
+			9,
+		},
+	}
+
+	require.Equal(t, expected, maps)
 }
