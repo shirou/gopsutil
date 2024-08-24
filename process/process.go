@@ -325,7 +325,11 @@ func calculatePercent(t1, t2 *cpu.TimesStat, delta float64, numcpu int) float64 
 	if delta == 0 {
 		return 0
 	}
-	delta_proc := t2.Total() - t1.Total()
+	// https://github.com/giampaolo/psutil/blob/c034e6692cf736b5e87d14418a8153bb03f6cf42/psutil/__init__.py#L1064
+	delta_proc := (t2.User - t1.User) + (t2.System - t1.System)
+	if delta_proc <= 0 {
+		return 0
+	}
 	overall_percent := ((delta_proc / delta) * 100) * float64(numcpu)
 	return overall_percent
 }
