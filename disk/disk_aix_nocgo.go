@@ -136,7 +136,7 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 					return nil, err
 				}
 			case `%Used`:
-				val, err := strconv.Atoi(strings.Replace(fs[i], "%", "", -1))
+				val, err := strconv.ParseInt(strings.Replace(fs[i], "%", "", -1), 10, 32)
 				if err != nil {
 					return nil, err
 				}
@@ -152,7 +152,7 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 					return nil, err
 				}
 			case `%Iused`:
-				val, err := strconv.Atoi(strings.Replace(fs[i], "%", "", -1))
+				val, err := strconv.ParseInt(strings.Replace(fs[i], "%", "", -1), 10, 32)
 				if err != nil {
 					return nil, err
 				}

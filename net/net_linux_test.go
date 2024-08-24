@@ -52,27 +52,27 @@ func TestIOCountersByFileParsing(t *testing.T) {
 		assert.NotEmpty(t, counters)
 		assert.Equal(t, 2, len(counters))
 		assert.Equal(t, interface0, counters[0].Name)
-		assert.Equal(t, 1, int(counters[0].BytesRecv))
-		assert.Equal(t, 2, int(counters[0].PacketsRecv))
-		assert.Equal(t, 3, int(counters[0].Errin))
-		assert.Equal(t, 4, int(counters[0].Dropin))
-		assert.Equal(t, 5, int(counters[0].Fifoin))
-		assert.Equal(t, 9, int(counters[0].BytesSent))
-		assert.Equal(t, 10, int(counters[0].PacketsSent))
-		assert.Equal(t, 11, int(counters[0].Errout))
-		assert.Equal(t, 12, int(counters[0].Dropout))
-		assert.Equal(t, 13, int(counters[0].Fifoout))
+		assert.Equal(t, uint64(1), counters[0].BytesRecv)
+		assert.Equal(t, uint64(2), counters[0].PacketsRecv)
+		assert.Equal(t, uint64(3), counters[0].Errin)
+		assert.Equal(t, uint64(4), counters[0].Dropin)
+		assert.Equal(t, uint64(5), counters[0].Fifoin)
+		assert.Equal(t, uint64(9), counters[0].BytesSent)
+		assert.Equal(t, uint64(10), counters[0].PacketsSent)
+		assert.Equal(t, uint64(11), counters[0].Errout)
+		assert.Equal(t, uint64(12), counters[0].Dropout)
+		assert.Equal(t, uint64(13), counters[0].Fifoout)
 		assert.Equal(t, interface1, counters[1].Name)
-		assert.Equal(t, 100, int(counters[1].BytesRecv))
-		assert.Equal(t, 200, int(counters[1].PacketsRecv))
-		assert.Equal(t, 300, int(counters[1].Errin))
-		assert.Equal(t, 400, int(counters[1].Dropin))
-		assert.Equal(t, 500, int(counters[1].Fifoin))
-		assert.Equal(t, 900, int(counters[1].BytesSent))
-		assert.Equal(t, 1000, int(counters[1].PacketsSent))
-		assert.Equal(t, 1100, int(counters[1].Errout))
-		assert.Equal(t, 1200, int(counters[1].Dropout))
-		assert.Equal(t, 1300, int(counters[1].Fifoout))
+		assert.Equal(t, uint64(100), counters[1].BytesRecv)
+		assert.Equal(t, uint64(200), counters[1].PacketsRecv)
+		assert.Equal(t, uint64(300), counters[1].Errin)
+		assert.Equal(t, uint64(400), counters[1].Dropin)
+		assert.Equal(t, uint64(500), counters[1].Fifoin)
+		assert.Equal(t, uint64(900), counters[1].BytesSent)
+		assert.Equal(t, uint64(1000), counters[1].PacketsSent)
+		assert.Equal(t, uint64(1100), counters[1].Errout)
+		assert.Equal(t, uint64(1200), counters[1].Dropout)
+		assert.Equal(t, uint64(1300), counters[1].Fifoout)
 	}
 
 	err = tmpfile.Close()
@@ -81,7 +81,7 @@ func TestIOCountersByFileParsing(t *testing.T) {
 
 func TestGetProcInodesAll(t *testing.T) {
 	waitForServer := make(chan bool)
-	go func() { // TCP listening goroutine to have some opened inodes even in CI
+	go func(t *testing.T) { // TCP listening goroutine to have some opened inodes even in CI
 		addr, err := net.ResolveTCPAddr("tcp", "localhost:0") // dynamically get a random open port from OS
 		if err != nil {
 			t.Skipf("unable to resolve localhost: %v", err)
@@ -99,7 +99,7 @@ func TestGetProcInodesAll(t *testing.T) {
 			}
 			defer conn.Close()
 		}
-	}()
+	}(t)
 	<-waitForServer
 
 	root := common.HostProcWithContext(context.Background(), "")

@@ -97,7 +97,7 @@ func ParseNetstat(output string, mode string,
 			n.PacketsSent = parsed[2]
 			n.Dropout = parsed[3]
 		case "ine":
-		        n.Errin = parsed[0]
+			n.Errin = parsed[0]
 			n.Errout = parsed[1]
 		}
 
@@ -255,7 +255,7 @@ func parseNetstatAddr(local string, remote string, family uint32) (laddr Addr, r
 				return Addr{}, fmt.Errorf("unknown family, %d", family)
 			}
 		}
-		lport, err := strconv.Atoi(port)
+		lport, err := strconv.ParseInt(port, 10, 32)
 		if err != nil {
 			return Addr{}, err
 		}

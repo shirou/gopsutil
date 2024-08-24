@@ -20,7 +20,7 @@ func (p *Process) CwdWithContext(ctx context.Context) (string, error) {
 func (p *Process) ExeWithContext(ctx context.Context) (string, error) {
 	out, err := invoke.CommandWithContext(ctx, "lsof", "-p", strconv.Itoa(int(p.Pid)), "-Fpfn")
 	if err != nil {
-		return "", fmt.Errorf("bad call to lsof: %s", err)
+		return "", fmt.Errorf("bad call to lsof: %w", err)
 	}
 	txtFound := 0
 	lines := strings.Split(string(out), "\n")
@@ -111,15 +111,15 @@ func (p *Process) MemoryInfoWithContext(ctx context.Context) (*MemoryInfoStat, e
 	if err != nil {
 		return nil, err
 	}
-	rss, err := strconv.Atoi(r[0][0])
+	rss, err := strconv.ParseInt(r[0][0], 10, 64)
 	if err != nil {
 		return nil, err
 	}
-	vms, err := strconv.Atoi(r[0][1])
+	vms, err := strconv.ParseInt(r[0][1], 10, 64)
 	if err != nil {
 		return nil, err
 	}
-	pagein, err := strconv.Atoi(r[0][2])
+	pagein, err := strconv.ParseInt(r[0][2], 10, 64)
 	if err != nil {
 		return nil, err
 	}

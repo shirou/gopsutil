@@ -109,11 +109,11 @@ func parseNetLine(line string) (ConnectionStat, error) {
 		f[7] = "unix"
 	}
 
-	pid, err := strconv.Atoi(f[1])
+	pid, err := strconv.ParseInt(f[1], 10, 32)
 	if err != nil {
 		return ConnectionStat{}, err
 	}
-	fd, err := strconv.Atoi(strings.Trim(f[3], "u"))
+	fd, err := strconv.ParseInt(strings.Trim(f[3], "u"), 10, 32)
 	if err != nil {
 		return ConnectionStat{}, fmt.Errorf("unknown fd, %s", f[3])
 	}
@@ -157,7 +157,7 @@ func parseNetAddr(line string) (laddr Addr, raddr Addr, err error) {
 		if err != nil {
 			return Addr{}, fmt.Errorf("wrong addr, %s", l)
 		}
-		lport, err := strconv.Atoi(port)
+		lport, err := strconv.ParseInt(port, 10, 32)
 		if err != nil {
 			return Addr{}, err
 		}

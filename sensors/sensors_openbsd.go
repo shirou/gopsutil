@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 //go:build openbsd
 
-package openbsd
+package sensors
 
 import (
 	"context"

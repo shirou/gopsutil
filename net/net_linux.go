@@ -573,7 +573,7 @@ func getProcInodes(root string, pid int32, maxConn int) (map[string][]inodeMap, 
 		if !ok {
 			ret[inode] = make([]inodeMap, 0)
 		}
-		fd, err := strconv.Atoi(dirEntry.Name())
+		fd, err := strconv.ParseInt(dirEntry.Name(), 10, 32)
 		if err != nil {
 			continue
 		}
@@ -858,7 +858,7 @@ func processUnix(file string, kind netConnectionKindType, inodes map[string][]in
 		if len(tokens) < 6 {
 			continue
 		}
-		st, err := strconv.Atoi(tokens[4])
+		st, err := strconv.ParseInt(tokens[4], 10, 32)
 		if err != nil {
 			return nil, err
 		}
