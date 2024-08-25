@@ -133,7 +133,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 						uintptr(unsafe.Pointer(&lpFileSystemNameBuffer[0])),
 						uintptr(len(lpFileSystemNameBuffer)))
 					if driveret == 0 {
-						if typeret == 5 || typeret == 2 {
+						if typeret == 2 || typeret == 4 || typeret == 5 {
 							continue // device is not ready will happen if there is no disk in the drive
 						}
 						warnings.Add(err)
