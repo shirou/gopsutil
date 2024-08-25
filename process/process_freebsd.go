@@ -6,6 +6,7 @@ package process
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -336,5 +337,9 @@ func (p *Process) getKProc() (*KinfoProc, error) {
 	if err != nil {
 		return nil, err
 	}
+	if &k == nil {
+		return nil, fmt.Errorf("kInfoProc is nil")
+	}
+
 	return &k, nil
 }
