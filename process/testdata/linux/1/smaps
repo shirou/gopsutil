@@ -1,0 +1,44 @@
+ffffb5ecc000-ffffb5ece000 r--p 00000000 00:00 0        [vvar]
+Rss:                   0 kB
+KernelPageSize:        4 kB
+Size:                  1 kB
+Shared_Clean:          3 kB
+Shared_Dirty:          4 kB
+Private_Clean:         5 kB
+Private_Dirty:         6 kB
+Referenced:            7 kB
+Anonymous:             8 kB
+Swap:                  9 kB
+ffffb5eca000-ffffb5ecc000 rw-p 00000000 00:00 0
+Rss:                   0 kB
+Size:                  1 kB
+Pss:                   2 kB
+Shared_Clean:          3 kB
+Shared_Dirty:          4 kB
+Private_Dirty:         6 kB
+LazyFree:              0 kB
+Referenced:            7 kB
+Anonymous:             8 kB
+Swap:                  9 kB
+ffffb5ece000-ffffb5ecf000 r-xp 00000000 00:00 0        [vdso]
+Rss:                   0 kB
+Size:                  1 kB
+Pss:                   2 kB
+Shared_Clean:          3 kB
+Shared_Dirty:          4 kB
+Private_Clean:         5 kB
+Private_Hugetlb:       0 kB
+Referenced:            7 kB
+Anonymous:             8 kB
+Swap:                  9 kB
+ffffb5ecf000-ffffb5ed1000 r--p 0002a000 00:3d 2238525  /usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1
+Rss:                   0 kB
+Size:                  1 kB
+Pss:                   2 kB
+Shared_Clean:          3 kB
+Shared_Dirty:          4 kB
+Private_Clean:         5 kB
+Private_Dirty:         6 kB
+Referenced:            7 kB
+THPeligible:           0
+Swap:                  9 kB

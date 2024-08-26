@@ -154,7 +154,7 @@ func ReadLinesOffsetN(filename string, offset uint, n int) ([]string, error) {
 	var ret []string
 
 	r := bufio.NewReader(f)
-	for i := 0; i < n+int(offset) || n < 0; i++ {
+	for i := uint(0); i < uint(n)+offset || n < 0; i++ {
 		line, err := r.ReadString('\n')
 		if err != nil {
 			if err == io.EOF && len(line) > 0 {
@@ -162,7 +162,7 @@ func ReadLinesOffsetN(filename string, offset uint, n int) ([]string, error) {
 			}
 			break
 		}
-		if i < int(offset) {
+		if i < offset {
 			continue
 		}
 		ret = append(ret, strings.Trim(line, "\n"))
