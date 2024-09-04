@@ -5,12 +5,16 @@ package cpu
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
+	"unsafe"
 
 	"github.com/shoenig/go-m1cpu"
 	"github.com/tklauser/go-sysconf"
 	"golang.org/x/sys/unix"
+
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 // sys/resource.h
@@ -22,6 +26,24 @@ const (
 	cpIdle    = 4
 	cpUStates = 5
 )
+
+// mach/machine.h
+const (
+	cpuStateUser   = 0
+	cpuStateSystem = 1
+	cpuStateIdle   = 2
+	cpuStateNice   = 3
+	cpuStateMax    = 4
+)
+
+// mach/processor_info.h
+const (
+	processorCpuLoadInfo = 2
+)
+
+type hostCpuLoadInfoData struct {
+	cpuTicks [cpuStateMax]uint32
+}
 
 // default value. from time.h
 var ClocksPerSec = float64(128)
@@ -39,11 +61,17 @@ func Times(percpu bool) ([]TimesStat, error) {
 }
 
 func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
+	lib, err := common.NewLibrary(common.Kernel)
+	if err != nil {
+		return nil, err
+	}
+	defer lib.Close()
+
 	if percpu {
-		return perCPUTimes()
+		return perCPUTimes(lib)
 	}
 
-	return allCPUTimes()
+	return allCPUTimes(lib)
 }
 
 // Returns only one CPUInfoStat on FreeBSD
@@ -114,4 +142,64 @@ func CountsWithContext(ctx context.Context, logical bool) (int, error) {
 	}
 
 	return int(count), nil
+}
+
+func perCPUTimes(machLib *common.Library) ([]TimesStat, error) {
+	machHostSelf := common.GetFunc[common.MachHostSelfFunc](machLib, common.MachHostSelfSym)
+	machTaskSelf := common.GetFunc[common.MachTaskSelfFunc](machLib, common.MachTaskSelfSym)
+	hostProcessorInfo := common.GetFunc[common.HostProcessorInfoFunc](machLib, common.HostProcessorInfoSym)
+	vmDeallocate := common.GetFunc[common.VMDeallocateFunc](machLib, common.VMDeallocateSym)
+
+	var count, ncpu uint32
+	var cpuload *hostCpuLoadInfoData
+
+	status := hostProcessorInfo(machHostSelf(), processorCpuLoadInfo, &ncpu, uintptr(unsafe.Pointer(&cpuload)), &count)
+
+	if status != common.KERN_SUCCESS {
+		return nil, fmt.Errorf("host_processor_info error=%d", status)
+	}
+
+	defer vmDeallocate(machTaskSelf(), uintptr(unsafe.Pointer(cpuload)), uintptr(ncpu))
+
+	ret := []TimesStat{}
+	loads := unsafe.Slice(cpuload, ncpu)
+
+	for i := 0; i < int(ncpu); i++ {
+		c := TimesStat{
+			CPU:    fmt.Sprintf("cpu%d", i),
+			User:   float64(loads[i].cpuTicks[cpuStateUser]) / ClocksPerSec,
+			System: float64(loads[i].cpuTicks[cpuStateSystem]) / ClocksPerSec,
+			Nice:   float64(loads[i].cpuTicks[cpuStateNice]) / ClocksPerSec,
+			Idle:   float64(loads[i].cpuTicks[cpuStateIdle]) / ClocksPerSec,
+		}
+
+		ret = append(ret, c)
+	}
+
+	return ret, nil
+}
+
+func allCPUTimes(machLib *common.Library) ([]TimesStat, error) {
+	machHostSelf := common.GetFunc[common.MachHostSelfFunc](machLib, common.MachHostSelfSym)
+	hostStatistics := common.GetFunc[common.HostStatisticsFunc](machLib, common.HostStatisticsSym)
+
+	var cpuload hostCpuLoadInfoData
+	count := uint32(cpuStateMax)
+
+	status := hostStatistics(machHostSelf(), common.HOST_CPU_LOAD_INFO,
+		uintptr(unsafe.Pointer(&cpuload)), &count)
+
+	if status != common.KERN_SUCCESS {
+		return nil, fmt.Errorf("host_statistics error=%d", status)
+	}
+
+	c := TimesStat{
+		CPU:    "cpu-total",
+		User:   float64(cpuload.cpuTicks[cpuStateUser]) / ClocksPerSec,
+		System: float64(cpuload.cpuTicks[cpuStateSystem]) / ClocksPerSec,
+		Nice:   float64(cpuload.cpuTicks[cpuStateNice]) / ClocksPerSec,
+		Idle:   float64(cpuload.cpuTicks[cpuStateIdle]) / ClocksPerSec,
+	}
+
+	return []TimesStat{c}, nil
 }
