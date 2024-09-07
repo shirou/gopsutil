@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -233,18 +234,21 @@ func convertCPUTimes(s string) (ret float64, err error) {
 }
 
 func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
-	pids, err := common.CallPgrepWithContext(ctx, invoke, p.Pid)
+	procs, err := ProcessesWithContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil
 	}
-	ret := make([]*Process, 0, len(pids))
-	for _, pid := range pids {
-		np, err := NewProcessWithContext(ctx, pid)
+	ret := make([]*Process, 0, len(procs))
+	for _, proc := range procs {
+		ppid, err := proc.PpidWithContext(ctx)
 		if err != nil {
-			return nil, err
+			continue
 		}
-		ret = append(ret, np)
+		if ppid == p.Pid {
+			ret = append(ret, proc)
+		}
 	}
+	sort.Slice(ret, func(i, j int) bool { return ret[i].Pid < ret[j].Pid })
 	return ret, nil
 }
 
