@@ -78,7 +78,7 @@ type Library struct {
 const (
 	IOKit          = "/System/Library/Frameworks/IOKit.framework/IOKit"
 	CoreFoundation = "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation"
-	Kernel         = "/usr/lib/system/libsystem_kernel.dylib"
+	System         = "/usr/lib/libSystem.B.dylib"
 )
 
 func NewLibrary(path string) (*Library, error) {
@@ -119,12 +119,19 @@ const (
 
 // IOKit functions and symbols.
 type (
-	IOServiceGetMatchingServiceFunc func(mainPort uint32, matching uintptr) uint32
-	IOServiceMatchingFunc           func(name string) unsafe.Pointer
-	IOServiceOpenFunc               func(service, owningTask, connType uint32, connect *uint32) int
-	IOServiceCloseFunc              func(connect uint32) int
-	IOObjectReleaseFunc             func(object uint32) int
-	IOConnectCallStructMethodFunc   func(connection, selector uint32, inputStruct, inputStructCnt, outputStruct uintptr, outputStructCnt *uintptr) int
+	IOServiceGetMatchingServiceFunc       func(mainPort uint32, matching uintptr) uint32
+	IOServiceGetMatchingServicesFunc      func(mainPort uint32, matching uintptr, existing *uint32) int
+	IOServiceMatchingFunc                 func(name string) unsafe.Pointer
+	IOServiceOpenFunc                     func(service, owningTask, connType uint32, connect *uint32) int
+	IOServiceCloseFunc                    func(connect uint32) int
+	IOIteratorNextFunc                    func(iterator uint32) uint32
+	IORegistryEntryGetNameFunc            func(entry uint32, name *byte) int
+	IORegistryEntryGetParentEntryFunc     func(entry uint32, plane string, parent *uint32) int
+	IORegistryEntryCreateCFPropertyFunc   func(entry uint32, key, allocator uintptr, options uint32) unsafe.Pointer
+	IORegistryEntryCreateCFPropertiesFunc func(entry uint32, properties unsafe.Pointer, allocator uintptr, options uint32) int
+	IOObjectConformsToFunc                func(object uint32, className string) bool
+	IOObjectReleaseFunc                   func(object uint32) int
+	IOConnectCallStructMethodFunc         func(connection, selector uint32, inputStruct, inputStructCnt, outputStruct uintptr, outputStructCnt *uintptr) int
 
 	IOHIDEventSystemClientCreateFunc      func(allocator uintptr) unsafe.Pointer
 	IOHIDEventSystemClientSetMatchingFunc func(client, match uintptr) int
@@ -136,12 +143,19 @@ type (
 )
 
 const (
-	IOServiceGetMatchingServiceSym = "IOServiceGetMatchingService"
-	IOServiceMatchingSym           = "IOServiceMatching"
-	IOServiceOpenSym               = "IOServiceOpen"
-	IOServiceCloseSym              = "IOServiceClose"
-	IOObjectReleaseSym             = "IOObjectRelease"
-	IOConnectCallStructMethodSym   = "IOConnectCallStructMethod"
+	IOServiceGetMatchingServiceSym       = "IOServiceGetMatchingService"
+	IOServiceGetMatchingServicesSym      = "IOServiceGetMatchingServices"
+	IOServiceMatchingSym                 = "IOServiceMatching"
+	IOServiceOpenSym                     = "IOServiceOpen"
+	IOServiceCloseSym                    = "IOServiceClose"
+	IOIteratorNextSym                    = "IOIteratorNext"
+	IORegistryEntryGetNameSym            = "IORegistryEntryGetName"
+	IORegistryEntryGetParentEntrySym     = "IORegistryEntryGetParentEntry"
+	IORegistryEntryCreateCFPropertySym   = "IORegistryEntryCreateCFProperty"
+	IORegistryEntryCreateCFPropertiesSym = "IORegistryEntryCreateCFProperties"
+	IOObjectConformsToSym                = "IOObjectConformsTo"
+	IOObjectReleaseSym                   = "IOObjectRelease"
+	IOConnectCallStructMethodSym         = "IOConnectCallStructMethod"
 
 	IOHIDEventSystemClientCreateSym       = "IOHIDEventSystemClientCreate"
 	IOHIDEventSystemClientSetMatchingSym  = "IOHIDEventSystemClientSetMatching"
@@ -152,49 +166,77 @@ const (
 )
 
 const (
+	KIOMainPortDefault = 0
+
 	KIOHIDEventTypeTemperature = 15
+
+	KNilOptions = 0
+)
+
+const (
+	KIOMediaWholeKey = "Media"
+	KIOServicePlane  = "IOService"
 )
 
 // CoreFoundation functions and symbols.
 type (
+	CFGetTypeIDFunc        func(cf uintptr) int32
 	CFNumberCreateFunc     func(allocator uintptr, theType int32, valuePtr uintptr) unsafe.Pointer
+	CFNumberGetValueFunc   func(num uintptr, theType int32, valuePtr uintptr) bool
 	CFDictionaryCreateFunc func(allocator uintptr, keys, values *unsafe.Pointer, numValues int32,
 		keyCallBacks, valueCallBacks uintptr) unsafe.Pointer
+	CFDictionaryAddValueFunc      func(theDict, key, value uintptr)
+	CFDictionaryGetValueFunc      func(theDict, key uintptr) unsafe.Pointer
 	CFArrayGetCountFunc           func(theArray uintptr) int32
 	CFArrayGetValueAtIndexFunc    func(theArray uintptr, index int32) unsafe.Pointer
 	CFStringCreateMutableFunc     func(alloc uintptr, maxLength int32) unsafe.Pointer
 	CFStringGetLengthFunc         func(theString uintptr) int32
 	CFStringGetCStringFunc        func(theString uintptr, buffer *byte, bufferSize int32, encoding uint32)
 	CFStringCreateWithCStringFunc func(alloc uintptr, cStr string, encoding uint32) unsafe.Pointer
+	CFDataGetLengthFunc           func(theData uintptr) int32
+	CFDataGetBytePtrFunc          func(theData uintptr) unsafe.Pointer
 	CFReleaseFunc                 func(cf uintptr)
 )
 
 const (
+	CFGetTypeIDSym               = "CFGetTypeID"
 	CFNumberCreateSym            = "CFNumberCreate"
+	CFNumberGetValueSym          = "CFNumberGetValue"
 	CFDictionaryCreateSym        = "CFDictionaryCreate"
+	CFDictionaryAddValueSym      = "CFDictionaryAddValue"
+	CFDictionaryGetValueSym      = "CFDictionaryGetValue"
 	CFArrayGetCountSym           = "CFArrayGetCount"
 	CFArrayGetValueAtIndexSym    = "CFArrayGetValueAtIndex"
 	CFStringCreateMutableSym     = "CFStringCreateMutable"
 	CFStringGetLengthSym         = "CFStringGetLength"
 	CFStringGetCStringSym        = "CFStringGetCString"
 	CFStringCreateWithCStringSym = "CFStringCreateWithCString"
+	CFDataGetLengthSym           = "CFDataGetLength"
+	CFDataGetBytePtrSym          = "CFDataGetBytePtr"
 	CFReleaseSym                 = "CFRelease"
 )
 
 const (
 	KCFStringEncodingUTF8 = 0x08000100
+	KCFNumberSInt64Type   = 4
 	KCFNumberIntType      = 9
 	KCFAllocatorDefault   = 0
 )
 
 // Kernel functions and symbols.
+type MachTimeBaseInfo struct {
+	Numer uint32
+	Denom uint32
+}
+
 type (
-	HostProcessorInfoFunc func(host uint32, flavor int, outProcessorCount *uint32, outProcessorInfo uintptr,
+	HostProcessorInfoFunc func(host uint32, flavor int32, outProcessorCount *uint32, outProcessorInfo uintptr,
 		outProcessorInfoCnt *uint32) int
-	HostStatisticsFunc func(host uint32, flavor int, hostInfoOut uintptr, hostInfoOutCnt *uint32) int
-	MachHostSelfFunc   func() uint32
-	MachTaskSelfFunc   func() uint32
-	VMDeallocateFunc   func(targetTask uint32, vmAddress, vmSize uintptr) int
+	HostStatisticsFunc   func(host uint32, flavor int32, hostInfoOut uintptr, hostInfoOutCnt *uint32) int
+	MachHostSelfFunc     func() uint32
+	MachTaskSelfFunc     func() uint32
+	MachTimeBaseInfoFunc func(info uintptr) int
+	VMDeallocateFunc     func(targetTask uint32, vmAddress, vmSize uintptr) int
 )
 
 const (
@@ -202,14 +244,38 @@ const (
 	HostStatisticsSym    = "host_statistics"
 	MachHostSelfSym      = "mach_host_self"
 	MachTaskSelfSym      = "mach_task_self"
+	MachTimeBaseInfoSym  = "mach_timebase_info"
 	VMDeallocateSym      = "vm_deallocate"
 )
 
 const (
+	CTL_KERN       = 1
+	KERN_ARGMAX    = 8
+	KERN_PROCARGS2 = 49
+
 	HOST_VM_INFO       = 2
 	HOST_CPU_LOAD_INFO = 3
 
 	HOST_VM_INFO_COUNT = 0xf
+)
+
+// System functions and symbols.
+type (
+	ProcPidPathFunc func(pid int32, buffer uintptr, bufferSize uint32) int32
+	ProcPidInfoFunc func(pid, flavor int32, arg uint64, buffer uintptr, bufferSize int32) int32
+)
+
+const (
+	SysctlSym      = "sysctl"
+	ProcPidPathSym = "proc_pidpath"
+	ProcPidInfoSym = "proc_pidinfo"
+)
+
+const (
+	MAXPATHLEN               = 1024
+	PROC_PIDPATHINFO_MAXSIZE = 4 * MAXPATHLEN
+	PROC_PIDTASKINFO         = 4
+	PROC_PIDVNODEPATHINFO    = 9
 )
 
 // SMC represents a SMC instance.
@@ -280,4 +346,19 @@ func (s *SMC) Close() error {
 		return fmt.Errorf("ERROR: IOServiceClose failed")
 	}
 	return nil
+}
+
+// https://github.com/ebitengine/purego/blob/main/internal/strings/strings.go#L26
+func GoString(cStr *byte) string {
+	if cStr == nil {
+		return ""
+	}
+	var length int
+	for {
+		if *(*byte)(unsafe.Add(unsafe.Pointer(cStr), uintptr(length))) == '\x00' {
+			break
+		}
+		length++
+	}
+	return string(unsafe.Slice(cStr, length))
 }

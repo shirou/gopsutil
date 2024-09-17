@@ -85,7 +85,7 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 }
 
 func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
-	machLib, err := common.NewLibrary(common.Kernel)
+	machLib, err := common.NewLibrary(common.System)
 	if err != nil {
 		return nil, err
 	}

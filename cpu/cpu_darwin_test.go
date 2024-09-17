@@ -5,13 +5,12 @@ package cpu
 
 import (
 	"os"
+	"runtime"
 	"testing"
-
-	"github.com/shoenig/go-m1cpu"
 )
 
 func TestInfo_AppleSilicon(t *testing.T) {
-	if !m1cpu.IsAppleSilicon() {
+	if runtime.GOARCH != "arm64" {
 		t.Skip("wrong cpu type")
 	}
 
