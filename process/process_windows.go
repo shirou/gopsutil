@@ -549,7 +549,37 @@ func (p *Process) NumCtxSwitchesWithContext(ctx context.Context) (*NumCtxSwitche
 }
 
 func (p *Process) NumFDsWithContext(ctx context.Context) (int32, error) {
-	return 0, common.ErrNotImplementedError
+	buffer := make([]byte, 1024)
+	var size uint32
+
+	st := common.CallWithExpandingBuffer(
+		func() common.NtStatus {
+			return common.NtQuerySystemInformation(
+				common.SystemExtendedHandleInformationClass,
+				&buffer[0],
+				uint32(len(buffer)),
+				&size,
+			)
+		},
+		&buffer,
+		&size,
+	)
+	if st.IsError() {
+		return 0, st.Error()
+	}
+
+	handlesList := (*common.SystemExtendedHandleInformation)(unsafe.Pointer(&buffer[0]))
+	handles := make([]common.SystemExtendedHandleTableEntryInformation, int(handlesList.NumberOfHandles))
+	hdr := (*reflect.SliceHeader)(unsafe.Pointer(&handles))
+	hdr.Data = uintptr(unsafe.Pointer(&handlesList.Handles[0]))
+
+	var handleCount int32
+	for _, handle := range handles {
+		if int32(handle.UniqueProcessId) == p.Pid {
+			handleCount++
+		}
+	}
+	return handleCount, nil
 }
 
 func (p *Process) NumThreadsWithContext(ctx context.Context) (int32, error) {
