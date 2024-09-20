@@ -10,6 +10,7 @@ package process
 // #include <sys/proc_info.h>
 // #include <sys/sysctl.h>
 // #include <mach/mach_time.h>
+// #include <sys/resource.h>
 import "C"
 
 import (
@@ -217,6 +218,33 @@ func (p *Process) MemoryInfoWithContext(ctx context.Context) (*MemoryInfoStat, e
 		RSS:  uint64(ti.pti_resident_size),
 		VMS:  uint64(ti.pti_virtual_size),
 		Swap: uint64(ti.pti_pageins),
+	}
+	return ret, nil
+}
+
+func (p *Process) MemoryInfoExWithContext(ctx context.Context) (*MemoryInfoExStat, error) {
+	const tiSize = C.sizeof_struct_proc_taskinfo
+	ti := (*C.struct_proc_taskinfo)(C.malloc(tiSize))
+	defer C.free(unsafe.Pointer(ti))
+
+	_, err := C.proc_pidinfo(C.int(p.Pid), C.PROC_PIDTASKINFO, 0, unsafe.Pointer(ti), tiSize)
+	if err != nil {
+		return nil, err
+	}
+
+	var usage C.struct_rusage_info_v2
+
+	_, err = C.proc_pid_rusage(C.int(p.Pid), C.RUSAGE_INFO_V2, (*C.rusage_info_t)(unsafe.Pointer(&usage)))
+	if err != nil {
+		return nil, err
+	}
+
+	ret := &MemoryInfoExStat{
+		VMS:       uint64(ti.pti_virtual_size),
+		Swap:      uint64(ti.pti_pageins),
+		Footprint: uint64(usage.ri_phys_footprint),
+		Wired:     uint64(usage.ri_wired_size),
+		Resident:  uint64(usage.ri_resident_size),
 	}
 	return ret, nil
 }
