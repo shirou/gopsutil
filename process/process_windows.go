@@ -549,6 +549,8 @@ func (p *Process) NumCtxSwitchesWithContext(ctx context.Context) (*NumCtxSwitche
 	return nil, common.ErrNotImplementedError
 }
 
+// NumFDsWithContext returns the number of handles for a process on Windows,
+// not the number of file descriptors (FDs).
 func (p *Process) NumFDsWithContext(ctx context.Context) (int32, error) {
 	handle, err := windows.OpenProcess(processQueryInformation, false, uint32(p.Pid))
 	if err != nil {
