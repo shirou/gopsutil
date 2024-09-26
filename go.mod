@@ -3,10 +3,10 @@ module github.com/shirou/gopsutil/v4
 go 1.18
 
 require (
+	github.com/ebitengine/purego v0.8.0
 	github.com/google/go-cmp v0.6.0
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c
-	github.com/shoenig/go-m1cpu v0.1.6
 	github.com/stretchr/testify v1.9.0
 	github.com/tklauser/go-sysconf v0.3.12
 	github.com/yusufpapurcu/wmi v1.2.4
