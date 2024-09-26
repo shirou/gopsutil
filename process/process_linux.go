@@ -1096,8 +1096,7 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
-	ctime := (t / uint64(clockTicks)) + uint64(bootTime)
-	createTime := int64(ctime * 1000)
+	createTime := int64((t * 1000 / uint64(clockTicks)) + uint64(bootTime*1000))
 
 	rtpriority, err := strconv.ParseInt(fields[18], 10, 32)
 	if err != nil {
