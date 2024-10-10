@@ -96,6 +96,10 @@ func (ta *temperatureArm) getProductNames() []string {
 	ta.ioHIDEventSystemClientSetMatching(uintptr(system), uintptr(ta.sensors))
 	matchingsrvs := ta.ioHIDEventSystemClientCopyServices(uintptr(system))
 
+	if matchingsrvs == nil {
+		return nil
+	}
+
 	count := ta.cfArrayGetCount(uintptr(matchingsrvs))
 
 	var i int32
@@ -129,6 +133,10 @@ func (ta *temperatureArm) getThermalValues() []float64 {
 
 	ta.ioHIDEventSystemClientSetMatching(uintptr(system), uintptr(ta.sensors))
 	matchingsrvs := ta.ioHIDEventSystemClientCopyServices(uintptr(system))
+
+	if matchingsrvs == nil {
+		return nil
+	}
 
 	count := ta.cfArrayGetCount(uintptr(matchingsrvs))
 
