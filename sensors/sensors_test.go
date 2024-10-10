@@ -3,8 +3,11 @@
 package sensors
 
 import (
+	"context"
 	"fmt"
 	"testing"
+
+	"github.com/shirou/gopsutil/v4/sensors"
 )
 
 func TestTemperatureStat_String(t *testing.T) {
@@ -18,4 +21,9 @@ func TestTemperatureStat_String(t *testing.T) {
 	if s != fmt.Sprintf("%v", v) {
 		t.Errorf("TemperatureStat string is invalid, %v", fmt.Sprintf("%v", v))
 	}
+}
+
+func TestTemperatures(t *testing.T) {
+	// make sure it does not segfault
+	sensors.TemperaturesWithContext(context.TODO())
 }
