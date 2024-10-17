@@ -87,6 +87,8 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 			Terminal: common.IntToString(u.Line[:]),
 			Host:     common.IntToString(u.Host[:]),
 			Started:  int(u.Time),
+			Type:     int(u.Type),
+			Pid:      int(u.Pid),
 		}
 
 		ret = append(ret, user)
