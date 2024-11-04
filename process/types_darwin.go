@@ -53,6 +53,7 @@ package process
 #include <sys/sysctl.h>
 #include <sys/ucred.h>
 #include <sys/proc.h>
+#include <sys/proc_info.h>
 #include <sys/time.h>
 #include <sys/_types/_timeval.h>
 #include <sys/appleapiopts.h>
@@ -153,6 +154,8 @@ type Au_session C.struct_au_session
 type Posix_cred C.struct_posix_cred
 
 type Label C.struct_label
+
+type ProcTaskInfo C.struct_proc_taskinfo
 
 type (
 	AuditinfoAddr C.struct_auditinfo_addr

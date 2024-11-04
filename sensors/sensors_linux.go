@@ -24,7 +24,7 @@ func TemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
 
 	files, err := getTemperatureFiles(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get tempreteure files, %w", err)
+		return nil, fmt.Errorf("failed to get temperature files, %w", err)
 	}
 
 	if len(files) == 0 { // handle distributions without hwmon, like raspbian #391, parse legacy thermal_zone files
