@@ -35,6 +35,7 @@ linters:
     - nolintlint
     - predeclared
     - revive
+    - testifylint
     - typecheck
     - unparam
   disable:
@@ -56,3 +57,9 @@ linters-settings:
             recommandations:
               - io
               - os
+  testifylint:
+    disable:
+      - expected-actual
+      - float-compare
+      - require-error
+    enabel-all: true
