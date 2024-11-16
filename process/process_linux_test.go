@@ -73,23 +73,23 @@ func TestSplitProcStat_fromFile(t *testing.T) {
 			continue
 		}
 		contents, err := os.ReadFile(statFile)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		pidStr := strconv.Itoa(int(pid))
 
 		ppid := "68044" // TODO: how to pass ppid to test?
 
 		fields := splitProcStat(contents)
-		assert.Equal(t, fields[1], pidStr)
-		assert.Equal(t, fields[2], "test(cmd).sh")
-		assert.Equal(t, fields[3], "S")
-		assert.Equal(t, fields[4], ppid)
-		assert.Equal(t, fields[5], pidStr) // pgrp
-		assert.Equal(t, fields[6], ppid)   // session
-		assert.Equal(t, fields[8], pidStr) // tpgrp
-		assert.Equal(t, fields[18], "20")  // priority
-		assert.Equal(t, fields[20], "1")   // num threads
-		assert.Equal(t, fields[52], "0")   // exit code
+		assert.Equal(t, pidStr, fields[1])
+		assert.Equal(t, "test(cmd).sh", fields[2])
+		assert.Equal(t, "S", fields[3])
+		assert.Equal(t, ppid, fields[4])
+		assert.Equal(t, pidStr, fields[5]) // pgrp
+		assert.Equal(t, ppid, fields[6])   // session
+		assert.Equal(t, pidStr, fields[8]) // tpgrp
+		assert.Equal(t, "20", fields[18])  // priority
+		assert.Equal(t, "1", fields[20])   // num threads
+		assert.Equal(t, "0", fields[52])   // exit code
 	}
 }
 
