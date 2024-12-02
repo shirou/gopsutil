@@ -129,8 +129,10 @@ func TestUserStat_String(t *testing.T) {
 		Terminal: "term",
 		Host:     "host",
 		Started:  100,
+		Pid:      0,
+		Type:     0,
 	}
-	e := `{"user":"user","terminal":"term","host":"host","started":100}`
+	e := `{"user":"user","terminal":"term","host":"host","started":100,"type":0,"pid":0}`
 	if e != fmt.Sprintf("%v", v) {
 		t.Errorf("UserStat string is invalid: %v", v)
 	}
