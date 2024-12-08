@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/shirou/gopsutil/v4/internal/common"
 )
@@ -20,7 +21,7 @@ func TestIOCountersByFileParsing(t *testing.T) {
 	tmpfile, err := os.CreateTemp("", "proc_dev_net")
 	defer os.Remove(tmpfile.Name()) // clean up
 
-	assert.Nil(t, err, "Temporary file creation failed: ", err)
+	require.NoError(t, err, "Temporary file creation failed: ", err)
 
 	cases := [4][2]string{
 		{"eth0:   ", "eth1:   "},
@@ -30,7 +31,7 @@ func TestIOCountersByFileParsing(t *testing.T) {
 	}
 	for _, testCase := range cases {
 		err = tmpfile.Truncate(0)
-		assert.Nil(t, err, "Temporary file truncating problem: ", err)
+		require.NoError(t, err, "Temporary file truncating problem: ", err)
 
 		// Parse interface name for assertion
 		interface0 := strings.TrimSpace(testCase[0])
@@ -44,13 +45,13 @@ func TestIOCountersByFileParsing(t *testing.T) {
 
 		// Write /proc/net/dev sample output
 		_, err = tmpfile.Write(proc)
-		assert.Nil(t, err, "Temporary file writing failed: ", err)
+		require.NoError(t, err, "Temporary file writing failed: ", err)
 
 		counters, err := IOCountersByFile(true, tmpfile.Name())
 
-		assert.Nil(t, err)
+		require.NoError(t, err)
 		assert.NotEmpty(t, counters)
-		assert.Equal(t, 2, len(counters))
+		assert.Len(t, counters, 2)
 		assert.Equal(t, interface0, counters[0].Name)
 		assert.Equal(t, uint64(1), counters[0].BytesRecv)
 		assert.Equal(t, uint64(2), counters[0].PacketsRecv)
@@ -76,7 +77,7 @@ func TestIOCountersByFileParsing(t *testing.T) {
 	}
 
 	err = tmpfile.Close()
-	assert.Nil(t, err, "Temporary file closing failed: ", err)
+	assert.NoError(t, err, "Temporary file closing failed: ", err)
 }
 
 func TestGetProcInodesAll(t *testing.T) {
@@ -104,7 +105,7 @@ func TestGetProcInodesAll(t *testing.T) {
 
 	root := common.HostProcWithContext(context.Background(), "")
 	v, err := getProcInodesAll(root, 0)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.NotEmpty(t, v)
 }
 
@@ -115,7 +116,7 @@ func TestConnectionsMax(t *testing.T) {
 
 	maxConn := 10
 	v, err := ConnectionsMax("tcp", maxConn)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.NotEmpty(t, v)
 
 	cxByPid := map[int32]int{}
@@ -125,7 +126,7 @@ func TestConnectionsMax(t *testing.T) {
 		}
 	}
 	for _, c := range cxByPid {
-		assert.True(t, c <= maxConn)
+		assert.LessOrEqual(t, c, maxConn)
 	}
 }
 
@@ -180,9 +181,9 @@ func TestDecodeAddress(t *testing.T) {
 		}
 		addr, err := decodeAddress(uint32(family), src)
 		if dst.Error {
-			assert.NotNil(err, src)
+			assert.Error(err, src)
 		} else {
-			assert.Nil(err, src)
+			require.NoError(t, err, src)
 			assert.Equal(dst.IP, addr.IP, src)
 			assert.Equal(dst.Port, int(addr.Port), src)
 		}
@@ -197,7 +198,7 @@ func TestReverse(t *testing.T) {
 func TestConntrackStatFileParsing(t *testing.T) {
 	tmpfile, err := os.CreateTemp("", "proc_net_stat_conntrack")
 	defer os.Remove(tmpfile.Name())
-	assert.Nil(t, err, "Temporary file creation failed: ", err)
+	require.NoError(t, err, "Temporary file creation failed: ", err)
 
 	data := []byte(`
 entries  searched found new invalid ignore delete deleteList insert insertFailed drop earlyDrop icmpError  expectNew expectCreate expectDelete searchRestart
@@ -246,12 +247,12 @@ entries  searched found new invalid ignore delete deleteList insert insertFailed
 
 	// Write data to tempfile
 	_, err = tmpfile.Write(data)
-	assert.Nil(t, err, "Temporary file writing failed: ", err)
+	require.NoError(t, err, "Temporary file writing failed: ", err)
 
 	// Function under test
 	stats, err := conntrackStatsFromFile(tmpfile.Name(), true)
-	assert.Nil(t, err)
-	assert.Equal(t, 8, len(stats), "Expected 8 results")
+	require.NoError(t, err)
+	assert.Len(t, stats, 8, "Expected 8 results")
 
 	summary := &ConntrackStat{}
 	for i, exp := range slist.Items() {
@@ -311,7 +312,7 @@ entries  searched found new invalid ignore delete deleteList insert insertFailed
 
 	// Test summary grouping
 	totals, err := conntrackStatsFromFile(tmpfile.Name(), false)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	for i, st := range totals {
 		assert.Equal(t, summary.Entries, st.Entries)
 		assert.Equal(t, summary.Searched, st.Searched)
