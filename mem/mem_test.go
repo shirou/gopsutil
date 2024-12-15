@@ -34,9 +34,9 @@ func TestVirtualMemory(t *testing.T) {
 	}
 	t.Log(v)
 
-	assert.True(t, v.Total > 0)
-	assert.True(t, v.Available > 0)
-	assert.True(t, v.Used > 0)
+	assert.Positive(t, v.Total)
+	assert.Positive(t, v.Available)
+	assert.Positive(t, v.Used)
 
 	total := v.Used + v.Free + v.Buffers + v.Cached
 	totalStr := "used + free + buffers + cached"
