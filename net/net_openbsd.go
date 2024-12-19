@@ -278,6 +278,10 @@ func Connections(kind string) ([]ConnectionStat, error) {
 	return ConnectionsWithContext(context.Background(), kind)
 }
 
+func ConnectionsPid(kind string, pid int32) ([]ConnectionStat, error) {
+	return nil, common.ErrNotImplementedError
+}
+
 func ConnectionsWithContext(ctx context.Context, kind string) ([]ConnectionStat, error) {
 	var ret []ConnectionStat
 
