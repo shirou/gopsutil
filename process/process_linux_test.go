@@ -41,7 +41,7 @@ func TestSplitProcStat(t *testing.T) {
 	for _, expectedName := range cases {
 		statLineContent[commandNameIndex-1] = "(" + expectedName + ")"
 		statLine := strings.Join(statLineContent, " ")
-		t.Run(fmt.Sprintf("name: %s", expectedName), func(t *testing.T) {
+		t.Run("name: "+expectedName, func(t *testing.T) {
 			parsedStatLine := splitProcStat([]byte(statLine))
 			assert.Equal(t, expectedName, parsedStatLine[commandNameIndex])
 			for _, idx := range consideredFields {
