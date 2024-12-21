@@ -758,7 +758,7 @@ func parseIPv6HexString(src []byte) (net.IP, error) {
 
 func parseIPv6HexStringWithContext(ctx context.Context, src []byte) (net.IP, error) {
 	if len(src) != 16 {
-		return nil, fmt.Errorf("invalid IPv6 string")
+		return nil, errors.New("invalid IPv6 string")
 	}
 
 	buf := make([]byte, 0, 16)
