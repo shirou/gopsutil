@@ -57,6 +57,9 @@ linters-settings:
             recommandations:
               - io
               - os
+  revive:
+    rules:
+      - name: use-any
   testifylint:
     disable:
       - expected-actual

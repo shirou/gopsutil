@@ -197,7 +197,7 @@ func ProcessorQueueLengthCounter() (*Win32PerformanceCounter, error) {
 }
 
 // WMIQueryWithContext - wraps wmi.Query with a timed-out context to avoid hanging
-func WMIQueryWithContext(ctx context.Context, query string, dst interface{}, connectServerArgs ...interface{}) error {
+func WMIQueryWithContext(ctx context.Context, query string, dst any, connectServerArgs ...any) error {
 	if _, ok := ctx.Deadline(); !ok {
 		ctxTimeout, cancel := context.WithTimeout(ctx, Timeout)
 		defer cancel()

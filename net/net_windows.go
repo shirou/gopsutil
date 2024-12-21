@@ -376,7 +376,7 @@ func getTableUintptr(family uint32, buf []byte) uintptr {
 	return p
 }
 
-func getTableInfo(filename string, table interface{}) (index, step, length int) {
+func getTableInfo(filename string, table any) (index, step, length int) {
 	switch filename {
 	case kindTCP4.filename:
 		index = int(unsafe.Sizeof(table.(pmibTCPTableOwnerPidAll).DwNumEntries))
