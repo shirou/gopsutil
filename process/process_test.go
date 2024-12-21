@@ -336,11 +336,11 @@ func TestLong_Name_With_Spaces(t *testing.T) {
 
 	cmd := exec.Command(tmpfile.Name() + ".exe")
 
-	assert.Nil(t, cmd.Start())
+	require.NoError(t, cmd.Start())
 	time.Sleep(100 * time.Millisecond)
 	p, err := NewProcess(int32(cmd.Process.Pid))
 	skipIfNotImplementedErr(t, err)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	n, err := p.Name()
 	skipIfNotImplementedErr(t, err)
@@ -383,11 +383,11 @@ func TestLong_Name(t *testing.T) {
 
 	cmd := exec.Command(tmpfile.Name() + ".exe")
 
-	assert.Nil(t, cmd.Start())
+	require.NoError(t, cmd.Start())
 	time.Sleep(100 * time.Millisecond)
 	p, err := NewProcess(int32(cmd.Process.Pid))
 	skipIfNotImplementedErr(t, err)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	n, err := p.Name()
 	skipIfNotImplementedErr(t, err)
@@ -642,7 +642,7 @@ func TestChildren(t *testing.T) {
 	} else {
 		cmd = exec.Command("sleep", "3")
 	}
-	assert.Nil(t, cmd.Start())
+	require.NoError(t, cmd.Start())
 	time.Sleep(100 * time.Millisecond)
 
 	c, err := p.Children()
@@ -682,23 +682,23 @@ func TestCPUTimes(t *testing.T) {
 	pid := os.Getpid()
 	process, err := NewProcess(int32(pid))
 	skipIfNotImplementedErr(t, err)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	spinSeconds := 0.2
 	cpuTimes0, err := process.Times()
 	skipIfNotImplementedErr(t, err)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	// Spin for a duration of spinSeconds
 	t0 := time.Now()
 	tGoal := t0.Add(time.Duration(spinSeconds*1000) * time.Millisecond)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	for time.Now().Before(tGoal) {
 		// This block intentionally left blank
 	}
 
 	cpuTimes1, err := process.Times()
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	if cpuTimes0 == nil || cpuTimes1 == nil {
 		t.FailNow()
@@ -706,26 +706,25 @@ func TestCPUTimes(t *testing.T) {
 	measuredElapsed := cpuTimes1.Total() - cpuTimes0.Total()
 	message := fmt.Sprintf("Measured %fs != spun time of %fs\ncpuTimes0=%v\ncpuTimes1=%v",
 		measuredElapsed, spinSeconds, cpuTimes0, cpuTimes1)
-	assert.True(t, measuredElapsed > float64(spinSeconds)/5, message)
-	assert.True(t, measuredElapsed < float64(spinSeconds)*5, message)
+	assert.Greater(t, measuredElapsed, float64(spinSeconds)/5, message)
+	assert.Less(t, measuredElapsed, float64(spinSeconds)*5, message)
 }
 
 func TestOpenFiles(t *testing.T) {
 	fp, err := os.Open("process_test.go")
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	defer func() {
-		err := fp.Close()
-		assert.Nil(t, err)
+		assert.NoError(t, fp.Close())
 	}()
 
 	pid := os.Getpid()
 	p, err := NewProcess(int32(pid))
 	skipIfNotImplementedErr(t, err)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	v, err := p.OpenFiles()
 	skipIfNotImplementedErr(t, err)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.NotEmpty(t, v) // test always open files.
 
 	for _, vv := range v {
@@ -740,14 +739,14 @@ func TestKill(t *testing.T) {
 	} else {
 		cmd = exec.Command("sleep", "3")
 	}
-	assert.Nil(t, cmd.Start())
+	require.NoError(t, cmd.Start())
 	time.Sleep(100 * time.Millisecond)
 	p, err := NewProcess(int32(cmd.Process.Pid))
 	skipIfNotImplementedErr(t, err)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	err = p.Kill()
 	skipIfNotImplementedErr(t, err)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	cmd.Wait()
 }
 
@@ -761,7 +760,7 @@ func TestIsRunning(t *testing.T) {
 	cmd.Start()
 	p, err := NewProcess(int32(cmd.Process.Pid))
 	skipIfNotImplementedErr(t, err)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	running, err := p.IsRunning()
 	skipIfNotImplementedErr(t, err)
 	if err != nil {
@@ -812,12 +811,12 @@ func TestEnviron(t *testing.T) {
 
 	cmd.Env = []string{"testkey=envvalue"}
 
-	assert.Nil(t, cmd.Start())
+	require.NoError(t, cmd.Start())
 	defer cmd.Process.Kill()
 	time.Sleep(100 * time.Millisecond)
 	p, err := NewProcess(int32(cmd.Process.Pid))
 	skipIfNotImplementedErr(t, err)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	envs, err := p.Environ()
 	skipIfNotImplementedErr(t, err)
@@ -877,6 +876,6 @@ func BenchmarkProcesses(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		ps, err := Processes()
 		require.NoError(b, err)
-		require.Greater(b, len(ps), 0)
+		require.NotEmpty(b, ps)
 	}
 }
