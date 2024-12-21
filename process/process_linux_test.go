@@ -172,7 +172,7 @@ func TestFillFromTIDStatWithContext_lx_brandz(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		assert.Equal(t, float64(0), cpuTimes.Iowait)
+		assert.Zero(t, cpuTimes.Iowait)
 	}
 }
 
