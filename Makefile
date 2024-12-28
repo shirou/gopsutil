@@ -27,12 +27,12 @@ build_test:  ## test only buildable
 	GOOS=freebsd GOARCH=arm64 go test ./... | $(BUILD_FAIL_PATTERN)
 	CGO_ENABLED=0 GOOS=darwin go test ./... | $(BUILD_FAIL_PATTERN)
 	GOOS=windows go test ./... | $(BUILD_FAIL_PATTERN)
-	# Operating systems supported for building only (not implemented error if used)
+	# The following operating systems are tested only for successful builds.
+	# Value testing is not performed.
 	GOOS=solaris go test ./... | $(BUILD_FAIL_PATTERN)
 	GOOS=dragonfly go test ./... | $(BUILD_FAIL_PATTERN)
 	GOOS=netbsd go test ./... | $(BUILD_FAIL_PATTERN)
-	# cross build to OpenBSD not worked since process has "C"
-#	GOOS=openbsd go test ./... | $(BUILD_FAIL_PATTERN)
+	GOOS=openbsd go test ./... | $(BUILD_FAIL_PATTERN)
 	GOOS=plan9 go test ./... | $(BUILD_FAIL_PATTERN)
 
 ifeq ($(shell uname -s), Darwin)
