@@ -103,8 +103,9 @@ func TestGetProcInodesAll(t *testing.T) {
 	}(t)
 	<-waitForServer
 
-	root := common.HostProcWithContext(context.Background(), "")
-	v, err := getProcInodesAll(root, 0)
+	ctx := context.Background()
+	root := common.HostProcWithContext(ctx, "")
+	v, err := getProcInodesAllWithContext(ctx, root, 0)
 	require.NoError(t, err)
 	assert.NotEmpty(t, v)
 }
