@@ -5,6 +5,7 @@ package disk
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"unsafe"
 
@@ -234,9 +235,9 @@ func (i *ioCounters) getDriveStat(d uint32) (*IOCountersStat, error) {
 	key := i.cfStr(kIOBSDNameKey)
 	defer i.cfRelease(uintptr(key))
 	name := i.cfDictionaryGetValue(uintptr(props), uintptr(key))
-	length := cfStringGetLength(uintptr(name)) + 1
-	buf := make([]byte, length-1)
-	cfStringGetCString(uintptr(name), &buf[0], length, common.KCFStringEncodingUTF8)
+
+	buf := common.NewCStr(cfStringGetLength(uintptr(name)))
+	cfStringGetCString(uintptr(name), buf, buf.Length(), common.KCFStringEncodingUTF8)
 
 	stat, err := i.fillStat(parent)
 	if err != nil {
@@ -244,7 +245,7 @@ func (i *ioCounters) getDriveStat(d uint32) (*IOCountersStat, error) {
 	}
 
 	if stat != nil {
-		stat.Name = string(buf)
+		stat.Name = buf.GoString()
 		return stat, nil
 	}
 	return nil, nil
@@ -263,9 +264,10 @@ func (i *ioCounters) fillStat(d uint32) (*IOCountersStat, error) {
 
 	key := i.cfStr(kIOBlockStorageDriverStatisticsKey)
 	defer i.cfRelease(uintptr(key))
+
 	v := i.cfDictionaryGetValue(uintptr(props), uintptr(key))
 	if v == nil {
-		return nil, fmt.Errorf("CFDictionaryGetValue failed")
+		return nil, errors.New("CFDictionaryGetValue failed")
 	}
 
 	var stat IOCountersStat
@@ -280,10 +282,10 @@ func (i *ioCounters) fillStat(d uint32) (*IOCountersStat, error) {
 
 	for key, off := range statstab {
 		s := i.cfStr(key)
-		defer i.cfRelease(uintptr(s))
 		if num := i.cfDictionaryGetValue(uintptr(v), uintptr(s)); num != nil {
-			i.cfNumberGetValue(uintptr(num), common.KCFNumberSInt64Type, uintptr(unsafe.Pointer(uintptr(unsafe.Pointer(&stat))+off)))
+			i.cfNumberGetValue(uintptr(num), common.KCFNumberSInt64Type, uintptr(unsafe.Add(unsafe.Pointer(&stat), off)))
 		}
+		i.cfRelease(uintptr(s))
 	}
 
 	return &stat, nil

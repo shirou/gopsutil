@@ -94,8 +94,6 @@ func (ta *temperatureArm) getProductNames(system unsafe.Pointer) []string {
 	cfStringGetLength := common.GetFunc[common.CFStringGetLengthFunc](ta.cf, common.CFStringGetLengthSym)
 	cfStringGetCString := common.GetFunc[common.CFStringGetCStringFunc](ta.cf, common.CFStringGetCStringSym)
 
-	var names []string
-
 	ta.ioHIDEventSystemClientSetMatching(uintptr(system), uintptr(ta.sensors))
 	matchingsrvs := ta.ioHIDEventSystemClientCopyServices(uintptr(system))
 
@@ -110,18 +108,19 @@ func (ta *temperatureArm) getProductNames(system unsafe.Pointer) []string {
 	str := ta.cfStr("Product")
 	defer ta.cfRelease(uintptr(str))
 
+	names := make([]string, 0, count)
 	for i = 0; i < count; i++ {
 		sc := ta.cfArrayGetValueAtIndex(uintptr(matchingsrvs), i)
 		name := ioHIDServiceClientCopyProperty(uintptr(sc), uintptr(str))
 
 		if name != nil {
-			length := cfStringGetLength(uintptr(name)) + 1 // include null terminator
-			buf := make([]byte, length)                    // allocate buffer with full length
-			cfStringGetCString(uintptr(name), &buf[0], length, common.KCFStringEncodingUTF8)
+			buf := common.NewCStr(cfStringGetLength(uintptr(name)))
+			cfStringGetCString(uintptr(name), buf, buf.Length(), common.KCFStringEncodingUTF8)
 
-			names = append(names, string(buf[:length-1])) // remove null terminator
+			names = append(names, buf.GoString())
 			ta.cfRelease(uintptr(name))
 		} else {
+			// make sure the number of names and values are consistent
 			names = append(names, "noname")
 		}
 	}
@@ -166,10 +165,16 @@ func (ta *temperatureArm) matching(page, usage int) {
 	cfDictionaryCreate := common.GetFunc[common.CFDictionaryCreateFunc](ta.cf, common.CFDictionaryCreateSym)
 
 	pageNum := cfNumberCreate(common.KCFAllocatorDefault, common.KCFNumberIntType, uintptr(unsafe.Pointer(&page)))
+	defer ta.cfRelease(uintptr(pageNum))
+
 	usageNum := cfNumberCreate(common.KCFAllocatorDefault, common.KCFNumberIntType, uintptr(unsafe.Pointer(&usage)))
+	defer ta.cfRelease(uintptr(usageNum))
 
 	k1 := ta.cfStr("PrimaryUsagePage")
 	k2 := ta.cfStr("PrimaryUsage")
+
+	defer ta.cfRelease(uintptr(k1))
+	defer ta.cfRelease(uintptr(k2))
 
 	keys := []unsafe.Pointer{k1, k2}
 	values := []unsafe.Pointer{pageNum, usageNum}
@@ -180,11 +185,6 @@ func (ta *temperatureArm) matching(page, usage int) {
 	ta.sensors = cfDictionaryCreate(common.KCFAllocatorDefault, &keys[0], &values[0], 2,
 		kCFTypeDictionaryKeyCallBacks,
 		kCFTypeDictionaryValueCallBacks)
-
-	ta.cfRelease(uintptr(pageNum))
-	ta.cfRelease(uintptr(usageNum))
-	ta.cfRelease(uintptr(k1))
-	ta.cfRelease(uintptr(k2))
 }
 
 func (ta *temperatureArm) cfStr(str string) unsafe.Pointer {
