@@ -24,7 +24,7 @@ func TemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
 	}
 	defer smc.Close()
 
-	var temperatures []TemperatureStat
+	temperatures := make([]TemperatureStat, 0, len(temperatureKeys))
 	for _, key := range temperatureKeys {
 		temperatures = append(temperatures, TemperatureStat{
 			SensorKey:   key,
