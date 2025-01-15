@@ -42,6 +42,7 @@ const (
 	KernProcProc     = 8  // only return procs
 	KernProcPathname = 12 // path to executable
 	KernProcArgs     = 7  // get/set arguments/proctitle
+	KernProcCwd      = 42 /* process current working directory */
 )
 
 const (
@@ -55,6 +56,7 @@ const (
 const (
 	sizeOfKinfoVmentry = C.sizeof_struct_kinfo_vmentry
 	sizeOfKinfoProc    = C.sizeof_struct_kinfo_proc
+	sizeOfKinfoFile    = C.sizeof_struct_kinfo_file
 )
 
 // from sys/proc.h
@@ -94,3 +96,7 @@ type KinfoProc C.struct_kinfo_proc
 type Priority C.struct_priority
 
 type KinfoVmentry C.struct_kinfo_vmentry
+
+type kinfoFile C.struct_kinfo_file
+
+type capRights C.struct_cap_rights

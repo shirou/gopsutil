@@ -70,29 +70,16 @@ The output is below.
     Total: 3179569152, Free:284233728, UsedPercent:84.508194%
     {"total":3179569152,"available":492572672,"used":2895335424,"usedPercent":84.50819439828305, (snip...)}
 
-You can set an alternative location to `/proc` by setting the `HOST_PROC`
-environment variable.
+You can set alternative locations for various system directories by using the following environment variables:
 
-You can set an alternative location to `/sys` by setting the `HOST_SYS`
-environment variable.
-
-You can set an alternative location to `/etc` by setting the `HOST_ETC`
-environment variable.
-
-You can set an alternative location to `/var` by setting the `HOST_VAR`
-environment variable.
-
-You can set an alternative location to `/run` by setting the `HOST_RUN`
-environment variable.
-
-You can set an alternative location to `/dev` by setting the `HOST_DEV`
-environment variable.
-
-You can set an alternative location to `/` by setting the `HOST_ROOT`
-environment variable.
-
-You can set an alternative location to `/proc/N/mountinfo` by setting the
-`HOST_PROC_MOUNTINFO` environment variable.
+- /proc: `HOST_PROC`
+- /sys: `HOST_SYS`
+- /etc: `HOST_ETC`
+- /var: `HOST_VAR`
+- /run: `HOST_RUN`
+- /dev: `HOST_DEV`
+- /: `HOST_ROOT`
+- /proc/N/mountinfo: `HOST_PROC_MOUNTINFO`
 
 ### Adding settings using `context` (from v3.23.6)
 
@@ -207,7 +194,6 @@ Some code is ported from Ohai. Many thanks.
 
 - x: works
 - b: almost works, but something is broken
-- c: works in CGO only
 
 |name                  |Linux  |FreeBSD  |OpenBSD  |macOS   |Windows  |Solaris  |Plan 9   |AIX      |
 |----------------------|-------|---------|---------|--------|---------|---------|---------|---------|
@@ -215,12 +201,12 @@ Some code is ported from Ohai. Many thanks.
 |cpu\_count            |x      |x        |x        |x       |x        |         |x        |x        |
 |cpu\_percent          |x      |x        |x        |x       |x        |         |         |x        |
 |cpu\_times\_percent   |x      |x        |x        |x       |x        |         |         |x        |
-|virtual\_memory       |x      |x        |x        |x       |x        | b       |x        |x        |
+|virtual\_memory       |x      |x        |x        |x       |x        |b        |x        |x        |
 |swap\_memory          |x      |x        |x        |x       |         |         |x        |X        |
 |disk\_partitions      |x      |x        |x        |x       |x        |         |         |x        |
-|disk\_io\_counters    |x      |x        |x        |        |         |         |         |         |
+|disk\_io\_counters    |x      |x        |x        |x       |x        |         |         |         |
 |disk\_usage           |x      |x        |x        |x       |x        |         |         |x        |
-|net\_io\_counters     |x      |x        |x        |b       |x        |         |         |         |
+|net\_io\_counters     |x      |x        |x        |b       |x        |x        |         |         |
 |boot\_time            |x      |x        |x        |x       |x        |         |         |X        |
 |users                 |x      |x        |x        |x       |x        |         |         |x        |
 |pids                  |x      |x        |x        |x       |x        |         |         |         |
@@ -230,6 +216,7 @@ Some code is ported from Ohai. Many thanks.
 |net\_if\_addrs        |       |         |         |        |         |         |         |x        |
 |net\_if\_stats        |       |         |         |        |         |         |         |x        |
 |netfilter\_conntrack  |x      |         |         |        |         |         |         |         |
+|sensors_temperature   |x      |         |         |x       |x        |x        |         |         |
 
 
 ### Process class
@@ -239,27 +226,26 @@ Some code is ported from Ohai. Many thanks.
 |pid                 |x      |x        |x        |x      |x        |
 |ppid                |x      |x        |x        |x      |x        |
 |name                |x      |x        |x        |x      |x        |
-|cmdline             |x      |x        |         |x      |x        |
+|cmdline             |x      |x        |x        |x      |x        |
 |create\_time        |x      |         |         |x      |x        |
 |status              |x      |x        |x        |x      |         |
-|cwd                 |x      |         |         |x      |x        |
+|cwd                 |x      |x        |x        |x      |x        |
 |exe                 |x      |x        |x        |       |x        |
 |uids                |x      |x        |x        |x      |         |
 |gids                |x      |x        |x        |x      |         |
 |terminal            |x      |x        |x        |       |         |
 |io\_counters        |x      |x        |x        |       |x        |
 |nice                |x      |x        |x        |x      |x        |
-|num\_fds            |x      |         |         |       |         |
+|num\_fds            |x      |         |         |       |x        |
 |num\_ctx\_switches  |x      |         |         |       |         |
 |num\_threads        |x      |x        |x        |x      |x        |
 |cpu\_times          |x      |         |         |       |x        |
 |memory\_info        |x      |x        |x        |x      |x        |
-|memory\_info\_ex    |x      |         |         |       |         |
 |memory\_maps        |x      |         |         |       |         |
-|open\_files         |x      |         |         |       |         |
+|open\_files         |x      |         |         |       |x        |
 |send\_signal        |x      |x        |x        |x      |         |
-|suspend             |x      |x        |x        |x      |         |
-|resume              |x      |x        |x        |x      |         |
+|suspend             |x      |x        |x        |x      |x        |
+|resume              |x      |x        |x        |x      |x        |
 |terminate           |x      |x        |x        |x      |x        |
 |kill                |x      |x        |x        |x      |         |
 |username            |x      |x        |x        |x      |x        |
@@ -276,39 +262,39 @@ Some code is ported from Ohai. Many thanks.
 |is\_running         |       |         |         |       |         |
 |page\_faults        |x      |         |         |       |         |
 
-### Original Metrics
+### gopsutil Original Metrics
 
-|item             |Linux  |FreeBSD  |OpenBSD  |macOS   |Windows |Solaris  |AIX      |
-|-----------------|-------|---------|---------|--------|--------|---------|---------|
-|**HostInfo**     |       |         |         |        |        |         |         |
-|hostname         |x      |x        |x        |x       |x       |x        |X        |
-|uptime           |x      |x        |x        |x       |        |x        |x        |
-|process          |x      |x        |x        |        |        |x        |         |
-|os               |x      |x        |x        |x       |x       |x        |x        |
-|platform         |x      |x        |x        |x       |        |x        |x        |
-|platformfamily   |x      |x        |x        |x       |        |x        |x        |
-|virtualization   |x      |         |         |        |        |         |         |
-|**CPU**          |       |         |         |        |        |         |         |
-|VendorID         |x      |x        |x        |x       |x       |x        |x        |
-|Family           |x      |x        |x        |x       |x       |x        |x        |
-|Model            |x      |x        |x        |x       |x       |x        |x        |
-|Stepping         |x      |x        |x        |x       |x       |x        |         |
-|PhysicalID       |x      |         |         |        |        |x        |         |
-|CoreID           |x      |         |         |        |        |x        |         |
-|Cores            |x      |         |         |        |x       |x        |x        |
-|ModelName        |x      |x        |x        |x       |x       |x        |x        |
-|Microcode        |x      |         |         |        |        |x        |         |
-|**LoadAvg**      |       |         |         |        |        |         |         |
-|Load1            |x      |x        |x        |x       |        |         |x        |
-|Load5            |x      |x        |x        |x       |        |         |x        |
-|Load15           |x      |x        |x        |x       |        |         |x        |
-|**GetDockerID**  |       |         |         |        |        |         |         |
-|container id     |x      |no       |no       |no      |no      |         |         |
-|**CgroupsCPU**   |       |         |         |        |        |         |         |
-|user             |x      |no       |no       |no      |no      |         |         |
-|system           |x      |no       |no       |no      |no      |         |         |
-|**CgroupsMem**   |       |         |         |        |        |         |         |
-|various          |x      |no       |no       |no      |no      |         |         |
+|item                    |Linux  |FreeBSD  |OpenBSD  |macOS   |Windows |Solaris  |AIX      |
+|------------------------|-------|---------|---------|--------|--------|---------|---------|
+|**HostInfo**            |       |         |         |        |        |         |         |
+|hostname                |x      |x        |x        |x       |x       |x        |X        |
+|uptime                  |x      |x        |x        |x       |        |x        |x        |
+|process                 |x      |x        |x        |        |        |x        |         |
+|os                      |x      |x        |x        |x       |x       |x        |x        |
+|platform                |x      |x        |x        |x       |        |x        |x        |
+|platformfamily          |x      |x        |x        |x       |        |x        |x        |
+|virtualization          |x      |         |         |        |        |         |         |
+|**CPU**                 |       |         |         |        |        |         |         |
+|VendorID                |x      |x        |x        |x       |x       |x        |x        |
+|Family                  |x      |x        |x        |x       |x       |x        |x        |
+|Model                   |x      |x        |x        |x       |x       |x        |x        |
+|Stepping                |x      |x        |x        |x       |x       |x        |         |
+|PhysicalID              |x      |         |         |        |        |x        |         |
+|CoreID                  |x      |         |         |        |        |x        |         |
+|Cores                   |x      |         |         |x       |x       |x        |x        |
+|ModelName               |x      |x        |x        |x       |x       |x        |x        |
+|Microcode               |x      |         |         |        |        |x        |         |
+|**LoadAvg**             |       |         |         |        |        |         |         |
+|Load1                   |x      |x        |x        |x       |x       |x        |x        |
+|Load5                   |x      |x        |x        |x       |x       |x        |x        |
+|Load15                  |x      |x        |x        |x       |x       |x        |x        |
+|**Docker GetDockerID**  |       |         |         |        |        |         |         |
+|container id            |x      |no       |no       |no      |no      |no       |no       |
+|**Docker CgroupsCPU**   |       |         |         |        |        |         |         |
+|user                    |x      |no       |no       |no      |no      |no       |no       |
+|system                  |x      |no       |no       |no      |no      |no       |no       |
+|**Docker CgroupsMem**   |       |         |         |        |        |         |         |
+|various                 |x      |no       |no       |no      |no      |no       |no       |
 
 - future work
   - process_iter
