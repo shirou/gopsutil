@@ -1135,6 +1135,7 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 		MajorFaults:      majFault,
 		ChildMinorFaults: cMinFault,
 		ChildMajorFaults: cMajFault,
+		TotalFaults:      minFault + majFault + cMinFault + cMajFault,
 	}
 
 	return terminal, int32(ppid), cpuTimes, createTime, uint32(rtpriority), nice, faults, nil
