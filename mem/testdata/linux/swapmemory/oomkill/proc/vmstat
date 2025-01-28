@@ -1,0 +1,15 @@
+pgpgin 1
+pgpgout 2
+pswpin 3
+pswpout 4
+pgalloc_dma 5
+pgalloc_dma32 6
+pgalloc_normal 7
+pgalloc_movable 8
+pgfree 9
+pgactivate 10
+pgdeactivate 1
+pglazyfree 2
+pgfault 3
+pgmajfault 4
+oom_kill 5

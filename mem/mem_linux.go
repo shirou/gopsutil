@@ -375,6 +375,12 @@ func SwapMemoryWithContext(ctx context.Context) (*SwapMemoryStat, error) {
 				continue
 			}
 			ret.PgMajFault = value * 4 * 1024
+		case "oom_kill":
+			value, err := strconv.ParseUint(fields[1], 10, 64)
+			if err != nil {
+				continue
+			}
+			ret.OomKill = value
 		}
 	}
 	return ret, nil

@@ -177,3 +177,48 @@ func TestParseSwapsFile_EmptyFile(t *testing.T) {
 	_, err := parseSwapsFile(context.Background(), strings.NewReader(""))
 	assert.Error(t, err)
 }
+
+var swapMemoryVmstatTests = []struct {
+	mockedRootFS string
+	swap         *SwapMemoryStat
+}{
+	{
+		"oomkill", &SwapMemoryStat{
+			// not checked
+			Total:       0,
+			Used:        0,
+			Free:        0,
+			UsedPercent: 0,
+
+			// checked
+			PgIn:       1 * 4 * 1024,
+			PgOut:      2 * 4 * 1024,
+			PgFault:    3 * 4 * 1024,
+			PgMajFault: 4 * 4 * 1024,
+			Sin:        3 * 4 * 1024,
+			Sout:       4 * 4 * 1024,
+			OomKill:    5,
+		},
+	},
+}
+
+func TestSwapVmstatMemoryLinux(t *testing.T) {
+	for _, tt := range swapMemoryVmstatTests {
+		t.Run(tt.mockedRootFS, func(t *testing.T) {
+			t.Setenv("HOST_PROC", filepath.Join("testdata/linux/swapmemory/", tt.mockedRootFS, "proc"))
+
+			stat, err := SwapMemory()
+			stat.Total = 0
+			stat.Used = 0
+			stat.Free = 0
+			stat.UsedPercent = 0
+			skipIfNotImplementedErr(t, err)
+			if err != nil {
+				t.Errorf("error %v", err)
+			}
+			if !reflect.DeepEqual(stat, tt.swap) {
+				t.Errorf("got: %+v\nwant: %+v", stat, tt.swap)
+			}
+		})
+	}
+}
