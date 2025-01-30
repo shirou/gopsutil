@@ -6,13 +6,14 @@ package disk
 import (
 	"bytes"
 	"context"
-	"fmt"
+	"errors"
 	"syscall"
 	"unsafe"
 
-	"github.com/shirou/gopsutil/v4/internal/common"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
+
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 var (
@@ -202,11 +203,11 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 			if typeret != windows.DRIVE_FIXED {
 				continue
 			}
-			szDevice := fmt.Sprintf(`\\.\%s`, path)
+			szDevice := `\\.\` + path
 			const IOCTL_DISK_PERFORMANCE = 0x70020
 			h, err := windows.CreateFile(syscall.StringToUTF16Ptr(szDevice), 0, windows.FILE_SHARE_READ|windows.FILE_SHARE_WRITE, nil, windows.OPEN_EXISTING, 0, 0)
 			if err != nil {
-				if err == windows.ERROR_FILE_NOT_FOUND {
+				if errors.Is(err, windows.ERROR_FILE_NOT_FOUND) {
 					continue
 				}
 				return drivemap, err

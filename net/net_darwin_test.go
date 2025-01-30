@@ -137,5 +137,5 @@ func TestParseNetstatTruncated(t *testing.T) {
 
 	mapUsage := newMapInterfaceNameUsage(nsInterfaces)
 	assert.True(t, mapUsage.isTruncated())
-	assert.Equal(t, 3, len(mapUsage.notTruncated()), "en0, gif0 and stf0")
+	assert.Len(t, mapUsage.notTruncated(), 3, "en0, gif0 and stf0")
 }

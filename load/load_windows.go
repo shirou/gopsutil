@@ -14,9 +14,9 @@ import (
 
 var (
 	loadErr              error
-	loadAvg1M            float64 = 0.0
-	loadAvg5M            float64 = 0.0
-	loadAvg15M           float64 = 0.0
+	loadAvg1M            = 0.0
+	loadAvg5M            = 0.0
+	loadAvg15M           = 0.0
 	loadAvgMutex         sync.RWMutex
 	loadAvgGoroutineOnce sync.Once
 )
@@ -27,10 +27,10 @@ var (
 // code https://github.com/giampaolo/psutil/blob/8415355c8badc9c94418b19bdf26e622f06f0cce/psutil/arch/windows/wmi.c
 func loadAvgGoroutine(ctx context.Context) {
 	var (
-		samplingFrequency time.Duration = 5 * time.Second
-		loadAvgFactor1M   float64       = 1 / math.Exp(samplingFrequency.Seconds()/time.Minute.Seconds())
-		loadAvgFactor5M   float64       = 1 / math.Exp(samplingFrequency.Seconds()/(5*time.Minute).Seconds())
-		loadAvgFactor15M  float64       = 1 / math.Exp(samplingFrequency.Seconds()/(15*time.Minute).Seconds())
+		samplingFrequency = 5 * time.Second
+		loadAvgFactor1M   = 1 / math.Exp(samplingFrequency.Seconds()/time.Minute.Seconds())
+		loadAvgFactor5M   = 1 / math.Exp(samplingFrequency.Seconds()/(5*time.Minute).Seconds())
+		loadAvgFactor15M  = 1 / math.Exp(samplingFrequency.Seconds()/(15*time.Minute).Seconds())
 		currentLoad       float64
 	)
 

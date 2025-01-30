@@ -222,7 +222,7 @@ func (i *ioCounters) getDriveStat(d uint32) (*IOCountersStat, error) {
 	defer i.ioObjectRelease(parent)
 
 	if !ioObjectConformsTo(parent, "IOBlockStorageDriver") {
-		//return nil, fmt.Errorf("ERROR: the object is not of the IOBlockStorageDriver class")
+		// return nil, fmt.Errorf("ERROR: the object is not of the IOBlockStorageDriver class")
 		return nil, nil
 	}
 
