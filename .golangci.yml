@@ -96,7 +96,6 @@ linters-settings:
       - name: unused-parameter
         disabled: true
       - name: use-any
-        disabled: true
       - name: var-declaration
       - name: var-naming
         disabled: true
