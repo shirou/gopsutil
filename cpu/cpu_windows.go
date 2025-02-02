@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"unsafe"
 
+	cpuid "github.com/klauspost/cpuid/v2"
 	"github.com/shirou/gopsutil/v4/internal/common"
 	"github.com/yusufpapurcu/wmi"
 	"golang.org/x/sys/windows"
@@ -198,30 +199,34 @@ type systemInfo struct {
 	wProcessorRevision          uint16
 }
 
-func CountsWithContext(ctx context.Context, logical bool) (int, error) {
-	if logical {
-		// https://github.com/giampaolo/psutil/blob/d01a9eaa35a8aadf6c519839e987a49d8be2d891/psutil/_psutil_windows.c#L97
-		ret := windows.GetActiveProcessorCount(windows.ALL_PROCESSOR_GROUPS)
-		if ret != 0 {
-			return int(ret), nil
-		}
-		var systemInfo systemInfo
-		_, _, err := procGetNativeSystemInfo.Call(uintptr(unsafe.Pointer(&systemInfo)))
-		if systemInfo.dwNumberOfProcessors == 0 {
-			return 0, err
-		}
-		return int(systemInfo.dwNumberOfProcessors), nil
+func getNumberOfLogicalCores() (int, error) {
+	// https://github.com/giampaolo/psutil/blob/d01a9eaa35a8aadf6c519839e987a49d8be2d891/psutil/_psutil_windows.c#L97
+	ret := windows.GetActiveProcessorCount(windows.ALL_PROCESSOR_GROUPS)
+	if ret != 0 {
+		return int(ret), nil
 	}
-	// physical cores https://github.com/giampaolo/psutil/blob/d01a9eaa35a8aadf6c519839e987a49d8be2d891/psutil/_psutil_windows.c#L499
-	// for the time being, try with unreliable and slow WMI call…
-	var dst []win32_Processor
-	q := wmi.CreateQuery(&dst, "")
-	if err := common.WMIQueryWithContext(ctx, q, &dst); err != nil {
+	var systemInfo systemInfo
+	_, _, err := procGetNativeSystemInfo.Call(uintptr(unsafe.Pointer(&systemInfo)))
+	if systemInfo.dwNumberOfProcessors == 0 {
 		return 0, err
 	}
-	var count uint32
-	for _, d := range dst {
-		count += d.NumberOfCores
+
+	numberOfLogicalProcessors := systemInfo.dwNumberOfProcessors
+	return int(numberOfLogicalProcessors), nil
+}
+
+func CountsWithContext(ctx context.Context, logical bool) (int, error) {
+	numberOfLogicalProcessors, err := getNumberOfLogicalCores()
+	if err != nil {
+		return 0, err
 	}
-	return int(count), nil
+	if logical {
+		return int(numberOfLogicalProcessors), nil
+	}
+
+	logicalCoresOfCurrentCPU := cpuid.CPU.LogicalCores // in a system with more cpu, we assume all cpu have the same number of cores
+	numberOfCPU := int(numberOfLogicalProcessors) / logicalCoresOfCurrentCPU
+	currentCPUPhysicalCores := numberOfCPU * cpuid.CPU.PhysicalCores // cpu get info about the processor where the code is running
+
+	return int(currentCPUPhysicalCores), nil
 }
