@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"syscall"
 	"time"
@@ -90,7 +91,7 @@ type ioCounters struct {
 
 type processBasicInformation32 struct {
 	Reserved1       uint32
-	PebBaseAddress  uint32
+	PebBaseAddress  uintptr
 	Reserved2       uint32
 	Reserved3       uint32
 	UniqueProcessId uint32
@@ -99,7 +100,7 @@ type processBasicInformation32 struct {
 
 type processBasicInformation64 struct {
 	Reserved1       uint64
-	PebBaseAddress  uint64
+	PebBaseAddress  uintptr
 	Reserved2       uint64
 	Reserved3       uint64
 	UniqueProcessId uint64
@@ -112,7 +113,7 @@ type processEnvironmentBlock32 struct {
 	Reserved2         uint8
 	Reserved3         [2]uint32
 	Ldr               uint32
-	ProcessParameters uint32
+	ProcessParameters uintptr
 	// More fields which we don't use so far
 }
 
@@ -123,7 +124,7 @@ type processEnvironmentBlock64 struct {
 	_                 [4]uint8 // padding, since we are 64 bit, the next pointer is 64 bit aligned (when compiling for 32 bit, this is not the case without manual padding)
 	Reserved3         [2]uint64
 	Ldr               uint64
-	ProcessParameters uint64
+	ProcessParameters uintptr
 	// More fields which we don't use so far
 }
 
@@ -136,18 +137,18 @@ type rtlUserProcessParameters32 struct {
 	StdErrorHandle                 uint32
 	CurrentDirectoryPathNameLength uint16
 	_                              uint16 // Max Length
-	CurrentDirectoryPathAddress    uint32
+	CurrentDirectoryPathAddress    uintptr
 	CurrentDirectoryHandle         uint32
 	DllPathNameLength              uint16
 	_                              uint16 // Max Length
-	DllPathAddress                 uint32
+	DllPathAddress                 uintptr
 	ImagePathNameLength            uint16
 	_                              uint16 // Max Length
-	ImagePathAddress               uint32
+	ImagePathAddress               uintptr
 	CommandLineLength              uint16
 	_                              uint16 // Max Length
-	CommandLineAddress             uint32
-	EnvironmentAddress             uint32
+	CommandLineAddress             uintptr
+	EnvironmentAddress             uintptr
 	// More fields which we don't use so far
 }
 
@@ -161,21 +162,21 @@ type rtlUserProcessParameters64 struct {
 	CurrentDirectoryPathNameLength uint16
 	_                              uint16 // Max Length
 	_                              uint32 // Padding
-	CurrentDirectoryPathAddress    uint64
+	CurrentDirectoryPathAddress    uintptr
 	CurrentDirectoryHandle         uint64
 	DllPathNameLength              uint16
 	_                              uint16 // Max Length
 	_                              uint32 // Padding
-	DllPathAddress                 uint64
+	DllPathAddress                 uintptr
 	ImagePathNameLength            uint16
 	_                              uint16 // Max Length
 	_                              uint32 // Padding
-	ImagePathAddress               uint64
+	ImagePathAddress               uintptr
 	CommandLineLength              uint16
 	_                              uint16 // Max Length
 	_                              uint32 // Padding
-	CommandLineAddress             uint64
-	EnvironmentAddress             uint64
+	CommandLineAddress             uintptr
+	EnvironmentAddress             uintptr
 	// More fields which we don't use so far
 }
 
@@ -404,13 +405,13 @@ func (p *Process) CwdWithContext(_ context.Context) (string, error) {
 
 	procIs32Bits := is32BitProcess(h)
 
-	if procIs32Bits {
+	if procIs32Bits && !strings.Contains(runtime.GOARCH, "64") {
 		userProcParams, err := getUserProcessParams32(h)
 		if err != nil {
 			return "", err
 		}
 		if userProcParams.CurrentDirectoryPathNameLength > 0 {
-			cwd := readProcessMemory(syscall.Handle(h), procIs32Bits, uint64(userProcParams.CurrentDirectoryPathAddress), uint(userProcParams.CurrentDirectoryPathNameLength))
+			cwd := readProcessMemory(syscall.Handle(h), procIs32Bits, userProcParams.CurrentDirectoryPathAddress, uint(userProcParams.CurrentDirectoryPathNameLength))
 			if len(cwd) != int(userProcParams.CurrentDirectoryPathNameLength) {
 				return "", errors.New("cannot read current working directory")
 			}
@@ -956,39 +957,39 @@ func getProcessCPUTimes(pid int32) (SYSTEM_TIMES, error) {
 }
 
 func getUserProcessParams32(handle windows.Handle) (rtlUserProcessParameters32, error) {
-	pebAddress, err := queryPebAddress(syscall.Handle(handle), true)
+	pebAddress, err, queryFrom64Bit := queryPebAddress(syscall.Handle(handle), true)
 	if err != nil {
-		return rtlUserProcessParameters32{}, fmt.Errorf("cannot locate process PEB: %w", err)
+		return rtlUserProcessParameters32{}, fmt.Errorf("cannot locate process PEB for 64-bit-initiator: %t, 32-bit-proc: %t : %w", queryFrom64Bit, true, err)
 	}
 
 	buf := readProcessMemory(syscall.Handle(handle), true, pebAddress, uint(unsafe.Sizeof(processEnvironmentBlock32{})))
 	if len(buf) != int(unsafe.Sizeof(processEnvironmentBlock32{})) {
-		return rtlUserProcessParameters32{}, fmt.Errorf("cannot read process PEB")
+		return rtlUserProcessParameters32{}, fmt.Errorf("cannot read process PEB for 64-bit-initiator: %t, 32-bit-proc: %t", queryFrom64Bit, true)
 	}
 	peb := (*processEnvironmentBlock32)(unsafe.Pointer(&buf[0]))
-	userProcessAddress := uint64(peb.ProcessParameters)
+	userProcessAddress := peb.ProcessParameters
 	buf = readProcessMemory(syscall.Handle(handle), true, userProcessAddress, uint(unsafe.Sizeof(rtlUserProcessParameters32{})))
 	if len(buf) != int(unsafe.Sizeof(rtlUserProcessParameters32{})) {
-		return rtlUserProcessParameters32{}, fmt.Errorf("cannot read user process parameters")
+		return rtlUserProcessParameters32{}, fmt.Errorf("cannot read user process parameters for 64-bit-initiator: %t, 32-bit-proc: %t", queryFrom64Bit, true)
 	}
 	return *(*rtlUserProcessParameters32)(unsafe.Pointer(&buf[0])), nil
 }
 
 func getUserProcessParams64(handle windows.Handle) (rtlUserProcessParameters64, error) {
-	pebAddress, err := queryPebAddress(syscall.Handle(handle), false)
+	pebAddress, err, queryFrom64Bit := queryPebAddress(syscall.Handle(handle), false)
 	if err != nil {
-		return rtlUserProcessParameters64{}, fmt.Errorf("cannot locate process PEB: %w", err)
+		return rtlUserProcessParameters64{}, fmt.Errorf("cannot locate process PEB for 64-bit-initiator: %t, 32-bit-proc: %t : %w", queryFrom64Bit, false, err)
 	}
 
 	buf := readProcessMemory(syscall.Handle(handle), false, pebAddress, uint(unsafe.Sizeof(processEnvironmentBlock64{})))
 	if len(buf) != int(unsafe.Sizeof(processEnvironmentBlock64{})) {
-		return rtlUserProcessParameters64{}, fmt.Errorf("cannot read process PEB")
+		return rtlUserProcessParameters64{}, fmt.Errorf("cannot read process PEB for 64-bit-initiator: %t, 32-bit-proc: %t", queryFrom64Bit, false)
 	}
 	peb := (*processEnvironmentBlock64)(unsafe.Pointer(&buf[0]))
 	userProcessAddress := peb.ProcessParameters
 	buf = readProcessMemory(syscall.Handle(handle), false, userProcessAddress, uint(unsafe.Sizeof(rtlUserProcessParameters64{})))
 	if len(buf) != int(unsafe.Sizeof(rtlUserProcessParameters64{})) {
-		return rtlUserProcessParameters64{}, fmt.Errorf("cannot read user process parameters")
+		return rtlUserProcessParameters64{}, fmt.Errorf("cannot read user process parameters for 64-bit-initiator: %t, 32-bit-proc: %t", queryFrom64Bit, false)
 	}
 	return *(*rtlUserProcessParameters64)(unsafe.Pointer(&buf[0])), nil
 }
@@ -1050,14 +1051,14 @@ func getProcessEnvironmentVariables(pid int32, ctx context.Context) ([]string, e
 
 	procIs32Bits := is32BitProcess(h)
 
-	var processParameterBlockAddress uint64
+	var processParameterBlockAddress uintptr
 
-	if procIs32Bits {
+	if procIs32Bits && !strings.Contains(runtime.GOARCH, "64") {
 		peb, err := getUserProcessParams32(h)
 		if err != nil {
 			return nil, err
 		}
-		processParameterBlockAddress = uint64(peb.EnvironmentAddress)
+		processParameterBlockAddress = peb.EnvironmentAddress
 	} else {
 		peb, err := getUserProcessParams64(h)
 		if err != nil {
@@ -1065,6 +1066,7 @@ func getProcessEnvironmentVariables(pid int32, ctx context.Context) ([]string, e
 		}
 		processParameterBlockAddress = peb.EnvironmentAddress
 	}
+
 	envvarScanner := bufio.NewScanner(&processReader{
 		processHandle:  h,
 		is32BitProcess: procIs32Bits,
@@ -1109,7 +1111,7 @@ func getProcessEnvironmentVariables(pid int32, ctx context.Context) ([]string, e
 type processReader struct {
 	processHandle  windows.Handle
 	is32BitProcess bool
-	offset         uint64
+	offset         uintptr
 }
 
 func (p *processReader) Read(buf []byte) (int, error) {
@@ -1118,7 +1120,7 @@ func (p *processReader) Read(buf []byte) (int, error) {
 		return 0, io.EOF
 	}
 	copy(buf, processMemory)
-	p.offset += uint64(len(processMemory))
+	p.offset += uintptr(len(processMemory))
 	return len(processMemory), nil
 }
 
@@ -1134,15 +1136,15 @@ func getProcessCommandLine(pid int32) (string, error) {
 
 	procIs32Bits := is32BitProcess(h)
 
-	if procIs32Bits {
+	if procIs32Bits && !strings.Contains(runtime.GOARCH, "64") {
 		userProcParams, err := getUserProcessParams32(h)
 		if err != nil {
 			return "", err
 		}
 		if userProcParams.CommandLineLength > 0 {
-			cmdLine := readProcessMemory(syscall.Handle(h), procIs32Bits, uint64(userProcParams.CommandLineAddress), uint(userProcParams.CommandLineLength))
+			cmdLine := readProcessMemory(syscall.Handle(h), procIs32Bits, userProcParams.CommandLineAddress, uint(userProcParams.CommandLineLength))
 			if len(cmdLine) != int(userProcParams.CommandLineLength) {
-				return "", errors.New("cannot read cmdline")
+				return "", fmt.Errorf("cannot read cmdline for 32-bit-proc: %t, len: %d and %d", procIs32Bits, len(cmdLine), int(userProcParams.CommandLineLength))
 			}
 
 			return convertUTF16ToString(cmdLine), nil
@@ -1155,7 +1157,7 @@ func getProcessCommandLine(pid int32) (string, error) {
 		if userProcParams.CommandLineLength > 0 {
 			cmdLine := readProcessMemory(syscall.Handle(h), procIs32Bits, userProcParams.CommandLineAddress, uint(userProcParams.CommandLineLength))
 			if len(cmdLine) != int(userProcParams.CommandLineLength) {
-				return "", errors.New("cannot read cmdline")
+				return "", fmt.Errorf("cannot read cmdline for 32-bit-proc: %t, len: %d and %d", procIs32Bits, len(cmdLine), int(userProcParams.CommandLineLength))
 			}
 
 			return convertUTF16ToString(cmdLine), nil
