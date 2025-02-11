@@ -5,8 +5,11 @@ package disk
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"os/exec"
+	"strings"
 	"unsafe"
 
 	"golang.org/x/sys/unix"
@@ -88,8 +91,60 @@ func getFsType(stat unix.Statfs_t) string {
 	return common.ByteToString(stat.Fstypename[:])
 }
 
+type SPNVMeDataTypeItem struct {
+	Name              string `json:"_name"`
+	BsdName           string `json:"bsd_name"`
+	DetachableDrive   string `json:"detachable_drive"`
+	DeviceModel       string `json:"device_model"`
+	DeviceRevision    string `json:"device_revision"`
+	DeviceSerial      string `json:"device_serial"`
+	PartitionMapType  string `json:"partition_map_type"`
+	RemovableMedia    string `json:"removable_media"`
+	Size              string `json:"size"`
+	SizeInBytes       int64  `json:"size_in_bytes"`
+	SmartStatus       string `json:"smart_status"`
+	SpnvmeTrimSupport string `json:"spnvme_trim_support"`
+	Volumes           []struct {
+		Name        string `json:"_name"`
+		BsdName     string `json:"bsd_name"`
+		Iocontent   string `json:"iocontent"`
+		Size        string `json:"size"`
+		SizeInBytes int    `json:"size_in_bytes"`
+	} `json:"volumes"`
+}
+
 func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
-	return "", common.ErrNotImplementedError
+	cmd := exec.Command("system_profiler", "SPNVMeDataType", "-json")
+
+	output, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+
+	var temp struct {
+		SPNVMeDataType []struct {
+			Items []SPNVMeDataTypeItem `json:"_items"`
+		} `json:"SPNVMeDataType"`
+	}
+
+	err = json.Unmarshal(output, &temp)
+	if err != nil {
+		return "", fmt.Errorf("failed to unmarshal JSON: %w", err)
+	}
+
+	// Extract all serial numbers into a single string
+	var serialNumbers []string
+	for _, data := range temp.SPNVMeDataType {
+		for _, item := range data.Items {
+			serialNumbers = append(serialNumbers, item.DeviceSerial)
+		}
+	}
+
+	if len(serialNumbers) == 0 {
+		return "", fmt.Errorf("no serial numbers found")
+	}
+
+	return strings.Join(serialNumbers, ", "), nil
 }
 
 func LabelWithContext(ctx context.Context, name string) (string, error) {
