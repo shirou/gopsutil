@@ -148,7 +148,7 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 	return []InfoStat{ret}, nil
 }
 
-func CountsWithContext(ctx context.Context, logical bool) (int, error) {
+func CountsWithContext(ctx context.Context, _ bool) (int, error) {
 	info, err := InfoWithContext(ctx)
 	if err == nil {
 		return int(info[0].Cores), nil

@@ -13,7 +13,7 @@ import (
 // cachedBootTime must be accessed via atomic.Load/StoreUint64
 var cachedBootTime uint64
 
-func BootTimeWithContext(ctx context.Context) (uint64, error) {
+func BootTimeWithContext(_ context.Context) (uint64, error) {
 	if enableBootTimeCache {
 		t := atomic.LoadUint64(&cachedBootTime)
 		if t != 0 {

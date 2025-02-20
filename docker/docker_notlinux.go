@@ -15,7 +15,7 @@ func GetDockerStat() ([]CgroupDockerStat, error) {
 	return GetDockerStatWithContext(context.Background())
 }
 
-func GetDockerStatWithContext(ctx context.Context) ([]CgroupDockerStat, error) {
+func GetDockerStatWithContext(_ context.Context) ([]CgroupDockerStat, error) {
 	return nil, ErrDockerNotAvailable
 }
 
@@ -25,7 +25,7 @@ func GetDockerIDList() ([]string, error) {
 	return GetDockerIDListWithContext(context.Background())
 }
 
-func GetDockerIDListWithContext(ctx context.Context) ([]string, error) {
+func GetDockerIDListWithContext(_ context.Context) ([]string, error) {
 	return nil, ErrDockerNotAvailable
 }
 
@@ -37,7 +37,7 @@ func CgroupCPU(containerid string, base string) (*CgroupCPUStat, error) {
 	return CgroupCPUWithContext(context.Background(), containerid, base)
 }
 
-func CgroupCPUWithContext(ctx context.Context, containerid string, base string) (*CgroupCPUStat, error) {
+func CgroupCPUWithContext(_ context.Context, _ string, _ string) (*CgroupCPUStat, error) {
 	return nil, ErrCgroupNotAvailable
 }
 
@@ -53,7 +53,7 @@ func CgroupMem(containerid string, base string) (*CgroupMemStat, error) {
 	return CgroupMemWithContext(context.Background(), containerid, base)
 }
 
-func CgroupMemWithContext(ctx context.Context, containerid string, base string) (*CgroupMemStat, error) {
+func CgroupMemWithContext(_ context.Context, _ string, _ string) (*CgroupMemStat, error) {
 	return nil, ErrCgroupNotAvailable
 }
 

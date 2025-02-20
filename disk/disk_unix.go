@@ -10,7 +10,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
+func UsageWithContext(_ context.Context, path string) (*UsageStat, error) {
 	stat := unix.Statfs_t{}
 	err := unix.Statfs(path, &stat)
 	if err != nil {
