@@ -133,11 +133,7 @@ func TestGetNetIOCountersAll(t *testing.T) {
 			Errin:       10,
 		},
 	}
-	ret, err := getIOCountersAll(n)
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Error(err)
-	}
+	ret := getIOCountersAll(n)
 	if len(ret) != 1 {
 		t.Errorf("invalid return count")
 	}

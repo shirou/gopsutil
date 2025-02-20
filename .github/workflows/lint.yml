@@ -12,12 +12,41 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - {os: macos-latest, GOOS: darwin, GOARCH: amd64}
+          - {os: macos-latest, GOOS: darwin, GOARCH: arm64}
+          - {os: ubuntu-latest, GOOS: dragonfly, GOARCH: amd64}
+          - {os: ubuntu-latest, GOOS: freebsd, GOARCH: amd64}
+          - {os: ubuntu-latest, GOOS: freebsd, GOARCH: 386}
+          - {os: ubuntu-latest, GOOS: freebsd, GOARCH: arm}
+          - {os: ubuntu-latest, GOOS: linux, GOARCH: 386}
+          - {os: ubuntu-latest, GOOS: linux, GOARCH: amd64}
+          - {os: ubuntu-latest, GOOS: linux, GOARCH: arm64}
+          - {os: ubuntu-latest, GOOS: linux, GOARCH: arm}
+          - {os: ubuntu-latest, GOOS: linux, GOARCH: mips64}
+          - {os: ubuntu-latest, GOOS: linux, GOARCH: mips64le}
+          - {os: ubuntu-latest, GOOS: linux, GOARCH: mips}
+          - {os: ubuntu-latest, GOOS: linux, GOARCH: mipsle}
+          - {os: ubuntu-latest, GOOS: linux, GOARCH: ppc64le}
+          - {os: ubuntu-latest, GOOS: linux, GOARCH: ppc64}
+          - {os: ubuntu-latest, GOOS: linux, GOARCH: riscv64}
+          - {os: ubuntu-latest, GOOS: linux, GOARCH: s390x}
+          - {os: ubuntu-latest, GOOS: netbsd, GOARCH: amd64}
+          - {os: ubuntu-latest, GOOS: openbsd, GOARCH: 386}
+          - {os: ubuntu-latest, GOOS: openbsd, GOARCH: amd64}
+          - {os: ubuntu-latest, GOOS: plan9, GOARCH: amd64}
+          - {os: ubuntu-latest, GOOS: plan9, GOARCH: 386}
+          - {os: ubuntu-latest, GOOS: solaris, GOARCH: amd64}
+          - {os: windows-latest, GOOS: windows, GOARCH: amd64}
+          - {os: windows-latest, GOOS: windows, GOARCH: 386}
     permissions:
       contents: read  # for actions/checkout to fetch code
       pull-requests: read  # for golangci/golangci-lint-action to fetch pull requests
     name: lint
     runs-on: ${{ matrix.os }}
+    env:
+      GOARCH: ${{ matrix.GOARCH }}
+      GOOS: ${{ matrix.GOOS }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2

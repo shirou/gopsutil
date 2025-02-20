@@ -6,6 +6,7 @@ package sensors
 import (
 	"context"
 	"encoding/csv"
+	"errors"
 	"io"
 	"strconv"
 	"strings"
@@ -24,7 +25,7 @@ func TemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
 	r.FieldsPerRecord = -1
 	for {
 		record, err := r.Read()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {

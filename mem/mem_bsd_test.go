@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const validFreeBSD = `Device:       1kB-blocks      Used:
@@ -24,33 +25,31 @@ const invalid = `Device:       512-blocks      Used:
 `
 
 func TestParseSwapctlOutput_FreeBSD(t *testing.T) {
-	assert := assert.New(t)
 	stats, err := parseSwapctlOutput(validFreeBSD)
-	assert.NoError(err)
+	require.NoError(t, err)
 
-	assert.Equal(*stats[0], SwapDevice{
+	assert.Equal(t, SwapDevice{
 		Name:      "/dev/gpt/swapfs",
 		UsedBytes: 1263616,
 		FreeBytes: 1072478208,
-	})
+	}, *stats[0])
 
-	assert.Equal(*stats[1], SwapDevice{
+	assert.Equal(t, SwapDevice{
 		Name:      "/dev/md0",
 		UsedBytes: 681984,
 		FreeBytes: 1073059840,
-	})
+	}, *stats[1])
 }
 
 func TestParseSwapctlOutput_OpenBSD(t *testing.T) {
-	assert := assert.New(t)
 	stats, err := parseSwapctlOutput(validOpenBSD)
-	assert.NoError(err)
+	require.NoError(t, err)
 
-	assert.Equal(*stats[0], SwapDevice{
+	assert.Equal(t, SwapDevice{
 		Name:      "/dev/wd0b",
 		UsedBytes: 1234 * 1024,
 		FreeBytes: 653791 * 1024,
-	})
+	}, *stats[0])
 }
 
 func TestParseSwapctlOutput_Invalid(t *testing.T) {

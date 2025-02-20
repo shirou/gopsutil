@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"regexp"
@@ -31,13 +32,12 @@ func HostIDWithContext(ctx context.Context) (string, error) {
 				line := sc.Text()
 
 				// If we're in the global zone, rely on the hostname.
-				if line == "global" {
-					hostname, err := os.Hostname()
-					if err == nil {
-						return hostname, nil
-					}
-				} else {
+				if line != "global" {
 					return strings.TrimSpace(line), nil
+				}
+				hostname, err := os.Hostname()
+				if err == nil {
+					return hostname, nil
 				}
 			}
 		}
@@ -84,7 +84,7 @@ func BootTimeWithContext(ctx context.Context) (uint64, error) {
 }
 
 func UptimeWithContext(ctx context.Context) (uint64, error) {
-	bootTime, err := BootTime()
+	bootTime, err := BootTime() //nolint:contextcheck //FIXME
 	if err != nil {
 		return 0, err
 	}
@@ -139,7 +139,7 @@ func parseUnameOutput(ctx context.Context) (string, string, string, error) {
 
 	fields := strings.Fields(string(out))
 	if len(fields) < 3 {
-		return "", "", "", fmt.Errorf("malformed `uname` output")
+		return "", "", "", errors.New("malformed `uname` output")
 	}
 
 	return fields[0], fields[1], fields[2], nil
