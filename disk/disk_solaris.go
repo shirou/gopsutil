@@ -44,7 +44,7 @@ var fsTypeBlacklist = map[string]struct{}{
 	"proc":   {},
 }
 
-func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {
+func PartitionsWithContext(_ context.Context, _ bool) ([]PartitionStat, error) {
 	ret := make([]PartitionStat, 0, _DEFAULT_NUM_MOUNTS)
 
 	// Scan mnttab(4)
@@ -199,7 +199,7 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 	return ret, nil
 }
 
-func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
+func UsageWithContext(_ context.Context, path string) (*UsageStat, error) {
 	statvfs := unix.Statvfs_t{}
 	if err := unix.Statvfs(path, &statvfs); err != nil {
 		return nil, fmt.Errorf("unable to call statvfs(2) on %q: %w", path, err)
@@ -258,6 +258,6 @@ func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
 	return "", nil
 }
 
-func LabelWithContext(ctx context.Context, name string) (string, error) {
+func LabelWithContext(_ context.Context, _ string) (string, error) {
 	return "", common.ErrNotImplementedError
 }
