@@ -59,7 +59,7 @@ func HostIDWithContext(ctx context.Context) (string, error) {
 }
 
 // Count number of processes based on the number of entries in /proc
-func numProcs(ctx context.Context) (uint64, error) {
+func numProcs(_ context.Context) (uint64, error) {
 	dirs, err := os.ReadDir("/proc")
 	if err != nil {
 		return 0, err
@@ -84,18 +84,18 @@ func BootTimeWithContext(ctx context.Context) (uint64, error) {
 }
 
 func UptimeWithContext(ctx context.Context) (uint64, error) {
-	bootTime, err := BootTime() //nolint:contextcheck //FIXME
+	bootTime, err := BootTimeWithContext(ctx)
 	if err != nil {
 		return 0, err
 	}
 	return timeSince(bootTime), nil
 }
 
-func UsersWithContext(ctx context.Context) ([]UserStat, error) {
+func UsersWithContext(_ context.Context) ([]UserStat, error) {
 	return []UserStat{}, common.ErrNotImplementedError
 }
 
-func VirtualizationWithContext(ctx context.Context) (string, string, error) {
+func VirtualizationWithContext(_ context.Context) (string, string, error) {
 	return "", "", common.ErrNotImplementedError
 }
 

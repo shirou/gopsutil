@@ -86,7 +86,7 @@ func Misc() (*MiscStat, error) {
 	return MiscWithContext(context.Background())
 }
 
-func MiscWithContext(ctx context.Context) (*MiscStat, error) {
+func MiscWithContext(_ context.Context) (*MiscStat, error) {
 	ret := MiscStat{}
 
 	return &ret, common.ErrNotImplementedError
