@@ -40,7 +40,7 @@ linters-settings:
     blocked:
       modules:
         - io/ioutil:
-            recommandations:
+            recommendations:
               - io
               - os
   gosec:
