@@ -273,19 +273,19 @@ type SystemExtendedHandleInformation struct {
 // CallWithExpandingBuffer https://github.com/hillu/go-ntdll
 func CallWithExpandingBuffer(fn func() NtStatus, buf *[]byte, resultLength *uint32) NtStatus {
 	for {
-		if st := fn(); st == STATUS_BUFFER_OVERFLOW || st == STATUS_BUFFER_TOO_SMALL || st == STATUS_INFO_LENGTH_MISMATCH {
+		st := fn()
+		if st == STATUS_BUFFER_OVERFLOW || st == STATUS_BUFFER_TOO_SMALL || st == STATUS_INFO_LENGTH_MISMATCH {
 			if int(*resultLength) <= cap(*buf) {
 				(*reflect.SliceHeader)(unsafe.Pointer(buf)).Len = int(*resultLength)
 			} else {
 				*buf = make([]byte, int(*resultLength))
 			}
 			continue
-		} else {
-			if !st.IsError() {
-				*buf = (*buf)[:int(*resultLength)]
-			}
-			return st
 		}
+		if !st.IsError() {
+			*buf = (*buf)[:int(*resultLength)]
+		}
+		return st
 	}
 }
 
