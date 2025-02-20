@@ -15,7 +15,7 @@ func ReadTemperaturesArm() []TemperatureStat {
 	return temperatures
 }
 
-func TemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
+func TemperaturesWithContext(_ context.Context) ([]TemperatureStat, error) {
 	ioKit, err := common.NewLibrary(common.IOKit)
 	if err != nil {
 		return nil, err
