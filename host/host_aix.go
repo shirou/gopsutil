@@ -27,7 +27,7 @@ func HostIDWithContext(ctx context.Context) (string, error) {
 	return strings.Split(string(out[:]), "\n")[0], nil
 }
 
-func numProcs(ctx context.Context) (uint64, error) {
+func numProcs(_ context.Context) (uint64, error) {
 	return 0, common.ErrNotImplementedError
 }
 
@@ -38,7 +38,7 @@ func BootTimeWithContext(ctx context.Context) (btime uint64, err error) {
 	}
 
 	if ut <= 0 {
-		return 0, errors.New("Uptime was not set, so cannot calculate boot time from it.")
+		return 0, errors.New("uptime was not set, so cannot calculate boot time from it")
 	}
 
 	ut = ut * 60
@@ -110,7 +110,7 @@ func parseUptime(uptime string) uint64 {
 		if err != nil {
 			return 0
 		}
-	case ut[3] == "mins,":
+	case ut[3] == "min," || ut[3] == "mins,":
 		mins, err = strconv.ParseUint(ut[2], 10, 64)
 		if err != nil {
 			return 0
@@ -201,6 +201,6 @@ func KernelArch() (arch string, err error) {
 	return arch, nil
 }
 
-func VirtualizationWithContext(ctx context.Context) (string, string, error) {
+func VirtualizationWithContext(_ context.Context) (string, string, error) {
 	return "", "", common.ErrNotImplementedError
 }
