@@ -25,7 +25,7 @@ const (
 	UTHostSize = 16
 )
 
-func HostIDWithContext(ctx context.Context) (string, error) {
+func HostIDWithContext(_ context.Context) (string, error) {
 	uuid, err := unix.Sysctl("kern.hostuuid")
 	if err != nil {
 		return "", err
@@ -41,7 +41,7 @@ func numProcs(ctx context.Context) (uint64, error) {
 	return uint64(len(procs)), nil
 }
 
-func UsersWithContext(ctx context.Context) ([]UserStat, error) {
+func UsersWithContext(_ context.Context) ([]UserStat, error) {
 	utmpfile := "/var/run/utx.active"
 	if !common.PathExists(utmpfile) {
 		utmpfile = "/var/run/utmp" // before 9.0
@@ -85,7 +85,7 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 	return ret, nil
 }
 
-func PlatformInformationWithContext(ctx context.Context) (string, string, string, error) {
+func PlatformInformationWithContext(_ context.Context) (string, string, string, error) {
 	platform, err := unix.Sysctl("kern.ostype")
 	if err != nil {
 		return "", "", "", err
@@ -99,7 +99,7 @@ func PlatformInformationWithContext(ctx context.Context) (string, string, string
 	return strings.ToLower(platform), "", strings.ToLower(version), nil
 }
 
-func VirtualizationWithContext(ctx context.Context) (string, string, error) {
+func VirtualizationWithContext(_ context.Context) (string, string, error) {
 	return "", "", common.ErrNotImplementedError
 }
 

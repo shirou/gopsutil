@@ -11,11 +11,11 @@ import (
 	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
-func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOCountersStat, error) {
+func IOCountersWithContext(_ context.Context, _ ...string) (map[string]IOCountersStat, error) {
 	return nil, common.ErrNotImplementedError
 }
 
-func LabelWithContext(ctx context.Context, name string) (string, error) {
+func LabelWithContext(_ context.Context, _ string) (string, error) {
 	return "", common.ErrNotImplementedError
 }
 

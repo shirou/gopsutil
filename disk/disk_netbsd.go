@@ -24,7 +24,7 @@ const (
 	MNT_SOFTDEP     = 0x80000000 /* Use soft dependencies */
 )
 
-func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {
+func PartitionsWithContext(_ context.Context, _ bool) ([]PartitionStat, error) {
 	var ret []PartitionStat
 
 	flag := uint64(1) // ST_WAIT/MNT_WAIT, see sys/fstypes.h
@@ -97,12 +97,12 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 	return ret, nil
 }
 
-func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOCountersStat, error) {
+func IOCountersWithContext(_ context.Context, _ ...string) (map[string]IOCountersStat, error) {
 	ret := make(map[string]IOCountersStat)
 	return ret, common.ErrNotImplementedError
 }
 
-func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
+func UsageWithContext(_ context.Context, path string) (*UsageStat, error) {
 	stat := Statvfs{}
 	flag := uint64(1) // ST_WAIT/MNT_WAIT, see sys/fstypes.h
 
@@ -144,10 +144,10 @@ func getFsType(stat Statvfs) string {
 	return common.ByteToString(stat.Fstypename[:])
 }
 
-func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
+func SerialNumberWithContext(_ context.Context, _ string) (string, error) {
 	return "", common.ErrNotImplementedError
 }
 
-func LabelWithContext(ctx context.Context, name string) (string, error) {
+func LabelWithContext(_ context.Context, _ string) (string, error) {
 	return "", common.ErrNotImplementedError
 }
