@@ -138,8 +138,6 @@ type AddrTest struct {
 }
 
 func TestDecodeAddress(t *testing.T) {
-	assert := assert.New(t)
-
 	addr := map[string]AddrTest{
 		"11111:0035": {
 			Error: true,
@@ -182,11 +180,11 @@ func TestDecodeAddress(t *testing.T) {
 		}
 		addr, err := decodeAddress(uint32(family), src)
 		if dst.Error {
-			assert.Error(err, src)
+			assert.Error(t, err, src)
 		} else {
 			require.NoError(t, err, src)
-			assert.Equal(dst.IP, addr.IP, src)
-			assert.Equal(dst.Port, int(addr.Port), src)
+			assert.Equal(t, dst.IP, addr.IP, src)
+			assert.Equal(t, dst.Port, int(addr.Port), src)
 		}
 	}
 }

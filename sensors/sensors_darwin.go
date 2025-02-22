@@ -5,7 +5,7 @@ package sensors
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"unsafe"
 
 	"github.com/shirou/gopsutil/v4/internal/common"
@@ -129,7 +129,7 @@ func readSMC(smc *common.SMC, key string) (*smcReturn, error) {
 	resultSmc.kSMC = result.result
 
 	if err != nil || result.result != common.KSMCSuccess {
-		return resultSmc, fmt.Errorf("ERROR: IOConnectCallStructMethod failed")
+		return resultSmc, errors.New("ERROR: IOConnectCallStructMethod failed")
 	}
 
 	resultSmc.dataSize = uint32(result.keyInfo.dataSize)
@@ -158,7 +158,7 @@ func callSMC(smc *common.SMC, input *smcParamStruct) (*smcParamStruct, error) {
 		uintptr(unsafe.Pointer(input)), inputCnt, uintptr(unsafe.Pointer(output)), &outputCnt)
 
 	if result != 0 {
-		return output, fmt.Errorf("ERROR: IOConnectCallStructMethod failed")
+		return output, errors.New("ERROR: IOConnectCallStructMethod failed")
 	}
 
 	return output, nil
@@ -169,7 +169,7 @@ func toUint32(key string) uint32 {
 		return 0
 	}
 
-	var ans uint32 = 0
+	var ans uint32
 	var shift uint32 = 24
 
 	for i := 0; i < smcKeySize; i++ {

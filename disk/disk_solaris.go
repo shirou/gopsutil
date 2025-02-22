@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"os"
@@ -16,8 +17,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/shirou/gopsutil/v4/internal/common"
 	"golang.org/x/sys/unix"
+
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 const (
@@ -100,7 +102,7 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 	}
 	lines := strings.Split(strings.TrimSpace(string(kstatSysOut)), "\n")
 	if len(lines) == 0 {
-		return nil, fmt.Errorf("no disk class found")
+		return nil, errors.New("no disk class found")
 	}
 	dnamearr := make(map[string]string)
 	nreadarr := make(map[string]uint64)
