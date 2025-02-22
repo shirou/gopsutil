@@ -122,3 +122,5 @@ linters-settings:
   usetesting:
       os-create-temp: false
       os-mkdir-temp: false
+run:
+  timeout: 5m
