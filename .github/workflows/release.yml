@@ -1,8 +1,9 @@
+name: Release
+
 on:
   schedule:
-    - cron:  '0 1 1 * *'  # UTC 01:00 on the first day of the Month
+    - cron: '0 1 1 * *'  # UTC 01:00 on the first day of the Month
 
-name: Release
 permissions:
   contents: write
 
