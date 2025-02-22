@@ -12,7 +12,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"strings"
 	"syscall"
 	"time"
 	"unicode/utf16"
@@ -381,7 +380,27 @@ func (p *Process) CmdlineSliceWithContext(ctx context.Context) ([]string, error)
 	if err != nil {
 		return nil, err
 	}
-	return strings.Split(cmdline, " "), nil
+	return parseCmdline(cmdline)
+}
+
+func parseCmdline(cmdline string) ([]string, error) {
+	cmdlineptr, err := windows.UTF16PtrFromString(cmdline)
+	if err != nil {
+		return nil, err
+	}
+
+	var argc int32
+	argvptr, err := windows.CommandLineToArgv(cmdlineptr, &argc)
+	if err != nil {
+		return nil, err
+	}
+	defer windows.LocalFree(windows.Handle(uintptr(unsafe.Pointer(argvptr))))
+
+	argv := make([]string, argc)
+	for i, v := range (*argvptr)[:argc] {
+		argv[i] = windows.UTF16ToString((*v)[:])
+	}
+	return argv, nil
 }
 
 func (p *Process) createTimeWithContext(ctx context.Context) (int64, error) {
