@@ -49,7 +49,7 @@ func numProcs(ctx context.Context) (uint64, error) {
 	return uint64(len(procs)), nil
 }
 
-func UsersWithContext(ctx context.Context) ([]UserStat, error) {
+func UsersWithContext(_ context.Context) ([]UserStat, error) {
 	utmpfile := "/var/run/utmpx"
 	var ret []UserStat
 
@@ -123,11 +123,11 @@ func PlatformInformationWithContext(ctx context.Context) (string, string, string
 	return platform, family, pver, nil
 }
 
-func VirtualizationWithContext(ctx context.Context) (string, string, error) {
+func VirtualizationWithContext(_ context.Context) (string, string, error) {
 	return "", "", common.ErrNotImplementedError
 }
 
-func KernelVersionWithContext(ctx context.Context) (string, error) {
+func KernelVersionWithContext(_ context.Context) (string, error) {
 	version, err := unix.Sysctl("kern.osrelease")
 	return strings.ToLower(version), err
 }
