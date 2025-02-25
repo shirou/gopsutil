@@ -27,7 +27,7 @@ func HostIDWithContext(ctx context.Context) (string, error) {
 	return strings.Split(string(out[:]), "\n")[0], nil
 }
 
-func numProcs(ctx context.Context) (uint64, error) {
+func numProcs(_ context.Context) (uint64, error) {
 	return 0, common.ErrNotImplementedError
 }
 
@@ -201,6 +201,6 @@ func KernelArch() (arch string, err error) {
 	return arch, nil
 }
 
-func VirtualizationWithContext(ctx context.Context) (string, string, error) {
+func VirtualizationWithContext(_ context.Context) (string, string, error) {
 	return "", "", common.ErrNotImplementedError
 }

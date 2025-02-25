@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestGetDockerIDList(t *testing.T) {
+func TestGetDockerIDList(_ *testing.T) {
 	// If there is not docker environment, this test always fail.
 	// not tested here
 	/*
@@ -19,7 +19,7 @@ func TestGetDockerIDList(t *testing.T) {
 	*/
 }
 
-func TestGetDockerStat(t *testing.T) {
+func TestGetDockerStat(_ *testing.T) {
 	// If there is not docker environment, this test always fail.
 	// not tested here
 
