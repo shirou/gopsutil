@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os/exec"
 	"strings"
 	"unsafe"
 
@@ -91,7 +90,7 @@ func getFsType(stat unix.Statfs_t) string {
 	return common.ByteToString(stat.Fstypename[:])
 }
 
-type SPNVMeDataTypeItem struct {
+type spnvmeDataTypeItem struct {
 	Name              string `json:"_name"`
 	BsdName           string `json:"bsd_name"`
 	DetachableDrive   string `json:"detachable_drive"`
@@ -113,29 +112,27 @@ type SPNVMeDataTypeItem struct {
 	} `json:"volumes"`
 }
 
-func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
-	cmd := exec.Command("system_profiler", "SPNVMeDataType", "-json")
+type spnvmeDataWrapper struct {
+	SPNVMeDataType []struct {
+		Items []spnvmeDataTypeItem `json:"_items"`
+	} `json:"SPNVMeDataType"`
+}
 
-	output, err := cmd.Output()
+func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
+	output, err := invoke.CommandWithContext(ctx, "system_profiler", "SPNVMeDataType", "-json")
 	if err != nil {
 		return "", err
 	}
 
-	var temp struct {
-		SPNVMeDataType []struct {
-			Items []SPNVMeDataTypeItem `json:"_items"`
-		} `json:"SPNVMeDataType"`
-	}
-
-	err = json.Unmarshal(output, &temp)
-	if err != nil {
+	var data spnvmeDataWrapper
+	if err := json.Unmarshal(output, &data); err != nil {
 		return "", fmt.Errorf("failed to unmarshal JSON: %w", err)
 	}
 
 	// Extract all serial numbers into a single string
 	var serialNumbers []string
-	for _, data := range temp.SPNVMeDataType {
-		for _, item := range data.Items {
+	for _, spnvmeData := range data.SPNVMeDataType {
+		for _, item := range spnvmeData.Items {
 			serialNumbers = append(serialNumbers, item.DeviceSerial)
 		}
 	}
