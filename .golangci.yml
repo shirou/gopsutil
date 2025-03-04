@@ -101,3 +101,5 @@ linters-settings:
         disabled: true
   testifylint:
     enable-all: true
+run:
+  timeout: 5m
