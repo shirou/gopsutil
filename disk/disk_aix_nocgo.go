@@ -25,7 +25,7 @@ var (
 	}
 )
 
-func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {
+func PartitionsWithContext(ctx context.Context, _ bool) ([]PartitionStat, error) {
 	var ret []PartitionStat
 
 	out, err := invoke.CommandWithContext(ctx, "mount")

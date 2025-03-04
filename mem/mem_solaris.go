@@ -58,7 +58,7 @@ func SwapMemory() (*SwapMemoryStat, error) {
 	return SwapMemoryWithContext(context.Background())
 }
 
-func SwapMemoryWithContext(ctx context.Context) (*SwapMemoryStat, error) {
+func SwapMemoryWithContext(_ context.Context) (*SwapMemoryStat, error) {
 	return nil, common.ErrNotImplementedError
 }
 
