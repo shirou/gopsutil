@@ -127,7 +127,6 @@ type PageFaultsStat struct {
 	MajorFaults      uint64 `json:"majorFaults"`
 	ChildMinorFaults uint64 `json:"childMinorFaults"`
 	ChildMajorFaults uint64 `json:"childMajorFaults"`
-	TotalFaults      uint64 `json:"totalFaults"`
 }
 
 // Resource limit constants are from /usr/include/x86_64-linux-gnu/bits/resource.h

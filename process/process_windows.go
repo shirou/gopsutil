@@ -658,7 +658,7 @@ func (p *Process) PageFaultsWithContext(ctx context.Context) (*PageFaultsStat, e
 	}
 
 	ret := &PageFaultsStat{
-		TotalFaults: uint64(mem.PageFaultCount),
+		MajorFaults: uint64(mem.PageFaultCount), //Since Windows does not distinguish between Major and Minor faults, all faults are treated as Major
 	}
 
 	return ret, nil
