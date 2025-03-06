@@ -110,7 +110,7 @@ func parseUptime(uptime string) uint64 {
 		if err != nil {
 			return 0
 		}
-	case ut[3] == "mins," || ut[3] == "mins,":
+	case ut[3] == "mins,":
 		mins, err = strconv.ParseUint(ut[2], 10, 64)
 		if err != nil {
 			return 0
