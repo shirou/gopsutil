@@ -151,17 +151,16 @@ const invalidFile = `INVALID				Type		Size		Used		Priority
 `
 
 func TestParseSwapsFile_ValidFile(t *testing.T) {
-	assert := assert.New(t)
 	stats, err := parseSwapsFile(context.Background(), strings.NewReader(validFile))
 	require.NoError(t, err)
 
-	assert.Equal(SwapDevice{
+	assert.Equal(t, SwapDevice{
 		Name:      "/dev/dm-2",
 		UsedBytes: 502566912,
 		FreeBytes: 68128825344,
 	}, *stats[0])
 
-	assert.Equal(SwapDevice{
+	assert.Equal(t, SwapDevice{
 		Name:      "/swapfile",
 		UsedBytes: 1024,
 		FreeBytes: 1024,

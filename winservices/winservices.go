@@ -5,6 +5,7 @@ package winservices
 
 import (
 	"context"
+	"errors"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
@@ -86,7 +87,7 @@ func (s *Service) QueryStatusWithContext(ctx context.Context) (ServiceStatus, er
 	var bytesNeeded uint32
 	var buf []byte
 
-	if err := windows.QueryServiceStatusEx(s.srv.Handle, windows.SC_STATUS_PROCESS_INFO, nil, 0, &bytesNeeded); err != windows.ERROR_INSUFFICIENT_BUFFER {
+	if err := windows.QueryServiceStatusEx(s.srv.Handle, windows.SC_STATUS_PROCESS_INFO, nil, 0, &bytesNeeded); !errors.Is(err, windows.ERROR_INSUFFICIENT_BUFFER) {
 		return ServiceStatus{}, err
 	}
 
