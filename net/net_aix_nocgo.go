@@ -89,7 +89,7 @@ func IOCountersWithContext(ctx context.Context, pernic bool) ([]IOCountersStat, 
 		return nil, err
 	}
 	if pernic == false {
-		return getIOCountersAll(iocounters)
+		return getIOCountersAll(iocounters), nil
 	}
 	return iocounters, nil
 }
