@@ -29,7 +29,7 @@ func IOCountersWithContext(ctx context.Context, pernic bool) ([]IOCountersStat, 
 		}
 		iocounters = append(iocounters, n)
 	}
-	if pernic == false {
+	if !pernic {
 		return getIOCountersAll(iocounters), nil
 	}
 	return iocounters, nil
