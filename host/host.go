@@ -39,6 +39,8 @@ type UserStat struct {
 	Terminal string `json:"terminal"`
 	Host     string `json:"host"`
 	Started  int    `json:"started"`
+	Type     int    `json:"type"`
+	Pid      int    `json:"pid"`
 }
 
 func (h InfoStat) String() string {
