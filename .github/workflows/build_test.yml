@@ -22,7 +22,7 @@ jobs:
       - id: versions
         run: |
           versions=$(curl -s 'https://go.dev/dl/?mode=json' | jq -c 'map(.version[2:])')
-          echo "::set-output name=value::${versions}"
+          echo "value=${versions}"  >> $GITHUB_OUTPUT
   build_test:
     needs: go-versions
     strategy:
