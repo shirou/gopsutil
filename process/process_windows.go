@@ -357,14 +357,14 @@ func (p *Process) ExeWithContext(ctx context.Context) (string, error) {
 		if ret == 0 {
 			return "", err
 		}
-		return windows.UTF16ToString(buf[:]), nil
+		return windows.UTF16ToString(buf), nil
 	}
 	// XP fallback
 	ret, _, err := procGetProcessImageFileNameW.Call(uintptr(c), uintptr(unsafe.Pointer(&buf[0])), uintptr(size))
 	if ret == 0 {
 		return "", err
 	}
-	return common.ConvertDOSPath(windows.UTF16ToString(buf[:])), nil
+	return common.ConvertDOSPath(windows.UTF16ToString(buf)), nil
 }
 
 func (p *Process) CmdlineWithContext(_ context.Context) (string, error) {
