@@ -139,7 +139,8 @@ func SwapMemoryWithContext(ctx context.Context) (*SwapMemoryStat, error) {
 
 		// first, try to parse with version 2
 		xsw := (*xswdev)(unsafe.Pointer(&buf[0]))
-		if xsw.Version == XSWDEV_VERSION11 {
+		switch {
+		case xsw.Version == XSWDEV_VERSION11:
 			// this is version 1, so try to parse again
 			xsw := (*xswdev11)(unsafe.Pointer(&buf[0]))
 			if xsw.Version != XSWDEV_VERSION11 {
@@ -147,9 +148,9 @@ func SwapMemoryWithContext(ctx context.Context) (*SwapMemoryStat, error) {
 			}
 			s.Total += uint64(xsw.NBlks)
 			s.Used += uint64(xsw.Used)
-		} else if xsw.Version != XSWDEV_VERSION {
+		case xsw.Version != XSWDEV_VERSION:
 			return nil, errors.New("xswdev version mismatch")
-		} else {
+		default:
 			s.Total += uint64(xsw.NBlks)
 			s.Used += uint64(xsw.Used)
 		}

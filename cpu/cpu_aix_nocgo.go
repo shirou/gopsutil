@@ -105,14 +105,15 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 
 	ret := InfoStat{}
 	for _, line := range strings.Split(string(out), "\n") {
-		if strings.HasPrefix(line, "Number Of Processors:") {
+		switch {
+		case strings.HasPrefix(line, "Number Of Processors:"):
 			p := strings.Fields(line)
 			if len(p) > 3 {
 				if t, err := strconv.ParseUint(p[3], 10, 64); err == nil {
 					ret.Cores = int32(t)
 				}
 			}
-		} else if strings.HasPrefix(line, "Processor Clock Speed:") {
+		case strings.HasPrefix(line, "Processor Clock Speed:"):
 			p := strings.Fields(line)
 			if len(p) > 4 {
 				if t, err := strconv.ParseFloat(p[3], 64); err == nil {
@@ -128,13 +129,12 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 					}
 				}
 			}
-			break
-		} else if strings.HasPrefix(line, "System Model:") {
+		case strings.HasPrefix(line, "System Model:"):
 			p := strings.Split(string(line), ":")
 			if p != nil {
 				ret.VendorID = strings.TrimSpace(p[1])
 			}
-		} else if strings.HasPrefix(line, "Processor Type:") {
+		case strings.HasPrefix(line, "Processor Type:"):
 			p := strings.Split(string(line), ":")
 			if p != nil {
 				c := strings.Split(string(p[1]), "_")
