@@ -193,7 +193,8 @@ func parseNetstatA(output string, kind string) ([]ConnectionStat, error) {
 			continue
 		}
 
-		if strings.HasPrefix(fields[0], "f1") {
+		switch {
+		case strings.HasPrefix(fields[0], "f1"):
 			// Unix lines
 			if len(fields) < 2 {
 				// every unix connections have two lines
@@ -207,7 +208,7 @@ func parseNetstatA(output string, kind string) ([]ConnectionStat, error) {
 
 			ret = append(ret, c)
 
-		} else if strings.HasPrefix(fields[0], "tcp") || strings.HasPrefix(fields[0], "udp") {
+		case strings.HasPrefix(fields[0], "tcp") || strings.HasPrefix(fields[0], "udp"):
 			// Inet lines
 			if !hasCorrectInetProto(kind, fields[0]) {
 				continue
@@ -225,7 +226,7 @@ func parseNetstatA(output string, kind string) ([]ConnectionStat, error) {
 			}
 
 			ret = append(ret, c)
-		} else {
+		default:
 			// Header lines
 			continue
 		}

@@ -34,7 +34,7 @@ func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
 
 	ret := ""
 	// Kind of inefficient, but it works
-	lines := strings.Split(string(out[:]), "\n")
+	lines := strings.Split(string(out), "\n")
 	for line := 1; line < len(lines); line++ {
 		v := strings.TrimSpace(lines[line])
 		if strings.HasPrefix(v, "Serial Number...............") {

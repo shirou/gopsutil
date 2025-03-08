@@ -240,11 +240,12 @@ func (p *Process) getKProc() (*unix.KinfoProc, error) {
 // If passed arg pid is 0, get information from all process.
 func callPsWithContext(ctx context.Context, arg string, pid int32, threadOption bool, nameOption bool) ([][]string, error) {
 	var cmd []string
-	if pid == 0 { // will get from all processes.
+	switch {
+	case pid == 0: // will get from all processes.
 		cmd = []string{"-ax", "-o", arg}
-	} else if threadOption {
+	case threadOption:
 		cmd = []string{"-x", "-o", arg, "-M", "-p", strconv.Itoa(int(pid))}
-	} else {
+	default:
 		cmd = []string{"-x", "-o", arg, "-p", strconv.Itoa(int(pid))}
 	}
 	if nameOption {
@@ -394,7 +395,7 @@ func (p *Process) cmdlineSlice() ([]string, error) {
 	// are the arguments. Everything else in the slice is then the environment
 	// of the process.
 	for _, arg := range args[1:] {
-		argStr = string(arg[:])
+		argStr = string(arg)
 		if len(argStr) > 0 {
 			if nargs > 0 {
 				argSlice = append(argSlice, argStr)
