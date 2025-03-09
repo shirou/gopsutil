@@ -32,11 +32,11 @@ func sysinfoAvgWithContext() (*AvgStat, error) {
 		return nil, err
 	}
 
-	const si_load_shift = 16
+	const siLoadShift = 16
 	return &AvgStat{
-		Load1:  float64(info.Loads[0]) / float64(1<<si_load_shift),
-		Load5:  float64(info.Loads[1]) / float64(1<<si_load_shift),
-		Load15: float64(info.Loads[2]) / float64(1<<si_load_shift),
+		Load1:  float64(info.Loads[0]) / float64(1<<siLoadShift),
+		Load5:  float64(info.Loads[1]) / float64(1<<siLoadShift),
+		Load15: float64(info.Loads[2]) / float64(1<<siLoadShift),
 	}, nil
 }
 
