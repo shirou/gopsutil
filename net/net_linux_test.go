@@ -21,7 +21,7 @@ func TestIOCountersByFileParsing(t *testing.T) {
 	tmpfile, err := os.CreateTemp("", "proc_dev_net")
 	defer os.Remove(tmpfile.Name()) // clean up
 
-	require.NoError(t, err, "Temporary file creation failed: ", err)
+	require.NoErrorf(t, err, "Temporary file creation failed: %s", err)
 
 	cases := [4][2]string{
 		{"eth0:   ", "eth1:   "},
@@ -31,7 +31,7 @@ func TestIOCountersByFileParsing(t *testing.T) {
 	}
 	for _, testCase := range cases {
 		err = tmpfile.Truncate(0)
-		require.NoError(t, err, "Temporary file truncating problem: ", err)
+		require.NoErrorf(t, err, "Temporary file truncating problem: %s", err)
 
 		// Parse interface name for assertion
 		interface0 := strings.TrimSpace(testCase[0])
@@ -45,7 +45,7 @@ func TestIOCountersByFileParsing(t *testing.T) {
 
 		// Write /proc/net/dev sample output
 		_, err = tmpfile.Write(proc)
-		require.NoError(t, err, "Temporary file writing failed: ", err)
+		require.NoErrorf(t, err, "Temporary file writing failed: %s", err)
 
 		counters, err := IOCountersByFile(true, tmpfile.Name())
 
@@ -76,8 +76,7 @@ func TestIOCountersByFileParsing(t *testing.T) {
 		assert.Equal(t, uint64(1300), counters[1].Fifoout)
 	}
 
-	err = tmpfile.Close()
-	assert.NoError(t, err, "Temporary file closing failed: ", err)
+	assert.NoErrorf(t, tmpfile.Close(), "Temporary file closing failed")
 }
 
 func TestGetProcInodesAll(t *testing.T) {
@@ -180,11 +179,11 @@ func TestDecodeAddress(t *testing.T) {
 		}
 		addr, err := decodeAddress(uint32(family), src)
 		if dst.Error {
-			assert.Error(t, err, src)
+			assert.Errorf(t, err, src)
 		} else {
-			require.NoError(t, err, src)
-			assert.Equal(t, dst.IP, addr.IP, src)
-			assert.Equal(t, dst.Port, int(addr.Port), src)
+			require.NoErrorf(t, err, src)
+			assert.Equalf(t, dst.IP, addr.IP, src)
+			assert.Equalf(t, dst.Port, int(addr.Port), src)
 		}
 	}
 }
@@ -197,7 +196,7 @@ func TestReverse(t *testing.T) {
 func TestConntrackStatFileParsing(t *testing.T) {
 	tmpfile, err := os.CreateTemp("", "proc_net_stat_conntrack")
 	defer os.Remove(tmpfile.Name())
-	require.NoError(t, err, "Temporary file creation failed: ", err)
+	require.NoErrorf(t, err, "Temporary file creation failed: %s", err)
 
 	data := []byte(`
 entries  searched found new invalid ignore delete deleteList insert insertFailed drop earlyDrop icmpError  expectNew expectCreate expectDelete searchRestart
@@ -246,12 +245,12 @@ entries  searched found new invalid ignore delete deleteList insert insertFailed
 
 	// Write data to tempfile
 	_, err = tmpfile.Write(data)
-	require.NoError(t, err, "Temporary file writing failed: ", err)
+	require.NoErrorf(t, err, "Temporary file writing failed: %s", err)
 
 	// Function under test
 	stats, err := conntrackStatsFromFile(tmpfile.Name(), true)
 	require.NoError(t, err)
-	assert.Len(t, stats, 8, "Expected 8 results")
+	assert.Lenf(t, stats, 8, "Expected 8 results")
 
 	summary := &ConntrackStat{}
 	for i, exp := range slist.Items() {

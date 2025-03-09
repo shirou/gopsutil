@@ -26,7 +26,7 @@ func TestVirtualMemoryDarwin(t *testing.T) {
 	assert.Equal(t, uint64(actualTotal), v.Total)
 
 	assert.Positive(t, v.Available)
-	assert.Equal(t, v.Available, v.Free+v.Inactive, "%v", v)
+	assert.Equalf(t, v.Available, v.Free+v.Inactive, "%v", v)
 
 	assert.Positive(t, v.Used)
 	assert.Less(t, v.Used, v.Total)
