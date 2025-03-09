@@ -9,6 +9,6 @@ import (
 	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
-func TemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
+func TemperaturesWithContext(_ context.Context) ([]TemperatureStat, error) {
 	return []TemperatureStat{}, common.ErrNotImplementedError
 }

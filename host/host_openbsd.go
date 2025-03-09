@@ -24,7 +24,7 @@ const (
 	UTHostSize = 16
 )
 
-func HostIDWithContext(ctx context.Context) (string, error) {
+func HostIDWithContext(_ context.Context) (string, error) {
 	return "", common.ErrNotImplementedError
 }
 
@@ -36,7 +36,7 @@ func numProcs(ctx context.Context) (uint64, error) {
 	return uint64(len(procs)), nil
 }
 
-func PlatformInformationWithContext(ctx context.Context) (string, string, string, error) {
+func PlatformInformationWithContext(_ context.Context) (string, string, string, error) {
 	platform := ""
 	family := ""
 	version := ""
@@ -53,11 +53,11 @@ func PlatformInformationWithContext(ctx context.Context) (string, string, string
 	return platform, family, version, nil
 }
 
-func VirtualizationWithContext(ctx context.Context) (string, string, error) {
+func VirtualizationWithContext(_ context.Context) (string, string, error) {
 	return "", "", common.ErrNotImplementedError
 }
 
-func UsersWithContext(ctx context.Context) ([]UserStat, error) {
+func UsersWithContext(_ context.Context) ([]UserStat, error) {
 	var ret []UserStat
 	utmpfile := "/var/run/utmp"
 	file, err := os.Open(utmpfile)
