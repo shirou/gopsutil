@@ -958,7 +958,7 @@ func getProcessMemoryInfo(h windows.Handle, mem *PROCESS_MEMORY_COUNTERS) (err e
 	return
 }
 
-type SYSTEM_TIMES struct {
+type SYSTEM_TIMES struct { //nolint:revive //FIXME
 	CreateTime syscall.Filetime
 	ExitTime   syscall.Filetime
 	KernelTime syscall.Filetime

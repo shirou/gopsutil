@@ -14,11 +14,11 @@ import (
 func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 	var ret []TimesStat
 	if percpu {
-		per_out, err := invoke.CommandWithContext(ctx, "sar", "-u", "-P", "ALL", "10", "1")
+		perOut, err := invoke.CommandWithContext(ctx, "sar", "-u", "-P", "ALL", "10", "1")
 		if err != nil {
 			return nil, err
 		}
-		lines := strings.Split(string(per_out), "\n")
+		lines := strings.Split(string(perOut), "\n")
 		if len(lines) < 6 {
 			return []TimesStat{}, common.ErrNotImplementedError
 		}

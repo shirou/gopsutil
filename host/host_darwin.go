@@ -20,7 +20,7 @@ import (
 )
 
 // from utmpx.h
-const user_PROCESS = 7
+const user_PROCESS = 7 //nolint:revive //FIXME
 
 func HostIDWithContext(ctx context.Context) (string, error) {
 	out, err := invoke.CommandWithContext(ctx, "ioreg", "-rd1", "-c", "IOPlatformExpertDevice")
