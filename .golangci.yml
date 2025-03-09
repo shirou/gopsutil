@@ -22,6 +22,7 @@ linters:
     - gosec
     - govet
     - importas
+    - ineffassign
     - misspell
     - nakedret
     - nolintlint
@@ -34,7 +35,6 @@ linters:
     - usetesting
   disable:
     - errcheck
-    - ineffassign
     - staticcheck
     - unused
   settings:
