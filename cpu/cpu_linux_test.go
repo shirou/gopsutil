@@ -10,6 +10,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func TestTimesEmpty(t *testing.T) {
@@ -76,10 +78,10 @@ func TestCountsAgainstLscpu(t *testing.T) {
 	expectedPhysical := coresPerSocket * sockets * books * drawers
 	expectedLogical := expectedPhysical * threadsPerCore
 	physical, err := Counts(false)
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	require.NoError(t, err)
 	logical, err := Counts(true)
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	require.NoError(t, err)
 	assert.Equalf(t, expectedPhysical, physical, "expected %v, got %v", expectedPhysical, physical)
 	assert.Equalf(t, expectedLogical, logical, "expected %v, got %v", expectedLogical, logical)
