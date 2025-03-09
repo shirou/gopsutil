@@ -2,7 +2,6 @@
 package host
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"sync"
@@ -11,15 +10,9 @@ import (
 	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
-func skipIfNotImplementedErr(t *testing.T, err error) {
-	if errors.Is(err, common.ErrNotImplementedError) {
-		t.Skip("not implemented")
-	}
-}
-
 func TestHostID(t *testing.T) {
 	v, err := HostID()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -31,7 +24,7 @@ func TestHostID(t *testing.T) {
 
 func TestInfo(t *testing.T) {
 	v, err := Info()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -51,7 +44,7 @@ func TestUptime(t *testing.T) {
 	}
 
 	v, err := Uptime()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -65,7 +58,7 @@ func TestBootTime(t *testing.T) {
 		t.Skip("Skip CI")
 	}
 	v, err := BootTime()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -78,7 +71,7 @@ func TestBootTime(t *testing.T) {
 	t.Logf("first boot time: %d", v)
 
 	v2, err := BootTime()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -90,7 +83,7 @@ func TestBootTime(t *testing.T) {
 
 func TestUsers(t *testing.T) {
 	v, err := Users()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -138,7 +131,7 @@ func TestUserStat_String(t *testing.T) {
 
 func TestGuid(t *testing.T) {
 	id, err := HostID()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Error(err)
 	}
@@ -157,7 +150,7 @@ func TestVirtualization(t *testing.T) {
 		go func(j int) {
 			system, role, err := Virtualization()
 			wg.Done()
-			skipIfNotImplementedErr(t, err)
+			common.SkipIfNotImplementedErr(t, err)
 			if err != nil {
 				t.Errorf("Virtualization() failed, %v", err)
 			}
@@ -172,7 +165,7 @@ func TestVirtualization(t *testing.T) {
 
 func TestKernelVersion(t *testing.T) {
 	version, err := KernelVersion()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("KernelVersion() failed, %v", err)
 	}
@@ -185,7 +178,7 @@ func TestKernelVersion(t *testing.T) {
 
 func TestPlatformInformation(t *testing.T) {
 	platform, family, version, err := PlatformInformation()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("PlatformInformation() failed, %v", err)
 	}

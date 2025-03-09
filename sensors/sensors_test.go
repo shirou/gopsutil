@@ -3,7 +3,6 @@
 package sensors
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"testing"
@@ -24,18 +23,12 @@ func TestTemperatureStat_String(t *testing.T) {
 	}
 }
 
-func skipIfNotImplementedErr(t *testing.T, err error) {
-	if errors.Is(err, common.ErrNotImplementedError) {
-		t.Skip("not implemented")
-	}
-}
-
 func TestTemperatures(t *testing.T) {
 	if os.Getenv("CI") != "" {
 		t.Skip("Skip CI")
 	}
 	v, err := SensorsTemperatures()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}

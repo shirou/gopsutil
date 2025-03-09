@@ -2,7 +2,6 @@
 package net
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"runtime"
@@ -10,12 +9,6 @@ import (
 
 	"github.com/shirou/gopsutil/v4/internal/common"
 )
-
-func skipIfNotImplementedErr(t *testing.T, err error) {
-	if errors.Is(err, common.ErrNotImplementedError) {
-		t.Skip("not implemented")
-	}
-}
 
 func TestAddrString(t *testing.T) {
 	v := Addr{IP: "192.168.0.1", Port: 8000}
@@ -67,12 +60,12 @@ func TestConnectionStatString(t *testing.T) {
 
 func TestIOCountersAll(t *testing.T) {
 	v, err := IOCounters(false)
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("Could not get NetIOCounters: %v", err)
 	}
 	per, err := IOCounters(true)
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("Could not get NetIOCounters: %v", err)
 	}
@@ -105,7 +98,7 @@ func TestIOCountersAll(t *testing.T) {
 
 func TestIOCountersPerNic(t *testing.T) {
 	v, err := IOCounters(true)
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("Could not get NetIOCounters: %v", err)
 	}
@@ -150,7 +143,7 @@ func TestGetNetIOCountersAll(t *testing.T) {
 
 func TestInterfaces(t *testing.T) {
 	v, err := Interfaces()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("Could not get NetInterfaceStat: %v", err)
 	}
@@ -166,7 +159,7 @@ func TestInterfaces(t *testing.T) {
 
 func TestProtoCountersStatsAll(t *testing.T) {
 	v, err := ProtoCounters(nil)
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Fatalf("Could not get NetProtoCounters: %v", err)
 	}
@@ -185,7 +178,7 @@ func TestProtoCountersStatsAll(t *testing.T) {
 
 func TestProtoCountersStats(t *testing.T) {
 	v, err := ProtoCounters([]string{"tcp", "ip"})
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Fatalf("Could not get NetProtoCounters: %v", err)
 	}
@@ -211,7 +204,7 @@ func TestConnections(t *testing.T) {
 	}
 
 	v, err := Connections("inet")
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("could not get NetConnections: %v", err)
 	}
@@ -238,7 +231,7 @@ func TestFilterCounters(t *testing.T) {
 	}
 
 	v, err := FilterCounters()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("could not get NetConnections: %v", err)
 	}

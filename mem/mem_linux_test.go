@@ -12,6 +12,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func TestExVirtualMemory(t *testing.T) {
@@ -129,7 +131,7 @@ func TestVirtualMemoryLinux(t *testing.T) {
 			t.Setenv("HOST_PROC", filepath.Join("testdata/linux/virtualmemory/", tt.mockedRootFS, "proc"))
 
 			stat, err := VirtualMemory()
-			skipIfNotImplementedErr(t, err)
+			common.SkipIfNotImplementedErr(t, err)
 			if err != nil {
 				t.Errorf("error %v", err)
 			}

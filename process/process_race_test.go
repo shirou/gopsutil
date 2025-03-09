@@ -6,6 +6,8 @@ package process
 import (
 	"sync"
 	"testing"
+
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func TestPpid_Race(t *testing.T) {
@@ -17,7 +19,7 @@ func TestPpid_Race(t *testing.T) {
 		go func(j int) {
 			ppid, err := p.Ppid()
 			wg.Done()
-			skipIfNotImplementedErr(t, err)
+			common.SkipIfNotImplementedErr(t, err)
 			if err != nil {
 				t.Errorf("Ppid() failed, %v", err)
 			}

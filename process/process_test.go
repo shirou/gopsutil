@@ -3,7 +3,6 @@ package process
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -27,12 +26,6 @@ import (
 
 var mu sync.Mutex
 
-func skipIfNotImplementedErr(t *testing.T, err error) {
-	if errors.Is(err, common.ErrNotImplementedError) {
-		t.Skip("not implemented")
-	}
-}
-
 func testGetProcess() Process {
 	checkPid := os.Getpid() // process.test
 	ret, _ := NewProcess(int32(checkPid))
@@ -41,7 +34,7 @@ func testGetProcess() Process {
 
 func TestPids(t *testing.T) {
 	ret, err := Pids()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -54,7 +47,7 @@ func TestPid_exists(t *testing.T) {
 	checkPid := os.Getpid()
 
 	ret, err := PidExists(int32(checkPid))
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -68,7 +61,7 @@ func TestNewProcess(t *testing.T) {
 	checkPid := os.Getpid()
 
 	ret, err := NewProcess(int32(checkPid))
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -84,14 +77,14 @@ func TestMemoryMaps(t *testing.T) {
 	checkPid := os.Getpid()
 
 	ret, err := NewProcess(int32(checkPid))
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
 
 	// ungrouped memory maps
 	mmaps, err := ret.MemoryMaps(false)
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("memory map get error %v", err)
 	}
@@ -104,7 +97,7 @@ func TestMemoryMaps(t *testing.T) {
 
 	// grouped memory maps
 	mmaps, err = ret.MemoryMaps(true)
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("memory map get error %v", err)
 	}
@@ -120,7 +113,7 @@ func TestMemoryInfo(t *testing.T) {
 	p := testGetProcess()
 
 	v, err := p.MemoryInfo()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("getting memory info error %v", err)
 	}
@@ -134,7 +127,7 @@ func TestCmdLine(t *testing.T) {
 	p := testGetProcess()
 
 	v, err := p.Cmdline()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("getting cmdline error %v", err)
 	}
@@ -147,7 +140,7 @@ func TestCmdLineSlice(t *testing.T) {
 	p := testGetProcess()
 
 	v, err := p.CmdlineSlice()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Fatalf("getting cmdline slice error %v", err)
 	}
@@ -160,7 +153,7 @@ func TestPpid(t *testing.T) {
 	p := testGetProcess()
 
 	v, err := p.Ppid()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("getting ppid error %v", err)
 	}
@@ -177,7 +170,7 @@ func TestStatus(t *testing.T) {
 	p := testGetProcess()
 
 	v, err := p.Status()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("getting status error %v", err)
 	}
@@ -193,7 +186,7 @@ func TestTerminal(t *testing.T) {
 	p := testGetProcess()
 
 	_, err := p.Terminal()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("getting terminal error %v", err)
 	}
@@ -203,7 +196,7 @@ func TestIOCounters(t *testing.T) {
 	p := testGetProcess()
 
 	v, err := p.IOCounters()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("getting iocounter error %v", err)
 		return
@@ -218,7 +211,7 @@ func TestNumCtx(t *testing.T) {
 	p := testGetProcess()
 
 	_, err := p.NumCtxSwitches()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("getting numctx error %v", err)
 		return
@@ -234,7 +227,7 @@ func TestNice(t *testing.T) {
 	}
 
 	n, err := p.Nice()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("getting nice error %v", err)
 	}
@@ -247,7 +240,7 @@ func TestGroups(t *testing.T) {
 	p := testGetProcess()
 
 	v, err := p.Groups()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("getting groups error %v", err)
 	}
@@ -263,7 +256,7 @@ func TestNumThread(t *testing.T) {
 	p := testGetProcess()
 
 	n, err := p.NumThreads()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("getting NumThread error %v", err)
 	}
@@ -276,7 +269,7 @@ func TestThreads(t *testing.T) {
 	p := testGetProcess()
 
 	n, err := p.NumThreads()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("getting NumThread error %v", err)
 	}
@@ -285,7 +278,7 @@ func TestThreads(t *testing.T) {
 	}
 
 	ts, err := p.Threads()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("getting Threads error %v", err)
 	}
@@ -298,7 +291,7 @@ func TestName(t *testing.T) {
 	p := testGetProcess()
 
 	n, err := p.Name()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("getting name error %v", err)
 	}
@@ -339,11 +332,11 @@ func TestLong_Name_With_Spaces(t *testing.T) {
 	require.NoError(t, cmd.Start())
 	time.Sleep(100 * time.Millisecond)
 	p, err := NewProcess(int32(cmd.Process.Pid))
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	require.NoError(t, err)
 
 	n, err := p.Name()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Fatalf("getting name error %v", err)
 	}
@@ -386,11 +379,11 @@ func TestLong_Name(t *testing.T) {
 	require.NoError(t, cmd.Start())
 	time.Sleep(100 * time.Millisecond)
 	p, err := NewProcess(int32(cmd.Process.Pid))
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	require.NoError(t, err)
 
 	n, err := p.Name()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Fatalf("getting name error %v", err)
 	}
@@ -443,12 +436,12 @@ func TestName_Against_Python(t *testing.T) {
 	pyName := scanner.Text() // first line printed by py3 script, its name
 	t.Logf("pyName %s", pyName)
 	p, err := NewProcess(int32(cmd.Process.Pid))
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Fatalf("getting process error %v", err)
 	}
 	name, err := p.Name()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Fatalf("getting name error %v", err)
 	}
@@ -461,7 +454,7 @@ func TestExe(t *testing.T) {
 	p := testGetProcess()
 
 	n, err := p.Exe()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("getting Exe error %v", err)
 	}
@@ -473,7 +466,7 @@ func TestExe(t *testing.T) {
 func TestCpuPercent(t *testing.T) {
 	p := testGetProcess()
 	_, err := p.Percent(0)
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -498,7 +491,7 @@ func TestCpuPercentLoop(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		duration := time.Duration(100) * time.Microsecond
 		percent, err := p.Percent(duration)
-		skipIfNotImplementedErr(t, err)
+		common.SkipIfNotImplementedErr(t, err)
 		if err != nil {
 			t.Errorf("error %v", err)
 		}
@@ -517,7 +510,7 @@ func TestCreateTime(t *testing.T) {
 	p := testGetProcess()
 
 	c, err := p.CreateTime()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -538,7 +531,7 @@ func TestParent(t *testing.T) {
 	p := testGetProcess()
 
 	c, err := p.Parent()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Fatalf("error %v", err)
 	}
@@ -596,7 +589,7 @@ func TestConnections(t *testing.T) {
 	<-serverEstablished
 
 	c, err := p.Connections()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Fatalf("error %v", err)
 	}
@@ -646,7 +639,7 @@ func TestChildren(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	c, err := p.Children()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Fatalf("error %v", err)
 	}
@@ -672,7 +665,7 @@ func TestUsername(t *testing.T) {
 
 	process, _ := NewProcess(int32(myPid))
 	pidUsername, err := process.Username()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	assert.Equal(t, myUsername, pidUsername)
 
 	t.Log(pidUsername)
@@ -681,12 +674,12 @@ func TestUsername(t *testing.T) {
 func TestCPUTimes(t *testing.T) {
 	pid := os.Getpid()
 	process, err := NewProcess(int32(pid))
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	require.NoError(t, err)
 
 	spinSeconds := 0.2
 	cpuTimes0, err := process.Times()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	require.NoError(t, err)
 
 	// Spin for a duration of spinSeconds
@@ -719,11 +712,11 @@ func TestOpenFiles(t *testing.T) {
 
 	pid := os.Getpid()
 	p, err := NewProcess(int32(pid))
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	require.NoError(t, err)
 
 	v, err := p.OpenFiles()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	require.NoError(t, err)
 	assert.NotEmpty(t, v) // test always open files.
 
@@ -742,10 +735,10 @@ func TestKill(t *testing.T) {
 	require.NoError(t, cmd.Start())
 	time.Sleep(100 * time.Millisecond)
 	p, err := NewProcess(int32(cmd.Process.Pid))
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	require.NoError(t, err)
 	err = p.Kill()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	require.NoError(t, err)
 	cmd.Wait()
 }
@@ -759,10 +752,10 @@ func TestIsRunning(t *testing.T) {
 	}
 	cmd.Start()
 	p, err := NewProcess(int32(cmd.Process.Pid))
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	require.NoError(t, err)
 	running, err := p.IsRunning()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Fatalf("IsRunning error: %v", err)
 	}
@@ -771,7 +764,7 @@ func TestIsRunning(t *testing.T) {
 	}
 	cmd.Wait()
 	running, err = p.IsRunning()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Fatalf("IsRunning error: %v", err)
 	}
@@ -815,11 +808,11 @@ func TestEnviron(t *testing.T) {
 	defer cmd.Process.Kill()
 	time.Sleep(100 * time.Millisecond)
 	p, err := NewProcess(int32(cmd.Process.Pid))
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	require.NoError(t, err)
 
 	envs, err := p.Environ()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("getting environ error %v", err)
 	}
@@ -841,7 +834,7 @@ func TestCwd(t *testing.T) {
 
 	process, _ := NewProcess(int32(myPid))
 	pidCwd, err := process.Cwd()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Fatalf("getting cwd error %v", err)
 	}

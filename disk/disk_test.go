@@ -2,7 +2,6 @@
 package disk
 
 import (
-	"errors"
 	"fmt"
 	"runtime"
 	"sync"
@@ -11,19 +10,13 @@ import (
 	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
-func skipIfNotImplementedErr(t *testing.T, err error) {
-	if errors.Is(err, common.ErrNotImplementedError) {
-		t.Skip("not implemented")
-	}
-}
-
 func TestUsage(t *testing.T) {
 	path := "/"
 	if runtime.GOOS == "windows" {
 		path = "C:"
 	}
 	v, err := Usage(path)
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -34,7 +27,7 @@ func TestUsage(t *testing.T) {
 
 func TestPartitions(t *testing.T) {
 	ret, err := Partitions(false)
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil || len(ret) == 0 {
 		t.Errorf("error %v", err)
 	}
@@ -52,7 +45,7 @@ func TestPartitions(t *testing.T) {
 
 func TestIOCounters(t *testing.T) {
 	ret, err := IOCounters()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
