@@ -91,7 +91,6 @@ linters-settings:
       - name: time-naming
       - name: unexported-return
       - name: unnecessary-stmt
-        disabled: true
       - name: unreachable-code
       - name: unused-parameter
         disabled: true
