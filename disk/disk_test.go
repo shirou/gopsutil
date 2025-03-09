@@ -8,6 +8,9 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
@@ -24,12 +27,8 @@ func TestUsage(t *testing.T) {
 	}
 	v, err := Usage(path)
 	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("error %v", err)
-	}
-	if v.Path != path {
-		t.Errorf("error %v", err)
-	}
+	require.NoError(t, err)
+	assert.Equalf(t, v.Path, path, "error %v", err)
 }
 
 func TestPartitions(t *testing.T) {
@@ -40,31 +39,21 @@ func TestPartitions(t *testing.T) {
 	}
 	t.Log(ret)
 
-	if len(ret) == 0 {
-		t.Errorf("ret is empty")
-	}
+	assert.NotEmptyf(t, ret, "ret is empty")
 	for _, disk := range ret {
-		if disk.Device == "" {
-			t.Errorf("Could not get device info %v", disk)
-		}
+		assert.NotEmptyf(t, disk.Device, "Could not get device info %v", disk)
 	}
 }
 
 func TestIOCounters(t *testing.T) {
 	ret, err := IOCounters()
 	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("error %v", err)
-	}
-	if len(ret) == 0 {
-		t.Errorf("ret is empty")
-	}
+	require.NoError(t, err)
+	assert.NotEmptyf(t, ret, "ret is empty")
 	empty := IOCountersStat{}
 	for part, io := range ret {
 		t.Log(part, io)
-		if io == empty {
-			t.Errorf("io_counter error %v, %v", part, io)
-		}
+		assert.NotEqualf(t, io, empty, "io_counter error %v, %v", part, io)
 	}
 }
 
@@ -99,9 +88,7 @@ func TestUsageStat_String(t *testing.T) {
 		Fstype:            "ext4",
 	}
 	e := `{"path":"/","fstype":"ext4","total":1000,"free":2000,"used":3000,"usedPercent":50.1,"inodesTotal":4000,"inodesUsed":5000,"inodesFree":6000,"inodesUsedPercent":49.1}`
-	if e != fmt.Sprintf("%v", v) {
-		t.Errorf("DiskUsageStat string is invalid: %v", v)
-	}
+	assert.JSONEqf(t, e, fmt.Sprintf("%v", v), "DiskUsageStat string is invalid: %v", v)
 }
 
 func TestPartitionStat_String(t *testing.T) {
@@ -112,9 +99,7 @@ func TestPartitionStat_String(t *testing.T) {
 		Opts:       []string{"ro"},
 	}
 	e := `{"device":"sd01","mountpoint":"/","fstype":"ext4","opts":["ro"]}`
-	if e != fmt.Sprintf("%v", v) {
-		t.Errorf("DiskUsageStat string is invalid: %v", v)
-	}
+	assert.JSONEqf(t, e, fmt.Sprintf("%v", v), "DiskUsageStat string is invalid: %v", v)
 }
 
 func TestIOCountersStat_String(t *testing.T) {
@@ -127,7 +112,5 @@ func TestIOCountersStat_String(t *testing.T) {
 		SerialNumber: "SERIAL",
 	}
 	e := `{"readCount":100,"mergedReadCount":0,"writeCount":200,"mergedWriteCount":0,"readBytes":300,"writeBytes":400,"readTime":0,"writeTime":0,"iopsInProgress":0,"ioTime":0,"weightedIO":0,"name":"sd01","serialNumber":"SERIAL","label":""}`
-	if e != fmt.Sprintf("%v", v) {
-		t.Errorf("DiskUsageStat string is invalid: %v", v)
-	}
+	assert.JSONEqf(t, e, fmt.Sprintf("%v", v), "DiskUsageStat string is invalid: %v", v)
 }

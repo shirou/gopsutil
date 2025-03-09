@@ -7,6 +7,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"golang.org/x/sys/unix"
 )
 
@@ -14,8 +15,5 @@ func Test_SendSignal(t *testing.T) {
 	checkPid := os.Getpid()
 
 	p, _ := NewProcess(int32(checkPid))
-	err := p.SendSignal(unix.SIGCONT)
-	if err != nil {
-		t.Errorf("send signal %v", err)
-	}
+	assert.NoErrorf(t, p.SendSignal(unix.SIGCONT), "send signal")
 }

@@ -9,6 +9,8 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var timesTests = []struct {
@@ -34,13 +36,9 @@ func TestTimesPlan9(t *testing.T) {
 			t.Setenv("HOST_ROOT", filepath.Join("testdata/plan9", tt.mockedRootFS))
 			stats, err := Times(false)
 			skipIfNotImplementedErr(t, err)
-			if err != nil {
-				t.Errorf("error %v", err)
-			}
+			require.NoError(t, err)
 			eps := cmpopts.EquateApprox(0, 0.00000001)
-			if !cmp.Equal(stats, tt.stats, eps) {
-				t.Errorf("got: %+v\nwant: %+v", stats, tt.stats)
-			}
+			assert.Truef(t, cmp.Equal(stats, tt.stats, eps), "got: %+v\nwant: %+v", stats, tt.stats)
 		})
 	}
 }

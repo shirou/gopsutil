@@ -18,9 +18,7 @@ func TestExVirtualMemory(t *testing.T) {
 	ex := NewExLinux()
 
 	v, err := ex.VirtualMemory()
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 
 	t.Log(v)
 }
@@ -130,12 +128,8 @@ func TestVirtualMemoryLinux(t *testing.T) {
 
 			stat, err := VirtualMemory()
 			skipIfNotImplementedErr(t, err)
-			if err != nil {
-				t.Errorf("error %v", err)
-			}
-			if !reflect.DeepEqual(stat, tt.stat) {
-				t.Errorf("got: %+v\nwant: %+v", stat, tt.stat)
-			}
+			require.NoError(t, err)
+			assert.Truef(t, reflect.DeepEqual(stat, tt.stat), "got: %+v\nwant: %+v", stat, tt.stat)
 		})
 	}
 }

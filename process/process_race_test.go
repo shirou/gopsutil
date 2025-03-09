@@ -6,6 +6,8 @@ package process
 import (
 	"sync"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestPpid_Race(t *testing.T) {
@@ -18,9 +20,7 @@ func TestPpid_Race(t *testing.T) {
 			ppid, err := p.Ppid()
 			wg.Done()
 			skipIfNotImplementedErr(t, err)
-			if err != nil {
-				t.Errorf("Ppid() failed, %v", err)
-			}
+			require.NoError(t, err, "Ppid() failed, %v", err)
 
 			if j == 9 {
 				t.Logf("Ppid(): %d", ppid)

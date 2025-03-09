@@ -47,7 +47,7 @@ func TestSplitProcStat(t *testing.T) {
 			for _, idx := range consideredFields {
 				expected := strconv.Itoa(idx)
 				parsed := parsedStatLine[idx]
-				assert.Equal(
+				assert.Equalf(
 					t, expected, parsed,
 					"field %d (index from 1 as in man proc) must be %q but %q is received",
 					idx, expected, parsed,
@@ -59,9 +59,7 @@ func TestSplitProcStat(t *testing.T) {
 
 func TestSplitProcStat_fromFile(t *testing.T) {
 	pids, err := os.ReadDir("testdata/linux/")
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 	t.Setenv("HOST_PROC", "testdata/linux")
 	for _, pid := range pids {
 		pid, err := strconv.ParseInt(pid.Name(), 0, 32)
@@ -95,9 +93,7 @@ func TestSplitProcStat_fromFile(t *testing.T) {
 
 func TestFillFromCommWithContext(t *testing.T) {
 	pids, err := os.ReadDir("testdata/linux/")
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 	t.Setenv("HOST_PROC", "testdata/linux")
 	for _, pid := range pids {
 		pid, err := strconv.ParseInt(pid.Name(), 0, 32)
@@ -108,17 +104,13 @@ func TestFillFromCommWithContext(t *testing.T) {
 			continue
 		}
 		p, _ := NewProcess(int32(pid))
-		if err := p.fillFromCommWithContext(context.Background()); err != nil {
-			t.Error(err)
-		}
+		assert.NoError(t, p.fillFromCommWithContext(context.Background()))
 	}
 }
 
 func TestFillFromStatusWithContext(t *testing.T) {
 	pids, err := os.ReadDir("testdata/linux/")
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 	t.Setenv("HOST_PROC", "testdata/linux")
 	for _, pid := range pids {
 		pid, err := strconv.ParseInt(pid.Name(), 0, 32)
@@ -129,9 +121,7 @@ func TestFillFromStatusWithContext(t *testing.T) {
 			continue
 		}
 		p, _ := NewProcess(int32(pid))
-		if err := p.fillFromStatus(); err != nil {
-			t.Error(err)
-		}
+		assert.NoError(t, p.fillFromStatus())
 	}
 }
 
@@ -155,9 +145,7 @@ func Benchmark_fillFromStatusWithContext(b *testing.B) {
 
 func TestFillFromTIDStatWithContext_lx_brandz(t *testing.T) {
 	pids, err := os.ReadDir("testdata/lx_brandz/")
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 	t.Setenv("HOST_PROC", "testdata/lx_brandz")
 	for _, pid := range pids {
 		pid, err := strconv.ParseInt(pid.Name(), 0, 32)
@@ -169,9 +157,7 @@ func TestFillFromTIDStatWithContext_lx_brandz(t *testing.T) {
 		}
 		p, _ := NewProcess(int32(pid))
 		_, _, cpuTimes, _, _, _, _, err := p.fillFromTIDStat(-1)
-		if err != nil {
-			t.Error(err)
-		}
+		require.NoError(t, err)
 		assert.Zero(t, cpuTimes.Iowait)
 	}
 }
