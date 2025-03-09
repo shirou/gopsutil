@@ -71,8 +71,7 @@ func UsersWithContext(_ context.Context) ([]UserStat, error) {
 		return ret, err
 	}
 
-	u := Utmp{}
-	entrySize := int(unsafe.Sizeof(u))
+	entrySize := int(unsafe.Sizeof(Utmp{}))
 	count := len(buf) / entrySize
 
 	for i := 0; i < count; i++ {
