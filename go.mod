@@ -1,6 +1,6 @@
 module github.com/shirou/gopsutil/v4
 
-go 1.18
+go 1.23
 
 require (
 	github.com/ebitengine/purego v0.8.2
