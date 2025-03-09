@@ -528,10 +528,10 @@ func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
 
 func LabelWithContext(ctx context.Context, name string) (string, error) {
 	// Try label based on devicemapper name
-	dmname_filename := common.HostSysWithContext(ctx, fmt.Sprintf("block/%s/dm/name", name))
+	dmnameFilename := common.HostSysWithContext(ctx, fmt.Sprintf("block/%s/dm/name", name))
 	// Could errors.Join errs with Go >= 1.20
-	if common.PathExists(dmname_filename) {
-		dmname, err := os.ReadFile(dmname_filename)
+	if common.PathExists(dmnameFilename) {
+		dmname, err := os.ReadFile(dmnameFilename)
 		if err == nil {
 			return strings.TrimSpace(string(dmname)), nil
 		}

@@ -27,7 +27,7 @@ type lsbStruct struct {
 
 // from utmp.h
 const (
-	user_PROCESS = 7
+	user_PROCESS = 7 //nolint:revive //FIXME
 )
 
 func HostIDWithContext(ctx context.Context) (string, error) {

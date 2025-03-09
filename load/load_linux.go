@@ -32,7 +32,7 @@ func sysinfoAvgWithContext() (*AvgStat, error) {
 		return nil, err
 	}
 
-	const si_load_shift = 16
+	const si_load_shift = 16 //nolint:revive //FIXME
 	return &AvgStat{
 		Load1:  float64(info.Loads[0]) / float64(1<<si_load_shift),
 		Load5:  float64(info.Loads[1]) / float64(1<<si_load_shift),

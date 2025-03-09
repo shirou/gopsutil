@@ -144,7 +144,7 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 }
 
 func (b bintime) Compute() float64 {
-	BINTIME_SCALE := 5.42101086242752217003726400434970855712890625e-20
+	BINTIME_SCALE := 5.42101086242752217003726400434970855712890625e-20 //nolint:revive //FIXME
 	return float64(b.Sec) + float64(b.Frac)*BINTIME_SCALE
 }
 
