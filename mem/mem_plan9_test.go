@@ -6,6 +6,8 @@ package mem
 import (
 	"reflect"
 	"testing"
+
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 var virtualMemoryTests = []struct {
@@ -31,7 +33,7 @@ func TestVirtualMemoryPlan9(t *testing.T) {
 			t.Setenv("HOST_ROOT", "testdata/plan9/virtualmemory/")
 
 			stat, err := VirtualMemory()
-			skipIfNotImplementedErr(t, err)
+			common.SkipIfNotImplementedErr(t, err)
 			if err != nil {
 				t.Errorf("error %v", err)
 			}
@@ -61,7 +63,7 @@ func TestSwapMemoryPlan9(t *testing.T) {
 			t.Setenv("HOST_ROOT", "testdata/plan9/virtualmemory/")
 
 			swap, err := SwapMemory()
-			skipIfNotImplementedErr(t, err)
+			common.SkipIfNotImplementedErr(t, err)
 			if err != nil {
 				t.Errorf("error %v", err)
 			}

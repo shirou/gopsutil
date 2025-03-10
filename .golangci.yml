@@ -102,23 +102,6 @@ linters-settings:
         disabled: true
   testifylint:
     enable-all: true
-  thelper:
-    test:
-      # Check t.Helper() begins helper function.
-      # Default: true
-      begin: false
-    benchmark:
-      # Check b.Helper() begins helper function.
-      # Default: true
-      begin: false
-    tb:
-      # Check tb.Helper() begins helper function.
-      # Default: true
-      begin: false
-    fuzz:
-      # Check f.Helper() begins helper function.
-      # Default: true
-      begin: false
   usetesting:
       os-create-temp: false
       os-mkdir-temp: false

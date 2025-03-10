@@ -9,6 +9,8 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 var timesTests = []struct {
@@ -33,7 +35,7 @@ func TestTimesPlan9(t *testing.T) {
 		t.Run(tt.mockedRootFS, func(t *testing.T) {
 			t.Setenv("HOST_ROOT", filepath.Join("testdata/plan9", tt.mockedRootFS))
 			stats, err := Times(false)
-			skipIfNotImplementedErr(t, err)
+			common.SkipIfNotImplementedErr(t, err)
 			if err != nil {
 				t.Errorf("error %v", err)
 			}

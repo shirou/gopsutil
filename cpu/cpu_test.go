@@ -2,7 +2,6 @@
 package cpu
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"runtime"
@@ -14,15 +13,9 @@ import (
 	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
-func skipIfNotImplementedErr(t *testing.T, err error) {
-	if errors.Is(err, common.ErrNotImplementedError) {
-		t.Skip("not implemented")
-	}
-}
-
 func TestTimes(t *testing.T) {
 	v, err := Times(false)
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -38,7 +31,7 @@ func TestTimes(t *testing.T) {
 
 	// test sum of per cpu stats is within margin of error for cpu total stats
 	cpuTotal, err := Times(false)
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -46,7 +39,7 @@ func TestTimes(t *testing.T) {
 		t.Error("could not get CPUs", err)
 	}
 	perCPU, err := Times(true)
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -80,7 +73,7 @@ func TestTimes(t *testing.T) {
 
 func TestCounts(t *testing.T) {
 	v, err := Counts(true)
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -89,7 +82,7 @@ func TestCounts(t *testing.T) {
 	}
 	t.Logf("logical cores: %d", v)
 	v, err = Counts(false)
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -114,7 +107,7 @@ func TestTimeStat_String(t *testing.T) {
 
 func TestInfo(t *testing.T) {
 	v, err := Info()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -129,13 +122,14 @@ func TestInfo(t *testing.T) {
 }
 
 func testPercent(t *testing.T, percpu bool) {
+	t.Helper()
 	numcpu := runtime.NumCPU()
 	testCount := 3
 
 	if runtime.GOOS != "windows" {
 		testCount = 100
 		v, err := Percent(time.Millisecond, percpu)
-		skipIfNotImplementedErr(t, err)
+		common.SkipIfNotImplementedErr(t, err)
 		if err != nil {
 			t.Errorf("error %v", err)
 		}
@@ -149,7 +143,7 @@ func testPercent(t *testing.T, percpu bool) {
 	for i := 0; i < testCount; i++ {
 		duration := time.Duration(10) * time.Microsecond
 		v, err := Percent(duration, percpu)
-		skipIfNotImplementedErr(t, err)
+		common.SkipIfNotImplementedErr(t, err)
 		if err != nil {
 			t.Errorf("error %v", err)
 		}
@@ -163,13 +157,14 @@ func testPercent(t *testing.T, percpu bool) {
 }
 
 func testPercentLastUsed(t *testing.T, percpu bool) {
+	t.Helper()
 	numcpu := runtime.NumCPU()
 	testCount := 10
 
 	if runtime.GOOS != "windows" {
 		testCount = 2
 		v, err := Percent(time.Millisecond, percpu)
-		skipIfNotImplementedErr(t, err)
+		common.SkipIfNotImplementedErr(t, err)
 		if err != nil {
 			t.Errorf("error %v", err)
 		}
@@ -182,7 +177,7 @@ func testPercentLastUsed(t *testing.T, percpu bool) {
 	}
 	for i := 0; i < testCount; i++ {
 		v, err := Percent(0, percpu)
-		skipIfNotImplementedErr(t, err)
+		common.SkipIfNotImplementedErr(t, err)
 		if err != nil {
 			t.Errorf("error %v", err)
 		}
