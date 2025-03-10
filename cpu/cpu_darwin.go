@@ -37,10 +37,10 @@ const (
 
 // mach/processor_info.h
 const (
-	processorCpuLoadInfo = 2
+	processorCpuLoadInfo = 2 //nolint:revive //FIXME
 )
 
-type hostCpuLoadInfoData struct {
+type hostCpuLoadInfoData struct { //nolint:revive //FIXME
 	cpuTicks [cpuStateMax]uint32
 }
 

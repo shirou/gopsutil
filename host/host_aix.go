@@ -14,7 +14,7 @@ import (
 
 // from https://www.ibm.com/docs/en/aix/7.2?topic=files-utmph-file
 const (
-	user_PROCESS = 7
+	user_PROCESS = 7 //nolint:revive //FIXME
 )
 
 func HostIDWithContext(ctx context.Context) (string, error) {

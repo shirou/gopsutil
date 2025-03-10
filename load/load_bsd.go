@@ -40,7 +40,7 @@ func AvgWithContext(ctx context.Context) (*AvgStat, error) {
 type forkstat struct {
 	forks    int
 	vforks   int
-	__tforks int
+	__tforks int //nolint:revive //FIXME
 }
 
 // Misc returns miscellaneous host-wide statistics.
