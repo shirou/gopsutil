@@ -233,7 +233,7 @@ func ConvertDOSPath(p string) string {
 		ret, _, _ := procQueryDosDeviceW.Call(uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(szDeviceName))),
 			uintptr(unsafe.Pointer(&szTarget[0])),
 			uintptr(len(szTarget)))
-		if ret != 0 && windows.UTF16ToString(szTarget[:]) == rawDrive {
+		if ret != 0 && windows.UTF16ToString(szTarget) == rawDrive {
 			return filepath.Join(szDeviceName, p[len(rawDrive):])
 		}
 	}
