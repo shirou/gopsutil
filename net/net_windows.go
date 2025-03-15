@@ -96,7 +96,7 @@ const (
 type mibIfRow2 struct {
 	InterfaceLuid               uint64
 	InterfaceIndex              uint32
-	InterfaceGuid               guid
+	InterfaceGuid               guid //nolint:revive //FIXME
 	Alias                       [maxStringSize + 1]uint16
 	Description                 [maxStringSize + 1]uint16
 	PhysicalAddressLength       uint32
@@ -113,7 +113,7 @@ type mibIfRow2 struct {
 	OperStatus                  uint32
 	AdminStatus                 uint32
 	MediaConnectState           uint32
-	NetworkGuid                 guid
+	NetworkGuid                 guid //nolint:revive //FIXME
 	ConnectionType              uint32
 	padding1                    [pad0for64_4for32]byte
 	TransmitLinkSpeed           uint64
@@ -383,7 +383,7 @@ func getTCPConnections(family uint32) ([]ConnectionStat, error) {
 			}
 		}
 
-		err := getExtendedTcpTable(p,
+		err := getExtendedTCPTable(p,
 			&size,
 			true,
 			family,
@@ -464,7 +464,7 @@ func getUDPConnections(family uint32) ([]ConnectionStat, error) {
 			}
 		}
 
-		err := getExtendedUdpTable(
+		err := getExtendedUDPTable(
 			p,
 			&size,
 			true,
@@ -528,16 +528,16 @@ var tcpStatuses = map[mibTCPState]string{
 	12: "DELETE",
 }
 
-func getExtendedTcpTable(pTcpTable uintptr, pdwSize *uint32, bOrder bool, ulAf uint32, tableClass tcpTableClass, reserved uint32) (errcode error) {
-	r1, _, _ := syscall.Syscall6(procGetExtendedTCPTable.Addr(), 6, pTcpTable, uintptr(unsafe.Pointer(pdwSize)), getUintptrFromBool(bOrder), uintptr(ulAf), uintptr(tableClass), uintptr(reserved))
+func getExtendedTCPTable(pTCPTable uintptr, pdwSize *uint32, bOrder bool, ulAf uint32, tableClass tcpTableClass, reserved uint32) (errcode error) {
+	r1, _, _ := syscall.Syscall6(procGetExtendedTCPTable.Addr(), 6, pTCPTable, uintptr(unsafe.Pointer(pdwSize)), getUintptrFromBool(bOrder), uintptr(ulAf), uintptr(tableClass), uintptr(reserved))
 	if r1 != 0 {
 		errcode = syscall.Errno(r1)
 	}
 	return
 }
 
-func getExtendedUdpTable(pUdpTable uintptr, pdwSize *uint32, bOrder bool, ulAf uint32, tableClass udpTableClass, reserved uint32) (errcode error) {
-	r1, _, _ := syscall.Syscall6(procGetExtendedUDPTable.Addr(), 6, pUdpTable, uintptr(unsafe.Pointer(pdwSize)), getUintptrFromBool(bOrder), uintptr(ulAf), uintptr(tableClass), uintptr(reserved))
+func getExtendedUDPTable(pUDPTable uintptr, pdwSize *uint32, bOrder bool, ulAf uint32, tableClass udpTableClass, reserved uint32) (errcode error) {
+	r1, _, _ := syscall.Syscall6(procGetExtendedUDPTable.Addr(), 6, pUDPTable, uintptr(unsafe.Pointer(pdwSize)), getUintptrFromBool(bOrder), uintptr(ulAf), uintptr(tableClass), uintptr(reserved))
 	if r1 != 0 {
 		errcode = syscall.Errno(r1)
 	}
