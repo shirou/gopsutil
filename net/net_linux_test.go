@@ -82,6 +82,7 @@ func TestIOCountersByFileParsing(t *testing.T) {
 func TestGetProcInodesAll(t *testing.T) {
 	waitForServer := make(chan bool)
 	go func(t *testing.T) { // TCP listening goroutine to have some opened inodes even in CI
+		t.Helper()
 		addr, err := net.ResolveTCPAddr("tcp", "localhost:0") // dynamically get a random open port from OS
 		if err != nil {
 			t.Skipf("unable to resolve localhost: %v", err)

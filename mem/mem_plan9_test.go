@@ -9,6 +9,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 var virtualMemoryTests = []struct {
@@ -34,7 +36,7 @@ func TestVirtualMemoryPlan9(t *testing.T) {
 			t.Setenv("HOST_ROOT", "testdata/plan9/virtualmemory/")
 
 			stat, err := VirtualMemory()
-			skipIfNotImplementedErr(t, err)
+			common.SkipIfNotImplementedErr(t, err)
 			require.NoError(t, err)
 			assert.Truef(t, reflect.DeepEqual(stat, tt.stat), "got: %+v\nwant: %+v", stat, tt.stat)
 		})
@@ -60,7 +62,7 @@ func TestSwapMemoryPlan9(t *testing.T) {
 			t.Setenv("HOST_ROOT", "testdata/plan9/virtualmemory/")
 
 			swap, err := SwapMemory()
-			skipIfNotImplementedErr(t, err)
+			common.SkipIfNotImplementedErr(t, err)
 			require.NoError(t, err)
 			assert.Truef(t, reflect.DeepEqual(swap, tt.swap), "got: %+v\nwant: %+v", swap, tt.swap)
 		})

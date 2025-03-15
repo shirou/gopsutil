@@ -3,7 +3,6 @@
 package sensors
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"testing"
@@ -25,18 +24,12 @@ func TestTemperatureStat_String(t *testing.T) {
 	assert.Equalf(t, s, fmt.Sprintf("%v", v), "TemperatureStat string is invalid, %v", fmt.Sprintf("%v", v))
 }
 
-func skipIfNotImplementedErr(t *testing.T, err error) {
-	if errors.Is(err, common.ErrNotImplementedError) {
-		t.Skip("not implemented")
-	}
-}
-
 func TestTemperatures(t *testing.T) {
 	if os.Getenv("CI") != "" {
 		t.Skip("Skip CI")
 	}
 	v, err := SensorsTemperatures()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	require.NoError(t, err)
 	assert.NotEmptyf(t, v, "Could not get temperature %v", v)
 	t.Log(v)

@@ -2,7 +2,6 @@
 package mem
 
 import (
-	"errors"
 	"fmt"
 	"runtime"
 	"testing"
@@ -13,19 +12,13 @@ import (
 	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
-func skipIfNotImplementedErr(t *testing.T, err error) {
-	if errors.Is(err, common.ErrNotImplementedError) {
-		t.Skip("not implemented")
-	}
-}
-
 func TestVirtualMemory(t *testing.T) {
 	if runtime.GOOS == "solaris" || runtime.GOOS == "illumos" {
 		t.Skip("Only .Total .Available are supported on Solaris/illumos")
 	}
 
 	v, err := VirtualMemory()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	require.NoError(t, err)
 	empty := &VirtualMemoryStat{}
 	assert.NotSamef(t, v, empty, "error %v", v)
@@ -66,7 +59,7 @@ func TestVirtualMemory(t *testing.T) {
 
 func TestSwapMemory(t *testing.T) {
 	v, err := SwapMemory()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	require.NoError(t, err)
 	empty := &SwapMemoryStat{}
 	assert.NotSamef(t, v, empty, "error %v", v)
@@ -106,7 +99,7 @@ func TestSwapMemoryStat_String(t *testing.T) {
 
 func TestSwapDevices(t *testing.T) {
 	v, err := SwapDevices()
-	skipIfNotImplementedErr(t, err)
+	common.SkipIfNotImplementedErr(t, err)
 	require.NoErrorf(t, err, "error calling SwapDevices: %v", err)
 
 	t.Logf("SwapDevices() -> %+v", v)
