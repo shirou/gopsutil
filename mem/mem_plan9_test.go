@@ -6,6 +6,9 @@ package mem
 import (
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var virtualMemoryTests = []struct {
@@ -32,12 +35,8 @@ func TestVirtualMemoryPlan9(t *testing.T) {
 
 			stat, err := VirtualMemory()
 			skipIfNotImplementedErr(t, err)
-			if err != nil {
-				t.Errorf("error %v", err)
-			}
-			if !reflect.DeepEqual(stat, tt.stat) {
-				t.Errorf("got: %+v\nwant: %+v", stat, tt.stat)
-			}
+			require.NoError(t, err)
+			assert.Truef(t, reflect.DeepEqual(stat, tt.stat), "got: %+v\nwant: %+v", stat, tt.stat)
 		})
 	}
 }
@@ -62,12 +61,8 @@ func TestSwapMemoryPlan9(t *testing.T) {
 
 			swap, err := SwapMemory()
 			skipIfNotImplementedErr(t, err)
-			if err != nil {
-				t.Errorf("error %v", err)
-			}
-			if !reflect.DeepEqual(swap, tt.swap) {
-				t.Errorf("got: %+v\nwant: %+v", swap, tt.swap)
-			}
+			require.NoError(t, err)
+			assert.Truef(t, reflect.DeepEqual(swap, tt.swap), "got: %+v\nwant: %+v", swap, tt.swap)
 		})
 	}
 }
