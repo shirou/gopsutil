@@ -11,6 +11,8 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 var timesTests = []struct {
@@ -35,7 +37,7 @@ func TestTimesPlan9(t *testing.T) {
 		t.Run(tt.mockedRootFS, func(t *testing.T) {
 			t.Setenv("HOST_ROOT", filepath.Join("testdata/plan9", tt.mockedRootFS))
 			stats, err := Times(false)
-			skipIfNotImplementedErr(t, err)
+			common.SkipIfNotImplementedErr(t, err)
 			require.NoError(t, err)
 			eps := cmpopts.EquateApprox(0, 0.00000001)
 			assert.Truef(t, cmp.Equal(stats, tt.stats, eps), "got: %+v\nwant: %+v", stats, tt.stats)
