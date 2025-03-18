@@ -50,7 +50,7 @@ func TestBootTime(t *testing.T) {
 	common.SkipIfNotImplementedErr(t, err)
 	require.NoError(t, err)
 	assert.NotZerof(t, v, "Could not get boot time %v", v)
-	assert.GreaterOrEqualf(t, v, 946652400, "Invalid Boottime, older than 2000-01-01")
+	assert.GreaterOrEqualf(t, v, uint64(946652400), "Invalid Boottime, older than 2000-01-01")
 	t.Logf("first boot time: %d", v)
 
 	v2, err := BootTime()
