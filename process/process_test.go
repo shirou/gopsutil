@@ -384,7 +384,7 @@ func TestCreateTime(t *testing.T) {
 	common.SkipIfNotImplementedErr(t, err)
 	require.NoError(t, err)
 
-	assert.GreaterOrEqualf(t, c, 1420000000, "process created time is wrong.")
+	assert.GreaterOrEqualf(t, c, int64(1420000000), "process created time is wrong.")
 
 	gotElapsed := time.Since(time.Unix(int64(c/1000), 0))
 	maxElapsed := time.Duration(20 * time.Second)
