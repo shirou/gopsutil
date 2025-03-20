@@ -260,7 +260,7 @@ Some code is ported from Ohai. Many thanks.
 |children            |x      |x        |x        |x      |x        |
 |connections         |x      |         |x        |x      |         |
 |is\_running         |       |         |         |       |         |
-|page\_faults        |x      |         |         |       |         |
+|page\_faults        |x      |         |         |       |x        |
 
 ### gopsutil Original Metrics
 

@@ -12,15 +12,15 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func TestExVirtualMemory(t *testing.T) {
 	ex := NewExLinux()
 
 	v, err := ex.VirtualMemory()
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 
 	t.Log(v)
 }
@@ -129,13 +129,9 @@ func TestVirtualMemoryLinux(t *testing.T) {
 			t.Setenv("HOST_PROC", filepath.Join("testdata/linux/virtualmemory/", tt.mockedRootFS, "proc"))
 
 			stat, err := VirtualMemory()
-			skipIfNotImplementedErr(t, err)
-			if err != nil {
-				t.Errorf("error %v", err)
-			}
-			if !reflect.DeepEqual(stat, tt.stat) {
-				t.Errorf("got: %+v\nwant: %+v", stat, tt.stat)
-			}
+			common.SkipIfNotImplementedErr(t, err)
+			require.NoError(t, err)
+			assert.Truef(t, reflect.DeepEqual(stat, tt.stat), "got: %+v\nwant: %+v", stat, tt.stat)
 		})
 	}
 }
@@ -151,17 +147,16 @@ const invalidFile = `INVALID				Type		Size		Used		Priority
 `
 
 func TestParseSwapsFile_ValidFile(t *testing.T) {
-	assert := assert.New(t)
 	stats, err := parseSwapsFile(context.Background(), strings.NewReader(validFile))
 	require.NoError(t, err)
 
-	assert.Equal(SwapDevice{
+	assert.Equal(t, SwapDevice{
 		Name:      "/dev/dm-2",
 		UsedBytes: 502566912,
 		FreeBytes: 68128825344,
 	}, *stats[0])
 
-	assert.Equal(SwapDevice{
+	assert.Equal(t, SwapDevice{
 		Name:      "/swapfile",
 		UsedBytes: 1024,
 		FreeBytes: 1024,

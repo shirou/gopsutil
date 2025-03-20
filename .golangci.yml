@@ -22,8 +22,10 @@ linters:
     - predeclared
     - revive
     - testifylint
+    - thelper
     - typecheck
     - unparam
+    - usetesting
   disable:
     - errcheck
     - govet
@@ -40,7 +42,7 @@ linters-settings:
     blocked:
       modules:
         - io/ioutil:
-            recommandations:
+            recommendations:
               - io
               - os
   gosec:
@@ -91,14 +93,17 @@ linters-settings:
       - name: time-naming
       - name: unexported-return
       - name: unnecessary-stmt
-        disabled: true
       - name: unreachable-code
       - name: unused-parameter
         disabled: true
       - name: use-any
-        disabled: true
       - name: var-declaration
       - name: var-naming
         disabled: true
   testifylint:
     enable-all: true
+  usetesting:
+      os-create-temp: false
+      os-mkdir-temp: false
+run:
+  timeout: 5m

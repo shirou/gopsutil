@@ -13,9 +13,10 @@ import (
 	"time"
 	"unsafe"
 
+	"golang.org/x/sys/windows"
+
 	"github.com/shirou/gopsutil/v4/internal/common"
 	"github.com/shirou/gopsutil/v4/process"
-	"golang.org/x/sys/windows"
 )
 
 var (
@@ -79,7 +80,7 @@ func HostIDWithContext(ctx context.Context) (string, error) {
 	hostID := windows.UTF16ToString(regBuf[:])
 	hostIDLen := len(hostID)
 	if hostIDLen != uuidLen {
-		return "", fmt.Errorf("HostID incorrect: %q\n", hostID)
+		return "", fmt.Errorf("HostID incorrect: %q\n", hostID) //nolint:revive //FIXME
 	}
 
 	return strings.ToLower(hostID), nil
@@ -135,15 +136,15 @@ func BootTimeWithContext(ctx context.Context) (uint64, error) {
 	return t, nil
 }
 
-func PlatformInformationWithContext(ctx context.Context) (platform string, family string, version string, err error) {
-	platform, family, _, displayVersion, err := platformInformation(ctx)
+func PlatformInformationWithContext(_ context.Context) (platform string, family string, version string, err error) {
+	platform, family, _, displayVersion, err := platformInformation()
 	if err != nil {
 		return "", "", "", err
 	}
 	return platform, family, displayVersion, nil
 }
 
-func platformInformation(ctx context.Context) (platform, family, version, displayVersion string, err error) {
+func platformInformation() (platform, family, version, displayVersion string, err error) {
 	// GetVersionEx lies on Windows 8.1 and returns as Windows 8 if we don't declare compatibility in manifest
 	// RtlGetVersion bypasses this lying layer and returns the true Windows version
 	// https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/content/wdm/nf-wdm-rtlgetversion
@@ -152,26 +153,26 @@ func platformInformation(ctx context.Context) (platform, family, version, displa
 	osInfo.dwOSVersionInfoSize = uint32(unsafe.Sizeof(osInfo))
 	ret, _, err := procRtlGetVersion.Call(uintptr(unsafe.Pointer(&osInfo)))
 	if ret != 0 {
-		return
+		return //nolint:nakedret //FIXME
 	}
 
 	// Platform
 	var h windows.Handle // like HostIDWithContext(), we query the registry using the raw windows.RegOpenKeyEx/RegQueryValueEx
 	err = windows.RegOpenKeyEx(windows.HKEY_LOCAL_MACHINE, windows.StringToUTF16Ptr(`SOFTWARE\Microsoft\Windows NT\CurrentVersion`), 0, windows.KEY_READ|windows.KEY_WOW64_64KEY, &h)
 	if err != nil {
-		return
+		return //nolint:nakedret //FIXME
 	}
 	defer windows.RegCloseKey(h)
 	var bufLen uint32
 	var valType uint32
 	err = windows.RegQueryValueEx(h, windows.StringToUTF16Ptr(`ProductName`), nil, &valType, nil, &bufLen)
 	if err != nil {
-		return
+		return //nolint:nakedret //FIXME
 	}
 	regBuf := make([]uint16, bufLen/2+1)
 	err = windows.RegQueryValueEx(h, windows.StringToUTF16Ptr(`ProductName`), nil, &valType, (*byte)(unsafe.Pointer(&regBuf[0])), &bufLen)
 	if err != nil {
-		return
+		return //nolint:nakedret //FIXME
 	}
 	platform = windows.UTF16ToString(regBuf[:])
 	if strings.Contains(platform, "Windows 10") { // check build number to determine whether it's actually Windows 11
@@ -243,8 +244,8 @@ func VirtualizationWithContext(ctx context.Context) (string, string, error) {
 	return "", "", common.ErrNotImplementedError
 }
 
-func KernelVersionWithContext(ctx context.Context) (string, error) {
-	_, _, version, _, err := platformInformation(ctx)
+func KernelVersionWithContext(_ context.Context) (string, error) {
+	_, _, version, _, err := platformInformation()
 	return version, err
 }
 

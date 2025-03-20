@@ -7,8 +7,9 @@ import (
 	"context"
 	"math"
 
-	"github.com/shirou/gopsutil/v4/internal/common"
 	"github.com/yusufpapurcu/wmi"
+
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 type msAcpi_ThermalZoneTemperature struct {

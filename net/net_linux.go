@@ -128,7 +128,7 @@ func IOCountersByFileWithContext(ctx context.Context, pernic bool, filename stri
 	}
 
 	if !pernic {
-		return getIOCountersAll(ret)
+		return getIOCountersAll(ret), nil
 	}
 
 	return ret, nil
@@ -571,8 +571,7 @@ func (p *process) fillFromStatus(ctx context.Context) error {
 			continue
 		}
 		value := tabParts[1]
-		switch strings.TrimRight(tabParts[0], ":") {
-		case "Uid":
+		if strings.TrimRight(tabParts[0], ":") == "Uid" {
 			p.uids = make([]int32, 0, 4)
 			for _, i := range strings.Split(value, "\t") {
 				v, err := strconv.ParseInt(i, 10, 32)

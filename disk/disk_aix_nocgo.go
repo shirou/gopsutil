@@ -9,8 +9,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/shirou/gopsutil/v4/internal/common"
 	"golang.org/x/sys/unix"
+
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 var startBlank = regexp.MustCompile(`^\s+`)
@@ -25,7 +26,7 @@ var (
 	}
 )
 
-func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {
+func PartitionsWithContext(ctx context.Context, _ bool) ([]PartitionStat, error) {
 	var ret []PartitionStat
 
 	out, err := invoke.CommandWithContext(ctx, "mount")
