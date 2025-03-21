@@ -27,16 +27,16 @@ const ( // Conntrack Column numbers
 	ctINVALID
 	ctIGNORE
 	ctDELETE
-	ctDELETE_LIST
+	ctDELETE_LIST //nolint:revive //FIXME
 	ctINSERT
-	ctINSERT_FAILED
+	ctINSERT_FAILED //nolint:revive //FIXME
 	ctDROP
-	ctEARLY_DROP
-	ctICMP_ERROR
-	CT_EXPEctNEW
-	ctEXPECT_CREATE
-	CT_EXPEctDELETE
-	ctSEARCH_RESTART
+	ctEARLY_DROP     //nolint:revive //FIXME
+	ctICMP_ERROR     //nolint:revive //FIXME
+	CT_EXPEctNEW     //nolint:revive //FIXME
+	ctEXPECT_CREATE  //nolint:revive //FIXME
+	CT_EXPEctDELETE  //nolint:revive //FIXME
+	ctSEARCH_RESTART //nolint:revive //FIXME
 )
 
 func IOCountersWithContext(ctx context.Context, pernic bool) ([]IOCountersStat, error) {

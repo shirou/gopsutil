@@ -99,7 +99,10 @@ linters-settings:
       - name: use-any
       - name: var-declaration
       - name: var-naming
-        disabled: true
+        arguments:
+          - ["ID"] # AllowList
+          - ["VM"] # DenyList
+          - - upperCaseConst: true # Extra parameter (upperCaseConst|skipPackageNameChecks)
   testifylint:
     enable-all: true
   usetesting:

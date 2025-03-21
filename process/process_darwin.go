@@ -33,7 +33,7 @@ const (
 	KernProcPathname = 12 // path to executable
 )
 
-type _Ctype_struct___0 struct {
+type _Ctype_struct___0 struct { //nolint:revive //FIXME
 	Pad uint64
 }
 
