@@ -70,7 +70,7 @@ func BootTimeWithContext(ctx context.Context) (uint64, error) {
 	return common.BootTimeWithContext(ctx, enableBootTimeCache)
 }
 
-func UptimeWithContext(ctx context.Context) (uint64, error) {
+func UptimeWithContext(_ context.Context) (uint64, error) {
 	sysinfo := &unix.Sysinfo_t{}
 	if err := unix.Sysinfo(sysinfo); err != nil {
 		return 0, err
@@ -324,7 +324,7 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 	return platform, family, version, nil
 }
 
-func KernelVersionWithContext(ctx context.Context) (version string, err error) {
+func KernelVersionWithContext(_ context.Context) (version string, err error) {
 	var utsname unix.Utsname
 	err = unix.Uname(&utsname)
 	if err != nil {

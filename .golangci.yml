@@ -99,7 +99,6 @@ linters-settings:
       - name: unnecessary-stmt
       - name: unreachable-code
       - name: unused-parameter
-        disabled: true
       - name: use-any
       - name: var-declaration
       - name: var-naming

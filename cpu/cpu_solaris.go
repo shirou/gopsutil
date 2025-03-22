@@ -265,6 +265,6 @@ func parseProcessorInfo(cmdOutput string) ([]InfoStat, error) {
 	return result, nil
 }
 
-func CountsWithContext(ctx context.Context, logical bool) (int, error) {
+func CountsWithContext(_ context.Context, _ bool) (int, error) {
 	return runtime.NumCPU(), nil
 }

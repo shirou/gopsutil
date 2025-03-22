@@ -17,7 +17,7 @@ func VirtualMemory() (*VirtualMemoryStat, error) {
 	return VirtualMemoryWithContext(context.Background())
 }
 
-func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
+func VirtualMemoryWithContext(_ context.Context) (*VirtualMemoryStat, error) {
 	pageSize, err := common.SysctlUint("vm.stats.vm.v_page_size")
 	if err != nil {
 		return nil, err
@@ -110,7 +110,7 @@ type xswdev11 struct {
 	Used    int32  // Used is the number of blocks used
 }
 
-func SwapMemoryWithContext(ctx context.Context) (*SwapMemoryStat, error) {
+func SwapMemoryWithContext(_ context.Context) (*SwapMemoryStat, error) {
 	// FreeBSD can have multiple swap devices so we total them up
 	i, err := common.SysctlUint("vm.nswapdev")
 	if err != nil {
