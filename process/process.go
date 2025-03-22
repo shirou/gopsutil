@@ -269,13 +269,11 @@ func (p *Process) PercentWithContext(ctx context.Context, interval time.Duration
 		if err != nil {
 			return 0, err
 		}
-	} else {
-		if p.lastCPUTimes == nil {
-			// invoked first time
-			p.lastCPUTimes = cpuTimes
-			p.lastCPUTime = now
-			return 0, nil
-		}
+	} else if p.lastCPUTimes == nil {
+		// invoked first time
+		p.lastCPUTimes = cpuTimes
+		p.lastCPUTime = now
+		return 0, nil
 	}
 
 	numcpu := runtime.NumCPU()

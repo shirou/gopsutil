@@ -8,6 +8,7 @@ linters:
     - durationcheck
     - errorlint
     - gci
+    - gocritic
     - gofmt
     - gofumpt
     - goimports
@@ -38,6 +39,9 @@ linters-settings:
       - standard
       - default
       - prefix(github.com/shirou)
+  gocritic:
+    disabled-checks:
+      - captLocal
   gomodguard:
     blocked:
       modules:

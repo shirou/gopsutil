@@ -174,14 +174,14 @@ func platformInformation() (platform, family, version, displayVersion string, er
 	if err != nil {
 		return //nolint:nakedret //FIXME
 	}
-	platform = windows.UTF16ToString(regBuf[:])
+	platform = windows.UTF16ToString(regBuf)
 	if strings.Contains(platform, "Windows 10") { // check build number to determine whether it's actually Windows 11
 		err = windows.RegQueryValueEx(h, windows.StringToUTF16Ptr(`CurrentBuildNumber`), nil, &valType, nil, &bufLen)
 		if err == nil {
 			regBuf = make([]uint16, bufLen/2+1)
 			err = windows.RegQueryValueEx(h, windows.StringToUTF16Ptr(`CurrentBuildNumber`), nil, &valType, (*byte)(unsafe.Pointer(&regBuf[0])), &bufLen)
 			if err == nil {
-				buildNumberStr := windows.UTF16ToString(regBuf[:])
+				buildNumberStr := windows.UTF16ToString(regBuf)
 				if buildNumber, err := strconv.ParseInt(buildNumberStr, 10, 32); err == nil && buildNumber >= 22000 {
 					platform = strings.Replace(platform, "Windows 10", "Windows 11", 1)
 				}
@@ -196,7 +196,7 @@ func platformInformation() (platform, family, version, displayVersion string, er
 		regBuf = make([]uint16, bufLen/2+1)
 		err = windows.RegQueryValueEx(h, windows.StringToUTF16Ptr(`CSDVersion`), nil, &valType, (*byte)(unsafe.Pointer(&regBuf[0])), &bufLen)
 		if err == nil {
-			platform += " " + windows.UTF16ToString(regBuf[:])
+			platform += " " + windows.UTF16ToString(regBuf)
 		}
 	}
 
@@ -213,7 +213,7 @@ func platformInformation() (platform, family, version, displayVersion string, er
 	if err == nil {
 		regBuf := make([]uint16, bufLen/2+1)
 		err = windows.RegQueryValueEx(h, windows.StringToUTF16Ptr(`DisplayVersion`), nil, &valType, (*byte)(unsafe.Pointer(&regBuf[0])), &bufLen)
-		displayVersion = windows.UTF16ToString(regBuf[:])
+		displayVersion = windows.UTF16ToString(regBuf)
 	}
 
 	// PlatformFamily
