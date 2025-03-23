@@ -140,7 +140,7 @@ func PidExistsWithContext(ctx context.Context, pid int32) (bool, error) {
 	return false, err
 }
 
-func (p *Process) SendSignalWithContext(ctx context.Context, sig syscall.Signal) error {
+func (p *Process) SendSignalWithContext(_ context.Context, sig syscall.Signal) error {
 	process, err := os.FindProcess(int(p.Pid))
 	if err != nil {
 		return err
