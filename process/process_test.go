@@ -554,7 +554,7 @@ func TestOpenFiles(t *testing.T) {
 	assert.NotEmpty(t, v) // test always open files.
 
 	for _, vv := range v {
-		assert.NotEqual(t, "", vv.Path)
+		assert.NotEmpty(t, vv.Path)
 	}
 }
 
