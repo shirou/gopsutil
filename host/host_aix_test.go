@@ -5,6 +5,8 @@ package host
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestParseUptimeValidInput(t *testing.T) {
@@ -21,9 +23,7 @@ func TestParseUptimeValidInput(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		got := parseUptime(tc.input)
-		if got != tc.expected {
-			t.Errorf("parseUptime(%q) = %v, want %v", tc.input, got, tc.expected)
-		}
+		assert.Equalf(t, tc.expected, got, "parseUptime(%q) = %v, want %v", tc.input, got, tc.expected)
 	}
 }
 
@@ -36,8 +36,6 @@ func TestParseUptimeInvalidInput(t *testing.T) {
 
 	for _, tc := range testCases {
 		got := parseUptime(tc)
-		if got > 0 {
-			t.Errorf("parseUptime(%q) expected zero to be returned, received %v", tc, got)
-		}
+		assert.LessOrEqualf(t, got, 0, "parseUptime(%q) expected zero to be returned, received %v", tc, got)
 	}
 }

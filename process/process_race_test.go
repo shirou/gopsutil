@@ -6,6 +6,10 @@ package process
 import (
 	"sync"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func TestPpid_Race(t *testing.T) {
@@ -17,10 +21,8 @@ func TestPpid_Race(t *testing.T) {
 		go func(j int) {
 			ppid, err := p.Ppid()
 			wg.Done()
-			skipIfNotImplementedErr(t, err)
-			if err != nil {
-				t.Errorf("Ppid() failed, %v", err)
-			}
+			common.SkipIfNotImplementedErr(t, err)
+			require.NoError(t, err, "Ppid() failed, %v", err)
 
 			if j == 9 {
 				t.Logf("Ppid(): %d", ppid)

@@ -9,8 +9,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/shirou/gopsutil/v4/internal/common"
 	"golang.org/x/sys/unix"
+
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 var startBlank = regexp.MustCompile(`^\s+`)
@@ -25,7 +26,7 @@ var (
 	}
 )
 
-func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {
+func PartitionsWithContext(ctx context.Context, _ bool) ([]PartitionStat, error) {
 	var ret []PartitionStat
 
 	out, err := invoke.CommandWithContext(ctx, "mount")
@@ -97,7 +98,7 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 		return &UsageStat{}, common.ErrNotImplementedError
 	}
 
-	hf := strings.Fields(strings.Replace(lines[0], "Mounted on", "Path", -1)) // headers
+	hf := strings.Fields(strings.ReplaceAll(lines[0], "Mounted on", "Path")) // headers
 	for line := 1; line < len(lines); line++ {
 		fs := strings.Fields(lines[line]) // values
 		for i, header := range hf {
@@ -136,7 +137,7 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 					return nil, err
 				}
 			case `%Used`:
-				val, err := strconv.ParseInt(strings.Replace(fs[i], "%", "", -1), 10, 32)
+				val, err := strconv.ParseInt(strings.ReplaceAll(fs[i], "%", ""), 10, 32)
 				if err != nil {
 					return nil, err
 				}
@@ -152,7 +153,7 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 					return nil, err
 				}
 			case `%Iused`:
-				val, err := strconv.ParseInt(strings.Replace(fs[i], "%", "", -1), 10, 32)
+				val, err := strconv.ParseInt(strings.ReplaceAll(fs[i], "%", ""), 10, 32)
 				if err != nil {
 					return nil, err
 				}
@@ -177,7 +178,7 @@ func GetMountFSTypeWithContext(ctx context.Context, mp string) (string, error) {
 	}
 
 	// Kind of inefficient, but it works
-	lines := strings.Split(string(out[:]), "\n")
+	lines := strings.Split(string(out), "\n")
 	for line := 1; line < len(lines); line++ {
 		fields := strings.Fields(lines[line])
 		if strings.TrimSpace(fields[0]) == mp {

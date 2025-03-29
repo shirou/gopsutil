@@ -7,18 +7,19 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func TestTimesEmpty(t *testing.T) {
 	t.Setenv("HOST_PROC", "testdata/linux/times_empty")
 	_, err := Times(true)
-	if err != nil {
-		t.Error("Times(true) failed")
-	}
+	require.NoErrorf(t, err, "Times(true) failed")
 	_, err = Times(false)
-	if err != nil {
-		t.Error("Times(false) failed")
-	}
+	assert.NoErrorf(t, err, "Times(false) failed")
 }
 
 func TestParseStatLine_424(t *testing.T) {
@@ -77,32 +78,20 @@ func TestCountsAgainstLscpu(t *testing.T) {
 	expectedPhysical := coresPerSocket * sockets * books * drawers
 	expectedLogical := expectedPhysical * threadsPerCore
 	physical, err := Counts(false)
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("error %v", err)
-	}
+	common.SkipIfNotImplementedErr(t, err)
+	require.NoError(t, err)
 	logical, err := Counts(true)
-	skipIfNotImplementedErr(t, err)
-	if err != nil {
-		t.Errorf("error %v", err)
-	}
-	if expectedPhysical != physical {
-		t.Errorf("expected %v, got %v", expectedPhysical, physical)
-	}
-	if expectedLogical != logical {
-		t.Errorf("expected %v, got %v", expectedLogical, logical)
-	}
+	common.SkipIfNotImplementedErr(t, err)
+	require.NoError(t, err)
+	assert.Equalf(t, expectedPhysical, physical, "expected %v, got %v", expectedPhysical, physical)
+	assert.Equalf(t, expectedLogical, logical, "expected %v, got %v", expectedLogical, logical)
 }
 
 func TestCountsLogicalAndroid_1037(t *testing.T) { // https://github.com/shirou/gopsutil/issues/1037
 	t.Setenv("HOST_PROC", "testdata/linux/1037/proc")
 
 	count, err := Counts(true)
-	if err != nil {
-		t.Errorf("error %v", err)
-	}
+	require.NoError(t, err)
 	expected := 8
-	if count != expected {
-		t.Errorf("expected %v, got %v", expected, count)
-	}
+	assert.Equalf(t, expected, count, "expected %v, got %v", expected, count)
 }

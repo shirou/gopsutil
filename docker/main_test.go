@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestSysAdvancedDockerInfo(t *testing.T) {
+func TestSysAdvancedDockerInfo(_ *testing.T) {
 	list, err := GetDockerIDList()
 	if err != nil {
 		fmt.Println(err)

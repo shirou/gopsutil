@@ -7,6 +7,8 @@ import (
 	"reflect"
 	"sort"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseISAInfo(t *testing.T) {
@@ -51,20 +53,14 @@ func TestParseISAInfo(t *testing.T) {
 
 	for _, tc := range cases {
 		content, err := os.ReadFile(filepath.Join("testdata", "solaris", tc.filename))
-		if err != nil {
-			t.Errorf("cannot read test case: %s", err)
-		}
+		require.NoErrorf(t, err, "cannot read test case: %s", err)
 
 		sort.Strings(tc.expected)
 
 		flags, err := parseISAInfo(string(content))
-		if err != nil {
-			t.Fatalf("parseISAInfo: %s", err)
-		}
+		require.NoErrorf(t, err, "parseISAInfo: %s", err)
 
-		if !reflect.DeepEqual(tc.expected, flags) {
-			t.Fatalf("Bad flags\nExpected: %v\n   Actual: %v", tc.expected, flags)
-		}
+		require.Truef(t, reflect.DeepEqual(tc.expected, flags), "Bad flags\nExpected: %v\n   Actual: %v", tc.expected, flags)
 	}
 }
 
@@ -140,17 +136,11 @@ func TestParseProcessorInfo(t *testing.T) {
 
 	for _, tc := range cases {
 		content, err := os.ReadFile(filepath.Join("testdata", "solaris", tc.filename))
-		if err != nil {
-			t.Errorf("cannot read test case: %s", err)
-		}
+		require.NoErrorf(t, err, "cannot read test case: %s", err)
 
 		cpus, err := parseProcessorInfo(string(content))
-		if err != nil {
-			t.Errorf("cannot parse processor info: %s", err)
-		}
+		require.NoErrorf(t, err, "cannot parse processor info: %s", err)
 
-		if !reflect.DeepEqual(tc.expected, cpus) {
-			t.Fatalf("Bad Processor Info\nExpected: %v\n   Actual: %v", tc.expected, cpus)
-		}
+		require.Truef(t, reflect.DeepEqual(tc.expected, cpus), "Bad Processor Info\nExpected: %v\n   Actual: %v", tc.expected, cpus)
 	}
 }

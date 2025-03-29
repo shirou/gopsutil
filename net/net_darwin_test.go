@@ -40,6 +40,7 @@ func TestParseNetstatLineHeader(t *testing.T) {
 }
 
 func assertLoopbackStat(t *testing.T, err error, stat *IOCountersStat) {
+	t.Helper()
 	assert.NoError(t, err)
 	assert.Equal(t, uint64(869107), stat.PacketsRecv)
 	assert.Equal(t, uint64(0), stat.Errin)
@@ -79,7 +80,7 @@ func TestParseNetstatOutput(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, nsInterfaces, 8)
 	for index := range nsInterfaces {
-		assert.NotNil(t, nsInterfaces[index].stat, "Index %d", index)
+		assert.NotNilf(t, nsInterfaces[index].stat, "Index %d", index)
 	}
 
 	assert.NotNil(t, nsInterfaces[0].linkID)
@@ -110,7 +111,7 @@ func TestParseNetstatTruncated(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, nsInterfaces, 11)
 	for index := range nsInterfaces {
-		assert.NotNil(t, nsInterfaces[index].stat, "Index %d", index)
+		assert.NotNilf(t, nsInterfaces[index].stat, "Index %d", index)
 	}
 
 	const truncatedIface = "utun8"
@@ -137,5 +138,5 @@ func TestParseNetstatTruncated(t *testing.T) {
 
 	mapUsage := newMapInterfaceNameUsage(nsInterfaces)
 	assert.True(t, mapUsage.isTruncated())
-	assert.Len(t, mapUsage.notTruncated(), 3, "en0, gif0 and stf0")
+	assert.Lenf(t, mapUsage.notTruncated(), 3, "en0, gif0 and stf0")
 }

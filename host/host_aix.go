@@ -14,7 +14,7 @@ import (
 
 // from https://www.ibm.com/docs/en/aix/7.2?topic=files-utmph-file
 const (
-	user_PROCESS = 7
+	user_PROCESS = 7 //nolint:revive //FIXME
 )
 
 func HostIDWithContext(ctx context.Context) (string, error) {
@@ -24,10 +24,10 @@ func HostIDWithContext(ctx context.Context) (string, error) {
 	}
 
 	// The command always returns an extra newline, so we make use of Split() to get only the first line
-	return strings.Split(string(out[:]), "\n")[0], nil
+	return strings.Split(string(out), "\n")[0], nil
 }
 
-func numProcs(ctx context.Context) (uint64, error) {
+func numProcs(_ context.Context) (uint64, error) {
 	return 0, common.ErrNotImplementedError
 }
 
@@ -38,10 +38,10 @@ func BootTimeWithContext(ctx context.Context) (btime uint64, err error) {
 	}
 
 	if ut <= 0 {
-		return 0, errors.New("Uptime was not set, so cannot calculate boot time from it.")
+		return 0, errors.New("uptime was not set, so cannot calculate boot time from it")
 	}
 
-	ut = ut * 60
+	ut *= 60
 	return timeSince(ut), nil
 }
 
@@ -59,7 +59,7 @@ func UptimeWithContext(ctx context.Context) (uint64, error) {
 		return 0, err
 	}
 
-	return parseUptime(string(out[:])), nil
+	return parseUptime(string(out)), nil
 }
 
 func parseUptime(uptime string) uint64 {
@@ -110,7 +110,7 @@ func parseUptime(uptime string) uint64 {
 		if err != nil {
 			return 0
 		}
-	case ut[3] == "mins," || ut[3] == "mins,":
+	case ut[3] == "min," || ut[3] == "mins,":
 		mins, err = strconv.ParseUint(ut[2], 10, 64)
 		if err != nil {
 			return 0
@@ -166,17 +166,17 @@ func PlatformInformationWithContext(ctx context.Context) (platform string, famil
 	if err != nil {
 		return "", "", "", err
 	}
-	platform = strings.TrimRight(string(out[:]), "\n")
+	platform = strings.TrimRight(string(out), "\n")
 
 	// Set the family
-	family = strings.TrimRight(string(out[:]), "\n")
+	family = strings.TrimRight(string(out), "\n")
 
 	// Set the version
 	out, err = invoke.CommandWithContext(ctx, "oslevel")
 	if err != nil {
 		return "", "", "", err
 	}
-	version = strings.TrimRight(string(out[:]), "\n")
+	version = strings.TrimRight(string(out), "\n")
 
 	return platform, family, version, nil
 }
@@ -186,7 +186,7 @@ func KernelVersionWithContext(ctx context.Context) (version string, err error) {
 	if err != nil {
 		return "", err
 	}
-	version = strings.TrimRight(string(out[:]), "\n")
+	version = strings.TrimRight(string(out), "\n")
 
 	return version, nil
 }
@@ -196,11 +196,11 @@ func KernelArch() (arch string, err error) {
 	if err != nil {
 		return "", err
 	}
-	arch = strings.TrimRight(string(out[:]), "\n")
+	arch = strings.TrimRight(string(out), "\n")
 
 	return arch, nil
 }
 
-func VirtualizationWithContext(ctx context.Context) (string, string, error) {
+func VirtualizationWithContext(_ context.Context) (string, string, error) {
 	return "", "", common.ErrNotImplementedError
 }
