@@ -118,7 +118,7 @@ type spnvmeDataWrapper struct {
 	} `json:"SPNVMeDataType"`
 }
 
-func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
+func SerialNumberWithContext(ctx context.Context, _ string) (string, error) {
 	output, err := invoke.CommandWithContext(ctx, "system_profiler", "SPNVMeDataType", "-json")
 	if err != nil {
 		return "", err
