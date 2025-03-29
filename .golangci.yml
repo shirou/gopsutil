@@ -15,6 +15,7 @@ linters:
     - gomodguard
     - gosec
     - gosimple
+    - govet
     - importas
     - misspell
     - nakedret
@@ -29,7 +30,6 @@ linters:
     - usetesting
   disable:
     - errcheck
-    - govet
     - ineffassign
     - staticcheck
     - unused
@@ -52,6 +52,13 @@ linters-settings:
   gosec:
     excludes:
       - G115
+  govet:
+    disable:
+      - copylocks
+      - fieldalignment
+      - shadow
+      - testinggoroutine
+    enable-all: true
   perfsprint:
     # Optimizes even if it requires an int or uint type cast.
     int-conversion: true
