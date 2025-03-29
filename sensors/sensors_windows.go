@@ -12,7 +12,7 @@ import (
 	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
-type msAcpi_ThermalZoneTemperature struct {
+type msAcpi_ThermalZoneTemperature struct { //nolint:revive //FIXME
 	Active             bool
 	CriticalTripPoint  uint32
 	CurrentTemperature uint32

@@ -7,6 +7,9 @@ import (
 	"os"
 	"runtime"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestInfo_AppleSilicon(t *testing.T) {
@@ -15,19 +18,13 @@ func TestInfo_AppleSilicon(t *testing.T) {
 	}
 
 	v, err := Info()
-	if err != nil {
-		t.Errorf("cpu info should be implemented on darwin systems")
-	}
+	require.NoErrorf(t, err, "cpu info should be implemented on darwin systems")
 
 	for _, vv := range v {
-		if vv.ModelName == "" {
-			t.Errorf("could not get CPU info: %v", vv)
-		}
+		assert.NotEmptyf(t, vv.ModelName, "could not get CPU info: %v", vv)
 		if vv.Mhz <= 0 && os.Getenv("CI") != "true" {
 			t.Errorf("could not get frequency of: %s", vv.ModelName)
 		}
-		if vv.Mhz > 6000 {
-			t.Errorf("cpu frequency is absurdly high value: %f MHz", vv.Mhz)
-		}
+		assert.LessOrEqualf(t, vv.Mhz, float64(6000), "cpu frequency is absurdly high value: %f MHz", vv.Mhz)
 	}
 }

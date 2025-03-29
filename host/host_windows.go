@@ -56,7 +56,7 @@ type systemInfo struct {
 	wProcessorRevision          uint16
 }
 
-func HostIDWithContext(ctx context.Context) (string, error) {
+func HostIDWithContext(_ context.Context) (string, error) {
 	// there has been reports of issues on 32bit using golang.org/x/sys/windows/registry, see https://github.com/shirou/gopsutil/pull/312#issuecomment-277422612
 	// for rationale of using windows.RegOpenKeyEx/RegQueryValueEx instead of registry.OpenKey/GetStringValue
 	var h windows.Handle
@@ -94,7 +94,7 @@ func numProcs(ctx context.Context) (uint64, error) {
 	return uint64(len(procs)), nil
 }
 
-func UptimeWithContext(ctx context.Context) (uint64, error) {
+func UptimeWithContext(_ context.Context) (uint64, error) {
 	up, err := uptimeMillis()
 	if err != nil {
 		return 0, err
@@ -118,7 +118,7 @@ func uptimeMillis() (uint64, error) {
 // cachedBootTime must be accessed via atomic.Load/StoreUint64
 var cachedBootTime uint64
 
-func BootTimeWithContext(ctx context.Context) (uint64, error) {
+func BootTimeWithContext(_ context.Context) (uint64, error) {
 	if enableBootTimeCache {
 		t := atomic.LoadUint64(&cachedBootTime)
 		if t != 0 {
@@ -174,14 +174,14 @@ func platformInformation() (platform, family, version, displayVersion string, er
 	if err != nil {
 		return //nolint:nakedret //FIXME
 	}
-	platform = windows.UTF16ToString(regBuf[:])
+	platform = windows.UTF16ToString(regBuf)
 	if strings.Contains(platform, "Windows 10") { // check build number to determine whether it's actually Windows 11
 		err = windows.RegQueryValueEx(h, windows.StringToUTF16Ptr(`CurrentBuildNumber`), nil, &valType, nil, &bufLen)
 		if err == nil {
 			regBuf = make([]uint16, bufLen/2+1)
 			err = windows.RegQueryValueEx(h, windows.StringToUTF16Ptr(`CurrentBuildNumber`), nil, &valType, (*byte)(unsafe.Pointer(&regBuf[0])), &bufLen)
 			if err == nil {
-				buildNumberStr := windows.UTF16ToString(regBuf[:])
+				buildNumberStr := windows.UTF16ToString(regBuf)
 				if buildNumber, err := strconv.ParseInt(buildNumberStr, 10, 32); err == nil && buildNumber >= 22000 {
 					platform = strings.Replace(platform, "Windows 10", "Windows 11", 1)
 				}
@@ -196,7 +196,7 @@ func platformInformation() (platform, family, version, displayVersion string, er
 		regBuf = make([]uint16, bufLen/2+1)
 		err = windows.RegQueryValueEx(h, windows.StringToUTF16Ptr(`CSDVersion`), nil, &valType, (*byte)(unsafe.Pointer(&regBuf[0])), &bufLen)
 		if err == nil {
-			platform += " " + windows.UTF16ToString(regBuf[:])
+			platform += " " + windows.UTF16ToString(regBuf)
 		}
 	}
 
@@ -213,7 +213,7 @@ func platformInformation() (platform, family, version, displayVersion string, er
 	if err == nil {
 		regBuf := make([]uint16, bufLen/2+1)
 		err = windows.RegQueryValueEx(h, windows.StringToUTF16Ptr(`DisplayVersion`), nil, &valType, (*byte)(unsafe.Pointer(&regBuf[0])), &bufLen)
-		displayVersion = windows.UTF16ToString(regBuf[:])
+		displayVersion = windows.UTF16ToString(regBuf)
 	}
 
 	// PlatformFamily
@@ -234,13 +234,13 @@ func platformInformation() (platform, family, version, displayVersion string, er
 	return platform, family, version, displayVersion, nil
 }
 
-func UsersWithContext(ctx context.Context) ([]UserStat, error) {
+func UsersWithContext(_ context.Context) ([]UserStat, error) {
 	var ret []UserStat
 
 	return ret, common.ErrNotImplementedError
 }
 
-func VirtualizationWithContext(ctx context.Context) (string, string, error) {
+func VirtualizationWithContext(_ context.Context) (string, string, error) {
 	return "", "", common.ErrNotImplementedError
 }
 

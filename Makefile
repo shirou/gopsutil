@@ -34,6 +34,7 @@ build_test:  ## test only buildable
 	GOOS=netbsd go test ./... | $(BUILD_FAIL_PATTERN)
 	GOOS=openbsd go test ./... | $(BUILD_FAIL_PATTERN)
 	GOOS=plan9 go test ./... | $(BUILD_FAIL_PATTERN)
+	CGO_ENABLED=0 GOOS=aix GOARCH=ppc64  go test ./... | $(BUILD_FAIL_PATTERN)
 
 ifeq ($(shell uname -s), Darwin)
 	CGO_ENABLED=1 GOOS=darwin go test ./... | $(BUILD_FAIL_PATTERN)
@@ -76,6 +77,8 @@ vet:
 
 	GOOS=plan9 GOARCH=amd64 go vet ./...
 	GOOS=plan9 GOARCH=386 go vet ./...
+
+	CGO_ENABLED=0 GOOS=aix GOARCH=ppc64 go vet ./...
 
 macos_test:
 	CGO_ENABLED=0 GOOS=darwin go test ./... | $(BUILD_FAIL_PATTERN)
