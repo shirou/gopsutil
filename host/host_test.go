@@ -115,7 +115,7 @@ func TestVirtualization(t *testing.T) {
 	for i := 0; i < testCount; i++ {
 		go func(j int) {
 			system, role, err := Virtualization()
-			wg.Done()
+			defer wg.Done()
 			common.SkipIfNotImplementedErr(t, err)
 			assert.NoErrorf(t, err, "Virtualization() failed, %v", err)
 
