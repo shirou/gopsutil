@@ -152,6 +152,10 @@ func perCPUTimes(machLib *common.Library) ([]TimesStat, error) {
 		return nil, fmt.Errorf("host_processor_info error=%d", status)
 	}
 
+	if cpuload == nil {
+		return nil, fmt.Errorf("host_processor_info returned nil cpuload")
+	}
+
 	defer vmDeallocate(machTaskSelf(), uintptr(unsafe.Pointer(cpuload)), uintptr(ncpu))
 
 	ret := []TimesStat{}
