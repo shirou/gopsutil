@@ -84,7 +84,7 @@ func getFsType(stat unix.Statfs_t) string {
 	return FSType[int(stat.Vfstype)]
 }
 
-func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
+func getUsage(ctx context.Context, path string) (*UsageStat, error) {
 	out, err := invoke.CommandWithContext(ctx, "df", "-v")
 	if err != nil {
 		return nil, err

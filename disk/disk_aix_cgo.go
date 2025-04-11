@@ -44,7 +44,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 	return ret, err
 }
 
-func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
+func getUsage(_ context.Context, path string) (*UsageStat, error) {
 	f, err := perfstat.FileSystemStat()
 	if err != nil {
 		return nil, err

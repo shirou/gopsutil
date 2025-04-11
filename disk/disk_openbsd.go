@@ -122,7 +122,7 @@ func parseDiskstats(buf []byte) (Diskstats, error) {
 	return ds, nil
 }
 
-func UsageWithContext(_ context.Context, path string) (*UsageStat, error) {
+func getUsage(_ context.Context, path string) (*UsageStat, error) {
 	stat := unix.Statfs_t{}
 	err := unix.Statfs(path, &stat)
 	if err != nil {

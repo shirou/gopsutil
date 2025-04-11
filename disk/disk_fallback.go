@@ -17,7 +17,7 @@ func PartitionsWithContext(_ context.Context, _ bool) ([]PartitionStat, error) {
 	return []PartitionStat{}, common.ErrNotImplementedError
 }
 
-func UsageWithContext(_ context.Context, _ string) (*UsageStat, error) {
+func getUsage(_ context.Context, _ string) (*UsageStat, error) {
 	return nil, common.ErrNotImplementedError
 }
 
