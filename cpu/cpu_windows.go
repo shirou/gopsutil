@@ -218,7 +218,7 @@ type processorRelationship struct {
 
 // https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-system_logical_processor_information_ex
 type systemLogicalProcessorInformationEx struct {
-	Relationship int
+	Relationship uint32
 	Size         uint32
 	Processor    processorRelationship
 }
