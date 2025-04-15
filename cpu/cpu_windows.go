@@ -5,6 +5,7 @@ package cpu
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"unsafe"
@@ -15,8 +16,10 @@ import (
 	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
-var procGetNativeSystemInfo = common.Modkernel32.NewProc("GetNativeSystemInfo")
-var getLogicalProcessorInformationEx = common.Modkernel32.NewProc("GetLogicalProcessorInformationEx")
+var (
+	procGetNativeSystemInfo          = common.Modkernel32.NewProc("GetNativeSystemInfo")
+	getLogicalProcessorInformationEx = common.Modkernel32.NewProc("GetLogicalProcessorInformationEx")
+)
 
 type win32_Processor struct { //nolint:revive //FIXME
 	Family                    uint16
@@ -230,7 +233,7 @@ func getPhysicalCoreCount(ctx context.Context) (int, error) {
 
 	// First call to determine the required buffer size
 	_, _, err := getLogicalProcessorInformationEx.Call(uintptr(relationAll), 0, uintptr(unsafe.Pointer(&length)))
-	if err != nil && err != windows.ERROR_INSUFFICIENT_BUFFER {
+	if err != nil && !errors.Is(err, windows.ERROR_INSUFFICIENT_BUFFER) {
 		return 0, fmt.Errorf("failed to get buffer size: %w", err)
 	}
 
@@ -239,7 +242,7 @@ func getPhysicalCoreCount(ctx context.Context) (int, error) {
 
 	// Second call to retrieve the processor information
 	_, _, err = getLogicalProcessorInformationEx.Call(uintptr(relationAll), uintptr(unsafe.Pointer(&buffer[0])), uintptr(unsafe.Pointer(&length)))
-	if err != nil && err != windows.NTE_OP_OK {
+	if err != nil && !errors.Is(err, windows.NTE_OP_OK) {
 		return 0, fmt.Errorf("failed to get logical processor information: %w", err)
 	}
 
