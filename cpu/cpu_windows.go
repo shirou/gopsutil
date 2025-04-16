@@ -17,8 +17,8 @@ import (
 )
 
 var (
-	procGetNativeSystemInfo          = common.Modkernel32.NewProc("GetNativeSystemInfo")
-	getLogicalProcessorInformationEx = common.Modkernel32.NewProc("GetLogicalProcessorInformationEx")
+	procGetNativeSystemInfo              = common.Modkernel32.NewProc("GetNativeSystemInfo")
+	procGetLogicalProcessorInformationEx = common.Modkernel32.NewProc("GetLogicalProcessorInformationEx")
 )
 
 type win32_Processor struct { //nolint:revive //FIXME
@@ -232,7 +232,7 @@ func getPhysicalCoreCount(ctx context.Context) (int, error) {
 	const relationProcessorCore = 0x0
 
 	// First call to determine the required buffer size
-	_, _, err := getLogicalProcessorInformationEx.Call(uintptr(relationAll), 0, uintptr(unsafe.Pointer(&length)))
+	_, _, err := procGetLogicalProcessorInformationEx.Call(uintptr(relationAll), 0, uintptr(unsafe.Pointer(&length)))
 	if err != nil && !errors.Is(err, windows.ERROR_INSUFFICIENT_BUFFER) {
 		return 0, fmt.Errorf("failed to get buffer size: %w", err)
 	}
@@ -241,7 +241,7 @@ func getPhysicalCoreCount(ctx context.Context) (int, error) {
 	buffer := make([]byte, length)
 
 	// Second call to retrieve the processor information
-	_, _, err = getLogicalProcessorInformationEx.Call(uintptr(relationAll), uintptr(unsafe.Pointer(&buffer[0])), uintptr(unsafe.Pointer(&length)))
+	_, _, err = procGetLogicalProcessorInformationEx.Call(uintptr(relationAll), uintptr(unsafe.Pointer(&buffer[0])), uintptr(unsafe.Pointer(&length)))
 	if err != nil && !errors.Is(err, windows.NTE_OP_OK) {
 		return 0, fmt.Errorf("failed to get logical processor information: %w", err)
 	}
@@ -267,7 +267,7 @@ func getPhysicalCoreCount(ctx context.Context) (int, error) {
 
 func CountsWithContext(ctx context.Context, logical bool) (int, error) {
 	if logical {
-		// Get logical processor count
+		// Get logical processor count https://github.com/giampaolo/psutil/blob/d01a9eaa35a8aadf6c519839e987a49d8be2d891/psutil/_psutil_windows.c#L97
 		ret := windows.GetActiveProcessorCount(windows.ALL_PROCESSOR_GROUPS)
 		if ret != 0 {
 			return int(ret), nil
@@ -281,6 +281,6 @@ func CountsWithContext(ctx context.Context, logical bool) (int, error) {
 		return int(systemInfo.dwNumberOfProcessors), nil
 	}
 
-	// Get physical core count
+	// Get physical core count https://github.com/giampaolo/psutil/blob/d01a9eaa35a8aadf6c519839e987a49d8be2d891/psutil/_psutil_windows.c#L499
 	return getPhysicalCoreCount(ctx)
 }
