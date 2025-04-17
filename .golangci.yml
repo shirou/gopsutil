@@ -1,20 +1,25 @@
+version: "2"
+formatters:
+  enable:
+    - gci
+    - gofumpt
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/shirou)
 issues:
   max-same-issues: 0
-  exclude-rules: []
 linters:
   enable:
     - asciicheck
     - contextcheck
     - durationcheck
     - errorlint
-    - gci
     - gocritic
-    - gofmt
-    - gofumpt
-    - goimports
     - gomodguard
     - gosec
-    - gosimple
     - importas
     - misspell
     - nakedret
@@ -24,7 +29,6 @@ linters:
     - revive
     - testifylint
     - thelper
-    - typecheck
     - unparam
     - usetesting
   disable:
@@ -33,83 +37,88 @@ linters:
     - ineffassign
     - staticcheck
     - unused
-linters-settings:
-  gci:
-    sections:
-      - standard
-      - default
-      - prefix(github.com/shirou)
-  gocritic:
-    disabled-checks:
-      - captLocal
-  gomodguard:
-    blocked:
-      modules:
-        - io/ioutil:
-            recommendations:
-              - io
-              - os
-  gosec:
-    excludes:
-      - G115
-  perfsprint:
-    # Optimizes even if it requires an int or uint type cast.
-    int-conversion: true
-    # Optimizes into `err.Error()` even if it is only equivalent for non-nil errors.
-    err-error: true
-    # Optimizes `fmt.Errorf`.
-    errorf: true
-    # Optimizes `fmt.Sprintf` with only one argument.
-    sprintf1: true
-    # Optimizes into strings concatenation.
-    strconcat: true
-  revive:
-    rules:
-      - name: blank-imports
-      - name: context-as-argument
-        arguments:
-          - allowTypesBefore: "*testing.T"
-      - name: context-keys-type
-      - name: dot-imports
-      - name: duplicated-imports
-      - name: early-return
-        arguments:
-          - "preserveScope"
-      - name: empty-block
-        disabled: true
-      - name: error-naming
-      - name: error-return
-      - name: error-strings
-      - name: exported
-        disabled: true
-      - name: errorf
-      - name: increment-decrement
-      - name: indent-error-flow
-        arguments:
-          - "preserveScope"
-      - name: range
-      - name: receiver-naming
-      - name: redefines-builtin-id
-      - name: redundant-import-alias
-      - name: superfluous-else
-        arguments:
-          - "preserveScope"
-      - name: time-naming
-      - name: unexported-return
-      - name: unnecessary-stmt
-      - name: unreachable-code
-      - name: unused-parameter
-      - name: use-any
-      - name: var-declaration
-      - name: var-naming
-        arguments:
-          - ["ID"] # AllowList
-          - ["VM"] # DenyList
-          - - upperCaseConst: true # Extra parameter (upperCaseConst|skipPackageNameChecks)
-  testifylint:
-    enable-all: true
-  usetesting:
+  settings:
+    gocritic:
+      disabled-checks:
+        - captLocal
+    gomodguard:
+      blocked:
+        modules:
+          - io/ioutil:
+              recommendations:
+                - io
+                - os
+    gosec:
+      excludes:
+        - G115
+    perfsprint:
+      # Optimizes even if it requires an int or uint type cast.
+      int-conversion: true
+      # Optimizes into `err.Error()` even if it is only equivalent for non-nil errors.
+      err-error: true
+      # Optimizes `fmt.Errorf`.
+      errorf: true
+      # Optimizes `fmt.Sprintf` with only one argument.
+      sprintf1: true
+      # Optimizes into strings concatenation.
+      strconcat: true
+    revive:
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+          arguments:
+            - allowTypesBefore: "*testing.T"
+        - name: context-keys-type
+        - name: dot-imports
+        - name: duplicated-imports
+        - name: early-return
+          arguments:
+            - "preserveScope"
+        - name: empty-block
+          disabled: true
+        - name: error-naming
+        - name: error-return
+        - name: error-strings
+        - name: exported
+          disabled: true
+        - name: errorf
+        - name: increment-decrement
+        - name: indent-error-flow
+          arguments:
+            - "preserveScope"
+        - name: range
+        - name: receiver-naming
+        - name: redefines-builtin-id
+        - name: redundant-import-alias
+        - name: superfluous-else
+          arguments:
+            - "preserveScope"
+        - name: time-naming
+        - name: unexported-return
+        - name: unnecessary-stmt
+        - name: unreachable-code
+        - name: unused-parameter
+        - name: use-any
+        - name: var-declaration
+        - name: var-naming
+          arguments:
+            - ["ID"] # AllowList
+            - ["VM"] # DenyList
+            - - upperCaseConst: true # Extra parameter (upperCaseConst|skipPackageNameChecks)
+    testifylint:
+      enable-all: true
+    usetesting:
       os-create-temp: false
       os-mkdir-temp: false
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    warn-unused: true
+output:
+  show-stats: false
 run:
   timeout: 5m
