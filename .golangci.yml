@@ -27,6 +27,7 @@ linters:
     - perfsprint
     - predeclared
     - revive
+    - staticcheck
     - testifylint
     - thelper
     - unparam
@@ -35,7 +36,6 @@ linters:
     - errcheck
     - govet
     - ineffassign
-    - staticcheck
     - unused
   settings:
     gocritic:
@@ -105,6 +105,25 @@ linters:
             - ["ID"] # AllowList
             - ["VM"] # DenyList
             - - upperCaseConst: true # Extra parameter (upperCaseConst|skipPackageNameChecks)
+    staticcheck:
+      checks:
+        - all
+        # TODO: remove this lines after fixing all the issues
+        - -QF1001 # Apply De Morgan’s law
+        - -QF1002 # Convert untagged switch to tagged switch
+        - -QF1006 # Lift if+break into loop condition
+        - -S1001 # Replace for loop with call to copy
+        - -SA2002 # Called testing.T.FailNow or SkipNow in a goroutine, which isn’t allowed
+        - -SA1019 # Using a deprecated function, variable, constant or field
+        - -SA4003 # Comparing unsigned values against negative values is pointless
+        - -SA4004 # The loop exits unconditionally after one iteration
+        - -SA4006 # A value assigned to a variable is never read before being overwritten. Forgotten error check or dead code?
+        - -SA4008 # The variable in the loop condition never changes, are you incrementing the wrong variable?
+        - -SA5003 # Defers in infinite loops will never execute
+        - -SA9003 # Empty body in an if or else branch
+        - -ST1003 # Poorly chosen identifier
+        - -ST1005 # Incorrectly formatted error string
+        - -ST1017 # Don’t use Yoda conditions
     testifylint:
       enable-all: true
     usetesting:
