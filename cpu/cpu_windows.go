@@ -226,7 +226,7 @@ type systemLogicalProcessorInformationEx struct {
 	Processor    processorRelationship
 }
 
-func getPhysicalCoreCount(ctx context.Context) (int, error) {
+func getPhysicalCoreCount() (int, error) {
 	var length uint32
 	const relationAll = 0xffff
 	const relationProcessorCore = 0x0
@@ -250,16 +250,11 @@ func getPhysicalCoreCount(ctx context.Context) (int, error) {
 	offset := uintptr(0)
 	ncpus := 0
 	for offset < uintptr(length) {
-		select {
-		case <-ctx.Done():
-			return 0, ctx.Err()
-		default:
-			info := (*systemLogicalProcessorInformationEx)(unsafe.Pointer(uintptr(unsafe.Pointer(&buffer[0])) + offset))
-			if info.Relationship == relationProcessorCore {
-				ncpus++
-			}
-			offset += uintptr(info.Size)
+		info := (*systemLogicalProcessorInformationEx)(unsafe.Pointer(uintptr(unsafe.Pointer(&buffer[0])) + offset))
+		if info.Relationship == relationProcessorCore {
+			ncpus++
 		}
+		offset += uintptr(info.Size)
 	}
 
 	return ncpus, nil
@@ -282,5 +277,5 @@ func CountsWithContext(ctx context.Context, logical bool) (int, error) {
 	}
 
 	// Get physical core count https://github.com/giampaolo/psutil/blob/d01a9eaa35a8aadf6c519839e987a49d8be2d891/psutil/_psutil_windows.c#L499
-	return getPhysicalCoreCount(ctx)
+	return getPhysicalCoreCount()
 }
