@@ -63,7 +63,7 @@ func PartitionsWithContext(ctx context.Context, _ bool) ([]PartitionStat, error)
 		if startBlank.MatchString(line) {
 			line = "localhost" + line
 		}
-		p := strings.Fields(lines[idx])
+		p := strings.Fields(line)
 		if len(p) < 5 || ignoreFSType[p[colidx["vfs"]]] {
 			continue
 		}
