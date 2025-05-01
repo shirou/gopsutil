@@ -260,7 +260,7 @@ func getPhysicalCoreCount() (int, error) {
 	return ncpus, nil
 }
 
-func CountsWithContext(ctx context.Context, logical bool) (int, error) {
+func CountsWithContext(_ context.Context, logical bool) (int, error) {
 	if logical {
 		// Get logical processor count https://github.com/giampaolo/psutil/blob/d01a9eaa35a8aadf6c519839e987a49d8be2d891/psutil/_psutil_windows.c#L97
 		ret := windows.GetActiveProcessorCount(windows.ALL_PROCESSOR_GROUPS)
