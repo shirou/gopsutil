@@ -59,16 +59,17 @@ func TestTimes(t *testing.T) {
 }
 
 func TestCounts(t *testing.T) {
-	v, err := Counts(true)
+	logicalCount, err := Counts(true)
 	common.SkipIfNotImplementedErr(t, err)
 	require.NoError(t, err)
-	assert.NotZerof(t, v, "could not get logical CPU counts: %v", v)
-	t.Logf("logical cores: %d", v)
-	v, err = Counts(false)
+	assert.NotZerof(t, logicalCount, "could not get logical CPU counts: %v", logicalCount)
+	t.Logf("logical cores: %d", logicalCount)
+	physicalCount, err := Counts(false)
 	common.SkipIfNotImplementedErr(t, err)
 	require.NoError(t, err)
-	assert.NotZerof(t, v, "could not get physical CPU counts: %v", v)
-	t.Logf("physical cores: %d", v)
+	assert.NotZerof(t, physicalCount, "could not get physical CPU counts: %v", physicalCount)
+	t.Logf("physical cores: %d", physicalCount)
+	assert.GreaterOrEqualf(t, logicalCount, physicalCount, "logical CPU count should be greater than or equal to physical CPU count: %v >= %v", logicalCount, physicalCount)
 }
 
 func TestTimeStat_String(t *testing.T) {
