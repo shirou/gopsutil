@@ -201,7 +201,7 @@ func IOCountersWithContext(_ context.Context, names ...string) (map[string]IOCou
 	stats := make([]IOCountersStat, 0, 16)
 	for {
 		d := ioIteratorNext(drives)
-		if !(d > 0) {
+		if d <= 0 {
 			break
 		}
 

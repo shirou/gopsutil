@@ -29,13 +29,13 @@ linters:
     - perfsprint
     - predeclared
     - revive
+    - staticcheck
     - testifylint
     - thelper
     - unparam
     - usetesting
   disable:
     - errcheck
-    - staticcheck
     - unused
   settings:
     gocritic:
@@ -112,6 +112,18 @@ linters:
             - ["ID"] # AllowList
             - ["VM"] # DenyList
             - - upperCaseConst: true # Extra parameter (upperCaseConst|skipPackageNameChecks)
+    staticcheck:
+      checks:
+        - all
+        - -SA1019 # Using a deprecated function, variable, constant or field
+        - -SA2002 # Called testing.T.FailNow or SkipNow in a goroutine, which isn’t allowed
+        - -SA4003 # Comparing unsigned values against negative values is pointless
+        - -SA4004 # The loop exits unconditionally after one iteration
+        - -SA4008 # The variable in the loop condition never changes, are you incrementing the wrong variable?
+        - -SA5003 # Defers in infinite loops will never execute
+        - -SA9003 # Empty body in an if or else branch
+        - -ST1003 # Poorly chosen identifier
+        - -ST1005 # Incorrectly formatted error string
     testifylint:
       enable-all: true
     usetesting:
