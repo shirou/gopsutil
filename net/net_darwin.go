@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	errNetstatHeader  = errors.New("Can't parse header of netstat output")
+	errNetstatHeader  = errors.New("can't parse header of netstat output")
 	netstatLinkRegexp = regexp.MustCompile(`^<Link#(\d+)>$`)
 )
 
@@ -50,7 +50,7 @@ func parseNetstatLine(line string) (stat *IOCountersStat, linkID *uint, err erro
 		base = 0
 	}
 	if numberColumns < 11 || numberColumns > 13 {
-		err = fmt.Errorf("Line %q do have an invalid number of columns %d", line, numberColumns)
+		err = fmt.Errorf("line %q do have an invalid number of columns %d", line, numberColumns)
 		return //nolint:nakedret //FIXME
 	}
 

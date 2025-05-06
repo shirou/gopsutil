@@ -123,7 +123,6 @@ linters:
         - -SA5003 # Defers in infinite loops will never execute
         - -SA9003 # Empty body in an if or else branch
         - -ST1003 # Poorly chosen identifier
-        - -ST1005 # Incorrectly formatted error string
     testifylint:
       enable-all: true
     usetesting:

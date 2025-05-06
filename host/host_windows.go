@@ -80,7 +80,7 @@ func HostIDWithContext(_ context.Context) (string, error) {
 	hostID := windows.UTF16ToString(regBuf[:])
 	hostIDLen := len(hostID)
 	if hostIDLen != uuidLen {
-		return "", fmt.Errorf("HostID incorrect: %q\n", hostID) //nolint:revive //FIXME
+		return "", fmt.Errorf("HostID incorrect: %q", hostID)
 	}
 
 	return strings.ToLower(hostID), nil
