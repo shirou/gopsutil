@@ -71,12 +71,14 @@ func TimesWithContext(_ context.Context, percpu bool) ([]TimesStat, error) {
 	var lpIdleTime common.FILETIME
 	var lpKernelTime common.FILETIME
 	var lpUserTime common.FILETIME
-	r, _, _ := common.ProcGetSystemTimes.Call(
+	// GetSystemTimes returns 0 for error, in which case we check err,
+	// see https://pkg.go.dev/golang.org/x/sys/windows#LazyProc.Call
+	r, _, err := common.ProcGetSystemTimes.Call(
 		uintptr(unsafe.Pointer(&lpIdleTime)),
 		uintptr(unsafe.Pointer(&lpKernelTime)),
 		uintptr(unsafe.Pointer(&lpUserTime)))
 	if r == 0 {
-		return ret, windows.GetLastError()
+		return nil, err
 	}
 
 	LOT := float64(0.0000001)
