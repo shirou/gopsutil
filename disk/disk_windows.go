@@ -55,7 +55,7 @@ func init() {
 	}
 }
 
-func UsageWithContext(_ context.Context, path string) (*UsageStat, error) {
+func getUsage(_ context.Context, path string) (*UsageStat, error) {
 	lpFreeBytesAvailable := int64(0)
 	lpTotalNumberOfBytes := int64(0)
 	lpTotalNumberOfFreeBytes := int64(0)
