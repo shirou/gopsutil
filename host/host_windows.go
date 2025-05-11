@@ -153,26 +153,26 @@ func platformInformation() (platform, family, version, displayVersion string, er
 	osInfo.dwOSVersionInfoSize = uint32(unsafe.Sizeof(osInfo))
 	ret, _, err := procRtlGetVersion.Call(uintptr(unsafe.Pointer(&osInfo)))
 	if ret != 0 {
-		return //nolint:nakedret //FIXME
+		return platform, family, version, displayVersion, err
 	}
 
 	// Platform
 	var h windows.Handle // like HostIDWithContext(), we query the registry using the raw windows.RegOpenKeyEx/RegQueryValueEx
 	err = windows.RegOpenKeyEx(windows.HKEY_LOCAL_MACHINE, windows.StringToUTF16Ptr(`SOFTWARE\Microsoft\Windows NT\CurrentVersion`), 0, windows.KEY_READ|windows.KEY_WOW64_64KEY, &h)
 	if err != nil {
-		return //nolint:nakedret //FIXME
+		return platform, family, version, displayVersion, err
 	}
 	defer windows.RegCloseKey(h)
 	var bufLen uint32
 	var valType uint32
 	err = windows.RegQueryValueEx(h, windows.StringToUTF16Ptr(`ProductName`), nil, &valType, nil, &bufLen)
 	if err != nil {
-		return //nolint:nakedret //FIXME
+		return platform, family, version, displayVersion, err
 	}
 	regBuf := make([]uint16, bufLen/2+1)
 	err = windows.RegQueryValueEx(h, windows.StringToUTF16Ptr(`ProductName`), nil, &valType, (*byte)(unsafe.Pointer(&regBuf[0])), &bufLen)
 	if err != nil {
-		return //nolint:nakedret //FIXME
+		return platform, family, version, displayVersion, err
 	}
 	platform = windows.UTF16ToString(regBuf)
 	if strings.Contains(platform, "Windows 10") { // check build number to determine whether it's actually Windows 11
