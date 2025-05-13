@@ -164,6 +164,14 @@ func TestNumCtx(t *testing.T) {
 	assert.NoErrorf(t, err, "getting numctx error %v", err)
 }
 
+func TestNumCtxAllThreads(t *testing.T) {
+	p := testGetProcess()
+
+	_, err := p.NumCtxSwitchesAllThreads()
+	common.SkipIfNotImplementedErr(t, err)
+	assert.NoErrorf(t, err, "getting numctx error %v", err)
+}
+
 func TestNice(t *testing.T) {
 	p := testGetProcess()
 

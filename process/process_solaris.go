@@ -136,6 +136,10 @@ func (p *Process) NumCtxSwitchesWithContext(_ context.Context) (*NumCtxSwitchesS
 	return nil, common.ErrNotImplementedError
 }
 
+func (p *Process) NumCtxSwitchesAllThreadsWithContext(ctx context.Context) (*NumCtxSwitchesStat, error) {
+	return nil, common.ErrNotImplementedError
+}
+
 func (p *Process) NumFDsWithContext(ctx context.Context) (int32, error) {
 	_, fnames, err := p.fillFromfdListWithContext(ctx)
 	return int32(len(fnames)), err

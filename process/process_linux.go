@@ -269,6 +269,45 @@ func (p *Process) NumCtxSwitchesWithContext(ctx context.Context) (*NumCtxSwitche
 	return p.numCtxSwitches, nil
 }
 
+func (p *Process) NumCtxSwitchesAllThreadsWithContext(ctx context.Context) (*NumCtxSwitchesStat, error) {
+	allCtxSwitches := &NumCtxSwitchesStat{}
+	taskPath := common.HostProcWithContext(ctx, strconv.Itoa(int(p.Pid)), "task")
+	tids, err := readPidsFromDir(taskPath)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, tid := range tids {
+		taskStatusPath := common.HostProcWithContext(ctx, strconv.Itoa(int(p.Pid)), "task", strconv.Itoa(int(tid)), "status")
+		contents, err := os.ReadFile(taskStatusPath)
+		if err != nil {
+			return nil, err
+		}
+		lines := strings.Split(string(contents), "\n")
+		for _, line := range lines {
+			tabParts := strings.SplitN(line, "\t", 2)
+			if len(tabParts) < 2 {
+				continue
+			}
+			if strings.HasPrefix(tabParts[0], "voluntary_ctxt_switches") {
+				v, err := strconv.ParseInt(tabParts[1], 10, 64)
+				if err != nil {
+					continue
+				}
+				allCtxSwitches.Voluntary += v
+			} else if strings.HasPrefix(tabParts[0], "nonvoluntary_ctxt_switches") {
+				v, err := strconv.ParseInt(tabParts[1], 10, 64)
+				if err != nil {
+					continue
+				}
+				allCtxSwitches.Involuntary += v
+			}
+		}
+	}
+
+	return allCtxSwitches, nil
+}
+
 func (p *Process) NumFDsWithContext(ctx context.Context) (int32, error) {
 	_, fnames, err := p.fillFromfdListWithContext(ctx)
 	return int32(len(fnames)), err

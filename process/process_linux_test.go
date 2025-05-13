@@ -125,6 +125,21 @@ func TestFillFromStatusWithContext(t *testing.T) {
 	}
 }
 
+func TestNumCtxAllThreadsWithContext(t *testing.T) {
+	// This process in the `testdata/linux` folder has
+	// a task subfolder with status files for each task.
+	testPid := 1505894
+	t.Setenv("HOST_PROC", "testdata/linux")
+	p, _ := NewProcess(int32(testPid))
+	ctxSwitches, err := p.NumCtxSwitchesAllThreadsWithContext(context.Background())
+	assert.NoError(t, err)
+	// This is the sum of voluntary switches from each thread.
+	assert.Equal(t, int64(2039), ctxSwitches.Voluntary)
+	// Only the lead thread had nonvoluntary switches so this is the value from
+	// the lead thread status file.
+	assert.Equal(t, int64(9930), ctxSwitches.Involuntary)
+}
+
 func Benchmark_fillFromCommWithContext(b *testing.B) {
 	b.Setenv("HOST_PROC", "testdata/linux")
 	pid := 1060

@@ -569,6 +569,10 @@ func (p *Process) NumCtxSwitchesWithContext(_ context.Context) (*NumCtxSwitchesS
 	return nil, common.ErrNotImplementedError
 }
 
+func (p *Process) NumCtxSwitchesAllThreadsWithContext(ctx context.Context) (*NumCtxSwitchesStat, error) {
+	return nil, common.ErrNotImplementedError
+}
+
 // NumFDsWithContext returns the number of handles for a process on Windows,
 // not the number of file descriptors (FDs).
 func (p *Process) NumFDsWithContext(_ context.Context) (int32, error) {

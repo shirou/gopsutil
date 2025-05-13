@@ -495,6 +495,12 @@ func (p *Process) NumCtxSwitches() (*NumCtxSwitchesStat, error) {
 	return p.NumCtxSwitchesWithContext(context.Background())
 }
 
+// NumCtxSwitchesAllThreads returns the sum of the context switches of all
+// threads of the process.
+func (p *Process) NumCtxSwitchesAllThreads() (*NumCtxSwitchesStat, error) {
+	return p.NumCtxSwitchesAllThreadsWithContext(context.Background())
+}
+
 // NumFDs returns the number of File Descriptors used by the process.
 func (p *Process) NumFDs() (int32, error) {
 	return p.NumFDsWithContext(context.Background())
