@@ -45,7 +45,8 @@ func AvgWithContext(ctx context.Context) (*AvgStat, error) {
 		}
 		*tgt = float64(v) / (1 << 8)
 	}
-	if err = scanner.Err(); err != nil {
+	err = scanner.Err()
+	if err != nil {
 		return nil, err
 	}
 

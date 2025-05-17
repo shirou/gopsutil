@@ -67,7 +67,7 @@ func numProcs(_ context.Context) (uint64, error) {
 	return uint64(len(dirs)), nil
 }
 
-var kstatMatch = regexp.MustCompile(`([^\s]+)[\s]+([^\s]*)`)
+var kstatMatch = regexp.MustCompile(`(\S+)\s+(\S*)`)
 
 func BootTimeWithContext(ctx context.Context) (uint64, error) {
 	out, err := invoke.CommandWithContext(ctx, "kstat", "-p", "unix:0:system_misc:boot_time")

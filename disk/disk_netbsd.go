@@ -57,7 +57,8 @@ func PartitionsWithContext(_ context.Context, _ bool) ([]PartitionStat, error) {
 		return ret, err
 	}
 
-	for _, stat := range buf {
+	for i := range buf {
+		stat := &buf[i]
 		opts := []string{"rw"}
 		if stat.Flag&MNT_RDONLY != 0 {
 			opts = []string{"rw"}

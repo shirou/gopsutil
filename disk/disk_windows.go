@@ -192,40 +192,41 @@ func IOCountersWithContext(_ context.Context, names ...string) (map[string]IOCou
 		return drivemap, err
 	}
 	for _, v := range lpBuffer[:lpBufferLen] {
-		if 'A' <= v && v <= 'Z' {
-			path := string(rune(v)) + ":"
-			typepath, _ := windows.UTF16PtrFromString(path)
-			typeret := windows.GetDriveType(typepath)
-			if typeret != windows.DRIVE_FIXED {
+		if 'A' > v || v > 'Z' {
+			continue
+		}
+		path := string(rune(v)) + ":"
+		typepath, _ := windows.UTF16PtrFromString(path)
+		typeret := windows.GetDriveType(typepath)
+		if typeret != windows.DRIVE_FIXED {
+			continue
+		}
+		szDevice := `\\.\` + path
+		const IOCTL_DISK_PERFORMANCE = 0x70020
+		h, err := windows.CreateFile(syscall.StringToUTF16Ptr(szDevice), 0, windows.FILE_SHARE_READ|windows.FILE_SHARE_WRITE, nil, windows.OPEN_EXISTING, 0, 0)
+		if err != nil {
+			if errors.Is(err, windows.ERROR_FILE_NOT_FOUND) {
 				continue
 			}
-			szDevice := `\\.\` + path
-			const IOCTL_DISK_PERFORMANCE = 0x70020
-			h, err := windows.CreateFile(syscall.StringToUTF16Ptr(szDevice), 0, windows.FILE_SHARE_READ|windows.FILE_SHARE_WRITE, nil, windows.OPEN_EXISTING, 0, 0)
-			if err != nil {
-				if errors.Is(err, windows.ERROR_FILE_NOT_FOUND) {
-					continue
-				}
-				return drivemap, err
-			}
-			defer windows.CloseHandle(h)
+			return drivemap, err
+		}
+		defer windows.CloseHandle(h)
 
-			var diskPerformanceSize uint32
-			err = windows.DeviceIoControl(h, IOCTL_DISK_PERFORMANCE, nil, 0, (*byte)(unsafe.Pointer(&diskPerformance)), uint32(unsafe.Sizeof(diskPerformance)), &diskPerformanceSize, nil)
-			if err != nil {
-				return drivemap, err
-			}
+		var diskPerformanceSize uint32
+		err = windows.DeviceIoControl(h, IOCTL_DISK_PERFORMANCE, nil, 0, (*byte)(unsafe.Pointer(&diskPerformance)), uint32(unsafe.Sizeof(diskPerformance)), &diskPerformanceSize, nil)
+		if err != nil {
+			return drivemap, err
+		}
 
-			if len(names) == 0 || common.StringsHas(names, path) {
-				drivemap[path] = IOCountersStat{
-					ReadBytes:  uint64(diskPerformance.BytesRead),
-					WriteBytes: uint64(diskPerformance.BytesWritten),
-					ReadCount:  uint64(diskPerformance.ReadCount),
-					WriteCount: uint64(diskPerformance.WriteCount),
-					ReadTime:   uint64(diskPerformance.ReadTime / 10000 / 1000), // convert to ms: https://github.com/giampaolo/psutil/issues/1012
-					WriteTime:  uint64(diskPerformance.WriteTime / 10000 / 1000),
-					Name:       path,
-				}
+		if len(names) == 0 || common.StringsHas(names, path) {
+			drivemap[path] = IOCountersStat{
+				ReadBytes:  uint64(diskPerformance.BytesRead),
+				WriteBytes: uint64(diskPerformance.BytesWritten),
+				ReadCount:  uint64(diskPerformance.ReadCount),
+				WriteCount: uint64(diskPerformance.WriteCount),
+				ReadTime:   uint64(diskPerformance.ReadTime / 10000 / 1000), // convert to ms: https://github.com/giampaolo/psutil/issues/1012
+				WriteTime:  uint64(diskPerformance.WriteTime / 10000 / 1000),
+				Name:       path,
 			}
 		}
 	}

@@ -41,6 +41,13 @@ linters:
     gocritic:
       disabled-checks:
         - captLocal
+        - commentedOutCode
+        - deferInLoop
+        - hexLiteral
+        - hugeParam
+        - tooManyResultsChecker
+        - unnamedResult
+      enable-all: true
     gomodguard:
       blocked:
         modules:
