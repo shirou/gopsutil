@@ -2,7 +2,6 @@
 package cpu
 
 import (
-	"fmt"
 	"os"
 	"runtime"
 	"testing"
@@ -80,7 +79,7 @@ func TestTimeStat_String(t *testing.T) {
 		Idle:   300.1,
 	}
 	e := `{"cpu":"cpu0","user":100.1,"system":200.1,"idle":300.1,"nice":0.0,"iowait":0.0,"irq":0.0,"softirq":0.0,"steal":0.0,"guest":0.0,"guestNice":0.0}`
-	assert.JSONEqf(t, e, fmt.Sprintf("%v", v), "CPUTimesStat string is invalid: %v", v)
+	assert.JSONEqf(t, e, v.String(), "CPUTimesStat string is invalid: %v", v)
 }
 
 func TestInfo(t *testing.T) {

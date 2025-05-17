@@ -170,7 +170,7 @@ func getlsbStruct(ctx context.Context) (*lsbStruct, error) {
 	return ret, nil
 }
 
-func PlatformInformationWithContext(ctx context.Context) (platform string, family string, version string, err error) {
+func PlatformInformationWithContext(ctx context.Context) (platform, family, version string, err error) {
 	lsb, err := getlsbStruct(ctx)
 	if err != nil {
 		lsb = &lsbStruct{}

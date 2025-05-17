@@ -2,7 +2,6 @@
 package load
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -28,7 +27,7 @@ func TestAvgStat_String(t *testing.T) {
 		Load15: 30.1,
 	}
 	e := `{"load1":10.1,"load5":20.1,"load15":30.1}`
-	assert.JSONEqf(t, e, fmt.Sprintf("%v", v), "LoadAvgStat string is invalid: %v", v)
+	assert.JSONEqf(t, e, v.String(), "LoadAvgStat string is invalid: %v", v)
 	t.Log(e)
 }
 
@@ -51,7 +50,7 @@ func TestMiscStatString(t *testing.T) {
 		Ctxt:         3,
 	}
 	e := `{"procsTotal":4,"procsCreated":5,"procsRunning":1,"procsBlocked":2,"ctxt":3}`
-	assert.JSONEqf(t, e, fmt.Sprintf("%v", v), "TestMiscString string is invalid: %v", v)
+	assert.JSONEqf(t, e, v.String(), "TestMiscString string is invalid: %v", v)
 	t.Log(e)
 }
 
