@@ -33,11 +33,11 @@ func GetDockerIDListWithContext(_ context.Context) ([]string, error) {
 // containerid is same as docker id if you use docker.
 // If you use container via systemd.slice, you could use
 // containerid = docker-<container id>.scope and base=/sys/fs/cgroup/cpuacct/system.slice/
-func CgroupCPU(containerid string, base string) (*CgroupCPUStat, error) {
+func CgroupCPU(containerid, base string) (*CgroupCPUStat, error) {
 	return CgroupCPUWithContext(context.Background(), containerid, base)
 }
 
-func CgroupCPUWithContext(_ context.Context, _ string, _ string) (*CgroupCPUStat, error) {
+func CgroupCPUWithContext(_ context.Context, _, _ string) (*CgroupCPUStat, error) {
 	return nil, ErrCgroupNotAvailable
 }
 
@@ -49,11 +49,11 @@ func CgroupCPUDockerWithContext(ctx context.Context, containerid string) (*Cgrou
 	return CgroupCPUWithContext(ctx, containerid, common.HostSysWithContext(ctx, "fs/cgroup/cpuacct/docker"))
 }
 
-func CgroupMem(containerid string, base string) (*CgroupMemStat, error) {
+func CgroupMem(containerid, base string) (*CgroupMemStat, error) {
 	return CgroupMemWithContext(context.Background(), containerid, base)
 }
 
-func CgroupMemWithContext(_ context.Context, _ string, _ string) (*CgroupMemStat, error) {
+func CgroupMemWithContext(_ context.Context, _, _ string) (*CgroupMemStat, error) {
 	return nil, ErrCgroupNotAvailable
 }
 

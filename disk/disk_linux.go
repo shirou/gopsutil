@@ -486,7 +486,7 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 	return ret, nil
 }
 
-func udevData(ctx context.Context, major uint32, minor uint32, name string) (string, error) {
+func udevData(ctx context.Context, major, minor uint32, name string) (string, error) {
 	udevDataPath := common.HostRunWithContext(ctx, fmt.Sprintf("udev/data/b%d:%d", major, minor))
 	if f, err := os.Open(udevDataPath); err == nil {
 		defer f.Close()
