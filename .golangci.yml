@@ -129,7 +129,6 @@ linters:
       os-create-temp: false
       os-mkdir-temp: false
   exclusions:
-    generated: lax
     presets:
       - comments
       - common-false-positives
