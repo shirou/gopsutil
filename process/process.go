@@ -28,7 +28,7 @@ type Process struct {
 	name           string
 	status         string
 	parent         int32
-	parentMutex    sync.RWMutex // for windows ppid cache
+	parentMutex    *sync.RWMutex // for windows ppid cache
 	numCtxSwitches *NumCtxSwitchesStat
 	uids           []uint32
 	gids           []uint32
@@ -214,7 +214,8 @@ func NewProcess(pid int32) (*Process, error) {
 
 func NewProcessWithContext(ctx context.Context, pid int32) (*Process, error) {
 	p := &Process{
-		Pid: pid,
+		Pid:         pid,
+		parentMutex: new(sync.RWMutex),
 	}
 
 	exists, err := PidExistsWithContext(ctx, pid)
