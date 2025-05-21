@@ -559,6 +559,11 @@ func (p *Process) ConnectionsMax(maxConn int) ([]net.ConnectionStat, error) {
 	return p.ConnectionsMaxWithContext(context.Background(), maxConn)
 }
 
+// NetIOCounters returns NetIOCounters of the process.
+func (p *Process) NetIOCounters(pernic bool) ([]net.IOCountersStat, error) {
+	return p.NetIOCountersWithContext(context.Background(), pernic)
+}
+
 // MemoryMaps get memory maps from /proc/(pid)/smaps
 func (p *Process) MemoryMaps(grouped bool) (*[]MemoryMapsStat, error) {
 	return p.MemoryMapsWithContext(context.Background(), grouped)
