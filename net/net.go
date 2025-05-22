@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"net"
+	"time"
 
 	"github.com/shirou/gopsutil/v4/internal/common"
 )
@@ -353,4 +354,16 @@ func ConnectionsPidMax(kind string, pid int32, maxConn int) ([]ConnectionStat, e
 // move to common made other platform breaking. Need consider.
 func Pids() ([]int32, error) {
 	return PidsWithContext(context.Background())
+}
+
+// Starts collecting Net IO statistics per connection.
+// Collected data is exposed with `process.NetIOCounters`.
+// Returns channel for passing errors during statistics collection.
+// It is caller responsibility to process errors in order unblock the collection.
+func CollectNetIO(kind string, intvl time.Duration) chan error {
+	return CollectNetIOWithContext(context.Background(), kind, intvl)
+}
+
+func CollectNetIOWithContext(ctx context.Context, kind string, intvl time.Duration) chan error {
+	return StartTracing(ctx, kind, intvl)
 }
