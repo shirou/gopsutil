@@ -35,6 +35,7 @@ func StartTracing(ctx context.Context, kind string, intvl time.Duration) chan er
 	errChannel = make(chan error)
 
 	go pollNetStat(ctx, kind, intvl)
+	tracePackets(ctx, kind)
 
 	return errChannel
 }
@@ -86,7 +87,7 @@ func updateTable(ctx context.Context, kind string, connProvider connProviderF) {
 	// add new entries
 	for a, p := range portPidMap {
 		if _, ok := ProcConnMap[a]; !ok {
-			ProcConnMap[a] = ProcNetStat{p, IOCountersStat{}}
+			ProcConnMap[a] = ProcNetStat{Pid: p, NetCounters: IOCountersStat{}}
 		}
 	}
 }
