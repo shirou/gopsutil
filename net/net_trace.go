@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: BSD-3-Clause
-// Tracing network packages with "gopacket"  package
 package net
 
 import (
@@ -18,33 +17,42 @@ type ProcNetStat struct {
 type connProviderF func(_ context.Context, _ string) ([]ConnectionStat, error)
 
 var (
-	ProcConnMap      map[Addr]ProcNetStat
+	ProcConnMap      map[Addr]*ProcNetStat
 	void             = struct{}{}
 	inactiveStatuses = map[string]struct{}{"CLOSED": void, "CLOSE": void, "TIME_WAIT": void, "DELETE": void}
 	watchLock        sync.RWMutex
-	errChannel       chan error
+	errChan          chan error
 )
 
-// Start collecting information on open ports and network traffic
+// Start collecting information on open ports and network traffic with Go-Pcap
 func StartTracing(ctx context.Context, kind string, intvl time.Duration) chan error {
 	if ProcConnMap != nil {
 		panic("Repeated capturing of process NET I/O is not supported")
 	}
 
-	ProcConnMap = make(map[Addr]ProcNetStat)
-	errChannel = make(chan error)
+	ProcConnMap = make(map[Addr]*ProcNetStat)
+	errChan = make(chan error)
 
 	go pollNetStat(ctx, kind, intvl)
 	tracePackets(ctx, kind)
 
-	return errChannel
+	return errChan
 }
 
 func GetProcConnStat() map[Addr]ProcNetStat {
 	watchLock.RLock()
 	defer watchLock.RUnlock()
 
-	return ProcConnMap
+	return copyMap(ProcConnMap)
+}
+
+// Deep copy!
+func copyMap[K comparable, V any](orgMap map[K]*V) map[K]V {
+	newMap := make(map[K]V)
+	for key, value := range orgMap {
+		newMap[key] = *value
+	}
+	return newMap
 }
 
 func pollNetStat(ctx context.Context, kind string, intvl time.Duration) {
@@ -67,7 +75,7 @@ func updateTable(ctx context.Context, kind string, connProvider connProviderF) {
 
 	conns, err := connProvider(ctx, kind)
 	if err != nil {
-		errChannel <- err
+		errChan <- err
 		return
 	}
 
@@ -87,7 +95,7 @@ func updateTable(ctx context.Context, kind string, connProvider connProviderF) {
 	// add new entries
 	for a, p := range portPidMap {
 		if _, ok := ProcConnMap[a]; !ok {
-			ProcConnMap[a] = ProcNetStat{Pid: p, NetCounters: IOCountersStat{}}
+			ProcConnMap[a] = &ProcNetStat{Pid: p, NetCounters: IOCountersStat{}}
 		}
 	}
 }

@@ -2,12 +2,15 @@ package net
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
+	"github.com/google/gopacket/pcap"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var testSimpleTCPPacket = []byte{
@@ -33,7 +36,7 @@ var testBogus = []byte{
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0xff, 0xde, 0xad, 0xbe, 0xef,
 }
 
-var testSmallUdpPacket = []byte{
+var testSmallUDPPacket = []byte{
 	0x01, 0x00, 0x5e, 0x00, 0x00, 0xfb, 0x00, 0x1b, 0xa9, 0x53, 0xe0, 0x91, 0x08, 0x00, 0x45, 0x00,
 	0x00, 0x4d, 0x3c, 0xb1, 0x00, 0x00, 0xff, 0x11, 0xdc, 0xc6, 0xc0, 0xa8, 0x00, 0x84, 0xe0, 0x00,
 	0x00, 0xfb, 0x14, 0xe5, 0x14, 0xe9, 0x00, 0x39, 0xfe, 0x31, 0x00, 0x00, 0x84, 0x00, 0x00, 0x00,
@@ -49,10 +52,30 @@ var testDecodeOptions = gopacket.DecodeOptions{
 
 var (
 	tcpPacket   = gopacket.NewPacket(testSimpleTCPPacket, layers.LinkTypeEthernet, testDecodeOptions)
-	udpPacket   = gopacket.NewPacket(testSmallUdpPacket, layers.LinkTypeEthernet, testDecodeOptions)
+	udpPacket   = gopacket.NewPacket(testSmallUDPPacket, layers.LinkTypeEthernet, testDecodeOptions)
 	icmp6Packet = gopacket.NewPacket(testICMP6, layers.LinkTypeEthernet, testDecodeOptions)
 	bogusPacket = gopacket.NewPacket(testBogus, layers.LinkTypeEthernet, testDecodeOptions)
 )
+
+func TestKindToBPFFilter(t *testing.T) {
+	allKinds := []string{"all", "tcp", "tcp4", "tcp6", "udp", "udp4", "udp6", "inet", "inet4", "inet6"}
+
+	for _, kind := range allKinds {
+		assert.NotEmpty(t, kindToBPFFilter(kind))
+	}
+}
+
+func TestKindToBPFFilterFallBack(t *testing.T) {
+	defer replaceGlobalVar(&errChan, make(chan error))()
+
+	dataChan := make(chan string)
+
+	for _, kind := range []string{"unix", "foo", ""} {
+		go func() { dataChan <- kindToBPFFilter(kind) }()
+		require.Error(t, <-errChan)
+		assert.Equal(t, "tcp || udp", <-dataChan)
+	}
+}
 
 func TestKeepTracing(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -78,41 +101,70 @@ func TestWaitNextPacket(t *testing.T) {
 }
 
 func TestDecodeIp(t *testing.T) {
-	var srcIp, dstIp string
+	var srcIP, dstIP string
 
-	assert.True(t, decodeIP(tcpPacket, &srcIp, &dstIp))
-	assert.Equal(t, "104.18.138.67", srcIp)
-	assert.Equal(t, "192.168.0.235", dstIp)
+	assert.True(t, decodeIP(tcpPacket, &srcIP, &dstIP))
+	assert.Equal(t, "104.18.138.67", srcIP)
+	assert.Equal(t, "192.168.0.235", dstIP)
 
-	assert.True(t, decodeIP(icmp6Packet, &srcIp, &dstIp))
-	assert.Equal(t, "fe80::21f:caff:feb3:75c0", srcIp)
-	assert.Equal(t, "2620:0:1005:0:26be:5ff:fe27:b17", dstIp)
+	assert.True(t, decodeIP(icmp6Packet, &srcIP, &dstIP))
+	assert.Equal(t, "fe80::21f:caff:feb3:75c0", srcIP)
+	assert.Equal(t, "2620:0:1005:0:26be:5ff:fe27:b17", dstIP)
 
-	assert.False(t, decodeIP(bogusPacket, &srcIp, &dstIp))
+	assert.False(t, decodeIP(bogusPacket, &srcIP, &dstIP))
 }
 
 func TestDecodeTcp(t *testing.T) {
 	var srcAddr, dstAddr Addr
 
-	assert.True(t, decodeTcp(tcpPacket, &srcAddr, &dstAddr))
+	assert.True(t, decodeTCP(tcpPacket, &srcAddr, &dstAddr))
 	assert.Equal(t, Addr{IP: "104.18.138.67", Port: 443}, srcAddr)
 	assert.Equal(t, Addr{IP: "192.168.0.235", Port: 20781}, dstAddr)
 
-	assert.False(t, decodeTcp(bogusPacket, &srcAddr, &dstAddr))
+	assert.False(t, decodeTCP(bogusPacket, &srcAddr, &dstAddr))
 }
 
 func TestDecodeUdp(t *testing.T) {
 	var srcAddr, dstAddr Addr
 
-	assert.True(t, decodeUdp(udpPacket, &srcAddr, &dstAddr))
+	assert.True(t, decodeUDP(udpPacket, &srcAddr, &dstAddr))
 	assert.Equal(t, Addr{IP: "192.168.0.132", Port: 5349}, srcAddr)
 	assert.Equal(t, Addr{IP: "224.0.0.251", Port: 5353}, dstAddr)
 
-	assert.False(t, decodeUdp(bogusPacket, &srcAddr, &dstAddr))
+	assert.False(t, decodeUDP(bogusPacket, &srcAddr, &dstAddr))
+}
+
+func TestFindActiveDevices(t *testing.T) {
+	mockDevs := []pcap.Interface{
+		{Name: "any", Description: "Pseudo-device", Flags: 0x36, Addresses: []pcap.InterfaceAddress{}},
+		{Name: "bluetooth0t", Description: "Bluetooth Device", Flags: 0x2e, Addresses: []pcap.InterfaceAddress{{}}},
+		{Name: "wlo1", Description: "Wi-Fi", Flags: 0x1e, Addresses: []pcap.InterfaceAddress{{}}},
+	}
+	mockFindDev := func() ([]pcap.Interface, error) {
+		return mockDevs, nil
+	}
+
+	devs := findActiveDevices(mockFindDev)
+	assert.Len(t, devs, 1)
+	assert.Equal(t, "wlo1", devs[0].Name)
+}
+
+func TestFindActiveDevicesFail(t *testing.T) {
+	defer replaceGlobalVar(&errChan, make(chan error))()
+
+	mockFindDev := func() ([]pcap.Interface, error) {
+		return []pcap.Interface{}, errors.New("test")
+	}
+	dataChan := make(chan []pcap.Interface)
+
+	go func() { dataChan <- findActiveDevices(mockFindDev) }()
+
+	require.Error(t, <-errChan)
+	assert.Empty(t, <-dataChan)
 }
 
 func BenchmarkFindActiveDevices(b *testing.B) {
 	for range b.N {
-		findActiveDevices("all")
+		findActiveDevices(pcap.FindAllDevs)
 	}
 }

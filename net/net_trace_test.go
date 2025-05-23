@@ -84,6 +84,16 @@ func BenchmarkUpdateTable(b *testing.B) {
 	}
 }
 
+func BechmarkGetProcConnStat(b *testing.B) {
+	defer replaceGlobalVar(&ProcConnMap, make(map[Addr]ProcNetStat))()
+
+	b.ResetTimer()
+
+	for range b.N {
+		GetProcConnStat()
+	}
+}
+
 func replaceGlobalVar[T any](target *T, replacement T) func() {
 	saveVal := *target
 	*target = replacement

@@ -3,6 +3,7 @@ package net
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/gopacket"
@@ -20,14 +21,19 @@ const (
 	PCAP_IF_CONNECTION_STATUS_DISCONNECTED   = uint32(0x00000020)
 	PCAP_IF_CONNECTION_STATUS_NOT_APPLICABLE = uint32(0x00000030)
 	PCAP_GTG_FLAGS                           = uint32(PCAP_IF_UP | PCAP_IF_RUNNING | PCAP_IF_CONNECTION_STATUS_CONNECTED)
+)
 
+const (
 	CHECK_DONE_INTVL = 10 * time.Millisecond
 )
 
+// For unit test mocking
+type findDevsF func() ([]pcap.Interface, error)
+
 func tracePackets(ctx context.Context, kind string) {
-	devs := findActiveDevices(kind)
+	devs := findActiveDevices(pcap.FindAllDevs)
 	if len(devs) == 0 {
-		errChannel <- errors.New("no active network devices found")
+		errChan <- errors.New("no active network devices found")
 		return
 	}
 
@@ -37,18 +43,18 @@ func tracePackets(ctx context.Context, kind string) {
 	}
 }
 
-func findActiveDevices(kind string) map[int]pcap.Interface {
-	ret := make(map[int]pcap.Interface)
+func findActiveDevices(findDevs findDevsF) []pcap.Interface {
+	ret := make([]pcap.Interface, 0)
 
-	devs, err := pcap.FindAllDevs()
+	devs, err := findDevs()
 	if err != nil {
-		errChannel <- err
+		errChan <- err
 		return ret
 	}
 
-	for idx, dev := range devs {
-		if (dev.Flags&PCAP_GTG_FLAGS) == PCAP_GTG_FLAGS && len(dev.Addresses) > 0 && isRightKind(dev, kind) { // UC exclude multicast ports?
-			ret[idx+1] = dev
+	for _, dev := range devs {
+		if (dev.Flags&PCAP_GTG_FLAGS) == PCAP_GTG_FLAGS && len(dev.Addresses) > 0 {
+			ret = append(ret, dev)
 		}
 	}
 
@@ -60,13 +66,13 @@ func processDeviceMsgs(ctx context.Context, dev *pcap.Interface, kind string) {
 	var err error
 
 	if handle, err = pcap.OpenLive(dev.Name, 1600, false, 1*time.Second); err != nil {
-		errChannel <- err
+		errChan <- err
 		return
 	}
 	defer handle.Close()
 
 	if handle.SetBPFFilter(kindToBPFFilter(kind)) != nil {
-		errChannel <- err
+		errChan <- err
 		return
 	}
 
@@ -82,15 +88,15 @@ func processDeviceMsgs(ctx context.Context, dev *pcap.Interface, kind string) {
 		var errCnt uint64
 		errLayer := p.ErrorLayer()
 		if errLayer != nil {
-			//UC err = errLayer.Error()
+			// What about errLayer.Error()?
 			errCnt = 1
 		}
 
 		nBytes := uint64(len(p.Data()))
 		var dstAddr, srcAddr Addr
-		if decodeTcp(p, &srcAddr, &dstAddr) || decodeUdp(p, &srcAddr, &dstAddr) {
+		if decodeTCP(p, &srcAddr, &dstAddr) || decodeUDP(p, &srcAddr, &dstAddr) {
 			if stat, ok := ProcConnMap[srcAddr]; ok {
-				stat.NetCounters.BytesSent += nBytes
+				ProcConnMap[srcAddr].NetCounters.BytesSent += nBytes
 				stat.NetCounters.PacketsSent++
 				stat.NetCounters.Errout += errCnt
 			} else if stat, ok := ProcConnMap[dstAddr]; ok {
@@ -98,6 +104,9 @@ func processDeviceMsgs(ctx context.Context, dev *pcap.Interface, kind string) {
 				stat.NetCounters.PacketsRecv++
 				stat.NetCounters.Errin += errCnt
 			}
+			// } else {
+			// 	fmt.Printf("--- Not in the table: src=%v, dst=%v\n", srcAddr, dstAddr) //UC
+			// }
 		}
 	}
 }
@@ -111,12 +120,29 @@ func keepTracing(ctx context.Context) bool {
 	}
 }
 
-func isRightKind(_ pcap.Interface, _ string) bool {
-	return true // UC WIP
-}
-
-func kindToBPFFilter(_ string) string {
-	return "tcp||udp" // UC WIP
+func kindToBPFFilter(kind string) string {
+	switch kind {
+	case "all", "inet":
+		return "tcp || udp"
+	case "tcp":
+		return "tcp"
+	case "tcp4":
+		return "ip && tcp"
+	case "tcp6":
+		return "ip6 && tcp"
+	case "udp":
+		return "udp"
+	case "udp4":
+		return "ip && udp"
+	case "udp6":
+		return "ip6 && udp"
+	case "inet4":
+		return "ip"
+	case "inet6":
+		return "ip6"
+	}
+	errChan <- fmt.Errorf("unknown network kind '%s', capturing all", kind)
+	return "tcp || udp"
 }
 
 func waitNextPacket(packetCh chan gopacket.Packet) gopacket.Packet {
@@ -129,9 +155,9 @@ func waitNextPacket(packetCh chan gopacket.Packet) gopacket.Packet {
 	}
 }
 
-func decodeTcp(p gopacket.Packet, srcAddr *Addr, dstAddr *Addr) bool {
-	var srcIp, dstIp string
-	if !decodeIP(p, &srcIp, &dstIp) {
+func decodeTCP(p gopacket.Packet, srcAddr *Addr, dstAddr *Addr) bool {
+	var srcIP, dstIP string
+	if !decodeIP(p, &srcIP, &dstIP) {
 		return false
 	}
 
@@ -141,14 +167,14 @@ func decodeTcp(p gopacket.Packet, srcAddr *Addr, dstAddr *Addr) bool {
 	}
 
 	tcp := tcpLayer.(*layers.TCP)
-	*srcAddr = Addr{IP: srcIp, Port: uint32(tcp.SrcPort)}
-	*dstAddr = Addr{IP: dstIp, Port: uint32(tcp.DstPort)}
+	*srcAddr = Addr{IP: srcIP, Port: uint32(tcp.SrcPort)}
+	*dstAddr = Addr{IP: dstIP, Port: uint32(tcp.DstPort)}
 	return true
 }
 
-func decodeUdp(p gopacket.Packet, srcAddr *Addr, dstAddr *Addr) bool {
-	var srcIp, dstIp string
-	if !decodeIP(p, &srcIp, &dstIp) {
+func decodeUDP(p gopacket.Packet, srcAddr *Addr, dstAddr *Addr) bool {
+	var srcIP, dstIP string
+	if !decodeIP(p, &srcIP, &dstIP) {
 		return false
 	}
 
@@ -158,25 +184,25 @@ func decodeUdp(p gopacket.Packet, srcAddr *Addr, dstAddr *Addr) bool {
 	}
 
 	udp := udpLayer.(*layers.UDP)
-	*srcAddr = Addr{IP: srcIp, Port: uint32(udp.SrcPort)}
-	*dstAddr = Addr{IP: dstIp, Port: uint32(udp.DstPort)}
+	*srcAddr = Addr{IP: srcIP, Port: uint32(udp.SrcPort)}
+	*dstAddr = Addr{IP: dstIP, Port: uint32(udp.DstPort)}
 	return true
 }
 
-func decodeIP(p gopacket.Packet, srcIp *string, dstIp *string) bool {
+func decodeIP(p gopacket.Packet, srcIP *string, dstIP *string) bool {
 	ip4Layer := p.Layer(layers.LayerTypeIPv4)
 	if ip4Layer != nil {
 		ip := ip4Layer.(*layers.IPv4)
-		*srcIp = ip.SrcIP.String()
-		*dstIp = ip.DstIP.String()
+		*srcIP = ip.SrcIP.String()
+		*dstIP = ip.DstIP.String()
 		return true
 	}
 
 	ip6Layer := p.Layer(layers.LayerTypeIPv6)
 	if ip6Layer != nil {
 		ip := ip6Layer.(*layers.IPv6)
-		*srcIp = ip.SrcIP.String()
-		*dstIp = ip.DstIP.String()
+		*srcIP = ip.SrcIP.String()
+		*dstIP = ip.DstIP.String()
 		return true
 	}
 
