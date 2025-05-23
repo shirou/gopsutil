@@ -16,7 +16,7 @@ import (
 func TestAddrString(t *testing.T) {
 	v := Addr{IP: "192.168.0.1", Port: 8000}
 
-	s := fmt.Sprintf("%v", v)
+	s := v.String()
 	assert.JSONEqf(t, `{"ip":"192.168.0.1","port":8000}`, s, "Addr string is invalid: %v", v)
 }
 
@@ -26,7 +26,7 @@ func TestIOCountersStatString(t *testing.T) {
 		BytesSent: 100,
 	}
 	e := `{"name":"test","bytesSent":100,"bytesRecv":0,"packetsSent":0,"packetsRecv":0,"errin":0,"errout":0,"dropin":0,"dropout":0,"fifoin":0,"fifoout":0}`
-	assert.JSONEqf(t, e, fmt.Sprintf("%v", v), "NetIOCountersStat string is invalid: %v", v)
+	assert.JSONEqf(t, e, v.String(), "NetIOCountersStat string is invalid: %v", v)
 }
 
 func TestProtoCountersStatString(t *testing.T) {
@@ -39,7 +39,7 @@ func TestProtoCountersStatString(t *testing.T) {
 		},
 	}
 	e := `{"protocol":"tcp","stats":{"ActiveOpens":4000,"MaxConn":-1,"PassiveOpens":3000}}`
-	assert.JSONEqf(t, e, fmt.Sprintf("%v", v), "NetProtoCountersStat string is invalid: %v", v)
+	assert.JSONEqf(t, e, v.String(), "NetProtoCountersStat string is invalid: %v", v)
 }
 
 func TestConnectionStatString(t *testing.T) {
@@ -50,7 +50,7 @@ func TestConnectionStatString(t *testing.T) {
 		Uids:   []int32{10, 10},
 	}
 	e := `{"fd":10,"family":10,"type":10,"localaddr":{"ip":"","port":0},"remoteaddr":{"ip":"","port":0},"status":"","uids":[10,10],"pid":0}`
-	assert.JSONEqf(t, e, fmt.Sprintf("%v", v), "NetConnectionStat string is invalid: %v", v)
+	assert.JSONEqf(t, e, v.String(), "NetConnectionStat string is invalid: %v", v)
 }
 
 func TestIOCountersAll(t *testing.T) {
@@ -194,10 +194,10 @@ func TestInterfaceStatString(t *testing.T) {
 		Addrs:        InterfaceAddrList{{Addr: "1.2.3.4"}, {Addr: "5.6.7.8"}},
 	}
 
-	s := fmt.Sprintf("%v", v)
+	s := v.String()
 	assert.JSONEqf(t, `{"index":0,"mtu":1500,"name":"eth0","hardwareAddr":"01:23:45:67:89:ab","flags":["up","down"],"addrs":[{"addr":"1.2.3.4"},{"addr":"5.6.7.8"}]}`, s, "InterfaceStat string is invalid: %v", s)
 
 	list := InterfaceStatList{v, v}
-	s = fmt.Sprintf("%v", list)
+	s = list.String()
 	assert.JSONEqf(t, `[{"index":0,"mtu":1500,"name":"eth0","hardwareAddr":"01:23:45:67:89:ab","flags":["up","down"],"addrs":[{"addr":"1.2.3.4"},{"addr":"5.6.7.8"}]},{"index":0,"mtu":1500,"name":"eth0","hardwareAddr":"01:23:45:67:89:ab","flags":["up","down"],"addrs":[{"addr":"1.2.3.4"},{"addr":"5.6.7.8"}]}]`, s, "InterfaceStatList string is invalid: %v", s)
 }

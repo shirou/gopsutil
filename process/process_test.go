@@ -446,7 +446,7 @@ func TestConnections(t *testing.T) {
 
 	serverConnections := 0
 	for _, connection := range c {
-		if connection.Laddr.IP == tcpServerAddrIP && connection.Laddr.Port == uint32(tcpServerAddrPort) && connection.Raddr.Port != 0 {
+		if connection.Laddr.IP == tcpServerAddrIP && uint64(connection.Laddr.Port) == tcpServerAddrPort && connection.Raddr.Port != 0 {
 			require.Equalf(t, "ESTABLISHED", connection.Status, "expected server connection to be ESTABLISHED, have %+v", connection)
 			serverConnections++
 		}
@@ -454,7 +454,7 @@ func TestConnections(t *testing.T) {
 
 	clientConnections := 0
 	for _, connection := range c {
-		if connection.Raddr.IP == tcpServerAddrIP && connection.Raddr.Port == uint32(tcpServerAddrPort) {
+		if connection.Raddr.IP == tcpServerAddrIP && uint64(connection.Raddr.Port) == tcpServerAddrPort {
 			require.Equalf(t, "ESTABLISHED", connection.Status, "expected client connection to be ESTABLISHED, have %+v", connection)
 			clientConnections++
 		}

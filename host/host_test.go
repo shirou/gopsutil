@@ -2,7 +2,6 @@
 package host
 
 import (
-	"fmt"
 	"os"
 	"sync"
 	"testing"
@@ -86,7 +85,7 @@ func TestInfoStat_String(t *testing.T) {
 		KernelArch: "x86_64",
 	}
 	e := `{"hostname":"test","uptime":3000,"bootTime":1447040000,"procs":100,"os":"linux","platform":"ubuntu","platformFamily":"","platformVersion":"","kernelVersion":"","kernelArch":"x86_64","virtualizationSystem":"","virtualizationRole":"","hostId":"edfd25ff-3c9c-b1a4-e660-bd826495ad35"}`
-	assert.JSONEqf(t, e, fmt.Sprintf("%v", v), "HostInfoStat string is invalid:\ngot  %v\nwant %v", v, e)
+	assert.JSONEqf(t, e, v.String(), "HostInfoStat string is invalid:\ngot  %v\nwant %v", v, e)
 }
 
 func TestUserStat_String(t *testing.T) {
@@ -97,7 +96,7 @@ func TestUserStat_String(t *testing.T) {
 		Started:  100,
 	}
 	e := `{"user":"user","terminal":"term","host":"host","started":100}`
-	assert.JSONEqf(t, e, fmt.Sprintf("%v", v), "UserStat string is invalid: %v", v)
+	assert.JSONEqf(t, e, v.String(), "UserStat string is invalid: %v", v)
 }
 
 func TestGuid(t *testing.T) {
