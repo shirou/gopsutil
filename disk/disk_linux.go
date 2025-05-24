@@ -296,7 +296,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 				Device:     fields[0],
 				Mountpoint: unescapeFstab(fields[1]),
 				Fstype:     fields[2],
-				Opts:       strings.Fields(fields[3]),
+				Opts:       strings.Split(fields[3], ","),
 			}
 
 			if !all {
