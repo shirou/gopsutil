@@ -88,7 +88,8 @@ func MiscWithContext(ctx context.Context) (*MiscStat, error) {
 		if len(fields) != 2 {
 			continue
 		}
-		v, err := strconv.ParseInt(fields[1], 10, 64)
+		var v int64
+		v, err = strconv.ParseInt(fields[1], 10, 64)
 		if err != nil {
 			continue
 		}
