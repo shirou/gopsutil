@@ -924,49 +924,49 @@ func (p *Process) fillFromStatusWithContext(ctx context.Context) error {
 			}
 			p.numCtxSwitches.Involuntary = v
 		case "VmRSS":
-			value := strings.Trim(value, " kB") // remove last "kB"
+			value = strings.Trim(value, " kB") // remove last "kB"
 			v, err := strconv.ParseUint(value, 10, 64)
 			if err != nil {
 				return err
 			}
 			p.memInfo.RSS = v * 1024
 		case "VmSize":
-			value := strings.Trim(value, " kB") // remove last "kB"
+			value = strings.Trim(value, " kB") // remove last "kB"
 			v, err := strconv.ParseUint(value, 10, 64)
 			if err != nil {
 				return err
 			}
 			p.memInfo.VMS = v * 1024
 		case "VmSwap":
-			value := strings.Trim(value, " kB") // remove last "kB"
+			value = strings.Trim(value, " kB") // remove last "kB"
 			v, err := strconv.ParseUint(value, 10, 64)
 			if err != nil {
 				return err
 			}
 			p.memInfo.Swap = v * 1024
 		case "VmHWM":
-			value := strings.Trim(value, " kB") // remove last "kB"
+			value = strings.Trim(value, " kB") // remove last "kB"
 			v, err := strconv.ParseUint(value, 10, 64)
 			if err != nil {
 				return err
 			}
 			p.memInfo.HWM = v * 1024
 		case "VmData":
-			value := strings.Trim(value, " kB") // remove last "kB"
+			value = strings.Trim(value, " kB") // remove last "kB"
 			v, err := strconv.ParseUint(value, 10, 64)
 			if err != nil {
 				return err
 			}
 			p.memInfo.Data = v * 1024
 		case "VmStk":
-			value := strings.Trim(value, " kB") // remove last "kB"
+			value = strings.Trim(value, " kB") // remove last "kB"
 			v, err := strconv.ParseUint(value, 10, 64)
 			if err != nil {
 				return err
 			}
 			p.memInfo.Stack = v * 1024
 		case "VmLck":
-			value := strings.Trim(value, " kB") // remove last "kB"
+			value = strings.Trim(value, " kB") // remove last "kB"
 			v, err := strconv.ParseUint(value, 10, 64)
 			if err != nil {
 				return err
