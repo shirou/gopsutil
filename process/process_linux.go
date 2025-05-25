@@ -212,15 +212,16 @@ func (p *Process) RlimitUsageWithContext(ctx context.Context, gatherUsed bool) (
 	if err != nil {
 		return nil, err
 	}
-	if err := p.fillFromStatusWithContext(ctx); err != nil {
-		return nil, err
+	if ferr := p.fillFromStatusWithContext(ctx); ferr != nil {
+		return nil, ferr
 	}
 
 	for i := range rlimits {
 		rs := &rlimits[i]
 		switch rs.Resource {
 		case RLIMIT_CPU:
-			times, err := p.TimesWithContext(ctx)
+			var times *cpu.TimesStat
+			times, err = p.TimesWithContext(ctx)
 			if err != nil {
 				return nil, err
 			}
@@ -232,7 +233,8 @@ func (p *Process) RlimitUsageWithContext(ctx context.Context, gatherUsed bool) (
 		case RLIMIT_RSS:
 			rs.Used = uint64(p.memInfo.RSS)
 		case RLIMIT_NOFILE:
-			n, err := p.NumFDsWithContext(ctx)
+			var n int32
+			n, err = p.NumFDsWithContext(ctx)
 			if err != nil {
 				return nil, err
 			}
@@ -932,49 +934,49 @@ func (p *Process) fillFromStatusWithContext(ctx context.Context) error {
 			}
 			p.numCtxSwitches.Involuntary = v
 		case "VmRSS":
-			value := strings.Trim(value, " kB") // remove last "kB"
+			value = strings.Trim(value, " kB") // remove last "kB"
 			v, err := strconv.ParseUint(value, 10, 64)
 			if err != nil {
 				return err
 			}
 			p.memInfo.RSS = v * 1024
 		case "VmSize":
-			value := strings.Trim(value, " kB") // remove last "kB"
+			value = strings.Trim(value, " kB") // remove last "kB"
 			v, err := strconv.ParseUint(value, 10, 64)
 			if err != nil {
 				return err
 			}
 			p.memInfo.VMS = v * 1024
 		case "VmSwap":
-			value := strings.Trim(value, " kB") // remove last "kB"
+			value = strings.Trim(value, " kB") // remove last "kB"
 			v, err := strconv.ParseUint(value, 10, 64)
 			if err != nil {
 				return err
 			}
 			p.memInfo.Swap = v * 1024
 		case "VmHWM":
-			value := strings.Trim(value, " kB") // remove last "kB"
+			value = strings.Trim(value, " kB") // remove last "kB"
 			v, err := strconv.ParseUint(value, 10, 64)
 			if err != nil {
 				return err
 			}
 			p.memInfo.HWM = v * 1024
 		case "VmData":
-			value := strings.Trim(value, " kB") // remove last "kB"
+			value = strings.Trim(value, " kB") // remove last "kB"
 			v, err := strconv.ParseUint(value, 10, 64)
 			if err != nil {
 				return err
 			}
 			p.memInfo.Data = v * 1024
 		case "VmStk":
-			value := strings.Trim(value, " kB") // remove last "kB"
+			value = strings.Trim(value, " kB") // remove last "kB"
 			v, err := strconv.ParseUint(value, 10, 64)
 			if err != nil {
 				return err
 			}
 			p.memInfo.Stack = v * 1024
 		case "VmLck":
-			value := strings.Trim(value, " kB") // remove last "kB"
+			value = strings.Trim(value, " kB") // remove last "kB"
 			v, err := strconv.ParseUint(value, 10, 64)
 			if err != nil {
 				return err

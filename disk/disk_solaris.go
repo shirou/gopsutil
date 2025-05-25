@@ -78,7 +78,7 @@ func PartitionsWithContext(_ context.Context, _ bool) ([]PartitionStat, error) {
 			Opts:       strings.Split(fields[3], ","),
 		})
 	}
-	if err := scanner.Err(); err != nil {
+	if err = scanner.Err(); err != nil {
 		return nil, fmt.Errorf("unable to scan %q: %w", _MNTTAB, err)
 	}
 
