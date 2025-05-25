@@ -67,7 +67,7 @@ func TestSplitProcStat_fromFile(t *testing.T) {
 			continue
 		}
 		statFile := fmt.Sprintf("testdata/linux/%d/stat", pid)
-		if _, err := os.Stat(statFile); err != nil {
+		if _, err = os.Stat(statFile); err != nil {
 			continue
 		}
 		contents, err := os.ReadFile(statFile)
@@ -152,7 +152,7 @@ func TestFillFromTIDStatWithContext_lx_brandz(t *testing.T) {
 		if err != nil {
 			continue
 		}
-		if _, err := os.Stat(fmt.Sprintf("testdata/lx_brandz/%d/stat", pid)); err != nil {
+		if _, err = os.Stat(fmt.Sprintf("testdata/lx_brandz/%d/stat", pid)); err != nil {
 			continue
 		}
 		p, _ := NewProcess(int32(pid))

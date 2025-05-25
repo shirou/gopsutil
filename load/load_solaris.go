@@ -39,7 +39,8 @@ func AvgWithContext(ctx context.Context) (*AvgStat, error) {
 		default:
 			continue
 		}
-		v, err := strconv.ParseInt(flds[1], 10, 64)
+		var v int64
+		v, err = strconv.ParseInt(flds[1], 10, 64)
 		if err != nil {
 			return nil, err
 		}
