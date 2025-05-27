@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
+	"slices"
 	"time"
 
 	"github.com/google/gopacket"
@@ -28,7 +30,10 @@ const (
 )
 
 // For unit test mocking
-type findDevsF func() ([]pcap.Interface, error)
+type (
+	findDevsF func() ([]pcap.Interface, error)
+	openLiveF func(device string, snaplen int32, promisc bool, timeout time.Duration) (*pcap.Handle, error)
+)
 
 func tracePackets(ctx context.Context, kind string) {
 	devs := findActiveDevices(pcap.FindAllDevs)
@@ -39,7 +44,7 @@ func tracePackets(ctx context.Context, kind string) {
 
 	for _, dev := range devs {
 		// one thread per interface
-		go processDeviceMsgs(ctx, &dev, kind)
+		go processDeviceMsgs(ctx, &dev, kind, pcap.OpenLive)
 	}
 }
 
@@ -61,11 +66,11 @@ func findActiveDevices(findDevs findDevsF) []pcap.Interface {
 	return ret
 }
 
-func processDeviceMsgs(ctx context.Context, dev *pcap.Interface, kind string) {
+func processDeviceMsgs(ctx context.Context, dev *pcap.Interface, kind string, openLive openLiveF) {
 	var handle *pcap.Handle
 	var err error
 
-	if handle, err = pcap.OpenLive(dev.Name, 1600, false, 1*time.Second); err != nil {
+	if handle, err = openLive(dev.Name, 1600, false, 1*time.Second); err != nil {
 		errChan <- err
 		return
 	}
@@ -85,28 +90,84 @@ func processDeviceMsgs(ctx context.Context, dev *pcap.Interface, kind string) {
 			continue
 		}
 
-		var errCnt uint64
-		errLayer := p.ErrorLayer()
-		if errLayer != nil {
-			// What about errLayer.Error()?
-			errCnt = 1
+		processPacket(p, dev)
+	}
+}
+
+func addTransientConn(srcAddr *Addr, dstAddr *Addr, dev *pcap.Interface) *Addr {
+	watchLock.Lock()
+	defer watchLock.Unlock()
+
+	lclAddr, rmtAddr, err := sortAddresses(srcAddr, dstAddr, dev)
+	if err != nil {
+		errChan <- err
+		return nil
+	}
+
+	ProcConnMap[*lclAddr] = &ProcNetStat{Pid: -1, NetCounters: IOCountersStat{}, RemoteAddr: *rmtAddr, LastUpdate: time.Now()}
+	return lclAddr
+}
+
+func updateIfName(stat *ProcNetStat, iName string) {
+	if len(stat.NetCounters.Name) == 0 {
+		stat.NetCounters.Name = iName
+	}
+}
+
+func ipMatch(ip net.IP, nicAddr pcap.InterfaceAddress) bool {
+	return slices.Equal(ip.Mask(nicAddr.Netmask), nicAddr.IP.Mask(nicAddr.Netmask))
+}
+
+// Figures which address is local and which remote
+func sortAddresses(addr1 *Addr, addr2 *Addr, dev *pcap.Interface) (*Addr, *Addr, error) {
+	ip1 := net.ParseIP(addr1.IP)
+	ip2 := net.ParseIP(addr2.IP)
+	for _, nicAddr := range dev.Addresses {
+		switch {
+		case ipMatch(ip1, nicAddr) && !ipMatch(ip2, nicAddr):
+			return addr1, addr2, nil
+		case ipMatch(ip2, nicAddr) && !ipMatch(ip1, nicAddr):
+			return addr2, addr1, nil
+		case ipMatch(ip1, nicAddr) && addr1.Port >= addr2.Port:
+			return addr1, addr2, nil
+		case ipMatch(ip2, nicAddr) && addr1.Port < addr2.Port:
+			return addr2, addr1, nil
+		}
+	}
+	return nil, nil, fmt.Errorf("addresses %v, %v don't belong to the interface %s", addr1, addr2, dev.Name)
+}
+
+func processPacket(p gopacket.Packet, dev *pcap.Interface) {
+	var errCnt uint64
+	errLayer := p.ErrorLayer()
+	if errLayer != nil {
+		// What about errLayer.Error()?
+		errCnt = 1
+	}
+
+	nBytes := uint64(len(p.Data()))
+	var dstAddr, srcAddr Addr
+	if decodeTCP(p, &srcAddr, &dstAddr) || decodeUDP(p, &srcAddr, &dstAddr) {
+		statOut, isOut := ProcConnMap[srcAddr]
+		statIn, isIn := ProcConnMap[dstAddr]
+		if !isIn && !isOut {
+			addTransientConn(&srcAddr, &dstAddr, dev)
+			statOut, isOut = ProcConnMap[srcAddr]
+			statIn, isIn = ProcConnMap[dstAddr]
 		}
 
-		nBytes := uint64(len(p.Data()))
-		var dstAddr, srcAddr Addr
-		if decodeTCP(p, &srcAddr, &dstAddr) || decodeUDP(p, &srcAddr, &dstAddr) {
-			if stat, ok := ProcConnMap[srcAddr]; ok {
-				ProcConnMap[srcAddr].NetCounters.BytesSent += nBytes
-				stat.NetCounters.PacketsSent++
-				stat.NetCounters.Errout += errCnt
-			} else if stat, ok := ProcConnMap[dstAddr]; ok {
-				stat.NetCounters.BytesRecv += nBytes
-				stat.NetCounters.PacketsRecv++
-				stat.NetCounters.Errin += errCnt
-			}
-			// } else {
-			// 	fmt.Printf("--- Not in the table: src=%v, dst=%v\n", srcAddr, dstAddr) //UC
-			// }
+		if isOut {
+			statOut.NetCounters.BytesSent += nBytes
+			statOut.NetCounters.PacketsSent++
+			statOut.NetCounters.Errout += errCnt
+			statOut.LastUpdate = time.Now()
+			updateIfName(statOut, dev.Name)
+		} else if isIn {
+			statIn.NetCounters.BytesRecv += nBytes
+			statIn.NetCounters.PacketsRecv++
+			statIn.NetCounters.Errin += errCnt
+			statIn.LastUpdate = time.Now()
+			updateIfName(statIn, dev.Name)
 		}
 	}
 }

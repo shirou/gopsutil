@@ -2,6 +2,7 @@ package net
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -48,44 +49,83 @@ var (
 	connections = [][]ConnectionStat{
 		{ConnectionStat{Laddr: addr1, Pid: 111}, ConnectionStat{Laddr: addr2, Pid: 111}},
 		{ConnectionStat{Laddr: addr1, Pid: 111}, ConnectionStat{Laddr: addr3, Pid: 111}},
+		{ConnectionStat{Laddr: addr1, Pid: 111}, ConnectionStat{Laddr: addr3, Pid: 111}},
 	}
 )
 
 func mockConnections(_ context.Context, _ string) ([]ConnectionStat, error) {
+	ret := connections[tIdx]
 	tIdx++
-	return connections[tIdx-1], nil
+	return ret, nil
 }
 
 func TestConnMapRefresh(t *testing.T) {
-	defer replaceGlobalVar(&ProcConnMap, make(map[Addr]ProcNetStat))()
+	defer replaceGlobalVar(&ProcConnMap, make(map[Addr]*ProcNetStat))()
+
+	expire := 20 * time.Millisecond
 
 	assert.Empty(t, ProcConnMap)
 
-	updateTable(context.Background(), "", mockConnections)
+	updateTable(context.Background(), "", mockConnections, expire)
 	assert.Len(t, ProcConnMap, 2)
 	assert.Contains(t, ProcConnMap, addr1)
 	assert.Contains(t, ProcConnMap, addr2)
 	assert.NotContains(t, ProcConnMap, addr3)
 
-	updateTable(context.Background(), "", mockConnections)
+	updateTable(context.Background(), "", mockConnections, expire)
+	assert.Len(t, ProcConnMap, 3)
+	assert.Contains(t, ProcConnMap, addr1)
+	assert.Contains(t, ProcConnMap, addr2)
+	assert.Contains(t, ProcConnMap, addr3)
+
+	time.Sleep(2 * expire)
+	updateTable(context.Background(), "", mockConnections, expire)
 	assert.Len(t, ProcConnMap, 2)
 	assert.Contains(t, ProcConnMap, addr1)
 	assert.NotContains(t, ProcConnMap, addr2)
 	assert.Contains(t, ProcConnMap, addr3)
 }
 
+func TestHandlingErrorsOnRefresh(t *testing.T) {
+	testErrChan := make(chan error)
+	defer replaceGlobalVar(&errChan, testErrChan)()
+
+	mockConnProvider := func(_ context.Context, _ string) ([]ConnectionStat, error) { return nil, errors.New("test") }
+
+	go updateTable(context.Background(), "any", mockConnProvider, time.Second)
+
+	assert.Error(t, <-testErrChan)
+}
+
+func TestGuessPidByRemote(t *testing.T) {
+	testTab := make(map[Addr]*ProcNetStat)
+	rAddr := Addr{IP: "104.18.138.67", Port: 443}
+	lAddr := Addr{IP: "192.168.0.235", Port: 20781}
+	lAddr2 := Addr{IP: "192.168.0.235", Port: 21326}
+	testTab[lAddr] = &ProcNetStat{Pid: -1, RemoteAddr: rAddr}
+	defer replaceGlobalVar(&ProcConnMap, testTab)()
+
+	mockConnections := []ConnectionStat{{Pid: 123, Raddr: rAddr, Laddr: lAddr2}}
+
+	assert.EqualValues(t, -1, testTab[lAddr].Pid)
+
+	guessPidByRemote(mockConnections)
+
+	assert.EqualValues(t, 123, testTab[lAddr].Pid)
+}
+
 func BenchmarkUpdateTable(b *testing.B) {
-	defer replaceGlobalVar(&ProcConnMap, make(map[Addr]ProcNetStat))()
+	defer replaceGlobalVar(&ProcConnMap, make(map[Addr]*ProcNetStat))()
 
 	b.ResetTimer()
 
 	for range b.N {
-		updateTable(context.Background(), "all", ConnectionsWithContext)
+		updateTable(context.Background(), "all", ConnectionsWithContext, time.Second)
 	}
 }
 
-func BechmarkGetProcConnStat(b *testing.B) {
-	defer replaceGlobalVar(&ProcConnMap, make(map[Addr]ProcNetStat))()
+func BenchmarkGetProcConnStat(b *testing.B) {
+	defer replaceGlobalVar(&ProcConnMap, make(map[Addr]*ProcNetStat))()
 
 	b.ResetTimer()
 
@@ -98,4 +138,8 @@ func replaceGlobalVar[T any](target *T, replacement T) func() {
 	saveVal := *target
 	*target = replacement
 	return func() { *target = saveVal }
+}
+
+func toSlice[T any](vals ...T) []T {
+	return vals
 }
