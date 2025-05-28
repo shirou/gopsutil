@@ -366,7 +366,7 @@ func CollectNetIO(kind string, intvl time.Duration) chan error {
 }
 
 func CollectNetIOWithContext(ctx context.Context, kind string, intvl time.Duration) chan error {
-	return StartTracing(ctx, kind, intvl)
+	return startTracing(ctx, kind, intvl)
 }
 
 func ProcNetCountersWithContext(_ context.Context, pid int32, pernic bool) ([]IOCountersStat, error) {

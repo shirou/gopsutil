@@ -165,8 +165,8 @@ func TestFindActiveDevicesFail(t *testing.T) {
 }
 
 func TestSortAddresses(t *testing.T) {
-	addr1 := Addr{IP: "31.13.80.53", Port: 443}
-	addr2 := Addr{IP: "192.168.0.235", Port: 49671}
+	addr1 := Addr{IP: "192.168.0.235", Port: 49671}
+	addr2 := Addr{IP: "31.13.80.53", Port: 443}
 	addr3 := Addr{IP: "127.0.0.1", Port: 49667}
 	addr4 := Addr{IP: "127.0.0.1", Port: 1042}
 	addr5 := Addr{IP: "172.28.216.133", Port: 5432}
@@ -182,22 +182,22 @@ func TestSortAddresses(t *testing.T) {
 	dev2 := pcap.Interface{Name: "lo", Addresses: []pcap.InterfaceAddress{{IP: net.ParseIP("127.0.0.1")}, {IP: net.ParseIP("::1")}}}
 
 	lAddr, rAddr, _ := sortAddresses(&addr1, &addr2, &dev1)
-	assert.ElementsMatch(t, toSlice(&addr1, &addr2), toSlice(lAddr, rAddr))
+	assert.Equal(t, toSlice(&addr1, &addr2), toSlice(lAddr, rAddr))
 	lAddr, rAddr, _ = sortAddresses(&addr2, &addr1, &dev1)
-	assert.ElementsMatch(t, toSlice(&addr1, &addr2), toSlice(lAddr, rAddr))
+	assert.Equal(t, toSlice(&addr1, &addr2), toSlice(lAddr, rAddr))
 
 	lAddr, rAddr, _ = sortAddresses(&addr3, &addr4, &dev2)
-	assert.ElementsMatch(t, toSlice(&addr3, &addr4), toSlice(lAddr, rAddr))
+	assert.Equal(t, toSlice(&addr3, &addr4), toSlice(lAddr, rAddr))
 	lAddr, rAddr, _ = sortAddresses(&addr4, &addr3, &dev2)
-	assert.ElementsMatch(t, toSlice(&addr3, &addr4), toSlice(lAddr, rAddr))
+	assert.Equal(t, toSlice(&addr3, &addr4), toSlice(lAddr, rAddr))
 
 	// ambiguous case - local connection
 	lAddr, rAddr, _ = sortAddresses(&addr6, &addr7, &dev1)
-	assert.ElementsMatch(t, toSlice(&addr6, &addr7), toSlice(lAddr, rAddr))
+	assert.Equal(t, toSlice(&addr6, &addr7), toSlice(lAddr, rAddr))
 	lAddr, rAddr, _ = sortAddresses(&addr7, &addr6, &dev1)
-	assert.ElementsMatch(t, toSlice(&addr7, &addr6), toSlice(lAddr, rAddr))
+	assert.Equal(t, toSlice(&addr7, &addr6), toSlice(lAddr, rAddr))
 
-	_, _, err := sortAddresses(&addr1, &addr5, &dev1)
+	_, _, err := sortAddresses(&addr3, &addr5, &dev1)
 	assert.Error(t, err)
 }
 

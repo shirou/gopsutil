@@ -16,7 +16,7 @@ type ProcNetStat struct {
 }
 
 // For unit test mocking
-type connProviderF func(_ context.Context, _ string) ([]ConnectionStat, error)
+type connProviderF func(context.Context, string) ([]ConnectionStat, error)
 
 var (
 	ProcConnMap      map[Addr]*ProcNetStat
@@ -27,7 +27,7 @@ var (
 )
 
 // Start collecting information on open ports and network traffic with Go-Pcap
-func StartTracing(ctx context.Context, kind string, intvl time.Duration) chan error {
+func startTracing(ctx context.Context, kind string, intvl time.Duration) chan error {
 	if ProcConnMap != nil {
 		panic("Repeated capturing of process NET I/O is not supported")
 	}
@@ -70,7 +70,6 @@ func pollNetStat(ctx context.Context, kind string, intvl time.Duration) {
 	}
 }
 
-// testable
 func updateTable(ctx context.Context, kind string, connProvider connProviderF, expiry time.Duration) {
 	watchLock.Lock()
 	defer watchLock.Unlock()
@@ -81,17 +80,17 @@ func updateTable(ctx context.Context, kind string, connProvider connProviderF, e
 		return
 	}
 
-	portPidMap := make(map[Addr]ConnectionStat)
+	tempAddrMap := make(map[Addr]ConnectionStat)
 	for _, conn := range conns {
 		if _, ok := inactiveStatuses[conn.Status]; !ok {
-			portPidMap[conn.Laddr] = conn
+			tempAddrMap[conn.Laddr] = conn
 		}
 	}
 
 	ntrans := 0
 	// remove outdated entries
 	for a, ps := range ProcConnMap {
-		if _, ok := portPidMap[a]; !ok && time.Since(ps.LastUpdate) > expiry {
+		if _, ok := tempAddrMap[a]; !ok && time.Since(ps.LastUpdate) > expiry {
 			delete(ProcConnMap, a)
 		} else if ok && ps.Pid == -1 {
 			ntrans++
@@ -99,7 +98,7 @@ func updateTable(ctx context.Context, kind string, connProvider connProviderF, e
 	}
 
 	// add new entries
-	for a, c := range portPidMap {
+	for a, c := range tempAddrMap {
 		ps, ok := ProcConnMap[a]
 		if !ok {
 			ProcConnMap[a] = &ProcNetStat{Pid: c.Pid, NetCounters: IOCountersStat{}, RemoteAddr: c.Raddr, LastUpdate: time.Now()}
@@ -115,17 +114,17 @@ func updateTable(ctx context.Context, kind string, connProvider connProviderF, e
 	}
 }
 
-// Here we are doing "best effort" when connection opened and closed between two polls.
+// Here we are doing "best effort" to figure process for a connection when it is opened and closed in between two polls.
 // Pid is guessed by assuming that the application connects to the same remote endpoint repeatedly.
-// This will be invalid if several applications connect to the same endpoint - hence the "guess".
+// (This will be invalid if several applications connect to the same endpoint - hence the "guess")
 func guessPidByRemote(conns []ConnectionStat) {
-	portPidMap := make(map[Addr]ConnectionStat)
+	tempAddrMap := make(map[Addr]ConnectionStat)
 	for _, conn := range conns {
-		portPidMap[conn.Raddr] = conn
+		tempAddrMap[conn.Raddr] = conn
 	}
 	for _, ps := range ProcConnMap {
 		if ps.Pid == -1 {
-			if ar, ok := portPidMap[ps.RemoteAddr]; ok {
+			if ar, ok := tempAddrMap[ps.RemoteAddr]; ok {
 				ps.Pid = ar.Pid
 			}
 		}

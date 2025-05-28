@@ -14,8 +14,8 @@ func TestSingleStartInvocation(t *testing.T) {
 	defer cancel()
 	defer replaceGlobalVar(&ProcConnMap, nil)()
 
-	assert.NotPanics(t, func() { StartTracing(ctx, "tcp", time.Millisecond) })
-	assert.Panics(t, func() { StartTracing(ctx, "tcp", time.Millisecond) })
+	assert.NotPanics(t, func() { startTracing(ctx, "tcp", time.Millisecond) })
+	assert.Panics(t, func() { startTracing(ctx, "tcp", time.Millisecond) })
 }
 
 func TestGetProcConnStat(t *testing.T) {
@@ -23,7 +23,7 @@ func TestGetProcConnStat(t *testing.T) {
 	defer cancel()
 	defer replaceGlobalVar(&ProcConnMap, nil)()
 
-	StartTracing(ctx, "all", 100*time.Millisecond)
+	startTracing(ctx, "all", 100*time.Millisecond)
 	time.Sleep(200 * time.Millisecond)
 
 	connections := GetProcConnStat()
@@ -35,7 +35,7 @@ func TestErrorReporting(t *testing.T) {
 	defer cancel()
 	defer replaceGlobalVar(&ProcConnMap, nil)()
 
-	errChan := StartTracing(ctx, "foo", time.Millisecond)
+	errChan := startTracing(ctx, "foo", time.Millisecond)
 
 	err := <-errChan
 	assert.Error(t, err)
