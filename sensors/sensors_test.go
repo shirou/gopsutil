@@ -3,7 +3,6 @@
 package sensors
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -21,7 +20,7 @@ func TestTemperatureStat_String(t *testing.T) {
 		Critical:    0.1,
 	}
 	s := `{"sensorKey":"CPU","temperature":1.1,"sensorHigh":30.1,"sensorCritical":0.1}`
-	assert.Equalf(t, s, fmt.Sprintf("%v", v), "TemperatureStat string is invalid, %v", fmt.Sprintf("%v", v))
+	assert.Equalf(t, s, v.String(), "TemperatureStat string is invalid, %v", v.String())
 }
 
 func TestTemperatures(t *testing.T) {

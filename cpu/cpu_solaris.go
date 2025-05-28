@@ -149,7 +149,7 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 	return result, nil
 }
 
-var flagsMatch = regexp.MustCompile(`[\w\.]+`)
+var flagsMatch = regexp.MustCompile(`[\w.]+`)
 
 func parseISAInfo(cmdOutput string) ([]string, error) {
 	words := flagsMatch.FindAllString(cmdOutput, -1)
