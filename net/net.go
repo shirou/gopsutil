@@ -4,6 +4,7 @@ package net
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net"
 	"time"
 
@@ -366,4 +367,45 @@ func CollectNetIO(kind string, intvl time.Duration) chan error {
 
 func CollectNetIOWithContext(ctx context.Context, kind string, intvl time.Duration) chan error {
 	return StartTracing(ctx, kind, intvl)
+}
+
+func ProcNetCountersWithContext(_ context.Context, pid int32, pernic bool) ([]IOCountersStat, error) {
+	lclConMap := GetProcConnStat()
+	countsMap := make(map[string]IOCountersStat)
+	for _, ps := range lclConMap {
+		if ps.Pid != pid {
+			continue
+		}
+
+		iName := ps.NetCounters.Name
+		if stat, ok := countsMap[iName]; ok {
+			addStats(&stat, &ps.NetCounters)
+		} else {
+			countsMap[iName] = ps.NetCounters
+		}
+	}
+
+	if len(countsMap) == 0 {
+		return nil, fmt.Errorf("no net counters for pid %d", pid)
+	}
+
+	ret := make([]IOCountersStat, 0)
+	for _, cs := range countsMap {
+		if pernic || len(ret) == 0 {
+			ret = append(ret, cs)
+		} else {
+			addStats(&ret[0], &cs)
+		}
+	}
+
+	return ret, nil
+}
+
+func addStats(stat1 *IOCountersStat, stat2 *IOCountersStat) {
+	stat1.BytesSent += stat2.BytesSent
+	stat1.BytesRecv += stat2.BytesRecv
+	stat1.PacketsSent += stat2.PacketsSent
+	stat1.PacketsRecv += stat2.PacketsRecv
+	stat1.Errin += stat2.Errin
+	stat1.Errout += stat2.Errout
 }

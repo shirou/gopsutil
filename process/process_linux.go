@@ -391,9 +391,8 @@ func (p *Process) ConnectionsMaxWithContext(ctx context.Context, maxConn int) ([
 	return net.ConnectionsPidMaxWithContext(ctx, "all", p.Pid, maxConn)
 }
 
-// UC
-func (p *Process) NetIOCountersWithContext(_ context.Context, _ bool) ([]net.IOCountersStat, error) {
-	return nil, common.ErrNotImplementedError
+func (p *Process) NetIOCountersWithContext(ctx context.Context, pernic bool) ([]net.IOCountersStat, error) {
+	return net.ProcNetCountersWithContext(ctx, p.Pid, pernic)
 }
 
 func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]MemoryMapsStat, error) {
