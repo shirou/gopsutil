@@ -202,10 +202,10 @@ type (
 )
 
 func init() {
-	var systemInfo systemInfo
+	var sInfo systemInfo
 
-	procGetNativeSystemInfo.Call(uintptr(unsafe.Pointer(&systemInfo)))
-	processorArchitecture = uint(systemInfo.wProcessorArchitecture)
+	procGetNativeSystemInfo.Call(uintptr(unsafe.Pointer(&sInfo)))
+	processorArchitecture = uint(sInfo.wProcessorArchitecture)
 
 	// enable SeDebugPrivilege https://github.com/midstar/proci/blob/6ec79f57b90ba3d9efa2a7b16ef9c9369d4be875/proci_windows.go#L80-L119
 	handle, err := syscall.GetCurrentProcess()
@@ -348,8 +348,10 @@ func (p *Process) ExeWithContext(_ context.Context) (string, error) {
 	defer windows.CloseHandle(c)
 	buf := make([]uint16, syscall.MAX_LONG_PATH)
 	size := uint32(syscall.MAX_LONG_PATH)
-	if err := procQueryFullProcessImageNameW.Find(); err == nil { // Vista+
-		ret, _, err := procQueryFullProcessImageNameW.Call(
+	err = procQueryFullProcessImageNameW.Find()
+	if err == nil { // Vista+
+		var ret uintptr
+		ret, _, err = procQueryFullProcessImageNameW.Call(
 			uintptr(c),
 			uintptr(0),
 			uintptr(unsafe.Pointer(&buf[0])),
@@ -550,16 +552,16 @@ func (p *Process) IOCountersWithContext(_ context.Context) (*IOCountersStat, err
 		return nil, err
 	}
 	defer windows.CloseHandle(c)
-	var ioCounters ioCounters
-	ret, _, err := procGetProcessIoCounters.Call(uintptr(c), uintptr(unsafe.Pointer(&ioCounters)))
+	var counters ioCounters
+	ret, _, err := procGetProcessIoCounters.Call(uintptr(c), uintptr(unsafe.Pointer(&counters)))
 	if ret == 0 {
 		return nil, err
 	}
 	stats := &IOCountersStat{
-		ReadCount:  ioCounters.ReadOperationCount,
-		ReadBytes:  ioCounters.ReadTransferCount,
-		WriteCount: ioCounters.WriteOperationCount,
-		WriteBytes: ioCounters.WriteTransferCount,
+		ReadCount:  counters.ReadOperationCount,
+		ReadBytes:  counters.ReadTransferCount,
+		WriteCount: counters.WriteOperationCount,
+		WriteBytes: counters.WriteTransferCount,
 	}
 
 	return stats, nil
@@ -674,12 +676,14 @@ func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
 	defer windows.CloseHandle(snap)
 	var pe32 windows.ProcessEntry32
 	pe32.Size = uint32(unsafe.Sizeof(pe32))
-	if err := windows.Process32First(snap, &pe32); err != nil {
+	err = windows.Process32First(snap, &pe32)
+	if err != nil {
 		return out, err
 	}
 	for {
 		if pe32.ParentProcessID == uint32(p.Pid) {
-			p, err := NewProcessWithContext(ctx, int32(pe32.ProcessID))
+			var p *Process
+			p, err = NewProcessWithContext(ctx, int32(pe32.ProcessID))
 			if err == nil {
 				out = append(out, p)
 			}
@@ -939,7 +943,8 @@ func getMemoryInfo(pid int32) (PROCESS_MEMORY_COUNTERS, error) {
 		return mem, err
 	}
 	defer windows.CloseHandle(c)
-	if err := getProcessMemoryInfo(c, &mem); err != nil {
+	err = getProcessMemoryInfo(c, &mem)
+	if err != nil {
 		return mem, err
 	}
 

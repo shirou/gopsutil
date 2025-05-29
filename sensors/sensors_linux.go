@@ -36,18 +36,21 @@ func TemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
 
 		for _, file := range files {
 			// Get the name of the temperature you are reading
-			name, err := os.ReadFile(filepath.Join(file, "type"))
+			var name []byte
+			name, err = os.ReadFile(filepath.Join(file, "type"))
 			if err != nil {
 				warns.Add(err)
 				continue
 			}
 			// Get the temperature reading
-			current, err := os.ReadFile(filepath.Join(file, "temp"))
+			var current []byte
+			current, err = os.ReadFile(filepath.Join(file, "temp"))
 			if err != nil {
 				warns.Add(err)
 				continue
 			}
-			temperature, err := strconv.ParseInt(strings.TrimSpace(string(current)), 10, 64)
+			var temperature int64
+			temperature, err = strconv.ParseInt(strings.TrimSpace(string(current)), 10, 64)
 			if err != nil {
 				warns.Add(err)
 				continue
@@ -149,22 +152,21 @@ func getTemperatureFiles(ctx context.Context) ([]string, error) {
 }
 
 func optionalValueReadFromFile(filename string) float64 {
-	var raw []byte
+	// Check if file exists
+	_, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return 0
+	}
 
-	var err error
+	var raw []byte
+	raw, err = os.ReadFile(filename)
+	if err != nil {
+		return 0
+	}
 
 	var value float64
-
-	// Check if file exists
-	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		return 0
-	}
-
-	if raw, err = os.ReadFile(filename); err != nil {
-		return 0
-	}
-
-	if value, err = strconv.ParseFloat(strings.TrimSpace(string(raw)), 64); err != nil {
+	value, err = strconv.ParseFloat(strings.TrimSpace(string(raw)), 64)
+	if err != nil {
 		return 0
 	}
 
