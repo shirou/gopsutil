@@ -185,6 +185,10 @@ func (p *Process) ConnectionsMaxWithContext(_ context.Context, _ int) ([]net.Con
 	return nil, common.ErrNotImplementedError
 }
 
+func (p *Process) NetIOCountersWithContext(_ context.Context, _ bool) ([]net.IOCountersStat, error) {
+       return nil, common.ErrNotImplementedError
+}
+
 func (p *Process) MemoryMapsWithContext(_ context.Context, _ bool) (*[]MemoryMapsStat, error) {
 	return nil, common.ErrNotImplementedError
 }

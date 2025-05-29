@@ -28,7 +28,7 @@ type Process struct {
 	name           string
 	status         string
 	parent         int32
-	parentMutex    sync.RWMutex // for windows ppid cache
+	parentMutex    *sync.RWMutex // for windows ppid cache
 	numCtxSwitches *NumCtxSwitchesStat
 	uids           []uint32
 	gids           []uint32
@@ -214,7 +214,8 @@ func NewProcess(pid int32) (*Process, error) {
 
 func NewProcessWithContext(ctx context.Context, pid int32) (*Process, error) {
 	p := &Process{
-		Pid: pid,
+		Pid:         pid,
+		parentMutex: new(sync.RWMutex),
 	}
 
 	exists, err := PidExistsWithContext(ctx, pid)
@@ -556,6 +557,11 @@ func (p *Process) Connections() ([]net.ConnectionStat, error) {
 // ConnectionsMax returns a slice of net.ConnectionStat used by the process at most `max`.
 func (p *Process) ConnectionsMax(maxConn int) ([]net.ConnectionStat, error) {
 	return p.ConnectionsMaxWithContext(context.Background(), maxConn)
+}
+
+// NetIOCounters returns NetIOCounters of the process.
+func (p *Process) NetIOCounters(pernic bool) ([]net.IOCountersStat, error) {
+	return p.NetIOCountersWithContext(context.Background(), pernic)
 }
 
 // MemoryMaps get memory maps from /proc/(pid)/smaps

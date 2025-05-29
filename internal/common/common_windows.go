@@ -290,15 +290,15 @@ func CallWithExpandingBuffer(fn func() NtStatus, buf *[]byte, resultLength *uint
 }
 
 func NtQuerySystemInformation(
-	SystemInformationClass uint32,
-	SystemInformation *byte,
-	SystemInformationLength uint32,
-	ReturnLength *uint32,
+	systemInformationClass uint32,
+	systemInformation *byte,
+	systemInformationLength uint32,
+	returnLength *uint32,
 ) NtStatus {
 	r0, _, _ := ProcNtQuerySystemInformation.Call(
-		uintptr(SystemInformationClass),
-		uintptr(unsafe.Pointer(SystemInformation)),
-		uintptr(SystemInformationLength),
-		uintptr(unsafe.Pointer(ReturnLength)))
+		uintptr(systemInformationClass),
+		uintptr(unsafe.Pointer(systemInformation)),
+		uintptr(systemInformationLength),
+		uintptr(unsafe.Pointer(returnLength)))
 	return NtStatus(r0)
 }

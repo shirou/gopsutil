@@ -2,6 +2,7 @@
 package net
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"runtime"
@@ -200,4 +201,33 @@ func TestInterfaceStatString(t *testing.T) {
 	list := InterfaceStatList{v, v}
 	s = fmt.Sprintf("%v", list)
 	assert.JSONEqf(t, `[{"index":0,"mtu":1500,"name":"eth0","hardwareAddr":"01:23:45:67:89:ab","flags":["up","down"],"addrs":[{"addr":"1.2.3.4"},{"addr":"5.6.7.8"}]},{"index":0,"mtu":1500,"name":"eth0","hardwareAddr":"01:23:45:67:89:ab","flags":["up","down"],"addrs":[{"addr":"1.2.3.4"},{"addr":"5.6.7.8"}]}]`, s, "InterfaceStatList string is invalid: %v", s)
+}
+
+func TestProcNetCountersWithContext(t *testing.T) {
+	testTab := make(map[Addr]*ProcNetStat)
+	stat1 := IOCountersStat{Name: "if1", BytesSent: 111, BytesRecv: 222, PacketsSent: 3, PacketsRecv: 4}
+	stat2 := IOCountersStat{Name: "if2", BytesSent: 333, BytesRecv: 44, PacketsSent: 2, PacketsRecv: 2}
+	stat3 := IOCountersStat{Name: "if1", BytesSent: 444, BytesRecv: 57, PacketsSent: 5, PacketsRecv: 7}
+	testTab[Addr{IP: "192.168.0.235", Port: 20781}] = &ProcNetStat{Pid: 111, NetCounters: stat1}
+	testTab[Addr{IP: "127.0.0.1", Port: 22137}] = &ProcNetStat{Pid: 111, NetCounters: stat2}
+	testTab[Addr{IP: "192.168.0.235", Port: 20675}] = &ProcNetStat{Pid: 411, NetCounters: stat3}
+	defer replaceGlobalVar(&ProcConnMap, testTab)()
+
+	counts, err := ProcNetCountersWithContext(context.Background(), 111, false)
+	require.NoError(t, err)
+	assert.Len(t, counts, 1)
+	assert.EqualValues(t, 444, counts[0].BytesSent)
+	assert.EqualValues(t, 266, counts[0].BytesRecv)
+	assert.EqualValues(t, 5, counts[0].PacketsSent)
+	assert.EqualValues(t, 6, counts[0].PacketsRecv)
+	assert.Zero(t, counts[0].Errin)
+	assert.Zero(t, counts[0].Errout)
+
+	counts, err = ProcNetCountersWithContext(context.Background(), 111, true)
+	require.NoError(t, err)
+	assert.Len(t, counts, 2)
+	assert.Equal(t, []IOCountersStat{stat1, stat2}, counts)
+
+	_, err = ProcNetCountersWithContext(context.Background(), 777, false)
+	assert.Error(t, err)
 }

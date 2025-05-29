@@ -6,6 +6,7 @@ package sensors
 import (
 	"context"
 	"math"
+	"strings"
 
 	"github.com/yusufpapurcu/wmi"
 
@@ -19,7 +20,21 @@ type msAcpi_ThermalZoneTemperature struct { //nolint:revive //FIXME
 	InstanceName       string
 }
 
+type win32_PerfFormattedData_Counters_ThermalZoneInformation struct { //nolint:revive //FIXME
+	Name                     string
+	HighPrecisionTemperature uint32
+}
+
 func TemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
+	ret, err := acpiQuery(ctx)
+	if strings.Contains(err.Error(), "Access denied") {
+		ret, err = win32Query(ctx)
+	}
+
+	return ret, err
+}
+
+func acpiQuery(ctx context.Context) ([]TemperatureStat, error) {
 	var ret []TemperatureStat
 	var dst []msAcpi_ThermalZoneTemperature
 	q := wmi.CreateQuery(&dst, "")
@@ -31,6 +46,25 @@ func TemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
 		ts := TemperatureStat{
 			SensorKey:   v.InstanceName,
 			Temperature: kelvinToCelsius(v.CurrentTemperature, 2),
+		}
+		ret = append(ret, ts)
+	}
+
+	return ret, nil
+}
+
+func win32Query(ctx context.Context) ([]TemperatureStat, error) {
+	var ret []TemperatureStat
+	var dst []win32_PerfFormattedData_Counters_ThermalZoneInformation
+	q := wmi.CreateQuery(&dst, "")
+	if err := common.WMIQueryWithContext(ctx, q, &dst, nil); err != nil {
+		return ret, err
+	}
+
+	for _, v := range dst {
+		ts := TemperatureStat{
+			SensorKey:   v.Name,
+			Temperature: kelvinToCelsius(v.HighPrecisionTemperature, 2),
 		}
 		ret = append(ret, ts)
 	}
