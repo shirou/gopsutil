@@ -150,20 +150,20 @@ func CgroupCPUUsageWithContext(ctx context.Context, containerID, base string) (f
 	return ns / nanoseconds, nil
 }
 
-func CgroupCPUDocker(containerid string) (*CgroupCPUStat, error) {
-	return CgroupCPUDockerWithContext(context.Background(), containerid)
+func CgroupCPUDocker(containerID string) (*CgroupCPUStat, error) {
+	return CgroupCPUDockerWithContext(context.Background(), containerID)
 }
 
-func CgroupCPUUsageDocker(containerid string) (float64, error) {
-	return CgroupCPUDockerUsageWithContext(context.Background(), containerid)
+func CgroupCPUUsageDocker(containerID string) (float64, error) {
+	return CgroupCPUDockerUsageWithContext(context.Background(), containerID)
 }
 
-func CgroupCPUDockerWithContext(ctx context.Context, containerid string) (*CgroupCPUStat, error) {
-	return CgroupCPUWithContext(ctx, containerid, common.HostSysWithContext(ctx, "fs/cgroup/cpuacct/docker"))
+func CgroupCPUDockerWithContext(ctx context.Context, containerID string) (*CgroupCPUStat, error) {
+	return CgroupCPUWithContext(ctx, containerID, common.HostSysWithContext(ctx, "fs/cgroup/cpuacct/docker"))
 }
 
-func CgroupCPUDockerUsageWithContext(ctx context.Context, containerid string) (float64, error) {
-	return CgroupCPUUsageWithContext(ctx, containerid, common.HostSysWithContext(ctx, "fs/cgroup/cpuacct/docker"))
+func CgroupCPUDockerUsageWithContext(ctx context.Context, containerID string) (float64, error) {
+	return CgroupCPUUsageWithContext(ctx, containerID, common.HostSysWithContext(ctx, "fs/cgroup/cpuacct/docker"))
 }
 
 func CgroupMem(containerID string, base string) (*CgroupMemStat, error) {

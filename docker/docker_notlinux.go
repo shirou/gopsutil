@@ -30,37 +30,37 @@ func GetDockerIDListWithContext(_ context.Context) ([]string, error) {
 }
 
 // CgroupCPU returns specified cgroup id CPU status.
-// containerid is same as docker id if you use docker.
+// containerID is same as docker id if you use docker.
 // If you use container via systemd.slice, you could use
-// containerid = docker-<container id>.scope and base=/sys/fs/cgroup/cpuacct/system.slice/
-func CgroupCPU(containerid string, base string) (*CgroupCPUStat, error) {
-	return CgroupCPUWithContext(context.Background(), containerid, base)
+// containerID = docker-<container id>.scope and base=/sys/fs/cgroup/cpuacct/system.slice/
+func CgroupCPU(containerID string, base string) (*CgroupCPUStat, error) {
+	return CgroupCPUWithContext(context.Background(), containerID, base)
 }
 
 func CgroupCPUWithContext(_ context.Context, _ string, _ string) (*CgroupCPUStat, error) {
 	return nil, ErrCgroupNotAvailable
 }
 
-func CgroupCPUDocker(containerid string) (*CgroupCPUStat, error) {
-	return CgroupCPUDockerWithContext(context.Background(), containerid)
+func CgroupCPUDocker(containerID string) (*CgroupCPUStat, error) {
+	return CgroupCPUDockerWithContext(context.Background(), containerID)
 }
 
-func CgroupCPUDockerWithContext(ctx context.Context, containerid string) (*CgroupCPUStat, error) {
-	return CgroupCPUWithContext(ctx, containerid, common.HostSysWithContext(ctx, "fs/cgroup/cpuacct/docker"))
+func CgroupCPUDockerWithContext(ctx context.Context, containerID string) (*CgroupCPUStat, error) {
+	return CgroupCPUWithContext(ctx, containerID, common.HostSysWithContext(ctx, "fs/cgroup/cpuacct/docker"))
 }
 
-func CgroupMem(containerid string, base string) (*CgroupMemStat, error) {
-	return CgroupMemWithContext(context.Background(), containerid, base)
+func CgroupMem(containerID string, base string) (*CgroupMemStat, error) {
+	return CgroupMemWithContext(context.Background(), containerID, base)
 }
 
 func CgroupMemWithContext(_ context.Context, _ string, _ string) (*CgroupMemStat, error) {
 	return nil, ErrCgroupNotAvailable
 }
 
-func CgroupMemDocker(containerid string) (*CgroupMemStat, error) {
-	return CgroupMemDockerWithContext(context.Background(), containerid)
+func CgroupMemDocker(containerID string) (*CgroupMemStat, error) {
+	return CgroupMemDockerWithContext(context.Background(), containerID)
 }
 
-func CgroupMemDockerWithContext(ctx context.Context, containerid string) (*CgroupMemStat, error) {
-	return CgroupMemWithContext(ctx, containerid, common.HostSysWithContext(ctx, "fs/cgroup/memory/docker"))
+func CgroupMemDockerWithContext(ctx context.Context, containerID string) (*CgroupMemStat, error) {
+	return CgroupMemWithContext(ctx, containerID, common.HostSysWithContext(ctx, "fs/cgroup/memory/docker"))
 }
