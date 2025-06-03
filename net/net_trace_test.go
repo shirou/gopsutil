@@ -3,6 +3,7 @@ package net
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -10,12 +11,25 @@ import (
 )
 
 func TestSingleStartInvocation(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 	defer replaceGlobalVar(&ProcConnMap, nil)()
 
-	assert.NotPanics(t, func() { startTracing(ctx, "tcp", time.Millisecond) })
-	assert.Panics(t, func() { startTracing(ctx, "tcp", time.Millisecond) })
+	var errChan chan error
+
+	ctx, cancel1 := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel1()
+	assert.NotPanics(t, func() { errChan = startTracing(ctx, "tcp", time.Millisecond) })
+
+	ctx, cancel2 := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel2()
+	assert.Panics(t, func() { errChan = startTracing(ctx, "tcp", time.Millisecond) })
+
+	select {
+	case err := <-errChan:
+		if !strings.HasPrefix(err.Error(), "You don't have permission to capture on that device") {
+			t.Fatalf("No error expected - got %v", err)
+		}
+	case <-time.After(50 * time.Millisecond):
+	}
 }
 
 func TestGetProcConnStat(t *testing.T) {

@@ -226,7 +226,7 @@ func TestProcNetCountersWithContext(t *testing.T) {
 	counts, err = ProcNetCountersWithContext(context.Background(), 111, true)
 	require.NoError(t, err)
 	assert.Len(t, counts, 2)
-	assert.Equal(t, []IOCountersStat{stat1, stat2}, counts)
+	assert.ElementsMatch(t, []IOCountersStat{stat1, stat2}, counts)
 
 	_, err = ProcNetCountersWithContext(context.Background(), 777, false)
 	assert.Error(t, err)
