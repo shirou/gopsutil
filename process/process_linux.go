@@ -636,10 +636,10 @@ func (p *Process) fillFromfdWithContext(ctx context.Context) (int32, []*OpenFile
 	}
 	numFDs := int32(len(fnames))
 
-	var openfiles []*OpenFilesStat
+	openfiles := make([]*OpenFilesStat, 0, numFDs)
 	for _, fd := range fnames {
 		fpath := filepath.Join(statPath, fd)
-		path, err := os.Readlink(fpath)
+		path, err := common.Readlink(fpath)
 		if err != nil {
 			continue
 		}
