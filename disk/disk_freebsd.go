@@ -33,7 +33,8 @@ func PartitionsWithContext(_ context.Context, _ bool) ([]PartitionStat, error) {
 		return ret, err
 	}
 
-	for _, stat := range fs {
+	for i := range fs {
+		stat := &fs[i]
 		opts := []string{"rw"}
 		if stat.Flags&unix.MNT_RDONLY != 0 {
 			opts = []string{"ro"}
@@ -182,7 +183,8 @@ func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
 			break
 		}
 	}
-	if err = s.Err(); err != nil {
+	err = s.Err()
+	if err != nil {
 		return "", err
 	}
 	return serial, nil

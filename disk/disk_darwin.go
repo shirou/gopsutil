@@ -35,7 +35,8 @@ func PartitionsWithContext(_ context.Context, _ bool) ([]PartitionStat, error) {
 	// to prevent accessing uninitialized entries.
 	// https://github.com/shirou/gopsutil/issues/1390
 	fs = fs[:count]
-	for _, stat := range fs {
+	for i := range fs {
+		stat := &fs[i]
 		opts := []string{"rw"}
 		if stat.Flags&unix.MNT_RDONLY != 0 {
 			opts = []string{"ro"}
@@ -131,8 +132,10 @@ func SerialNumberWithContext(ctx context.Context, _ string) (string, error) {
 
 	// Extract all serial numbers into a single string
 	var serialNumbers []string
-	for _, spnvmeData := range data.SPNVMeDataType {
-		for _, item := range spnvmeData.Items {
+	for i := range data.SPNVMeDataType {
+		spnvmeData := &data.SPNVMeDataType[i]
+		for j := range spnvmeData.Items {
+			item := &spnvmeData.Items[j]
 			serialNumbers = append(serialNumbers, item.DeviceSerial)
 		}
 	}

@@ -358,7 +358,7 @@ func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
 		if err != nil {
 			continue
 		}
-		if int32(ppid) == p.Pid {
+		if ppid == int64(p.Pid) {
 			np, err := NewProcessWithContext(ctx, int32(pid))
 			if err != nil {
 				continue
@@ -639,7 +639,7 @@ func (p *Process) fillFromfdWithContext(ctx context.Context) (int32, []*OpenFile
 	var openfiles []*OpenFilesStat
 	for _, fd := range fnames {
 		fpath := filepath.Join(statPath, fd)
-		filepath, err := os.Readlink(fpath)
+		path, err := os.Readlink(fpath)
 		if err != nil {
 			continue
 		}
@@ -648,7 +648,7 @@ func (p *Process) fillFromfdWithContext(ctx context.Context) (int32, []*OpenFile
 			return numFDs, openfiles, err
 		}
 		o := &OpenFilesStat{
-			Path: filepath,
+			Path: path,
 			Fd:   t,
 		}
 		openfiles = append(openfiles, o)

@@ -4,6 +4,7 @@
 package load
 
 import (
+	"bytes"
 	"context"
 	"regexp"
 	"strconv"
@@ -20,7 +21,7 @@ func AvgWithContext(ctx context.Context) (*AvgStat, error) {
 		return nil, err
 	}
 
-	idx := strings.Index(string(line), "load average:")
+	idx := bytes.Index(line, []byte("load average:"))
 	if idx < 0 {
 		return nil, common.ErrNotImplementedError
 	}

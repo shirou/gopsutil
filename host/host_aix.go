@@ -160,7 +160,7 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 }
 
 // Much of this function could be static. However, to be future proofed, I've made it call the OS for the information in all instances.
-func PlatformInformationWithContext(ctx context.Context) (platform string, family string, version string, err error) {
+func PlatformInformationWithContext(ctx context.Context) (platform, family, version string, err error) {
 	// Set the platform (which should always, and only be, "AIX") from `uname -s`
 	out, err := invoke.CommandWithContext(ctx, "uname", "-s")
 	if err != nil {

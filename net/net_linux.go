@@ -793,7 +793,7 @@ func processUnix(file string, kind netConnectionKindType, inodes map[string][]in
 	return ret, nil
 }
 
-func updateMap(src map[string][]inodeMap, add map[string][]inodeMap) map[string][]inodeMap {
+func updateMap(src, add map[string][]inodeMap) map[string][]inodeMap {
 	for key, value := range add {
 		a, exists := src[key]
 		if !exists {

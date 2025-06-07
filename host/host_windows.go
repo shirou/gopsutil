@@ -136,7 +136,7 @@ func BootTimeWithContext(_ context.Context) (uint64, error) {
 	return t, nil
 }
 
-func PlatformInformationWithContext(_ context.Context) (platform string, family string, version string, err error) {
+func PlatformInformationWithContext(_ context.Context) (platform, family, version string, err error) {
 	platform, family, _, displayVersion, err := platformInformation()
 	if err != nil {
 		return "", "", "", err

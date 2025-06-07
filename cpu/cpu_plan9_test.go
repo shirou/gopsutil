@@ -35,7 +35,7 @@ var timesTests = []struct {
 func TestTimesPlan9(t *testing.T) {
 	for _, tt := range timesTests {
 		t.Run(tt.mockedRootFS, func(t *testing.T) {
-			t.Setenv("HOST_ROOT", filepath.Join("testdata/plan9", tt.mockedRootFS))
+			t.Setenv("HOST_ROOT", filepath.Join("testdata", "plan9", tt.mockedRootFS))
 			stats, err := Times(false)
 			common.SkipIfNotImplementedErr(t, err)
 			require.NoError(t, err)
