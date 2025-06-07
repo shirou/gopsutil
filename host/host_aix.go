@@ -68,7 +68,7 @@ func parseUptime(uptime string) uint64 {
 	var err error
 
 	switch ut[3] {
-	case "day,", "days,":
+	case "day,", "days,", "day", "days":
 		days, err = strconv.ParseUint(ut[2], 10, 64)
 		if err != nil {
 			return 0
@@ -76,7 +76,8 @@ func parseUptime(uptime string) uint64 {
 
 		// day provided along with a single hour or hours
 		// ie: up 2 days, 20 hrs,
-		if ut[5] == "hr," || ut[5] == "hrs," {
+		if ut[5] == "hr," || ut[5] == "hrs," ||
+			ut[5] == "hr" || ut[5] == "hrs" {
 			hours, err = strconv.ParseUint(ut[4], 10, 64)
 			if err != nil {
 				return 0
@@ -85,7 +86,8 @@ func parseUptime(uptime string) uint64 {
 
 		// mins provided along with a single min or mins
 		// ie: up 4 days, 29 mins,
-		if ut[5] == "min," || ut[5] == "mins," {
+		if ut[5] == "min," || ut[5] == "mins," ||
+			ut[5] == "min" || ut[5] == "mins" {
 			mins, err = strconv.ParseUint(ut[4], 10, 64)
 			if err != nil {
 				return 0
@@ -105,12 +107,12 @@ func parseUptime(uptime string) uint64 {
 				return 0
 			}
 		}
-	case "hr,", "hrs,":
+	case "hr,", "hrs,", "hr", "hrs":
 		hours, err = strconv.ParseUint(ut[2], 10, 64)
 		if err != nil {
 			return 0
 		}
-	case "min,", "mins,":
+	case "min,", "mins,", "min", "mins":
 		mins, err = strconv.ParseUint(ut[2], 10, 64)
 		if err != nil {
 			return 0
