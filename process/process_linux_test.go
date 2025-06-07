@@ -18,7 +18,7 @@ import (
 func TestFillFromfdWithContext(t *testing.T) {
 	type expect struct {
 		numFDs    int32
-		openFiles []*OpenFilesStat
+		openFiles []OpenFilesStat
 		err       error
 	}
 	type testCase struct {
@@ -33,7 +33,7 @@ func TestFillFromfdWithContext(t *testing.T) {
 			pid:  1,
 			expected: &expect{
 				numFDs: 3,
-				openFiles: []*OpenFilesStat{
+				openFiles: []OpenFilesStat{
 					{
 						Path: "/foo",
 						Fd:   0,
