@@ -285,81 +285,101 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 		return nil, err
 	}
 
+	var ret []PartitionStat
+	if useMounts { // use mounts file
+		ret = parseFieldsOnMounts(lines, all, fs)
+		return ret, nil
+	}
+
+	// use mountinfo
+	ret, err = parseFieldsOnMountinfo(ctx, lines, all, fs, filename)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing mountinfo file %s: %w", filename, err)
+	}
+
+	return ret, nil
+}
+
+func parseFieldsOnMounts(lines []string, all bool, fs []string) []PartitionStat {
 	ret := make([]PartitionStat, 0, len(lines))
-
 	for _, line := range lines {
-		var d PartitionStat
-		if useMounts {
-			fields := strings.Fields(line)
+		fields := strings.Fields(line)
 
-			d = PartitionStat{
-				Device:     fields[0],
-				Mountpoint: unescapeFstab(fields[1]),
-				Fstype:     fields[2],
-				Opts:       strings.Fields(fields[3]),
-			}
+		d := PartitionStat{
+			Device:     fields[0],
+			Mountpoint: unescapeFstab(fields[1]),
+			Fstype:     fields[2],
+			Opts:       strings.Split(fields[3], ","),
+		}
 
-			if !all {
-				if d.Device == "none" || !common.StringsHas(fs, d.Fstype) {
-					continue
-				}
-			}
-		} else {
-			// a line of 1/mountinfo has the following structure:
-			// 36  35  98:0 /mnt1 /mnt2 rw,noatime master:1 - ext3 /dev/root rw,errors=continue
-			// (1) (2) (3)   (4)   (5)      (6)      (7)   (8) (9)   (10)         (11)
-
-			// split the mountinfo line by the separator hyphen
-			parts := strings.Split(line, " - ")
-			if len(parts) != 2 {
-				return nil, fmt.Errorf("found invalid mountinfo line in file %s: %s ", filename, line)
-			}
-
-			fields := strings.Fields(parts[0])
-			blockDeviceID := fields[2]
-			mountPoint := fields[4]
-			mountOpts := strings.Split(fields[5], ",")
-
-			if rootDir := fields[3]; rootDir != "" && rootDir != "/" {
-				mountOpts = append(mountOpts, "bind")
-			}
-
-			fields = strings.Fields(parts[1])
-			fstype := fields[0]
-			device := fields[1]
-
-			d = PartitionStat{
-				Device:     device,
-				Mountpoint: unescapeFstab(mountPoint),
-				Fstype:     fstype,
-				Opts:       mountOpts,
-			}
-
-			if !all {
-				if d.Device == "none" || !common.StringsHas(fs, d.Fstype) {
-					continue
-				}
-			}
-
-			if strings.HasPrefix(d.Device, "/dev/mapper/") {
-				devpath, err := filepath.EvalSymlinks(common.HostDevWithContext(ctx, strings.Replace(d.Device, "/dev", "", 1)))
-				if err == nil {
-					d.Device = devpath
-				}
-			}
-
-			// /dev/root is not the real device name
-			// so we get the real device name from its major/minor number
-			if d.Device == "/dev/root" {
-				devpath, err := os.Readlink(common.HostSysWithContext(ctx, "/dev/block/"+blockDeviceID))
-				if err == nil {
-					d.Device = strings.Replace(d.Device, "root", filepath.Base(devpath), 1)
-				}
+		if !all {
+			if d.Device == "none" || !common.StringsHas(fs, d.Fstype) {
+				continue
 			}
 		}
 		ret = append(ret, d)
 	}
 
+	return ret
+}
+
+func parseFieldsOnMountinfo(ctx context.Context, lines []string, all bool, fs []string, filename string) ([]PartitionStat, error) {
+	ret := make([]PartitionStat, 0, len(lines))
+
+	for _, line := range lines {
+		// a line of 1/mountinfo has the following structure:
+		// 36  35  98:0 /mnt1 /mnt2 rw,noatime master:1 - ext3 /dev/root rw,errors=continue
+		// (1) (2) (3)   (4)   (5)      (6)      (7)   (8) (9)   (10)         (11)
+
+		// split the mountinfo line by the separator hyphen
+		parts := strings.Split(line, " - ")
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("found invalid mountinfo line in file %s: %s ", filename, line)
+		}
+
+		fields := strings.Fields(parts[0])
+		blockDeviceID := fields[2]
+		mountPoint := fields[4]
+		mountOpts := strings.Split(fields[5], ",")
+
+		if rootDir := fields[3]; rootDir != "" && rootDir != "/" {
+			mountOpts = append(mountOpts, "bind")
+		}
+
+		fields = strings.Fields(parts[1])
+		fstype := fields[0]
+		device := fields[1]
+
+		d := PartitionStat{
+			Device:     device,
+			Mountpoint: unescapeFstab(mountPoint),
+			Fstype:     fstype,
+			Opts:       mountOpts,
+		}
+
+		if !all {
+			if d.Device == "none" || !common.StringsHas(fs, d.Fstype) {
+				continue
+			}
+		}
+
+		if strings.HasPrefix(d.Device, "/dev/mapper/") {
+			devpath, err := filepath.EvalSymlinks(common.HostDevWithContext(ctx, strings.Replace(d.Device, "/dev", "", 1)))
+			if err == nil {
+				d.Device = devpath
+			}
+		}
+
+		// /dev/root is not the real device name
+		// so we get the real device name from its major/minor number
+		if d.Device == "/dev/root" {
+			devpath, err := os.Readlink(common.HostSysWithContext(ctx, "/dev/block/"+blockDeviceID))
+			if err == nil {
+				d.Device = strings.Replace(d.Device, "root", filepath.Base(devpath), 1)
+			}
+		}
+		ret = append(ret, d)
+	}
 	return ret, nil
 }
 
