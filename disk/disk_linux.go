@@ -288,11 +288,13 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 	var ret []PartitionStat
 	if useMounts { // use mounts file
 		ret = parseFieldsOnMounts(lines, all, fs)
-	} else { // use mountinfo
-		ret, err = parseFieldsOnMountinfo(ctx, lines, all, fs, filename)
-		if err != nil {
-			return nil, fmt.Errorf("error parsing mountinfo file %s: %w", filename, err)
-		}
+		return ret, nil
+	}
+
+	// use mountinfo
+	ret, err = parseFieldsOnMountinfo(ctx, lines, all, fs, filename)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing mountinfo file %s: %w", filename, err)
 	}
 
 	return ret, nil
