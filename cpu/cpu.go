@@ -161,13 +161,13 @@ func PercentWithContext(ctx context.Context, interval time.Duration, percpu bool
 	if err != nil {
 		return nil, err
 	}
-
-	if err := common.Sleep(ctx, interval); err != nil {
-		return nil, err
+	if serr := common.Sleep(ctx, interval); serr != nil {
+		return nil, serr
 	}
 
 	// And at the end of the interval.
-	cpuTimes2, err := TimesWithContext(ctx, percpu)
+	var cpuTimes2 []TimesStat
+	cpuTimes2, err = TimesWithContext(ctx, percpu)
 	if err != nil {
 		return nil, err
 	}
