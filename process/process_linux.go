@@ -372,15 +372,7 @@ func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
 
 func (p *Process) OpenFilesWithContext(ctx context.Context) ([]OpenFilesStat, error) {
 	_, ofs, err := p.fillFromfdWithContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-	ret := make([]OpenFilesStat, len(ofs))
-	for i, o := range ofs {
-		ret[i] = *o
-	}
-
-	return ret, nil
+	return ofs, err
 }
 
 func (p *Process) ConnectionsWithContext(ctx context.Context) ([]net.ConnectionStat, error) {
@@ -629,17 +621,17 @@ func (p *Process) fillFromfdListWithContext(ctx context.Context) (string, []stri
 }
 
 // Get num_fds from /proc/(pid)/fd
-func (p *Process) fillFromfdWithContext(ctx context.Context) (int32, []*OpenFilesStat, error) {
+func (p *Process) fillFromfdWithContext(ctx context.Context) (int32, []OpenFilesStat, error) {
 	statPath, fnames, err := p.fillFromfdListWithContext(ctx)
 	if err != nil {
 		return 0, nil, err
 	}
 	numFDs := int32(len(fnames))
 
-	var openfiles []*OpenFilesStat
+	openfiles := make([]OpenFilesStat, 0, numFDs)
 	for _, fd := range fnames {
 		fpath := filepath.Join(statPath, fd)
-		path, err := os.Readlink(fpath)
+		path, err := common.Readlink(fpath)
 		if err != nil {
 			continue
 		}
@@ -647,7 +639,7 @@ func (p *Process) fillFromfdWithContext(ctx context.Context) (int32, []*OpenFile
 		if err != nil {
 			return numFDs, openfiles, err
 		}
-		o := &OpenFilesStat{
+		o := OpenFilesStat{
 			Path: path,
 			Fd:   t,
 		}

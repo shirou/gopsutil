@@ -15,6 +15,61 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestFillFromfdWithContext(t *testing.T) {
+	type expect struct {
+		numFDs    int32
+		openFiles []OpenFilesStat
+		err       error
+	}
+	type testCase struct {
+		name     string
+		pid      int32
+		expected *expect
+	}
+
+	cases := []testCase{
+		{
+			name: "good path",
+			pid:  1,
+			expected: &expect{
+				numFDs: 3,
+				openFiles: []OpenFilesStat{
+					{
+						Path: "/foo",
+						Fd:   0,
+					},
+					{
+						Path: "/bar",
+						Fd:   1,
+					},
+					{
+						Path: "/baz",
+						Fd:   2,
+					},
+				},
+			},
+		},
+	}
+
+	t.Setenv("HOST_PROC", "testdata/linux")
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			p, err := NewProcess(tt.pid)
+			require.NoError(t, err)
+			numFDs, openFiles, err := p.fillFromfdWithContext(context.TODO())
+			if tt.expected.err != nil {
+				assert.ErrorContains(t, err, tt.expected.err.Error())
+				return
+			}
+
+			//nolint:testifylint // false positive
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expected.numFDs, numFDs)
+			assert.ElementsMatch(t, tt.expected.openFiles, openFiles)
+		})
+	}
+}
+
 func TestSplitProcStat(t *testing.T) {
 	expectedFieldsNum := 53
 	statLineContent := make([]string, expectedFieldsNum-1)
