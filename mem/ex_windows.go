@@ -15,6 +15,10 @@ type ExVirtualMemory struct {
 	CommitTotal  uint64 `json:"commitTotal"`
 	VirtualTotal uint64 `json:"virtualTotal"`
 	VirtualAvail uint64 `json:"virtualAvail"`
+	PhysTotal    uint64 `json:"physTotal"`
+	PhysAvail    uint64 `json:"physAvail"`
+	SwapTotal    uint64 `json:"swapTotal"`
+	SwapAvail    uint64 `json:"swapAvail"`
 }
 
 type ExWindows struct{}
@@ -48,6 +52,10 @@ func (e *ExWindows) VirtualMemory() (*ExVirtualMemory, error) {
 		CommitTotal:  perfInfo.commitTotal * perfInfo.pageSize,
 		VirtualTotal: memInfo.ullTotalVirtual,
 		VirtualAvail: memInfo.ullAvailVirtual,
+		PhysTotal:    memInfo.ullTotalPhys,
+		PhysAvail:    memInfo.ullAvailPhys,
+		SwapTotal:    memInfo.ullTotalPageFile,
+		SwapAvail:    memInfo.ullAvailPageFile,
 	}
 
 	return ret, nil
