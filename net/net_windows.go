@@ -153,7 +153,8 @@ func IOCountersWithContext(_ context.Context, pernic bool) ([]IOCountersStat, er
 			}
 
 			row := mibIfRow2{InterfaceIndex: uint32(ifi.Index)}
-			ret, _, err := procGetIfEntry2.Call(uintptr(unsafe.Pointer(&row)))
+			var ret uintptr
+			ret, _, err = procGetIfEntry2.Call(uintptr(unsafe.Pointer(&row)))
 			if ret != 0 {
 				return nil, os.NewSyscallError("GetIfEntry2", err)
 			}
