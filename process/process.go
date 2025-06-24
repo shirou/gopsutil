@@ -261,8 +261,8 @@ func (p *Process) PercentWithContext(ctx context.Context, interval time.Duration
 	if interval > 0 {
 		p.lastCPUTimes = cpuTimes
 		p.lastCPUTime = now
-		if err := common.Sleep(ctx, interval); err != nil {
-			return 0, err
+		if serr := common.Sleep(ctx, interval); serr != nil {
+			return 0, serr
 		}
 		cpuTimes, err = p.TimesWithContext(ctx)
 		now = time.Now()
