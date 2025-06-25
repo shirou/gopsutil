@@ -257,7 +257,7 @@ func PlatformInformationWithContext(ctx context.Context) (platform, family, vers
 			version = getSuseVersion(contents)
 			platform = getSusePlatform(contents)
 		}
-		// TODO: slackware detecion
+		// TODO: slackware detection
 	case common.PathExistsWithContents(common.HostEtcWithContext(ctx, "arch-release")):
 		platform = "arch"
 		version = lsb.Release
