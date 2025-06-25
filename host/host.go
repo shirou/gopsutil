@@ -86,7 +86,7 @@ func InfoWithContext(ctx context.Context) (*InfoStat, error) {
 
 	ret.KernelArch, err = KernelArch()
 	if err != nil && !errors.Is(err, common.ErrNotImplementedError) {
-		return nil, fmt.Errorf("getting kernel archictecture: %w", err)
+		return nil, fmt.Errorf("getting kernel architecture: %w", err)
 	}
 
 	ret.VirtualizationSystem, ret.VirtualizationRole, err = VirtualizationWithContext(ctx)
