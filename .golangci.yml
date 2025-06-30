@@ -119,6 +119,7 @@ linters:
             - ["ID"] # AllowList
             - ["VM"] # DenyList
             - - upperCaseConst: true # Extra parameter (upperCaseConst|skipPackageNameChecks)
+                skipPackageNameChecks: true
     staticcheck:
       checks:
         - all
