@@ -252,7 +252,7 @@ func buildPartitionStat(path string) (PartitionStat, error) {
 func IOCountersWithContext(_ context.Context, names ...string) (map[string]IOCountersStat, error) {
 	// https://github.com/giampaolo/psutil/blob/544e9daa4f66a9f80d7bf6c7886d693ee42f0a13/psutil/arch/windows/disk.c#L83
 	drivemap := make(map[string]IOCountersStat, 0)
-	var diskPerformance diskPerformance
+	var dPerformance diskPerformance
 
 	lpBuffer := make([]uint16, 254)
 	lpBufferLen, err := windows.GetLogicalDriveStrings(uint32(len(lpBuffer)), &lpBuffer[0])
@@ -281,19 +281,19 @@ func IOCountersWithContext(_ context.Context, names ...string) (map[string]IOCou
 		defer windows.CloseHandle(h)
 
 		var diskPerformanceSize uint32
-		err = windows.DeviceIoControl(h, IOCTL_DISK_PERFORMANCE, nil, 0, (*byte)(unsafe.Pointer(&diskPerformance)), uint32(unsafe.Sizeof(diskPerformance)), &diskPerformanceSize, nil)
+		err = windows.DeviceIoControl(h, IOCTL_DISK_PERFORMANCE, nil, 0, (*byte)(unsafe.Pointer(&dPerformance)), uint32(unsafe.Sizeof(dPerformance)), &diskPerformanceSize, nil)
 		if err != nil {
 			return drivemap, err
 		}
 
 		if len(names) == 0 || common.StringsHas(names, path) {
 			drivemap[path] = IOCountersStat{
-				ReadBytes:  uint64(diskPerformance.BytesRead),
-				WriteBytes: uint64(diskPerformance.BytesWritten),
-				ReadCount:  uint64(diskPerformance.ReadCount),
-				WriteCount: uint64(diskPerformance.WriteCount),
-				ReadTime:   uint64(diskPerformance.ReadTime / 10000 / 1000), // convert to ms: https://github.com/giampaolo/psutil/issues/1012
-				WriteTime:  uint64(diskPerformance.WriteTime / 10000 / 1000),
+				ReadBytes:  uint64(dPerformance.BytesRead),
+				WriteBytes: uint64(dPerformance.BytesWritten),
+				ReadCount:  uint64(dPerformance.ReadCount),
+				WriteCount: uint64(dPerformance.WriteCount),
+				ReadTime:   uint64(dPerformance.ReadTime / 10000 / 1000), // convert to ms: https://github.com/giampaolo/psutil/issues/1012
+				WriteTime:  uint64(dPerformance.WriteTime / 10000 / 1000),
 				Name:       path,
 			}
 		}

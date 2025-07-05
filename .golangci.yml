@@ -62,7 +62,6 @@ linters:
       disable:
         - copylocks
         - fieldalignment
-        - shadow
         - testinggoroutine
       enable-all: true
     perfsprint:
@@ -143,6 +142,10 @@ linters:
       - common-false-positives
       - legacy
       - std-error-handling
+    rules:
+      - text: 'shadow: declaration of "err" shadows declaration at line'
+        linters:
+          - govet
     warn-unused: true
 output:
   show-stats: false
