@@ -25,7 +25,7 @@ func NewExLinux() *ExLinux {
 	return &ExLinux{}
 }
 
-func (ex *ExLinux) TemperatureWithContext(ctx context.Context) ([]ExTemperature, error) {
+func (*ExLinux) TemperatureWithContext(ctx context.Context) ([]ExTemperature, error) {
 	var warns Warnings
 
 	files, err := getTemperatureFiles(ctx)
