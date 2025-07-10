@@ -250,8 +250,8 @@ func KernelVersionWithContext(_ context.Context) (string, error) {
 }
 
 func KernelArch() (string, error) {
-	var systemInfo systemInfo
-	procGetNativeSystemInfo.Call(uintptr(unsafe.Pointer(&systemInfo)))
+	var sInfo systemInfo
+	procGetNativeSystemInfo.Call(uintptr(unsafe.Pointer(&sInfo)))
 
 	const (
 		PROCESSOR_ARCHITECTURE_INTEL = 0
@@ -260,15 +260,15 @@ func KernelArch() (string, error) {
 		PROCESSOR_ARCHITECTURE_IA64  = 6
 		PROCESSOR_ARCHITECTURE_AMD64 = 9
 	)
-	switch systemInfo.wProcessorArchitecture {
+	switch sInfo.wProcessorArchitecture {
 	case PROCESSOR_ARCHITECTURE_INTEL:
-		if systemInfo.wProcessorLevel < 3 {
+		if sInfo.wProcessorLevel < 3 {
 			return "i386", nil
 		}
-		if systemInfo.wProcessorLevel > 6 {
+		if sInfo.wProcessorLevel > 6 {
 			return "i686", nil
 		}
-		return fmt.Sprintf("i%d86", systemInfo.wProcessorLevel), nil
+		return fmt.Sprintf("i%d86", sInfo.wProcessorLevel), nil
 	case PROCESSOR_ARCHITECTURE_ARM:
 		return "arm", nil
 	case PROCESSOR_ARCHITECTURE_ARM64:
