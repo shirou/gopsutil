@@ -296,15 +296,17 @@ func fillFromMeminfoWithContext(ctx context.Context) (*VirtualMemoryStat, *ExVir
 
 	ret.Cached += ret.Sreclaimable
 
-	if !memavail {
+	if memavail {
+		ret.Used = ret.Total - ret.Available
+	} else {
 		if activeFile && inactiveFile && sReclaimable {
 			ret.Available = calculateAvailVmem(ctx, ret, retEx)
 		} else {
 			ret.Available = ret.Cached + ret.Free
 		}
+		ret.Used = ret.Total - ret.Free - ret.Buffers - ret.Cached
 	}
 
-	ret.Used = ret.Total - ret.Free - ret.Buffers - ret.Cached
 	ret.UsedPercent = float64(ret.Used) / float64(ret.Total) * 100.0
 
 	return ret, retEx, nil
