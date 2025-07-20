@@ -111,6 +111,7 @@ linters:
         - name: unnecessary-stmt
         - name: unreachable-code
         - name: unused-parameter
+        - name: unused-receiver
         - name: use-any
         - name: var-declaration
         - name: var-naming
