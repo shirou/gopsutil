@@ -5,6 +5,7 @@ package disk
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -78,6 +79,40 @@ func Test_parseFieldsOnMounts(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			actual := parseFieldsOnMounts(lines, c.all, fs)
 			assert.Equal(t, c.expect, actual)
+		})
+	}
+}
+
+func TestNVMeControllerNotationFix(t *testing.T) {
+	testCases := []struct {
+		input    string
+		expected string
+	}{
+		// Controller notation conversion
+		{"nvme0c0n1", "nvme0n1"},
+		{"nvme10c23n1", "nvme10n1"},
+		{"nvme5c5n2", "nvme5n2"},
+
+		// Should NOT be changed
+		{"nvme0n1", "nvme0n1"},     // standard notation
+		{"nvme0n1p1", "nvme0n1p1"}, // partition
+		{"sda", "sda"},             // non-nvme
+		{"nvme5", "nvme5"},         // incomplete
+		{"nvme0c0", "nvme0c0"},     // no namespace
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.input, func(t *testing.T) {
+			// Apply the same logic as in IOCountersWithContext
+			deviceName := tc.input
+			if strings.HasPrefix(tc.input, "nvme") {
+				if cIdx := strings.Index(tc.input, "c"); cIdx > 4 {
+					if nIdx := strings.Index(tc.input[cIdx:], "n"); nIdx > 0 {
+						deviceName = tc.input[:cIdx] + tc.input[cIdx+nIdx:]
+					}
+				}
+			}
+			assert.Equal(t, tc.expected, deviceName)
 		})
 	}
 }

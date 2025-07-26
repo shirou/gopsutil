@@ -498,8 +498,20 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 		// Since `name` here is already a basename, re-add the /dev path.
 		// This is not ideal, but we may break the API by changing how SerialNumberWithContext
 		// works.
-		d.SerialNumber, _ = SerialNumberWithContext(ctx, common.HostDevWithContext(ctx, name))
-		d.Label, _ = LabelWithContext(ctx, name)
+
+		// NVMe controller notation: convert nvmeXcYnZ to nvmeXnZ
+		deviceName := name
+		if strings.HasPrefix(name, "nvme") {
+			if cIdx := strings.Index(name, "c"); cIdx > 4 { // "nvme" is 4 chars
+				if nIdx := strings.Index(name[cIdx:], "n"); nIdx > 0 {
+					// Convert nvmeXcYnZ to nvmeXnZ by removing "cY" part
+					deviceName = name[:cIdx] + name[cIdx+nIdx:]
+				}
+			}
+		}
+
+		d.SerialNumber, _ = SerialNumberWithContext(ctx, common.HostDevWithContext(ctx, deviceName))
+		d.Label, _ = LabelWithContext(ctx, deviceName)
 
 		ret[name] = d
 	}
