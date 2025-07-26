@@ -880,7 +880,7 @@ func (p *Process) fillFromStatusWithContext(ctx context.Context) error {
 		case "Uid":
 			p.uids = make([]uint32, 0, 4)
 			for _, i := range strings.Split(value, "\t") {
-				v, err := strconv.ParseInt(i, 10, 32)
+				v, err := strconv.ParseUint(i, 10, 32)
 				if err != nil {
 					return err
 				}
@@ -889,7 +889,7 @@ func (p *Process) fillFromStatusWithContext(ctx context.Context) error {
 		case "Gid":
 			p.gids = make([]uint32, 0, 4)
 			for _, i := range strings.Split(value, "\t") {
-				v, err := strconv.ParseInt(i, 10, 32)
+				v, err := strconv.ParseUint(i, 10, 32)
 				if err != nil {
 					return err
 				}
