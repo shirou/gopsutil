@@ -42,7 +42,6 @@ linters:
       disabled-checks:
         - captLocal
         - commentedOutCode
-        - deferInLoop
         - hexLiteral
         - hugeParam
         - tooManyResultsChecker
