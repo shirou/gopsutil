@@ -108,8 +108,8 @@ func InfoWithContext(_ context.Context) ([]InfoStat, error) {
 		return nil, err
 	}
 	c.Cores = int32(ncpu)
-
-	if c.ModelName, err = unix.Sysctl("machdep.dmi.processor-version"); err != nil {
+	c.ModelName, err = unix.Sysctl("machdep.dmi.processor-version")
+	if err != nil {
 		return nil, err
 	}
 

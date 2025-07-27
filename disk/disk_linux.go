@@ -508,7 +508,8 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 
 func udevData(ctx context.Context, major, minor uint32, name string) (string, error) {
 	udevDataPath := common.HostRunWithContext(ctx, fmt.Sprintf("udev/data/b%d:%d", major, minor))
-	if f, err := os.Open(udevDataPath); err == nil {
+	f, err := os.Open(udevDataPath)
+	if err == nil {
 		defer f.Close()
 		scanner := bufio.NewScanner(f)
 		for scanner.Scan() {
@@ -526,7 +527,8 @@ func udevData(ctx context.Context, major, minor uint32, name string) (string, er
 
 func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
 	var stat unix.Stat_t
-	if err := unix.Stat(name, &stat); err != nil {
+	err := unix.Stat(name, &stat)
+	if err != nil {
 		return "", err
 	}
 	major := unix.Major(uint64(stat.Rdev))
@@ -560,7 +562,8 @@ func LabelWithContext(ctx context.Context, name string) (string, error) {
 	}
 	// Try udev data
 	var stat unix.Stat_t
-	if err := unix.Stat(common.HostDevWithContext(ctx, name), &stat); err != nil {
+	err := unix.Stat(common.HostDevWithContext(ctx, name), &stat)
+	if err != nil {
 		return "", err
 	}
 	major := unix.Major(uint64(stat.Rdev))

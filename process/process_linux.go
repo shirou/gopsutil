@@ -84,7 +84,8 @@ func (p *Process) PpidWithContext(ctx context.Context) (int32, error) {
 
 func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 	if p.name == "" {
-		if err := p.fillNameWithContext(ctx); err != nil {
+		err := p.fillNameWithContext(ctx)
+		if err != nil {
 			return "", err
 		}
 	}
@@ -93,7 +94,8 @@ func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 
 func (p *Process) TgidWithContext(ctx context.Context) (int32, error) {
 	if p.tgid == 0 {
-		if err := p.fillFromStatusWithContext(ctx); err != nil {
+		err := p.fillFromStatusWithContext(ctx)
+		if err != nil {
 			return 0, err
 		}
 	}
@@ -212,7 +214,8 @@ func (p *Process) RlimitUsageWithContext(ctx context.Context, gatherUsed bool) (
 	if err != nil {
 		return nil, err
 	}
-	if err := p.fillFromStatusWithContext(ctx); err != nil {
+	err = p.fillFromStatusWithContext(ctx)
+	if err != nil {
 		return nil, err
 	}
 
@@ -392,7 +395,8 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 		// If smaps_rollup exists (require kernel >= 4.15), then we will use it
 		// for pre-summed memory information for a process.
 		smapsRollupPath := common.HostProcWithContext(ctx, strconv.Itoa(int(pid)), "smaps_rollup")
-		if _, err := os.Stat(smapsRollupPath); !os.IsNotExist(err) {
+		_, err := os.Stat(smapsRollupPath)
+		if !os.IsNotExist(err) {
 			smapsPath = smapsRollupPath
 		}
 	}
@@ -600,7 +604,8 @@ func (p *Process) fillFromLimitsWithContext(ctx context.Context) ([]RlimitStat, 
 		limitStats = append(limitStats, statItem)
 	}
 
-	if err := limitsScanner.Err(); err != nil {
+	err = limitsScanner.Err()
+	if err != nil {
 		return nil, err
 	}
 

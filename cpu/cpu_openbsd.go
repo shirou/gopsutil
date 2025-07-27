@@ -126,8 +126,8 @@ func InfoWithContext(_ context.Context) ([]InfoStat, error) {
 		return nil, err
 	}
 	c.Cores = int32(ncpu)
-
-	if c.ModelName, err = unix.Sysctl("hw.model"); err != nil {
+	c.ModelName, err = unix.Sysctl("hw.model")
+	if err != nil {
 		return nil, err
 	}
 

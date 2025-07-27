@@ -37,7 +37,8 @@ func queryPebAddress(procHandle syscall.Handle, is32BitProcess bool) (uint64, er
 			uintptr(unsafe.Sizeof(wow64)),
 			uintptr(0),
 		)
-		if status := windows.NTStatus(ret); status == windows.STATUS_SUCCESS {
+		status := windows.NTStatus(ret)
+		if status == windows.STATUS_SUCCESS {
 			return uint64(wow64), nil
 		}
 		return 0, windows.NTStatus(ret)
@@ -52,7 +53,8 @@ func queryPebAddress(procHandle syscall.Handle, is32BitProcess bool) (uint64, er
 		uintptr(unsafe.Sizeof(info)),
 		uintptr(0),
 	)
-	if status := windows.NTStatus(ret); status == windows.STATUS_SUCCESS {
+	status := windows.NTStatus(ret)
+	if status == windows.STATUS_SUCCESS {
 		return info.PebBaseAddress, nil
 	}
 	return 0, windows.NTStatus(ret)

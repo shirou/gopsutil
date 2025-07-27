@@ -102,17 +102,18 @@ func InfoWithContext(_ context.Context) ([]InfoStat, error) {
 	}
 
 	var u32 uint32
-	if u32, err = unix.SysctlUint32("hw.clockrate"); err != nil {
+	u32, err = unix.SysctlUint32("hw.clockrate")
+	if err != nil {
 		return nil, err
 	}
 	c.Mhz = float64(u32)
-
-	if u32, err = unix.SysctlUint32("hw.ncpu"); err != nil {
+	u32, err = unix.SysctlUint32("hw.ncpu")
+	if err != nil {
 		return nil, err
 	}
 	c.Cores = int32(u32)
-
-	if c.ModelName, err = unix.Sysctl("hw.model"); err != nil {
+	c.ModelName, err = unix.Sysctl("hw.model")
+	if err != nil {
 		return nil, err
 	}
 
