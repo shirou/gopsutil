@@ -101,20 +101,22 @@ func InfoWithContext(_ context.Context) ([]InfoStat, error) {
 	}
 
 	var u32 uint32
-	if u32, err = unix.SysctlUint32("hw.clockrate"); err != nil {
+	u32, err = unix.SysctlUint32("hw.clockrate")
+	if err != nil {
 		return nil, err
 	}
 	c.Mhz = float64(u32)
 
 	var num int
 	var buf string
-	if buf, err = unix.Sysctl("hw.cpu_topology.tree"); err != nil {
+	buf, err = unix.Sysctl("hw.cpu_topology.tree")
+	if err != nil {
 		return nil, err
 	}
 	num = strings.Count(buf, "CHIP")
 	c.Cores = int32(strings.Count(string(buf), "CORE") / num)
-
-	if c.ModelName, err = unix.Sysctl("hw.model"); err != nil {
+	c.ModelName, err = unix.Sysctl("hw.model")
+	if err != nil {
 		return nil, err
 	}
 

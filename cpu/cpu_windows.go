@@ -135,7 +135,8 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 	var ret []InfoStat
 	var dst []win32_Processor
 	q := wmi.CreateQuery(&dst, "")
-	if err := common.WMIQueryWithContext(ctx, q, &dst); err != nil {
+	err := common.WMIQueryWithContext(ctx, q, &dst)
+	if err != nil {
 		return ret, err
 	}
 

@@ -142,7 +142,8 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 				break
 			}
 
-			if t, err := strconv.ParseFloat(v[i], 64); err == nil {
+			t, err := strconv.ParseFloat(v[i], 64)
+			if err == nil {
 				switch header {
 				case `User`:
 					us.User = strconv.FormatFloat(t, 'f', 1, 64)

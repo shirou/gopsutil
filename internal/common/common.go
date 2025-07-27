@@ -57,11 +57,13 @@ func (Invoke) CommandWithContext(ctx context.Context, name string, arg ...string
 	cmd.Stdout = &buf
 	cmd.Stderr = &buf
 
-	if err := cmd.Start(); err != nil {
+	err := cmd.Start()
+	if err != nil {
 		return buf.Bytes(), err
 	}
 
-	if err := cmd.Wait(); err != nil {
+	err = cmd.Wait()
+	if err != nil {
 		return buf.Bytes(), err
 	}
 
@@ -325,10 +327,8 @@ func attributes(m any) map[string]reflect.Type {
 }
 
 func PathExists(filename string) bool {
-	if _, err := os.Stat(filename); err == nil {
-		return true
-	}
-	return false
+	_, err := os.Stat(filename)
+	return err == nil
 }
 
 // PathExistsWithContents returns the filename exists and it is not empty

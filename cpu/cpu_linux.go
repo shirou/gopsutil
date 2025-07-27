@@ -222,7 +222,8 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 				processorName = "S390"
 			}
 		case "CPU implementer":
-			if v, err := strconv.ParseUint(value, 0, 8); err == nil {
+			v, err := strconv.ParseUint(value, 0, 8)
+			if err == nil {
 				switch v {
 				case 0x41:
 					c.VendorID = "ARM"
@@ -262,7 +263,8 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 			c.Model = value
 			// if CPU is arm based, model name is found via model number. refer to: arch/arm64/kernel/cpuinfo.c
 			if c.VendorID == "ARM" {
-				if v, err := strconv.ParseUint(c.Model, 0, 16); err == nil {
+				v, err := strconv.ParseUint(c.Model, 0, 16)
+				if err == nil {
 					modelName, exist := armModelToModelName[v]
 					if exist {
 						c.ModelName = modelName
@@ -296,7 +298,8 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 			c.Stepping = int32(t)
 		case "cpu MHz", "clock", "cpu MHz dynamic":
 			// treat this as the fallback value, thus we ignore error
-			if t, err := strconv.ParseFloat(strings.Replace(value, "MHz", "", 1), 64); err == nil {
+			t, err := strconv.ParseFloat(strings.Replace(value, "MHz", "", 1), 64)
+			if err == nil {
 				c.Mhz = t
 			}
 		case "cache size":
@@ -442,7 +445,8 @@ func CountsWithContext(ctx context.Context, logical bool) (int, error) {
 	// https://github.com/giampaolo/psutil/pull/1727#issuecomment-707624964
 	// https://lkml.org/lkml/2019/2/26/41
 	for _, glob := range []string{"devices/system/cpu/cpu[0-9]*/topology/core_cpus_list", "devices/system/cpu/cpu[0-9]*/topology/thread_siblings_list"} {
-		if files, err := filepath.Glob(common.HostSysWithContext(ctx, glob)); err == nil {
+		files, err := filepath.Glob(common.HostSysWithContext(ctx, glob))
+		if err == nil {
 			for _, file := range files {
 				lines, err := common.ReadLines(file)
 				if err != nil || len(lines) != 1 {

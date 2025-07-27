@@ -29,13 +29,16 @@ func AvgWithContext(ctx context.Context) (*AvgStat, error) {
 
 	p := separator.Split(string(line[idx:]), 5)
 	if 4 < len(p) && p[0] == "load" && p[1] == "average:" {
-		if t, err := strconv.ParseFloat(p[2], 64); err == nil {
+		t, err := strconv.ParseFloat(p[2], 64)
+		if err == nil {
 			ret.Load1 = t
 		}
-		if t, err := strconv.ParseFloat(p[3], 64); err == nil {
+		t, err = strconv.ParseFloat(p[3], 64)
+		if err == nil {
 			ret.Load5 = t
 		}
-		if t, err := strconv.ParseFloat(p[4], 64); err == nil {
+		t, err = strconv.ParseFloat(p[4], 64)
+		if err == nil {
 			ret.Load15 = t
 		}
 		return ret, nil

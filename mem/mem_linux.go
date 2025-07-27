@@ -335,8 +335,8 @@ func SwapMemory() (*SwapMemoryStat, error) {
 
 func SwapMemoryWithContext(ctx context.Context) (*SwapMemoryStat, error) {
 	sysinfo := &unix.Sysinfo_t{}
-
-	if err := unix.Sysinfo(sysinfo); err != nil {
+	err := unix.Sysinfo(sysinfo)
+	if err != nil {
 		return nil, err
 	}
 	ret := &SwapMemoryStat{
@@ -474,7 +474,8 @@ func parseSwapsFile(ctx context.Context, r io.Reader) ([]*SwapDevice, error) {
 	swapsFilePath := common.HostProcWithContext(ctx, swapsFilename)
 	scanner := bufio.NewScanner(r)
 	if !scanner.Scan() {
-		if err := scanner.Err(); err != nil {
+		err := scanner.Err()
+		if err != nil {
 			return nil, fmt.Errorf("couldn't read file %q: %w", swapsFilePath, err)
 		}
 		return nil, fmt.Errorf("unexpected end-of-file in %q", swapsFilePath)
@@ -520,7 +521,8 @@ func parseSwapsFile(ctx context.Context, r io.Reader) ([]*SwapDevice, error) {
 		})
 	}
 
-	if err := scanner.Err(); err != nil {
+	err := scanner.Err()
+	if err != nil {
 		return nil, fmt.Errorf("couldn't read file %q: %w", swapsFilePath, err)
 	}
 

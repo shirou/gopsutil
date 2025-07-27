@@ -45,7 +45,8 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 					continue
 				}
 
-				if t, err := strconv.ParseFloat(v[pos], 64); err == nil {
+				t, err := strconv.ParseFloat(v[pos], 64)
+				if err == nil {
 					switch header {
 					case `cpu`:
 						ct.CPU = strconv.FormatFloat(t, 'f', -1, 64)
@@ -77,7 +78,8 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 		h := strings.Fields(lines[len(lines)-3]) // headers
 		v := strings.Fields(lines[len(lines)-2]) // values
 		for i, header := range h {
-			if t, err := strconv.ParseFloat(v[i], 64); err == nil {
+			t, err := strconv.ParseFloat(v[i], 64)
+			if err == nil {
 				switch header {
 				case `%usr`:
 					ct.User = t
@@ -109,14 +111,16 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 		case strings.HasPrefix(line, "Number Of Processors:"):
 			p := strings.Fields(line)
 			if len(p) > 3 {
-				if t, err := strconv.ParseUint(p[3], 10, 64); err == nil {
+				t, err := strconv.ParseUint(p[3], 10, 64)
+				if err == nil {
 					ret.Cores = int32(t)
 				}
 			}
 		case strings.HasPrefix(line, "Processor Clock Speed:"):
 			p := strings.Fields(line)
 			if len(p) > 4 {
-				if t, err := strconv.ParseFloat(p[3], 64); err == nil {
+				t, err := strconv.ParseFloat(p[3], 64)
+				if err == nil {
 					switch strings.ToUpper(p[4]) {
 					case "MHZ":
 						ret.Mhz = t

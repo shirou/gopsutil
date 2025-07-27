@@ -281,7 +281,8 @@ func getCgroupFilePath(ctx context.Context, containerID, base, target, file stri
 	}
 	statfile := path.Join(base, containerID, file)
 
-	if _, err := os.Stat(statfile); os.IsNotExist(err) {
+	_, err := os.Stat(statfile)
+	if os.IsNotExist(err) {
 		statfile = path.Join(
 			common.HostSysWithContext(ctx, fmt.Sprintf("fs/cgroup/%s/system.slice", target)), "docker-"+containerID+".scope", file)
 	}

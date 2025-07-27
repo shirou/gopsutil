@@ -72,7 +72,8 @@ func BootTimeWithContext(ctx context.Context) (uint64, error) {
 
 func UptimeWithContext(_ context.Context) (uint64, error) {
 	sysinfo := &unix.Sysinfo_t{}
-	if err := unix.Sysinfo(sysinfo); err != nil {
+	err := unix.Sysinfo(sysinfo)
+	if err != nil {
 		return 0, err
 	}
 	return uint64(sysinfo.Uptime), nil

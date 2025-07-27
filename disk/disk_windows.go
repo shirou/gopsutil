@@ -117,7 +117,8 @@ func PartitionsWithContext(ctx context.Context, _ bool) ([]PartitionStat, error)
 		for _, v := range lpBuffer {
 			if v >= 65 && v <= 90 {
 				path := string(v) + ":"
-				if partitionStat, warning := buildPartitionStat(path); warning == nil {
+				partitionStat, warning := buildPartitionStat(path)
+				if warning == nil {
 					processedPaths[partitionStat.Mountpoint+"\\"] = struct{}{}
 					select {
 					case retChan <- partitionStat:
@@ -151,7 +152,8 @@ func PartitionsWithContext(ctx context.Context, _ bool) ([]PartitionStat, error)
 				if _, ok := processedPaths[mount]; ok {
 					continue
 				}
-				if partitionStat, warning := buildPartitionStat(mount); warning == nil {
+				partitionStat, warning := buildPartitionStat(mount)
+				if warning == nil {
 					select {
 					case retChan <- partitionStat:
 					case <-quitChan:
@@ -163,10 +165,11 @@ func PartitionsWithContext(ctx context.Context, _ bool) ([]PartitionStat, error)
 			}
 
 			volNameBuf = make([]uint16, volumeNameBufferLength)
-			if volRet, _, err := procFindNextVolumeW.Call(
+			volRet, _, err := procFindNextVolumeW.Call(
 				nextVolHandle,
 				uintptr(unsafe.Pointer(&volNameBuf[0])),
-				uintptr(volumeNameBufferLength)); err != nil && volRet == 0 {
+				uintptr(volumeNameBufferLength))
+			if err != nil && volRet == 0 {
 				var errno syscall.Errno
 				if errors.As(err, &errno) && errno == windows.ERROR_NO_MORE_FILES {
 					break
@@ -313,11 +316,12 @@ func LabelWithContext(_ context.Context, _ string) (string, error) {
 func getVolumePaths(volNameBuf []uint16) ([]string, error) {
 	volPathsBuf := make([]uint16, volumePathBufferLength)
 	returnLen := uint32(0)
-	if result, _, err := procGetVolumePathNamesForVolumeNameW.Call(
+	result, _, err := procGetVolumePathNamesForVolumeNameW.Call(
 		uintptr(unsafe.Pointer(&volNameBuf[0])),
 		uintptr(unsafe.Pointer(&volPathsBuf[0])),
 		uintptr(volumePathBufferLength),
-		uintptr(unsafe.Pointer(&returnLen))); err != nil && result == 0 {
+		uintptr(unsafe.Pointer(&returnLen)))
+	if err != nil && result == 0 {
 		return nil, err
 	}
 	return split0(volPathsBuf, int(returnLen)), nil

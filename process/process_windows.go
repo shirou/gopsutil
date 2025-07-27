@@ -251,7 +251,8 @@ func pidsWithContext(_ context.Context) ([]int32, error) {
 
 	for {
 		ps := make([]uint32, psSize)
-		if err := windows.EnumProcesses(ps, &read); err != nil {
+		err := windows.EnumProcesses(ps, &read)
+		if err != nil {
 			return nil, err
 		}
 		if uint32(len(ps)) == read/dwordSize { // ps buffer was too small to host every results, retry with a bigger one
@@ -348,7 +349,8 @@ func (p *Process) ExeWithContext(_ context.Context) (string, error) {
 	defer windows.CloseHandle(c)
 	buf := make([]uint16, syscall.MAX_LONG_PATH)
 	size := uint32(syscall.MAX_LONG_PATH)
-	if err := procQueryFullProcessImageNameW.Find(); err == nil { // Vista+
+	err = procQueryFullProcessImageNameW.Find()
+	if err == nil { // Vista+
 		ret, _, err := procQueryFullProcessImageNameW.Call(
 			uintptr(c),
 			uintptr(0),
@@ -674,7 +676,8 @@ func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
 	defer windows.CloseHandle(snap)
 	var pe32 windows.ProcessEntry32
 	pe32.Size = uint32(unsafe.Sizeof(pe32))
-	if err := windows.Process32First(snap, &pe32); err != nil {
+	err = windows.Process32First(snap, &pe32)
+	if err != nil {
 		return out, err
 	}
 	for {
@@ -684,7 +687,8 @@ func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
 				out = append(out, p)
 			}
 		}
-		if err = windows.Process32Next(snap, &pe32); err != nil {
+		err = windows.Process32Next(snap, &pe32)
+		if err != nil {
 			break
 		}
 	}
@@ -891,7 +895,8 @@ func getFromSnapProcess(pid int32) (int32, int32, string, error) { //nolint:unpa
 			szexe := windows.UTF16ToString(pe32.ExeFile[:])
 			return int32(pe32.ParentProcessID), int32(pe32.Threads), szexe, nil
 		}
-		if err = windows.Process32Next(snap, &pe32); err != nil {
+		err = windows.Process32Next(snap, &pe32)
+		if err != nil {
 			break
 		}
 	}
@@ -925,8 +930,8 @@ func getRusage(pid int32) (*windows.Rusage, error) {
 		return nil, err
 	}
 	defer windows.CloseHandle(c)
-
-	if err := windows.GetProcessTimes(c, &CPU.CreationTime, &CPU.ExitTime, &CPU.KernelTime, &CPU.UserTime); err != nil {
+	err = windows.GetProcessTimes(c, &CPU.CreationTime, &CPU.ExitTime, &CPU.KernelTime, &CPU.UserTime)
+	if err != nil {
 		return nil, err
 	}
 
@@ -940,7 +945,8 @@ func getMemoryInfo(pid int32) (PROCESS_MEMORY_COUNTERS, error) {
 		return mem, err
 	}
 	defer windows.CloseHandle(c)
-	if err := getProcessMemoryInfo(c, &mem); err != nil {
+	err = getProcessMemoryInfo(c, &mem)
+	if err != nil {
 		return mem, err
 	}
 
@@ -1131,7 +1137,8 @@ func getProcessEnvironmentVariables(ctx context.Context, pid int32) ([]string, e
 			continue
 		}
 	}
-	if err := envvarScanner.Err(); err != nil {
+	err = envvarScanner.Err()
+	if err != nil {
 		return nil, err
 	}
 	return envVars, nil

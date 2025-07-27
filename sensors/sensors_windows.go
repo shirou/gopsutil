@@ -23,7 +23,8 @@ func TemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
 	var ret []TemperatureStat
 	var dst []msAcpi_ThermalZoneTemperature
 	q := wmi.CreateQuery(&dst, "")
-	if err := common.WMIQueryWithContext(ctx, q, &dst, nil, "root/wmi"); err != nil {
+	err := common.WMIQueryWithContext(ctx, q, &dst, nil, "root/wmi")
+	if err != nil {
 		return ret, err
 	}
 
