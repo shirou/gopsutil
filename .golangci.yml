@@ -47,7 +47,6 @@ linters:
         - commentedOutCode
         - deferInLoop
         - hexLiteral
-        - hugeParam
         - tooManyResultsChecker
         - unnamedResult
       enable-all: true

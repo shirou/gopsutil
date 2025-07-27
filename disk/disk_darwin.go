@@ -87,7 +87,7 @@ func PartitionsWithContext(_ context.Context, _ bool) ([]PartitionStat, error) {
 	return ret, nil
 }
 
-func getFsType(stat unix.Statfs_t) string {
+func getFsType(stat *unix.Statfs_t) string {
 	return common.ByteToString(stat.Fstypename[:])
 }
 

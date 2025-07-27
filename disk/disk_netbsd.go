@@ -104,7 +104,7 @@ func IOCountersWithContext(_ context.Context, _ ...string) (map[string]IOCounter
 }
 
 func UsageWithContext(_ context.Context, path string) (*UsageStat, error) {
-	stat := Statvfs{}
+	stat := &Statvfs{}
 	flag := uint64(1) // ST_WAIT/MNT_WAIT, see sys/fstypes.h
 
 	_path, e := unix.BytePtrFromString(path)
@@ -115,7 +115,7 @@ func UsageWithContext(_ context.Context, path string) (*UsageStat, error) {
 	_, _, err := unix.Syscall(
 		484, // SYS___statvfs190, see sys/syscall.h
 		uintptr(unsafe.Pointer(_path)),
-		uintptr(unsafe.Pointer(&stat)),
+		uintptr(unsafe.Pointer(stat)),
 		uintptr(unsafe.Pointer(&flag)),
 	)
 	if err != 0 {
@@ -141,7 +141,7 @@ func UsageWithContext(_ context.Context, path string) (*UsageStat, error) {
 	return ret, nil
 }
 
-func getFsType(stat Statvfs) string {
+func getFsType(stat *Statvfs) string {
 	return common.ByteToString(stat.Fstypename[:])
 }
 
