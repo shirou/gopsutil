@@ -4,6 +4,7 @@
 package process
 
 import (
+	"errors"
 	"sync"
 	"testing"
 
@@ -21,7 +22,11 @@ func TestPpid_Race(t *testing.T) {
 		go func(j int) {
 			ppid, err := p.Ppid()
 			wg.Done()
-			common.SkipIfNotImplementedErr(t, err)
+
+			if errors.Is(err, common.ErrNotImplementedError) {
+				t.Skip("not implemented")
+			}
+
 			require.NoError(t, err, "Ppid() failed, %v", err)
 
 			if j == 9 {
