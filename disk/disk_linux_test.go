@@ -81,3 +81,34 @@ func Test_parseFieldsOnMounts(t *testing.T) {
 		})
 	}
 }
+
+func TestGetDeviceName(t *testing.T) {
+	testCases := []struct {
+		input    string
+		expected string
+	}{
+		// Controller notation conversion
+		{"nvme0c0n1", "nvme0n1"},
+		{"nvme10c23n1", "nvme10n1"},
+		{"nvme5c5n2", "nvme5n2"},
+
+		// Controller and partition together
+		{"nvme0c0n1p1", "nvme0n1p1"},
+		{"nvme2c2n1p2", "nvme2n1p2"},
+		{"nvme10c23n1p3", "nvme10n1p3"},
+
+		// Should NOT be changed
+		{"nvme0n1", "nvme0n1"},     // standard notation
+		{"nvme0n1p1", "nvme0n1p1"}, // partition
+		{"sda", "sda"},             // non-nvme
+		{"nvme5", "nvme5"},         // incomplete
+		{"nvme0c0", "nvme0c0"},     // no namespace
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.input, func(t *testing.T) {
+			actual := getDeviceName(tc.input)
+			assert.Equal(t, tc.expected, actual)
+		})
+	}
+}
