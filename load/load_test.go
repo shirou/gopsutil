@@ -2,6 +2,7 @@
 package load
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,7 +13,9 @@ import (
 
 func TestAvg(t *testing.T) {
 	v, err := Avg()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoError(t, err)
 
 	empty := &AvgStat{}
@@ -33,7 +36,9 @@ func TestAvgStat_String(t *testing.T) {
 
 func TestMisc(t *testing.T) {
 	v, err := Misc()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoError(t, err)
 
 	empty := &MiscStat{}
@@ -58,7 +63,9 @@ func BenchmarkLoad(b *testing.B) {
 	loadAvg := func(tb testing.TB) {
 		tb.Helper()
 		v, err := Avg()
-		common.SkipIfNotImplementedErr(tb, err)
+		if errors.Is(err, common.ErrNotImplementedError) {
+			tb.Skip("not implemented")
+		}
 		require.NoErrorf(tb, err, "error %v", err)
 		empty := &AvgStat{}
 		assert.NotSamef(tb, v, empty, "error load: %v", v)

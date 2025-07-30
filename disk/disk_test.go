@@ -2,6 +2,7 @@
 package disk
 
 import (
+	"errors"
 	"runtime"
 	"sync"
 	"testing"
@@ -18,14 +19,20 @@ func TestUsage(t *testing.T) {
 		path = "C:"
 	}
 	v, err := Usage(path)
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
+
 	require.NoError(t, err)
 	assert.Equalf(t, v.Path, path, "error %v", err)
 }
 
 func TestPartitions(t *testing.T) {
 	ret, err := Partitions(false)
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
+
 	if err != nil || len(ret) == 0 {
 		t.Errorf("error %v", err)
 	}
@@ -39,7 +46,10 @@ func TestPartitions(t *testing.T) {
 
 func TestIOCounters(t *testing.T) {
 	ret, err := IOCounters()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
+
 	require.NoError(t, err)
 	assert.NotEmptyf(t, ret, "ret is empty")
 	empty := IOCountersStat{}
