@@ -52,7 +52,8 @@ func NumProcsWithContext(ctx context.Context) (uint64, error) {
 	var cnt uint64
 
 	for _, v := range list {
-		if _, err = strconv.ParseUint(v, 10, 64); err == nil {
+		_, err = strconv.ParseUint(v, 10, 64)
+		if err == nil {
 			cnt++
 		}
 	}

@@ -90,12 +90,14 @@ func isMount(path string) bool {
 		return false
 	}
 	var stat1 unix.Stat_t
-	if err := unix.Lstat(path, &stat1); err != nil {
+	err = unix.Lstat(path, &stat1)
+	if err != nil {
 		return false
 	}
 	parent := filepath.Join(path, "..")
 	var stat2 unix.Stat_t
-	if err := unix.Lstat(parent, &stat2); err != nil {
+	err = unix.Lstat(parent, &stat2)
+	if err != nil {
 		return false
 	}
 	return stat1.Dev != stat2.Dev || stat1.Ino == stat2.Ino

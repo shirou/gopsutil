@@ -119,13 +119,15 @@ func readPtr(r io.Reader) (uintptr, error) {
 	switch sizeofPtr {
 	case 4:
 		var p uint32
-		if err := binary.Read(r, binary.LittleEndian, &p); err != nil {
+		err := binary.Read(r, binary.LittleEndian, &p)
+		if err != nil {
 			return 0, err
 		}
 		return uintptr(p), nil
 	case 8:
 		var p uint64
-		if err := binary.Read(r, binary.LittleEndian, &p); err != nil {
+		err := binary.Read(r, binary.LittleEndian, &p)
+		if err != nil {
 			return 0, err
 		}
 		return uintptr(p), nil

@@ -48,26 +48,31 @@ func callSVMon(ctx context.Context, virt bool) (*VirtualMemoryStat, *SwapMemoryS
 		if virt && strings.HasPrefix(line, "memory") {
 			p := strings.Fields(line)
 			if len(p) > 2 {
-				if t, err := strconv.ParseUint(p[1], 10, 64); err == nil {
+				t, err := strconv.ParseUint(p[1], 10, 64)
+				if err == nil {
 					vmem.Total = t * pagesize
 				}
-				if t, err := strconv.ParseUint(p[2], 10, 64); err == nil {
+				t, err = strconv.ParseUint(p[2], 10, 64)
+				if err == nil {
 					vmem.Used = t * pagesize
 					if vmem.Total > 0 {
 						vmem.UsedPercent = 100 * float64(vmem.Used) / float64(vmem.Total)
 					}
 				}
-				if t, err := strconv.ParseUint(p[3], 10, 64); err == nil {
+				t, err = strconv.ParseUint(p[3], 10, 64)
+				if err == nil {
 					vmem.Free = t * pagesize
 				}
 			}
 		} else if strings.HasPrefix(line, "pg space") {
 			p := strings.Fields(line)
 			if len(p) > 3 {
-				if t, err := strconv.ParseUint(p[2], 10, 64); err == nil {
+				t, err := strconv.ParseUint(p[2], 10, 64)
+				if err == nil {
 					swap.Total = t * pagesize
 				}
-				if t, err := strconv.ParseUint(p[3], 10, 64); err == nil {
+				t, err = strconv.ParseUint(p[3], 10, 64)
+				if err == nil {
 					swap.Free = swap.Total - t*pagesize
 				}
 			}

@@ -79,7 +79,8 @@ func (p *Process) CwdWithContext(_ context.Context) (string, error) {
 
 	var k kinfoFile
 	br := bytes.NewReader(buf)
-	if err := common.Read(br, binary.LittleEndian, &k); err != nil {
+	err = common.Read(br, binary.LittleEndian, &k)
+	if err != nil {
 		return "", err
 	}
 	cwd := common.IntToString(k.Path[:])

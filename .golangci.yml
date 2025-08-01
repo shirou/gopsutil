@@ -25,6 +25,7 @@ linters:
     - ineffassign
     - misspell
     - nakedret
+    - noinlineerr
     - nolintlint
     - perfsprint
     - predeclared

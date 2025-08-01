@@ -55,7 +55,8 @@ func (*ExLinux) TemperatureWithContext(ctx context.Context) ([]ExTemperature, er
 		}
 
 		// Get the name of the temperature you are reading
-		if raw, err = os.ReadFile(filepath.Join(directory, "name")); err != nil {
+		raw, err = os.ReadFile(filepath.Join(directory, "name"))
+		if err != nil {
 			warns.Add(err)
 			continue
 		}

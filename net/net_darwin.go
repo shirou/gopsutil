@@ -71,7 +71,8 @@ func parseNetstatLine(line string) (stat *IOCountersStat, linkID *uint, err erro
 			continue
 		}
 
-		if numericValue, err = strconv.ParseUint(target, 10, 64); err != nil {
+		numericValue, err = strconv.ParseUint(target, 10, 64)
+		if err != nil {
 			return nil, nil, err
 		}
 		parsed = append(parsed, numericValue)
@@ -114,7 +115,8 @@ func parseNetstatOutput(output string) ([]netstatInterface, error) {
 
 	for index := 0; index < numberInterfaces; index++ {
 		nsIface := netstatInterface{}
-		if nsIface.stat, nsIface.linkID, err = parseNetstatLine(lines[index+1]); err != nil {
+		nsIface.stat, nsIface.linkID, err = parseNetstatLine(lines[index+1])
+		if err != nil {
 			return nil, err
 		}
 		interfaces[index] = nsIface
@@ -206,7 +208,8 @@ func IOCountersWithContext(ctx context.Context, pernic bool) ([]IOCountersStat, 
 		}
 	} else {
 		// duplicated interface, list all interfaces
-		if out, err = invoke.CommandWithContext(ctx, "ifconfig", "-l"); err != nil {
+		out, err = invoke.CommandWithContext(ctx, "ifconfig", "-l")
+		if err != nil {
 			return nil, err
 		}
 		interfaceNames := strings.Fields(strings.TrimRight(string(out), endOfLine))
@@ -225,7 +228,8 @@ func IOCountersWithContext(ctx context.Context, pernic bool) ([]IOCountersStat, 
 			}
 			if truncated {
 				// run netstat with -I$ifacename
-				if out, err = invoke.CommandWithContext(ctx, netstat, "-ibdnWI"+interfaceName); err != nil {
+				out, err = invoke.CommandWithContext(ctx, netstat, "-ibdnWI"+interfaceName)
+				if err != nil {
 					return nil, err
 				}
 				parsedIfaces, err := parseNetstatOutput(string(out))
