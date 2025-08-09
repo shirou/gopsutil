@@ -2,6 +2,7 @@
 package mem
 
 import (
+	"errors"
 	"runtime"
 	"testing"
 
@@ -17,7 +18,9 @@ func TestVirtualMemory(t *testing.T) {
 	}
 
 	v, err := VirtualMemory()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoError(t, err)
 	empty := &VirtualMemoryStat{}
 	assert.NotSamef(t, v, empty, "error %v", v)
@@ -58,7 +61,9 @@ func TestVirtualMemory(t *testing.T) {
 
 func TestSwapMemory(t *testing.T) {
 	v, err := SwapMemory()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoError(t, err)
 	empty := &SwapMemoryStat{}
 	assert.NotSamef(t, v, empty, "error %v", v)
@@ -98,7 +103,9 @@ func TestSwapMemoryStat_String(t *testing.T) {
 
 func TestSwapDevices(t *testing.T) {
 	v, err := SwapDevices()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "error calling SwapDevices: %v", err)
 
 	t.Logf("SwapDevices() -> %+v", v)

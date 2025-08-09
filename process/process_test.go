@@ -3,6 +3,7 @@ package process
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -34,7 +35,9 @@ func testGetProcess() Process {
 
 func TestPids(t *testing.T) {
 	ret, err := Pids()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoError(t, err)
 	assert.NotEmptyf(t, ret, "could not get pids %v", ret)
 }
@@ -43,7 +46,9 @@ func TestPid_exists(t *testing.T) {
 	checkPid := os.Getpid()
 
 	ret, err := PidExists(int32(checkPid))
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoError(t, err)
 
 	assert.Truef(t, ret, "could not get process exists: %v", ret)
@@ -53,7 +58,9 @@ func TestNewProcess(t *testing.T) {
 	checkPid := os.Getpid()
 
 	ret, err := NewProcess(int32(checkPid))
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoError(t, err)
 	empty := &Process{}
 	if runtime.GOOS != "windows" { // Windows pid is 0
@@ -65,12 +72,16 @@ func TestMemoryMaps(t *testing.T) {
 	checkPid := os.Getpid()
 
 	ret, err := NewProcess(int32(checkPid))
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoError(t, err)
 
 	// ungrouped memory maps
 	mmaps, err := ret.MemoryMaps(false)
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "memory map get error %v", err)
 	empty := MemoryMapsStat{}
 	for _, m := range *mmaps {
@@ -79,7 +90,9 @@ func TestMemoryMaps(t *testing.T) {
 
 	// grouped memory maps
 	mmaps, err = ret.MemoryMaps(true)
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "memory map get error %v", err)
 	assert.Lenf(t, *mmaps, 1, "grouped memory maps length (%v) is not equal to 1", len(*mmaps))
 	assert.NotEqualf(t, (*mmaps)[0], empty, "memory map is empty")
@@ -89,7 +102,9 @@ func TestMemoryInfo(t *testing.T) {
 	p := testGetProcess()
 
 	v, err := p.MemoryInfo()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "getting memory info error %v", err)
 	empty := MemoryInfoStat{}
 	if v == nil || *v == empty {
@@ -101,7 +116,9 @@ func TestCmdLine(t *testing.T) {
 	p := testGetProcess()
 
 	v, err := p.Cmdline()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "getting cmdline error %v", err)
 	assert.Containsf(t, v, "process.test", "invalid cmd line %v", v)
 }
@@ -110,7 +127,9 @@ func TestCmdLineSlice(t *testing.T) {
 	p := testGetProcess()
 
 	v, err := p.CmdlineSlice()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "getting cmdline slice error %v", err)
 	assert.Truef(t, reflect.DeepEqual(v, os.Args), "returned cmdline slice not as expected:\nexp: %v\ngot: %v", os.Args, v)
 }
@@ -119,7 +138,9 @@ func TestPpid(t *testing.T) {
 	p := testGetProcess()
 
 	v, err := p.Ppid()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "getting ppid error %v", err)
 	assert.NotZerof(t, v, "return value is 0 %v", v)
 	expected := os.Getppid()
@@ -130,7 +151,9 @@ func TestStatus(t *testing.T) {
 	p := testGetProcess()
 
 	v, err := p.Status()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "getting status error %v", err)
 	assert.NotEmptyf(t, v, "could not get state")
 	if v[0] != Running && v[0] != Sleep {
@@ -142,7 +165,9 @@ func TestTerminal(t *testing.T) {
 	p := testGetProcess()
 
 	_, err := p.Terminal()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	assert.NoErrorf(t, err, "getting terminal error %v", err)
 }
 
@@ -150,7 +175,9 @@ func TestIOCounters(t *testing.T) {
 	p := testGetProcess()
 
 	v, err := p.IOCounters()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "getting iocounter error %v", err)
 	empty := &IOCountersStat{}
 	assert.NotSamef(t, v, empty, "error %v", v)
@@ -160,7 +187,9 @@ func TestNumCtx(t *testing.T) {
 	p := testGetProcess()
 
 	_, err := p.NumCtxSwitches()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	assert.NoErrorf(t, err, "getting numctx error %v", err)
 }
 
@@ -173,7 +202,9 @@ func TestNice(t *testing.T) {
 	}
 
 	n, err := p.Nice()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "getting nice error %v", err)
 	if runtime.GOOS != "windows" && n != 0 && n != 20 && n != 8 {
 		t.Errorf("invalid nice: %d", n)
@@ -184,7 +215,9 @@ func TestGroups(t *testing.T) {
 	p := testGetProcess()
 
 	v, err := p.Groups()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "getting groups error %v", err)
 	if len(v) == 0 {
 		t.Skip("Groups is empty")
@@ -195,7 +228,9 @@ func TestNumThread(t *testing.T) {
 	p := testGetProcess()
 
 	n, err := p.NumThreads()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "getting NumThread error %v", err)
 	assert.GreaterOrEqualf(t, n, int32(0), "invalid NumThread: %d", n)
 }
@@ -204,12 +239,16 @@ func TestThreads(t *testing.T) {
 	p := testGetProcess()
 
 	n, err := p.NumThreads()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "getting NumThread error %v", err)
 	assert.GreaterOrEqualf(t, n, int32(0), "invalid NumThread: %d", n)
 
 	ts, err := p.Threads()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "getting Threads error %v", err)
 	assert.Equalf(t, len(ts), int(n), "unexpected number of threads: %v vs %v", len(ts), n)
 }
@@ -218,7 +257,9 @@ func TestName(t *testing.T) {
 	p := testGetProcess()
 
 	n, err := p.Name()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "getting name error %v", err)
 	assert.Containsf(t, n, "process.test", "invalid Name %s", n)
 }
@@ -247,11 +288,15 @@ func TestLong_Name_With_Spaces(t *testing.T) {
 	require.NoError(t, cmd.Start())
 	time.Sleep(100 * time.Millisecond)
 	p, err := NewProcess(int32(cmd.Process.Pid))
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoError(t, err)
 
 	n, err := p.Name()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "getting name error %v", err)
 	basename := filepath.Base(tmpfile.Name() + ".exe")
 	require.Equalf(t, basename, n, "%s != %s", basename, n)
@@ -282,11 +327,15 @@ func TestLong_Name(t *testing.T) {
 	require.NoError(t, cmd.Start())
 	time.Sleep(100 * time.Millisecond)
 	p, err := NewProcess(int32(cmd.Process.Pid))
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoError(t, err)
 
 	n, err := p.Name()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "getting name error %v", err)
 	basename := filepath.Base(tmpfile.Name() + ".exe")
 	require.Equalf(t, basename, n, "%s != %s", basename, n)
@@ -327,10 +376,14 @@ func TestName_Against_Python(t *testing.T) {
 	pyName := scanner.Text() // first line printed by py3 script, its name
 	t.Logf("pyName %s", pyName)
 	p, err := NewProcess(int32(cmd.Process.Pid))
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "getting process error %v", err)
 	name, err := p.Name()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "getting name error %v", err)
 	require.Equalf(t, pyName, name, "psutil and gopsutil process.Name() results differ: expected %s, got %s", pyName, name)
 }
@@ -339,7 +392,9 @@ func TestExe(t *testing.T) {
 	p := testGetProcess()
 
 	n, err := p.Exe()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "getting Exe error %v", err)
 	assert.Containsf(t, n, "process.test", "invalid Exe %s", n)
 }
@@ -347,7 +402,9 @@ func TestExe(t *testing.T) {
 func TestCpuPercent(t *testing.T) {
 	p := testGetProcess()
 	_, err := p.Percent(0)
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoError(t, err)
 	duration := time.Duration(1000) * time.Microsecond
 	time.Sleep(duration)
@@ -366,7 +423,9 @@ func TestCpuPercentLoop(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		duration := time.Duration(100) * time.Microsecond
 		percent, err := p.Percent(duration)
-		common.SkipIfNotImplementedErr(t, err)
+		if errors.Is(err, common.ErrNotImplementedError) {
+			t.Skip("not implemented")
+		}
 		require.NoError(t, err)
 		//	if percent < 0.0 || percent > 100.0*float64(numcpu) { // TODO
 		require.GreaterOrEqualf(t, percent, 0.0, "CPUPercent value is invalid: %f, %d", percent, numcpu)
@@ -381,7 +440,9 @@ func TestCreateTime(t *testing.T) {
 	p := testGetProcess()
 
 	c, err := p.CreateTime()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoError(t, err)
 
 	assert.GreaterOrEqualf(t, c, int64(1420000000), "process created time is wrong.")
@@ -396,7 +457,9 @@ func TestParent(t *testing.T) {
 	p := testGetProcess()
 
 	c, err := p.Parent()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoError(t, err)
 	require.NotNilf(t, c, "could not get parent")
 	require.NotZerof(t, c.Pid, "wrong parent pid")
@@ -440,7 +503,9 @@ func TestConnections(t *testing.T) {
 	<-serverEstablished
 
 	c, err := p.Connections()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoError(t, err)
 	require.NotEmptyf(t, c, "no connections found")
 
@@ -478,7 +543,9 @@ func TestChildren(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	c, err := p.Children()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoError(t, err)
 	require.NotEmptyf(t, c, "children is empty")
 	found := false
@@ -498,7 +565,9 @@ func TestUsername(t *testing.T) {
 
 	process, _ := NewProcess(int32(myPid))
 	pidUsername, err := process.Username()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	assert.Equal(t, myUsername, pidUsername)
 
 	t.Log(pidUsername)
@@ -507,12 +576,16 @@ func TestUsername(t *testing.T) {
 func TestCPUTimes(t *testing.T) {
 	pid := os.Getpid()
 	process, err := NewProcess(int32(pid))
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoError(t, err)
 
 	spinSeconds := 0.2
 	cpuTimes0, err := process.Times()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoError(t, err)
 
 	// Spin for a duration of spinSeconds
@@ -545,11 +618,15 @@ func TestOpenFiles(t *testing.T) {
 
 	pid := os.Getpid()
 	p, err := NewProcess(int32(pid))
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoError(t, err)
 
 	v, err := p.OpenFiles()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoError(t, err)
 	assert.NotEmpty(t, v) // test always open files.
 
@@ -568,10 +645,14 @@ func TestKill(t *testing.T) {
 	require.NoError(t, cmd.Start())
 	time.Sleep(100 * time.Millisecond)
 	p, err := NewProcess(int32(cmd.Process.Pid))
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoError(t, err)
 	err = p.Kill()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoError(t, err)
 	cmd.Wait()
 }
@@ -585,15 +666,21 @@ func TestIsRunning(t *testing.T) {
 	}
 	cmd.Start()
 	p, err := NewProcess(int32(cmd.Process.Pid))
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoError(t, err)
 	running, err := p.IsRunning()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "IsRunning error: %v", err)
 	require.Truef(t, running, "process should be found running")
 	cmd.Wait()
 	running, err = p.IsRunning()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "IsRunning error: %v", err)
 	require.Falsef(t, running, "process should NOT be found running")
 }
@@ -625,11 +712,15 @@ func TestEnviron(t *testing.T) {
 	defer cmd.Process.Kill()
 	time.Sleep(100 * time.Millisecond)
 	p, err := NewProcess(int32(cmd.Process.Pid))
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoError(t, err)
 
 	envs, err := p.Environ()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "getting environ error %v", err)
 	var envvarFound bool
 	for _, envvar := range envs {
@@ -647,7 +738,9 @@ func TestCwd(t *testing.T) {
 
 	process, _ := NewProcess(int32(myPid))
 	pidCwd, err := process.Cwd()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "getting cwd error %v", err)
 	pidCwd = strings.TrimSuffix(pidCwd, string(os.PathSeparator))
 	assert.Equal(t, currentWorkingDirectory, pidCwd)
