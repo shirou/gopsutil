@@ -11,9 +11,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/shirou/gopsutil/v4/internal/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func TestExVirtualMemory(t *testing.T) {
