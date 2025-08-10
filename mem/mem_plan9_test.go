@@ -4,6 +4,7 @@
 package mem
 
 import (
+	"errors"
 	"reflect"
 	"testing"
 
