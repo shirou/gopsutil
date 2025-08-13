@@ -3,6 +3,7 @@
 package sensors
 
 import (
+	"errors"
 	"os"
 	"testing"
 
@@ -28,7 +29,9 @@ func TestTemperatures(t *testing.T) {
 		t.Skip("Skip CI")
 	}
 	v, err := SensorsTemperatures()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoError(t, err)
 	assert.NotEmptyf(t, v, "Could not get temperature %v", v)
 	t.Log(v)

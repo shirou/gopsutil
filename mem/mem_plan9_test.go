@@ -4,6 +4,7 @@
 package mem
 
 import (
+	"errors"
 	"reflect"
 	"testing"
 
@@ -36,7 +37,9 @@ func TestVirtualMemoryPlan9(t *testing.T) {
 			t.Setenv("HOST_ROOT", "testdata/plan9/virtualmemory/")
 
 			stat, err := VirtualMemory()
-			common.SkipIfNotImplementedErr(t, err)
+			if errors.Is(err, common.ErrNotImplementedError) {
+				t.Skip("not implemented")
+			}
 			require.NoError(t, err)
 			assert.Truef(t, reflect.DeepEqual(stat, tt.stat), "got: %+v\nwant: %+v", stat, tt.stat)
 		})
@@ -62,7 +65,9 @@ func TestSwapMemoryPlan9(t *testing.T) {
 			t.Setenv("HOST_ROOT", "testdata/plan9/virtualmemory/")
 
 			swap, err := SwapMemory()
-			common.SkipIfNotImplementedErr(t, err)
+			if errors.Is(err, common.ErrNotImplementedError) {
+				t.Skip("not implemented")
+			}
 			require.NoError(t, err)
 			assert.Truef(t, reflect.DeepEqual(swap, tt.swap), "got: %+v\nwant: %+v", swap, tt.swap)
 		})
