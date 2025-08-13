@@ -655,6 +655,25 @@ func TestCwd(t *testing.T) {
 	t.Log(pidCwd)
 }
 
+func TestConcurrent(t *testing.T) {
+	const goroutines int = 5
+	var wg sync.WaitGroup
+	for range goroutines {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			p, err := NewProcess(int32(os.Getpid()))
+			require.NoError(t, err)
+
+			times, err := p.Times()
+			require.NoError(t, err)
+
+			fmt.Println(times)
+		}()
+	}
+	wg.Wait()
+}
+
 func BenchmarkNewProcess(b *testing.B) {
 	checkPid := os.Getpid()
 	for i := 0; i < b.N; i++ {
