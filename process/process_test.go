@@ -663,10 +663,16 @@ func TestConcurrent(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			p, err := NewProcess(int32(os.Getpid()))
-			require.NoError(t, err)
+			if err != nil {
+				t.Errorf("NewProcess failed: %v", err)
+				return
+			}
 
 			times, err := p.Times()
-			require.NoError(t, err)
+			if err != nil {
+				t.Errorf("process.Times failed: %v", err)
+				return
+			}
 
 			fmt.Println(times)
 		}()
