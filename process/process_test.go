@@ -668,13 +668,11 @@ func TestConcurrent(t *testing.T) {
 				return
 			}
 
-			times, err := p.Times()
+			_, err = p.Times()
 			if err != nil {
 				t.Errorf("process.Times failed: %v", err)
 				return
 			}
-
-			fmt.Println(times)
 		}()
 	}
 	wg.Wait()
