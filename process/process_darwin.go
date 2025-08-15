@@ -14,6 +14,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"unsafe"
 
 	"golang.org/x/sys/unix"
@@ -279,26 +280,40 @@ func callPsWithContext(ctx context.Context, arg string, pid int32, threadOption,
 	return ret, nil
 }
 
-type dlFuncs struct {
-	lib *common.Library
+type osProcess struct {
+	dlOnce  sync.Once
+	dlErr   error
+	dlFuncs *dlFuncs
+}
 
+type dlFuncs struct {
+	lib              *common.Library
 	procPidPath      common.ProcPidPathFunc
 	procPidInfo      common.ProcPidInfoFunc
 	machTimeBaseInfo common.MachTimeBaseInfoFunc
 }
 
-func loadProcFuncs() (*dlFuncs, error) {
-	lib, err := common.NewLibrary(common.System)
-	if err != nil {
-		return nil, err
-	}
+func (p *osProcess) funcs() (*dlFuncs, error) {
+	p.dlOnce.Do(func() {
+		lib, err := common.NewLibrary(common.System)
+		if err != nil {
+			p.dlErr = err
+			return
+		}
 
-	return &dlFuncs{
-		lib:              lib,
-		procPidPath:      common.GetFunc[common.ProcPidPathFunc](lib, common.ProcPidPathSym),
-		procPidInfo:      common.GetFunc[common.ProcPidInfoFunc](lib, common.ProcPidInfoSym),
-		machTimeBaseInfo: common.GetFunc[common.MachTimeBaseInfoFunc](lib, common.MachTimeBaseInfoSym),
-	}, nil
+		p.dlFuncs = &dlFuncs{
+			lib:              lib,
+			procPidPath:      common.GetFunc[common.ProcPidPathFunc](lib, common.ProcPidPathSym),
+			procPidInfo:      common.GetFunc[common.ProcPidInfoFunc](lib, common.ProcPidInfoSym),
+			machTimeBaseInfo: common.GetFunc[common.MachTimeBaseInfoFunc](lib, common.MachTimeBaseInfoSym),
+		}
+
+		// Close library when process is no longer referenced.
+		runtime.SetFinalizer(lib, func(lib *common.Library) {
+			lib.Close()
+		})
+	})
+	return p.dlFuncs, p.dlErr
 }
 
 func (f *dlFuncs) getTimeScaleToNanoSeconds() float64 {
@@ -309,16 +324,11 @@ func (f *dlFuncs) getTimeScaleToNanoSeconds() float64 {
 	return float64(timeBaseInfo.Numer) / float64(timeBaseInfo.Denom)
 }
 
-func (f *dlFuncs) Close() {
-	f.lib.Close()
-}
-
 func (p *Process) ExeWithContext(_ context.Context) (string, error) {
-	funcs, err := loadProcFuncs()
+	funcs, err := p.os.funcs()
 	if err != nil {
-		return "", err
+		return "", nil
 	}
-	defer funcs.Close()
 
 	buf := common.NewCStr(common.PROC_PIDPATHINFO_MAXSIZE)
 	ret := funcs.procPidPath(p.Pid, buf.Addr(), common.PROC_PIDPATHINFO_MAXSIZE)
@@ -343,11 +353,10 @@ type vnodePathInfo struct {
 // error.
 // Note: This might also work for other *BSD OSs.
 func (p *Process) CwdWithContext(_ context.Context) (string, error) {
-	funcs, err := loadProcFuncs()
+	funcs, err := p.os.funcs()
 	if err != nil {
-		return "", err
+		return "", nil
 	}
-	defer funcs.Close()
 
 	// Lock OS thread to ensure the errno does not change
 	runtime.LockOSThread()
@@ -440,11 +449,10 @@ func (p *Process) CmdlineWithContext(ctx context.Context) (string, error) {
 }
 
 func (p *Process) NumThreadsWithContext(_ context.Context) (int32, error) {
-	funcs, err := loadProcFuncs()
+	funcs, err := p.os.funcs()
 	if err != nil {
 		return 0, err
 	}
-	defer funcs.Close()
 
 	var ti ProcTaskInfo
 	funcs.procPidInfo(p.Pid, common.PROC_PIDTASKINFO, 0, uintptr(unsafe.Pointer(&ti)), int32(unsafe.Sizeof(ti)))
@@ -453,11 +461,10 @@ func (p *Process) NumThreadsWithContext(_ context.Context) (int32, error) {
 }
 
 func (p *Process) TimesWithContext(_ context.Context) (*cpu.TimesStat, error) {
-	funcs, err := loadProcFuncs()
+	funcs, err := p.os.funcs()
 	if err != nil {
 		return nil, err
 	}
-	defer funcs.Close()
 
 	var ti ProcTaskInfo
 	funcs.procPidInfo(p.Pid, common.PROC_PIDTASKINFO, 0, uintptr(unsafe.Pointer(&ti)), int32(unsafe.Sizeof(ti)))
@@ -472,11 +479,10 @@ func (p *Process) TimesWithContext(_ context.Context) (*cpu.TimesStat, error) {
 }
 
 func (p *Process) MemoryInfoWithContext(_ context.Context) (*MemoryInfoStat, error) {
-	funcs, err := loadProcFuncs()
+	funcs, err := p.os.funcs()
 	if err != nil {
 		return nil, err
 	}
-	defer funcs.Close()
 
 	var ti ProcTaskInfo
 	funcs.procPidInfo(p.Pid, common.PROC_PIDTASKINFO, 0, uintptr(unsafe.Pointer(&ti)), int32(unsafe.Sizeof(ti)))

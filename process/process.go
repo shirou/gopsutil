@@ -41,6 +41,7 @@ type Process struct {
 	lastCPUTimes *cpu.TimesStat
 	lastCPUTime  time.Time
 
+	os   osProcess
 	tgid int32
 }
 
