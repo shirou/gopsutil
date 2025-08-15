@@ -42,6 +42,9 @@ func TestVirtualMemory(t *testing.T) {
 	case "freebsd":
 		total = v.Used + v.Free + v.Cached + v.Inactive + v.Laundry
 		totalStr = "used + free + cached + inactive + laundry"
+	case "linux":
+		total = v.Available + v.Used
+		totalStr = "used + available"
 	}
 	assert.Equalf(t, v.Total, total,
 		"Total should be computable (%v): %v", totalStr, v)
