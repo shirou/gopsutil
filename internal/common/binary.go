@@ -147,7 +147,8 @@ func Read(r io.Reader, order ByteOrder, data any) error {
 		} else {
 			bs = b[:n]
 		}
-		if _, err := io.ReadFull(r, bs); err != nil {
+		_, err := io.ReadFull(r, bs)
+		if err != nil {
 			return err
 		}
 		switch data := data.(type) {
@@ -215,7 +216,8 @@ func Read(r io.Reader, order ByteOrder, data any) error {
 		return errors.New("binary.Read: invalid type " + reflect.TypeOf(data).String())
 	}
 	d := &decoder{order: order, buf: make([]byte, size)}
-	if _, err := io.ReadFull(r, d.buf); err != nil {
+	_, err := io.ReadFull(r, d.buf)
+	if err != nil {
 		return err
 	}
 	d.value(v)

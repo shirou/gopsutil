@@ -78,7 +78,8 @@ func PartitionsWithContext(_ context.Context, _ bool) ([]PartitionStat, error) {
 			Opts:       strings.Split(fields[3], ","),
 		})
 	}
-	if err := scanner.Err(); err != nil {
+	err = scanner.Err()
+	if err != nil {
 		return nil, fmt.Errorf("unable to scan %q: %w", _MNTTAB, err)
 	}
 
@@ -201,7 +202,8 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 
 func UsageWithContext(_ context.Context, path string) (*UsageStat, error) {
 	statvfs := unix.Statvfs_t{}
-	if err := unix.Statvfs(path, &statvfs); err != nil {
+	err := unix.Statvfs(path, &statvfs)
+	if err != nil {
 		return nil, fmt.Errorf("unable to call statvfs(2) on %q: %w", path, err)
 	}
 
@@ -252,7 +254,8 @@ func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
 			return "", nil
 		}
 	}
-	if err := s.Err(); err != nil {
+	err = s.Err()
+	if err != nil {
 		return "", err
 	}
 	return "", nil

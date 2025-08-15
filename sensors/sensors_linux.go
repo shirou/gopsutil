@@ -92,7 +92,8 @@ func TemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
 		}
 
 		// Get the name of the temperature you are reading
-		if raw, err = os.ReadFile(filepath.Join(directory, "name")); err != nil {
+		raw, err = os.ReadFile(filepath.Join(directory, "name"))
+		if err != nil {
 			warns.Add(err)
 			continue
 		}
@@ -104,12 +105,14 @@ func TemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
 		}
 
 		// Get the temperature reading
-		if raw, err = os.ReadFile(file); err != nil {
+		raw, err = os.ReadFile(file)
+		if err != nil {
 			warns.Add(err)
 			continue
 		}
 
-		if temperature, err = strconv.ParseFloat(strings.TrimSpace(string(raw)), 64); err != nil {
+		temperature, err = strconv.ParseFloat(strings.TrimSpace(string(raw)), 64)
+		if err != nil {
 			warns.Add(err)
 			continue
 		}
@@ -127,20 +130,19 @@ func TemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
 }
 
 func getTemperatureFiles(ctx context.Context) ([]string, error) {
-	var files []string
-	var err error
-
 	// Only the temp*_input file provides current temperature
 	// value in millidegree Celsius as reported by the temperature to the device:
 	// https://www.kernel.org/doc/Documentation/hwmon/sysfs-interface
-	if files, err = filepath.Glob(common.HostSysWithContext(ctx, "/class/hwmon/hwmon*/temp*_input")); err != nil {
+	files, err := filepath.Glob(common.HostSysWithContext(ctx, "/class/hwmon/hwmon*/temp*_input"))
+	if err != nil {
 		return nil, err
 	}
 
 	if len(files) == 0 {
 		// CentOS has an intermediate /device directory:
 		// https://github.com/giampaolo/psutil/issues/971
-		if files, err = filepath.Glob(common.HostSysWithContext(ctx, "/class/hwmon/hwmon*/device/temp*_input")); err != nil {
+		files, err = filepath.Glob(common.HostSysWithContext(ctx, "/class/hwmon/hwmon*/device/temp*_input"))
+		if err != nil {
 			return nil, err
 		}
 	}
@@ -151,20 +153,19 @@ func getTemperatureFiles(ctx context.Context) ([]string, error) {
 func optionalValueReadFromFile(filename string) float64 {
 	var raw []byte
 
-	var err error
-
 	var value float64
 
 	// Check if file exists
-	if _, err := os.Stat(filename); os.IsNotExist(err) {
+	_, err := os.Stat(filename)
+	if os.IsNotExist(err) {
 		return 0
 	}
-
-	if raw, err = os.ReadFile(filename); err != nil {
+	raw, err = os.ReadFile(filename)
+	if err != nil {
 		return 0
 	}
-
-	if value, err = strconv.ParseFloat(strings.TrimSpace(string(raw)), 64); err != nil {
+	value, err = strconv.ParseFloat(strings.TrimSpace(string(raw)), 64)
+	if err != nil {
 		return 0
 	}
 

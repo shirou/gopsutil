@@ -126,7 +126,8 @@ func SerialNumberWithContext(ctx context.Context, _ string) (string, error) {
 	}
 
 	var data spnvmeDataWrapper
-	if err := json.Unmarshal(output, &data); err != nil {
+	err = json.Unmarshal(output, &data)
+	if err != nil {
 		return "", fmt.Errorf("failed to unmarshal JSON: %w", err)
 	}
 

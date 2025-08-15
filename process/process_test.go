@@ -274,7 +274,8 @@ func TestLong_Name_With_Spaces(t *testing.T) {
 	require.NoErrorf(t, err, "unable to create temp file %v", err)
 
 	tmpfilecontent := []byte("package main\nimport(\n\"time\"\n)\nfunc main(){\nfor range time.Tick(time.Second) {}\n}")
-	if _, err := tmpfile.Write(tmpfilecontent); err != nil {
+	_, err = tmpfile.Write(tmpfilecontent)
+	if err != nil {
 		tmpfile.Close()
 		t.Fatalf("unable to write temp file %v", err)
 	}
@@ -313,7 +314,8 @@ func TestLong_Name(t *testing.T) {
 	require.NoErrorf(t, err, "unable to create temp file %v", err)
 
 	tmpfilecontent := []byte("package main\nimport(\n\"time\"\n)\nfunc main(){\nfor range time.Tick(time.Second) {}\n}")
-	if _, err := tmpfile.Write(tmpfilecontent); err != nil {
+	_, err = tmpfile.Write(tmpfilecontent)
+	if err != nil {
 		tmpfile.Close()
 		t.Fatalf("unable to write temp file %v", err)
 	}
@@ -350,7 +352,8 @@ func TestName_Against_Python(t *testing.T) {
 	if err != nil {
 		t.Skipf("python3 not found: %s", err)
 	}
-	if out, err := exec.Command(py3Path, "-c", "import psutil").CombinedOutput(); err != nil {
+	out, err := exec.Command(py3Path, "-c", "import psutil").CombinedOutput()
+	if err != nil {
 		t.Skipf("psutil not found for %s: %s", py3Path, out)
 	}
 
@@ -361,7 +364,8 @@ func TestName_Against_Python(t *testing.T) {
 	tmpfile, err := os.Create(tmpfilepath)
 	require.NoErrorf(t, err, "unable to create temp file %v", err)
 	tmpfilecontent := []byte("#!" + py3Path + "\nimport psutil, time\nprint(psutil.Process().name(), flush=True)\nwhile True:\n\ttime.sleep(1)")
-	if _, err := tmpfile.Write(tmpfilecontent); err != nil {
+	_, err = tmpfile.Write(tmpfilecontent)
+	if err != nil {
 		tmpfile.Close()
 		t.Fatalf("unable to write temp file %v", err)
 	}
@@ -695,7 +699,8 @@ func TestEnviron(t *testing.T) {
 	require.NoErrorf(t, err, "unable to create temp file %v", err)
 
 	tmpfilecontent := []byte("package main\nimport(\n\"time\"\n)\nfunc main(){\nfor range time.Tick(time.Second) {}\n}")
-	if _, err := tmpfile.Write(tmpfilecontent); err != nil {
+	_, err = tmpfile.Write(tmpfilecontent)
+	if err != nil {
 		tmpfile.Close()
 		t.Fatalf("unable to write temp file %v", err)
 	}

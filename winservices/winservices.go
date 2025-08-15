@@ -87,13 +87,15 @@ func (s *Service) QueryStatusWithContext(_ context.Context) (ServiceStatus, erro
 	var bytesNeeded uint32
 	var buf []byte
 
-	if err := windows.QueryServiceStatusEx(s.srv.Handle, windows.SC_STATUS_PROCESS_INFO, nil, 0, &bytesNeeded); !errors.Is(err, windows.ERROR_INSUFFICIENT_BUFFER) {
+	err := windows.QueryServiceStatusEx(s.srv.Handle, windows.SC_STATUS_PROCESS_INFO, nil, 0, &bytesNeeded)
+	if !errors.Is(err, windows.ERROR_INSUFFICIENT_BUFFER) {
 		return ServiceStatus{}, err
 	}
 
 	buf = make([]byte, bytesNeeded)
 	p = (*windows.SERVICE_STATUS_PROCESS)(unsafe.Pointer(&buf[0]))
-	if err := windows.QueryServiceStatusEx(s.srv.Handle, windows.SC_STATUS_PROCESS_INFO, &buf[0], uint32(len(buf)), &bytesNeeded); err != nil {
+	err = windows.QueryServiceStatusEx(s.srv.Handle, windows.SC_STATUS_PROCESS_INFO, &buf[0], uint32(len(buf)), &bytesNeeded)
+	if err != nil {
 		return ServiceStatus{}, err
 	}
 
