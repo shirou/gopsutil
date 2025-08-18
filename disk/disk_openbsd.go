@@ -124,8 +124,8 @@ func parseDiskstats(buf []byte) (Diskstats, error) {
 }
 
 func UsageWithContext(_ context.Context, path string) (*UsageStat, error) {
-	stat := unix.Statfs_t{}
-	err := unix.Statfs(path, &stat)
+	stat := &unix.Statfs_t{}
+	err := unix.Statfs(path, stat)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +148,7 @@ func UsageWithContext(_ context.Context, path string) (*UsageStat, error) {
 	return ret, nil
 }
 
-func getFsType(stat unix.Statfs_t) string {
+func getFsType(stat *unix.Statfs_t) string {
 	return common.ByteToString(stat.F_fstypename[:])
 }
 
