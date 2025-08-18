@@ -303,33 +303,22 @@ func fillFromMeminfoWithContext(ctx context.Context) (*VirtualMemoryStat, *ExVir
 
 	ret.Cached += ret.Sreclaimable
 
+	if !memavail {
+		if activeFile && inactiveFile && sReclaimable {
+			ret.Available = calculateAvailVmem(ctx, ret, retEx)
+		} else {
+			ret.Available = ret.Cached + ret.Free
+		}
+	}
 	// Opt-Out of calculating Mem.Used if the context has the context key set to true.
 	// This is used for backward compatibility with applications that expect the old calculation method.
 	// However, we plan to standardize on using MemAvailable in the future.
 	// Therefore, please avoid using this opt-out unless it is absolutely necessary.
 	// see https://github.com/shirou/gopsutil/issues/1873
 	if val, ok := ctx.Value(WillBeDeletedOptOutMemAvailableCalc).(bool); ok && val {
-		if !memavail {
-			if activeFile && inactiveFile && sReclaimable {
-				ret.Available = calculateAvailVmem(ctx, ret, retEx)
-			} else {
-				ret.Available = ret.Cached + ret.Free
-			}
-		}
 		ret.Used = ret.Total - ret.Free - ret.Buffers - ret.Cached
-		ret.UsedPercent = float64(ret.Used) / float64(ret.Total) * 100.0
-		return ret, retEx, nil
-	}
-
-	if memavail {
-		ret.Used = ret.Total - ret.Available
 	} else {
-		if activeFile && inactiveFile && sReclaimable {
-			ret.Available = calculateAvailVmem(ctx, ret, retEx)
-		} else {
-			ret.Available = ret.Cached + ret.Free
-		}
-		ret.Used = ret.Total - ret.Free - ret.Buffers - ret.Cached
+		ret.Used = ret.Total - ret.Available
 	}
 
 	ret.UsedPercent = float64(ret.Used) / float64(ret.Total) * 100.0
