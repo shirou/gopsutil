@@ -19,6 +19,7 @@ import (
 var (
 	procGetNativeSystemInfo              = common.Modkernel32.NewProc("GetNativeSystemInfo")
 	procGetLogicalProcessorInformationEx = common.Modkernel32.NewProc("GetLogicalProcessorInformationEx")
+	procCallNtPowerInformation           = common.ModPowrProf.NewProc("CallNtPowerInformation")
 )
 
 type win32_Processor struct { //nolint:revive //FIXME
@@ -55,6 +56,10 @@ const (
 
 	// size of systemProcessorPerformanceInfoSize in memory
 	win32_SystemProcessorPerformanceInfoSize = uint32(unsafe.Sizeof(win32_SystemProcessorPerformanceInformation{})) //nolint:revive //FIXME
+	// https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/ne-wdm-power_information_level
+	processorInformation = 11
+	// https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getlogicalprocessorinformationex
+	relationProcessorCore = 0x0
 )
 
 // Times returns times stat per cpu and combined for all CPUs
@@ -228,38 +233,48 @@ type systemLogicalProcessorInformationEx struct {
 	Processor    processorRelationship
 }
 
-func getPhysicalCoreCount() (int, error) {
-	var length uint32
-	const relationAll = 0xffff
-	const relationProcessorCore = 0x0
+// https://learn.microsoft.com/en-us/windows/win32/power/processor-power-information-str
+type processorPowerInformation struct {
+	number           uint32 // http://download.microsoft.com/download/a/d/f/adf1347d-08dc-41a4-9084-623b1194d4b2/MoreThan64proc.docx
+	maxMhz           uint32
+	currentMhz       uint32
+	mhzLimit         uint32
+	maxIdleState     uint32
+	currentIdleState uint32
+}
 
+func getSystemLogicalProcessorInformationEx() ([]systemLogicalProcessorInformationEx, error) {
+	var length uint32
 	// First call to determine the required buffer size
-	_, _, err := procGetLogicalProcessorInformationEx.Call(uintptr(relationAll), 0, uintptr(unsafe.Pointer(&length)))
+	_, _, err := procGetLogicalProcessorInformationEx.Call(uintptr(relationProcessorCore), 0, uintptr(unsafe.Pointer(&length)))
 	if err != nil && !errors.Is(err, windows.ERROR_INSUFFICIENT_BUFFER) {
-		return 0, fmt.Errorf("failed to get buffer size: %w", err)
+		return nil, fmt.Errorf("failed to get buffer size: %w", err)
 	}
 
 	// Allocate the buffer
 	buffer := make([]byte, length)
 
 	// Second call to retrieve the processor information
-	_, _, err = procGetLogicalProcessorInformationEx.Call(uintptr(relationAll), uintptr(unsafe.Pointer(&buffer[0])), uintptr(unsafe.Pointer(&length)))
+	_, _, err = procGetLogicalProcessorInformationEx.Call(uintptr(relationProcessorCore), uintptr(unsafe.Pointer(&buffer[0])), uintptr(unsafe.Pointer(&length)))
 	if err != nil && !errors.Is(err, windows.NTE_OP_OK) {
-		return 0, fmt.Errorf("failed to get logical processor information: %w", err)
+		return nil, fmt.Errorf("failed to get logical processor information: %w", err)
 	}
 
-	// Iterate through the buffer to count physical cores
+	// Convert the byte slice into a slice of systemLogicalProcessorInformationEx structs
 	offset := uintptr(0)
-	ncpus := 0
+	var infos []systemLogicalProcessorInformationEx
 	for offset < uintptr(length) {
 		info := (*systemLogicalProcessorInformationEx)(unsafe.Pointer(uintptr(unsafe.Pointer(&buffer[0])) + offset))
-		if info.Relationship == relationProcessorCore {
-			ncpus++
-		}
+		infos = append(infos, *info)
 		offset += uintptr(info.Size)
 	}
 
-	return ncpus, nil
+	return infos, nil
+}
+
+func getPhysicalCoreCount() (int, error) {
+	infos, err := getSystemLogicalProcessorInformationEx()
+	return len(infos), err
 }
 
 func CountsWithContext(_ context.Context, logical bool) (int, error) {
@@ -280,4 +295,46 @@ func CountsWithContext(_ context.Context, logical bool) (int, error) {
 
 	// Get physical core count https://github.com/giampaolo/psutil/blob/d01a9eaa35a8aadf6c519839e987a49d8be2d891/psutil/_psutil_windows.c#L499
 	return getPhysicalCoreCount()
+}
+
+func NewInfoWithContext(ctx context.Context) error {
+	numLP, countErr := CountsWithContext(ctx, true)
+	if countErr != nil {
+		return fmt.Errorf("failed to get logical processor count: %w", countErr)
+	}
+	ppiSize := uintptr(numLP) * unsafe.Sizeof(processorPowerInformation{})
+	buf := make([]byte, ppiSize)
+	ret, _, err := procCallNtPowerInformation.Call(
+		uintptr(processorInformation),
+		0,
+		0,
+		uintptr(unsafe.Pointer(&buf[0])),
+		uintptr(ppiSize),
+	)
+
+	if ret != 0 {
+		return fmt.Errorf("CallNtPowerInformation failed with code %d: %w", ret, err)
+	}
+	ppis := (*[1 << 20]processorPowerInformation)(unsafe.Pointer(&buf[0]))[:numLP:numLP]
+	var needed uint32
+	r1, _, _ := procGetLogicalProcessorInformationEx.Call(
+		uintptr(relationProcessorCore),
+		0,
+		uintptr(unsafe.Pointer(&needed)),
+	)
+	if r1 == 0 && needed != 0 && ppis != nil {
+		// If the first call fails, it may be due to insufficient buffer size.
+		// We can try to allocate a larger buffer and call again.
+		buf = make([]byte, needed)
+		r1, _, _ = procGetLogicalProcessorInformationEx.Call(
+			uintptr(relationProcessorCore),
+			uintptr(unsafe.Pointer(&buf[0])),
+			uintptr(unsafe.Pointer(&needed)),
+		)
+		if r1 == 0 {
+			return fmt.Errorf("CallNtPowerInformation failed with code %d: %w", r1, err)
+		}
+
+	}
+	return nil
 }
