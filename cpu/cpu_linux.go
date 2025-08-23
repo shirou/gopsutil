@@ -81,6 +81,13 @@ var armModelToModelName = map[uint64]string{
 	0xd4c: "Cortex-X1C",
 	0xd4d: "Cortex-A715",
 	0xd4e: "Cortex-X3",
+	0xd4f: "Neoverse-V2",
+	0xd81: "Cortex-A720",
+	0xd82: "Cortex-X4",
+	0xd84: "Neoverse-V3",
+	0xd85: "Cortex-X925",
+	0xd87: "Cortex-A725",
+	0xd8e: "Neoverse-N3",
 }
 
 func init() {
