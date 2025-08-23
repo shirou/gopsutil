@@ -34,8 +34,8 @@ var virtualMemoryTests = []struct {
 		"intelcorei5", &VirtualMemoryStat{
 			Total:          16502300672,
 			Available:      11495358464,
-			Used:           3437277184,
-			UsedPercent:    20.82907863769651,
+			Used:           5006942208,
+			UsedPercent:    30.340873721295385,
 			Free:           8783491072,
 			Active:         4347392000,
 			Inactive:       2938834944,
@@ -75,8 +75,8 @@ var virtualMemoryTests = []struct {
 		"issue1002", &VirtualMemoryStat{
 			Total:          260579328,
 			Available:      215199744,
-			Used:           34328576,
-			UsedPercent:    13.173944481121694,
+			Used:           45379584,
+			UsedPercent:    17.414882580401773,
 			Free:           124506112,
 			Active:         108785664,
 			Inactive:       8581120,
@@ -118,8 +118,8 @@ var virtualMemoryTests = []struct {
 			Available:     127880216 * 1024,
 			Free:          119443248 * 1024,
 			AnonHugePages: 50409472 * 1024,
-			Used:          144748720128,
-			UsedPercent:   54.20110673559013,
+			Used:          136109264896,
+			UsedPercent:   50.96606579876596,
 		},
 	},
 }
