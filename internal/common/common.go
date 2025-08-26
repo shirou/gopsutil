@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -300,12 +301,7 @@ func StringsContains(target []string, src string) bool {
 
 // IntContains checks the src in any int of the target int slice.
 func IntContains(target []int, src int) bool {
-	for _, t := range target {
-		if src == t {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(target, src)
 }
 
 // get struct attributes.
