@@ -39,7 +39,10 @@ func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
 
 func fillFromMeminfoWithContext(ctx context.Context) (*VirtualMemoryStat, *ExVirtualMemory, error) {
 	filename := common.HostProcWithContext(ctx, "meminfo")
-	lines, _ := common.ReadLines(filename)
+	lines, err := common.ReadLines(filename)
+	if err != nil {
+		return nil, nil, fmt.Errorf("couldn't read %s: %w", filename, err)
+	}
 
 	// flag if MemAvailable is in /proc/meminfo (kernel 3.14+)
 	memavail := false
@@ -348,7 +351,10 @@ func SwapMemoryWithContext(ctx context.Context) (*SwapMemoryStat, error) {
 		ret.UsedPercent = 0
 	}
 	filename := common.HostProcWithContext(ctx, "vmstat")
-	lines, _ := common.ReadLines(filename)
+	lines, err := common.ReadLines(filename)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't read %s: %w", filename, err)
+	}
 	for _, l := range lines {
 		fields := strings.Fields(l)
 		if len(fields) < 2 {
