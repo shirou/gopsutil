@@ -17,6 +17,7 @@ linters:
     - contextcheck
     - durationcheck
     - errorlint
+    - fatcontext
     - gocritic
     - gomodguard
     - gosec
