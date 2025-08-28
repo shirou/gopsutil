@@ -52,7 +52,7 @@ type devstat struct {
 	Flags         uint32
 	Device_type   uint32
 	Priority      uint32
-	Id            *byte
+	Id            [sizeofPtr]byte
 	Sequence1     uint32
 	Pad_cgo_0     [4]byte
 }

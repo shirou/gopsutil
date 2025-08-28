@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 //go:build ignore
 
-// Hand writing: _Ctype_struct___0
+// Hand writing:
+//   - add _Ctype_struct___0 struct
+//   - devstat.ID *byte -> [sizeOfPtr]byte in order to use binary.Read
 
 /*
 Input to cgo -godefs.
