@@ -107,6 +107,8 @@ linters:
         - name: superfluous-else
           arguments:
             - "preserveScope"
+        - name: time-date
+        - name: time-equal
         - name: time-naming
         - name: unexported-return
         - name: unnecessary-stmt
