@@ -95,6 +95,7 @@ func TestTimeStat_String(t *testing.T) {
 
 func TestInfo(t *testing.T) {
 	v, err := Info()
+
 	if errors.Is(err, common.ErrNotImplementedError) {
 		t.Skip("not implemented")
 	}
