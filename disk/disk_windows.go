@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 	"syscall"
 	"unicode/utf16"
 	"unsafe"
@@ -90,6 +91,31 @@ func UsageWithContext(_ context.Context, path string) (*UsageStat, error) {
 		// InodesUsedPercent: 0,
 	}
 	return ret, nil
+}
+
+func getLogicaldrives(ctx context.Context) ([]string, error) {
+
+	// We first call GetLogicalDriveStringsW with a buffer length of 0 to get the required buffer size.
+	len, _, err := procGetLogicalDriveStringsW.Call(
+		uintptr(0),
+		uintptr(0))
+
+	if err != windows.ERROR_SUCCESS {
+		return nil, err // The call failed with an unexpected error
+	}
+	if ctx.Err() != nil {
+		return nil, ctx.Err() // Context canceled, don't retry (The call can be slow)
+	}
+
+	lpBuffer := make([]uint16, len)
+	_, _, err = procGetLogicalDriveStringsW.Call(
+		uintptr(len),
+		uintptr(unsafe.Pointer(&lpBuffer[0])))
+	if err != windows.ERROR_SUCCESS {
+		return nil, err // The call failed with an unexpected error
+	}
+	drives := windows.UTF16ToString(lpBuffer)
+	return strings.Split(drives, "\x00"), nil
 }
 
 // PartitionsWithContext returns disk partitions.
