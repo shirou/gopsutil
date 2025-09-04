@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"reflect"
 	"strings"
 	"syscall"
 	"unicode/utf16"
@@ -93,6 +92,7 @@ func UsageWithContext(_ context.Context, path string) (*UsageStat, error) {
 	return ret, nil
 }
 
+// this can be slow, the system call is not interruptible
 func getLogicaldrives(ctx context.Context) ([]string, error) {
 	// We first call GetLogicalDriveStringsW with a buffer length of 0 to get the required buffer size.
 	len, _, err := procGetLogicalDriveStringsW.Call(
@@ -122,103 +122,70 @@ func getLogicaldrives(ctx context.Context) ([]string, error) {
 // Since the api calls don't have a timeout, this method uses context to set deadline by users.
 func PartitionsWithContext(ctx context.Context, _ bool) ([]PartitionStat, error) {
 	warnings := Warnings{Verbose: true}
-	var errInitialCall error
-	retChan := make(chan PartitionStat)
-	quitChan := make(chan struct{})
-	defer close(quitChan)
 	processedPaths := make(map[string]struct{})
 
-	getPartitions := func() {
-		defer close(retChan)
+	partitionStats := []PartitionStat{}
 
-		// Get drives with drive letters (including remote drives, ex: SMB shares)
-		logicalDrives, logicalDrivedErr := getLogicaldrives(ctx)
-		if logicalDrivedErr != nil {
-			errInitialCall = fmt.Errorf("failed to get logical drives: %w", logicalDrivedErr)
-			return
-		}
-		for _, drive := range logicalDrives {
-			if len(drive) > 0 && drive[0] >= 'A' && drive[0] <= 'Z' {
-				v := drive[0]
-				path := string(v) + ":"
-				if partitionStat, warning := buildPartitionStat(path); warning == nil {
-					processedPaths[partitionStat.Mountpoint+`\`] = struct{}{}
-					select {
-					case retChan <- partitionStat:
-					case <-quitChan:
-						return
-					}
-				} else {
-					warnings.Add(warning)
-				}
+	// Get drives with drive letters (including remote drives, ex: SMB shares)
+	logicalDrives, logicalDrivedErr := getLogicaldrives(ctx)
+	if logicalDrivedErr != nil {
+		return partitionStats, logicalDrivedErr
+	}
+
+	for _, drive := range logicalDrives {
+		if len(drive) > 0 && drive[0] >= 'A' && drive[0] <= 'Z' {
+			v := drive[0]
+			path := string(v) + ":"
+			if partitionStat, statErr := buildPartitionStat(path); statErr == nil {
+				processedPaths[partitionStat.Mountpoint+`\`] = struct{}{}
+				partitionStats = append(partitionStats, partitionStat)
+			} else {
+				warnings.Add(statErr)
 			}
 		}
+	}
 
-		// Get volumes without drive letters (ex: mounted folders with no drive letter)
-		volNameBuf := make([]uint16, volumeNameBufferLength)
-		nextVolHandle, _, logicalDrivedErr := procFindFirstVolumeW.Call(
-			uintptr(unsafe.Pointer(&volNameBuf[0])),
-			uintptr(volumeNameBufferLength))
-		if windows.Handle(nextVolHandle) == windows.InvalidHandle {
-			errInitialCall = fmt.Errorf("failed to get first-volume: %w", logicalDrivedErr)
-			return
+	// Get volumes without drive letters (ex: mounted folders with no drive letter)
+	volNameBuf := make([]uint16, volumeNameBufferLength)
+	nextVolHandle, _, logicalDrivedErr := procFindFirstVolumeW.Call(
+		uintptr(unsafe.Pointer(&volNameBuf[0])),
+		uintptr(volumeNameBufferLength))
+	if windows.Handle(nextVolHandle) == windows.InvalidHandle {
+		return partitionStats, fmt.Errorf("failed to get first-volume: %w", logicalDrivedErr)
+	}
+	defer procFindVolumeClose.Call(nextVolHandle)
+	for {
+		mounts, err := getVolumePaths(volNameBuf)
+		if err != nil {
+			warnings.Add(fmt.Errorf("failed to find paths for volume %s", windows.UTF16ToString(volNameBuf)))
+			continue
 		}
-		defer procFindVolumeClose.Call(nextVolHandle)
-		for {
-			mounts, err := getVolumePaths(volNameBuf)
-			if err != nil {
-				warnings.Add(fmt.Errorf("failed to find paths for volume %s", windows.UTF16ToString(volNameBuf)))
+
+		for _, mount := range mounts {
+			if _, ok := processedPaths[mount]; ok {
 				continue
 			}
-
-			for _, mount := range mounts {
-				if _, ok := processedPaths[mount]; ok {
-					continue
-				}
-				if partitionStat, warning := buildPartitionStat(mount); warning == nil {
-					select {
-					case retChan <- partitionStat:
-					case <-quitChan:
-						return
-					}
-				} else {
-					warnings.Add(warning)
-				}
+			if partitionStat, warning := buildPartitionStat(mount); warning == nil {
+				partitionStats = append(partitionStats, partitionStat)
+			} else {
+				warnings.Add(warning)
 			}
+		}
 
-			volNameBuf = make([]uint16, volumeNameBufferLength)
-			if volRet, _, err := procFindNextVolumeW.Call(
-				nextVolHandle,
-				uintptr(unsafe.Pointer(&volNameBuf[0])),
-				uintptr(volumeNameBufferLength)); err != nil && volRet == 0 {
-				var errno syscall.Errno
-				if errors.As(err, &errno) && errno == windows.ERROR_NO_MORE_FILES {
-					break
-				}
-				warnings.Add(fmt.Errorf("failed to find next volume: %w", err))
+		volNameBuf = make([]uint16, volumeNameBufferLength)
+		if volRet, _, err := procFindNextVolumeW.Call(
+			nextVolHandle,
+			uintptr(unsafe.Pointer(&volNameBuf[0])),
+			uintptr(volumeNameBufferLength)); err != nil && volRet == 0 {
+			var errno syscall.Errno
+			if errors.As(err, &errno) && errno == windows.ERROR_NO_MORE_FILES {
+				break
 			}
+			warnings.Add(fmt.Errorf("failed to find next volume: %w", err))
 		}
 	}
 
-	go getPartitions()
-
-	var ret []PartitionStat
-	for {
-		select {
-		case p, ok := <-retChan:
-			if !ok {
-				if errInitialCall != nil {
-					return ret, errInitialCall
-				}
-				return ret, warnings.Reference()
-			}
-			if !reflect.DeepEqual(p, PartitionStat{}) {
-				ret = append(ret, p)
-			}
-		case <-ctx.Done():
-			return ret, ctx.Err()
-		}
-	}
+	return partitionStats, warnings.Reference()
 }
 
 func buildPartitionStat(path string) (PartitionStat, error) {
