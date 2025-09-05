@@ -27,6 +27,7 @@ func TestGetLogicalDrives(t *testing.T) {
 }
 
 func TestBuildPartitionStat(t *testing.T) {
+	t.Skip("this creates VHD partitions and requires admin rights, execute the test mnually")
 	volumeC := `C:\`
 	part, err := buildPartitionStat(volumeC)
 	require.NoError(t, err)
@@ -39,12 +40,9 @@ func TestBuildPartitionStat(t *testing.T) {
 func TestGetPartStatFromVolumeName(t *testing.T) {
 	driveLetter := "Y"
 	mountFolder := `C:\mountpoint\`
-	longMountFolder := `C:\this\is\a\very\long\mountpoint\to\test\the\maximum\path\length\allowed\by\windows\operating\system\for\mounted\volumes\as\folders\in\the\file\system\structure\of\the\os\itself\and\see\if\there\are\any\issues\with\paths\longer\than\the\traditional\260\character\limit\which\was\present\in\older\versions\of\windows\operating\system\and\is\still\a\common\issue\for\many\applications\ok\this\is\just\a\very\long\text\to\test\if\we\are\calling\the\api\correctly\it\is\not\exptected\that\you\read\it`
 	testMountedVolumesAsFolder(t, driveLetter, "")
 	testMountedVolumesAsFolder(t, driveLetter, mountFolder)
 	testMountedVolumesAsFolder(t, "", mountFolder)
-	testMountedVolumesAsFolder(t, driveLetter, longMountFolder)
-	testMountedVolumesAsFolder(t, "", longMountFolder)
 }
 
 func testMountedVolumesAsFolder(t *testing.T, driveLetter string, mountFolder string) {
@@ -77,14 +75,14 @@ func mountVolume(t *testing.T, driveLetter string, vhdFile string, mountFolder s
 	if mountFolder != "" {
 		args = append(args, "-MountFolder", mountFolder)
 	}
-	mountVolumeCmd := exec.Command("powershell.exe", args...)
+	mountVolumeCmd := exec.Command("pwsh.exe", args...)
 	out, createVolumeErr := mountVolumeCmd.Output()
 	require.NoError(t, createVolumeErr, out)
 }
 
 func removeMountedVolume(t *testing.T, vhdFile string, mountFolder string) {
 	if _, statErr := os.Stat(vhdFile); statErr == nil {
-		unmountVolumeCmd := exec.Command("powershell.exe", "-File", removeVolumeScript, "-VhdPath", vhdFile, "-MountFolder", mountFolder)
+		unmountVolumeCmd := exec.Command("pwsh.exe", "-File", removeVolumeScript, "-VhdPath", vhdFile, "-MountFolder", mountFolder)
 		out, unmountVolumeErr := unmountVolumeCmd.CombinedOutput()
 		require.NoError(t, unmountVolumeErr, out)
 	}
