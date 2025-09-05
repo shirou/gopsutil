@@ -155,7 +155,7 @@ func processVolumesMountedAsFolders(ctx context.Context, partitionStats []Partit
 			warnings.Add(fmt.Errorf(contextCancelMessage, ctx.Err()))
 			return partitionStats
 		default:
-			getPartStatFromVolumeName(ctx, volNameBuf, warnings, processedPaths, partitionStats)
+			partitionStats = getPartStatFromVolumeName(ctx, volNameBuf, warnings, processedPaths, partitionStats)
 
 			if ctx.Err() != nil {
 				warnings.Add(fmt.Errorf(contextCancelMessage, ctx.Err()))
@@ -170,7 +170,7 @@ func processVolumesMountedAsFolders(ctx context.Context, partitionStats []Partit
 			if nextVolumeErr != nil && volRet == 0 {
 				var errno syscall.Errno
 				if errors.As(nextVolumeErr, &errno) && errno == windows.ERROR_NO_MORE_FILES {
-					break
+					return partitionStats // All disk volumes processed, finish iteration
 				}
 				warnings.Add(fmt.Errorf("failed to find next volume: %w", nextVolumeErr))
 				return partitionStats // STOP here if there is an error != ERROR_NO_MORE_FILES or we risk to be blocked in an infine loop
@@ -179,20 +179,20 @@ func processVolumesMountedAsFolders(ctx context.Context, partitionStats []Partit
 	}
 }
 
-func getPartStatFromVolumeName(ctx context.Context, volNameBuf []uint16, warnings *Warnings, processedPaths map[string]struct{}, partitionStats []PartitionStat) {
+func getPartStatFromVolumeName(ctx context.Context, volNameBuf []uint16, warnings *Warnings, processedPaths map[string]struct{}, partitionStats []PartitionStat) []PartitionStat {
 	mounts, err := getVolumePaths(ctx, volNameBuf)
 	if err != nil {
 		warnings.Add(fmt.Errorf("failed to find paths for volume %s", windows.UTF16ToString(volNameBuf)))
-		return
+		return partitionStats
 	}
 
 	for _, mount := range mounts {
 		if _, ok := processedPaths[mount]; ok {
-			return
+			return partitionStats
 		}
 		select {
 		case <-ctx.Done():
-			return
+			return partitionStats
 		default:
 			if partitionStat, warning := buildPartitionStat(mount); warning == nil {
 				if partitionStat.Device != "" {
@@ -203,6 +203,7 @@ func getPartStatFromVolumeName(ctx context.Context, volNameBuf []uint16, warning
 			}
 		}
 	}
+	return partitionStats
 }
 
 func buildPartitionStat(path string) (PartitionStat, error) {

@@ -8,7 +8,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/sys/windows"
 )
 
 const (
@@ -39,22 +38,46 @@ func TestBuildPartitionStat(t *testing.T) {
 
 func TestGetPartStatFromVolumeName(t *testing.T) {
 	driveLetter := "Y"
+	mountFolder := `C:\mountpoint\`
+	longMountFolder := `C:\this\is\a\very\long\mountpoint\to\test\the\maximum\path\length\allowed\by\windows\operating\system\for\mounted\volumes\as\folders\in\the\file\system\structure\of\the\os\itself\and\see\if\there\are\any\issues\with\paths\longer\than\the\traditional\260\character\limit\which\was\present\in\older\versions\of\windows\operating\system\and\is\still\a\common\issue\for\many\applications\ok\this\is\just\a\very\long\text\to\test\if\we\are\calling\the\api\correctly\it\is\not\exptected\that\you\read\it`
+	testMountedVolumesAsFolder(t, driveLetter, "")
+	testMountedVolumesAsFolder(t, driveLetter, mountFolder)
+	testMountedVolumesAsFolder(t, "", mountFolder)
+	testMountedVolumesAsFolder(t, driveLetter, longMountFolder)
+	testMountedVolumesAsFolder(t, "", longMountFolder)
+}
+
+func testMountedVolumesAsFolder(t *testing.T, driveLetter string, mountFolder string) {
+	fsType := "NTFS"
 	vhdFile := `C:\testdisk.vhd`
-	mountFolder := `C:\mountpoint`
-	removeMountedVolume(t, vhdFile, mountFolder)
+	opts := []string{"rw", "compress"}
+	letterMountPoint := driveLetter + `:\`
+	defer removeMountedVolume(t, vhdFile, mountFolder)
 
 	mountVolume(t, driveLetter, vhdFile, mountFolder)
 	warnings := Warnings{}
 	processedPaths := make(map[string]struct{})
 	partitionsStats := make([]PartitionStat, 0)
-	drivePath := driveLetter + `:\`
-	volNameBuffer := windows.StringToUTF16(drivePath)
-	getPartStatFromVolumeName(context.Background(), volNameBuffer, &warnings, processedPaths, partitionsStats)
+	partitionStats := processVolumesMountedAsFolders(context.Background(), partitionsStats, processedPaths, &warnings)
 	assert.Empty(t, warnings.List)
+	assert.Greater(t, len(partitionStats), 1)
+	if mountFolder != "" {
+		assert.Contains(t, partitionStats, PartitionStat{Mountpoint: mountFolder, Device: mountFolder, Fstype: fsType, Opts: opts})
+	}
+	if driveLetter != "" {
+		assert.Contains(t, partitionStats, PartitionStat{Mountpoint: letterMountPoint, Device: letterMountPoint, Fstype: fsType, Opts: opts})
+	}
 }
 
 func mountVolume(t *testing.T, driveLetter string, vhdFile string, mountFolder string) {
-	mountVolumeCmd := exec.Command("powershell.exe", "-File", createVolumeScript, "-DriveLetter", driveLetter, "-VhdPath", vhdFile, "-MountFolder", mountFolder)
+	args := []string{"-File", createVolumeScript, "-VhdPath", vhdFile}
+	if driveLetter != "" {
+		args = append(args, "-DriveLetter", driveLetter)
+	}
+	if mountFolder != "" {
+		args = append(args, "-MountFolder", mountFolder)
+	}
+	mountVolumeCmd := exec.Command("powershell.exe", args...)
 	out, createVolumeErr := mountVolumeCmd.Output()
 	require.NoError(t, createVolumeErr, out)
 }
