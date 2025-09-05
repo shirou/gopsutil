@@ -27,7 +27,6 @@ func TestGetLogicalDrives(t *testing.T) {
 }
 
 func TestBuildPartitionStat(t *testing.T) {
-	t.Skip("this creates VHD partitions and requires admin rights, execute the test mnually")
 	volumeC := `C:\`
 	part, err := buildPartitionStat(volumeC)
 	require.NoError(t, err)
@@ -38,6 +37,8 @@ func TestBuildPartitionStat(t *testing.T) {
 }
 
 func TestGetPartStatFromVolumeName(t *testing.T) {
+	t.Skip("this creates VHD partitions and requires admin rights, execute the test mnually")
+
 	driveLetter := "Y"
 	mountFolder := `C:\mountpoint\`
 	testMountedVolumesAsFolder(t, driveLetter, "")
