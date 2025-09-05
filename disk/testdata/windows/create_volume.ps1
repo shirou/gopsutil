@@ -28,10 +28,26 @@ diskpart /s $diskpartScriptPath
 
 # Mount to folder if specified
 if ($MountFolder) {
+    # Create the mount folder if it doesn't exist
+    if (-not (Test-Path -Path $MountFolder)) {
+        New-Item -Path $MountFolder -ItemType Directory | Out-Null
+    }
     # Get the volume object
-    $vol = Get-WmiObject -Query "SELECT * FROM Win32_Volume WHERE DriveLetter = '${DriveLetter}:'"
+    if ($DriveLetter) {
+        $vol = Get-Volume -DriveLetter $DriveLetter -ErrorAction SilentlyContinue
+    } else {
+        # Find the most recently created volume without a drive letter
+        $vol = Get-Volume | Where-Object { $_.DriveLetter -eq $null } | Sort-Object -Property Size -Descending | Select-Object -First 1
+    }
     if ($vol) {
-        $vol.AddMountPoint($MountFolder)
+            # Find the disk associated with the VHD
+            $disk = Get-Disk | Where-Object { $_.Location -like "*${VhdPath}*" }
+            if ($disk) {
+                $part = Get-Partition -DiskNumber $disk.Number | Where-Object { $_.Type -eq 'IFS' } | Select-Object -First 1
+                if ($part) {
+                    Add-PartitionAccessPath -DiskNumber $disk.Number -PartitionNumber $part.PartitionNumber -AccessPath $MountFolder
+                }
+            }
     }
 }
 
