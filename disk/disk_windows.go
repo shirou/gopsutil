@@ -95,7 +95,8 @@ func UsageWithContext(_ context.Context, path string) (*UsageStat, error) {
 // this can be slow, the system call is not interruptible
 func getLogicaldrives(ctx context.Context) ([]string, error) {
 	// We first call GetLogicalDriveStringsW with a buffer length of 0 to get the required buffer size.
-	len, _, err := procGetLogicalDriveStringsW.Call(
+	// https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getlogicaldrivestringsw
+	bufferLen, _, err := procGetLogicalDriveStringsW.Call(
 		uintptr(0),
 		uintptr(0))
 
@@ -106,9 +107,9 @@ func getLogicaldrives(ctx context.Context) ([]string, error) {
 		return nil, ctx.Err() // Context canceled, don't retry (The call can be slow)
 	}
 
-	lpBuffer := make([]uint16, len)
+	lpBuffer := make([]uint16, bufferLen)
 	_, _, err = procGetLogicalDriveStringsW.Call(
-		uintptr(len),
+		uintptr(bufferLen),
 		uintptr(unsafe.Pointer(&lpBuffer[0])))
 	if err != windows.ERROR_SUCCESS {
 		return nil, err // The call failed with an unexpected error
