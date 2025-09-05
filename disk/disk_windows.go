@@ -34,6 +34,7 @@ var (
 	procGetVolumePathNamesForVolumeNameW = common.Modkernel32.NewProc("GetVolumePathNamesForVolumeNameW")
 )
 
+// https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getvolumeinformationa#parameters
 const (
 	rw       = "rw"
 	ro       = "ro"
