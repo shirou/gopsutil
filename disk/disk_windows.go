@@ -34,6 +34,12 @@ var (
 	procGetVolumePathNamesForVolumeNameW = common.Modkernel32.NewProc("GetVolumePathNamesForVolumeNameW")
 )
 
+const (
+	rw       = "rw"
+	ro       = "ro"
+	compress = "compress"
+)
+
 var (
 	fileFileCompression = int64(16)     // 0x00000010
 	fileReadOnlyVolume  = int64(524288) // 0x00080000
@@ -241,12 +247,12 @@ func buildPartitionStat(path string) (PartitionStat, error) {
 			return PartitionStat{}, err
 		}
 
-		opts := []string{"rw"}
+		opts := []string{rw}
 		if fsFlags&fileReadOnlyVolume != 0 {
-			opts = []string{"ro"}
+			opts = []string{ro}
 		}
 		if fsFlags&fileFileCompression != 0 {
-			opts = append(opts, "compress")
+			opts = append(opts, compress)
 		}
 
 		return PartitionStat{

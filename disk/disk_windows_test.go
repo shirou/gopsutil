@@ -33,7 +33,7 @@ func TestBuildPartitionStat(t *testing.T) {
 	assert.Equal(t, volumeC, part.Mountpoint)
 	assert.Equal(t, volumeC, part.Device)
 	assert.Equal(t, "NTFS", part.Fstype) // NTFS should be the only allowed fs on C: drive
-	assert.Contains(t, part.Opts, "rw")  // C: must have atleast rw option
+	assert.Contains(t, part.Opts, rw)    // C: must have atleast rw option
 }
 
 func TestGetPartStatFromVolumeName(t *testing.T) {
@@ -49,7 +49,7 @@ func TestGetPartStatFromVolumeName(t *testing.T) {
 func testMountedVolumesAsFolder(t *testing.T, driveLetter string, mountFolder string) {
 	fsType := "NTFS"
 	vhdFile := `C:\testdisk.vhd`
-	opts := []string{"rw", "compress"}
+	opts := []string{rw, compress}
 	letterMountPoint := driveLetter + `:\`
 	defer removeMountedVolume(t, vhdFile, mountFolder)
 
