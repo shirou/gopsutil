@@ -8,7 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"reflect"
+	"strings"
 	"syscall"
 	"unicode/utf16"
 	"unsafe"
@@ -20,8 +20,8 @@ import (
 )
 
 const (
-	volumeNameBufferLength = uint32(windows.MAX_PATH + 1)
-	volumePathBufferLength = volumeNameBufferLength
+	maxVolumeNameLength     = uint32(windows.MAX_PATH + 1)
+	maxFileSystemNameLength = uint32(windows.MAX_PATH + 1)
 )
 
 var (
@@ -32,6 +32,13 @@ var (
 	procFindNextVolumeW                  = common.Modkernel32.NewProc("FindNextVolumeW")
 	procFindVolumeClose                  = common.Modkernel32.NewProc("FindVolumeClose")
 	procGetVolumePathNamesForVolumeNameW = common.Modkernel32.NewProc("GetVolumePathNamesForVolumeNameW")
+)
+
+// https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getvolumeinformationa#parameters
+const (
+	rw       = "rw"
+	ro       = "ro"
+	compress = "compress"
 )
 
 var (
@@ -92,109 +99,119 @@ func UsageWithContext(_ context.Context, path string) (*UsageStat, error) {
 	return ret, nil
 }
 
+// this can be slow, the system call is not interruptible
+func getLogicaldrives(ctx context.Context) ([]string, error) {
+	// We first call GetLogicalDriveStringsW with a buffer length of 0 to get the required buffer size.
+	// https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getlogicaldrivestringsw
+	bufferLen, _, err := procGetLogicalDriveStringsW.Call(
+		uintptr(0),
+		uintptr(0))
+
+	if err != windows.ERROR_SUCCESS {
+		return nil, err // The call failed with an unexpected error
+	}
+	if ctx.Err() != nil {
+		return nil, ctx.Err() // Context canceled, don't retry (The call can be slow)
+	}
+
+	lpBuffer := make([]uint16, bufferLen)
+	_, _, err = procGetLogicalDriveStringsW.Call(
+		uintptr(bufferLen),
+		uintptr(unsafe.Pointer(&lpBuffer[0])))
+	if err != windows.ERROR_SUCCESS {
+		return nil, err // The call failed with an unexpected error
+	}
+	drives := windows.UTF16ToString(lpBuffer)
+	return strings.Split(drives, "\x00"), nil
+}
+
 // PartitionsWithContext returns disk partitions.
 // It uses procGetLogicalDriveStringsW to get drives with drive letters and procFindFirstVolumeW to get volumes without drive letters.
 // Since the api calls don't have a timeout, this method uses context to set deadline by users.
 func PartitionsWithContext(ctx context.Context, _ bool) ([]PartitionStat, error) {
 	warnings := Warnings{Verbose: true}
-	var errInitialCall error
-	retChan := make(chan PartitionStat)
-	quitChan := make(chan struct{})
-	defer close(quitChan)
 	processedPaths := make(map[string]struct{})
 
-	getPartitions := func() {
-		defer close(retChan)
+	partitionStats := []PartitionStat{}
 
-		// Get drives with drive letters (including remote drives, ex: SMB shares)
-		lpBuffer := make([]byte, 254)
-		if diskret, _, err := procGetLogicalDriveStringsW.Call(
-			uintptr(len(lpBuffer)),
-			uintptr(unsafe.Pointer(&lpBuffer[0]))); diskret == 0 {
-			errInitialCall = err
-			return
-		}
-		for _, v := range lpBuffer {
-			if v >= 65 && v <= 90 {
-				path := string(v) + ":"
-				if partitionStat, warning := buildPartitionStat(path); warning == nil {
-					processedPaths[partitionStat.Mountpoint+"\\"] = struct{}{}
-					select {
-					case retChan <- partitionStat:
-					case <-quitChan:
-						return
-					}
-				} else {
-					warnings.Add(warning)
-				}
-			}
-		}
-
-		// Get volumes without drive letters (ex: mounted folders with no drive letter)
-		volNameBuf := make([]uint16, volumeNameBufferLength)
-		nextVolHandle, _, err := procFindFirstVolumeW.Call(
-			uintptr(unsafe.Pointer(&volNameBuf[0])),
-			uintptr(volumeNameBufferLength))
-		if windows.Handle(nextVolHandle) == windows.InvalidHandle {
-			errInitialCall = fmt.Errorf("failed to get first-volume: %w", err)
-			return
-		}
-		defer procFindVolumeClose.Call(nextVolHandle)
-		for {
-			mounts, err := getVolumePaths(volNameBuf)
-			if err != nil {
-				warnings.Add(fmt.Errorf("failed to find paths for volume %s", windows.UTF16ToString(volNameBuf)))
-				continue
-			}
-
-			for _, mount := range mounts {
-				if _, ok := processedPaths[mount]; ok {
-					continue
-				}
-				if partitionStat, warning := buildPartitionStat(mount); warning == nil {
-					select {
-					case retChan <- partitionStat:
-					case <-quitChan:
-						return
-					}
-				} else {
-					warnings.Add(warning)
-				}
-			}
-
-			volNameBuf = make([]uint16, volumeNameBufferLength)
-			if volRet, _, err := procFindNextVolumeW.Call(
-				nextVolHandle,
-				uintptr(unsafe.Pointer(&volNameBuf[0])),
-				uintptr(volumeNameBufferLength)); err != nil && volRet == 0 {
-				var errno syscall.Errno
-				if errors.As(err, &errno) && errno == windows.ERROR_NO_MORE_FILES {
-					break
-				}
-				warnings.Add(fmt.Errorf("failed to find next volume: %w", err))
-			}
-		}
+	// Get drives with drive letters (including remote drives, ex: SMB shares)
+	logicalDrives, logicalDrivedErr := getLogicaldrives(ctx)
+	if logicalDrivedErr != nil {
+		return partitionStats, logicalDrivedErr
 	}
 
-	go getPartitions()
+	partitionStats, processedPaths = processLogicalDrives(ctx, logicalDrives, partitionStats, processedPaths, &warnings)
+	partitionStats = processVolumesMountedAsFolders(ctx, partitionStats, processedPaths, &warnings)
+	return partitionStats, warnings.Reference()
+}
 
-	var ret []PartitionStat
+func processVolumesMountedAsFolders(ctx context.Context, partitionStats []PartitionStat, processedPaths map[string]struct{}, warnings *Warnings) []PartitionStat {
+	// Get volumes without drive letters (ex: mounted folders with no drive letter)
+	volNameBuf := make([]uint16, maxVolumeNameLength)
+	nextVolHandle, _, firstVolumeErr := procFindFirstVolumeW.Call(
+		uintptr(unsafe.Pointer(&volNameBuf[0])),
+		uintptr(maxVolumeNameLength)) // The max length of this should be 50 (it's GUID based string), but I set to the max allowed volume name length
+	if windows.Handle(nextVolHandle) == windows.InvalidHandle {
+		warnings.Add(fmt.Errorf("failed to get first-volume: %w", firstVolumeErr))
+		return partitionStats
+	}
+	defer procFindVolumeClose.Call(nextVolHandle)
+	contextCancelMessage := "context done while processing volumes mounted as folders: %w"
 	for {
 		select {
-		case p, ok := <-retChan:
-			if !ok {
-				if errInitialCall != nil {
-					return ret, errInitialCall
-				}
-				return ret, warnings.Reference()
-			}
-			if !reflect.DeepEqual(p, PartitionStat{}) {
-				ret = append(ret, p)
-			}
 		case <-ctx.Done():
-			return ret, ctx.Err()
+			warnings.Add(fmt.Errorf(contextCancelMessage, ctx.Err()))
+			return partitionStats
+		default:
+			partitionStats = getPartStatFromVolumeName(ctx, volNameBuf, warnings, processedPaths, partitionStats)
+
+			if ctx.Err() != nil {
+				warnings.Add(fmt.Errorf(contextCancelMessage, ctx.Err()))
+				return partitionStats
+			}
+
+			volNameBuf = make([]uint16, maxVolumeNameLength)
+			volRet, _, nextVolumeErr := procFindNextVolumeW.Call(
+				nextVolHandle,
+				uintptr(unsafe.Pointer(&volNameBuf[0])),
+				uintptr(maxVolumeNameLength)) // The max length of this should be 50 (it's GUID based string), but I set to the max allowed volume name length
+			if nextVolumeErr != nil && volRet == 0 {
+				var errno syscall.Errno
+				if errors.As(nextVolumeErr, &errno) && errno == windows.ERROR_NO_MORE_FILES {
+					return partitionStats // All disk volumes processed, finish iteration
+				}
+				warnings.Add(fmt.Errorf("failed to find next volume: %w", nextVolumeErr))
+				return partitionStats // STOP here if there is an error != ERROR_NO_MORE_FILES or we risk to be blocked in an infine loop
+			}
 		}
 	}
+}
+
+func getPartStatFromVolumeName(ctx context.Context, volNameBuf []uint16, warnings *Warnings, processedPaths map[string]struct{}, partitionStats []PartitionStat) []PartitionStat {
+	mounts, err := getVolumePaths(ctx, volNameBuf)
+	if err != nil {
+		warnings.Add(fmt.Errorf("failed to find paths for volume %s", windows.UTF16ToString(volNameBuf)))
+		return partitionStats
+	}
+
+	for _, mount := range mounts {
+		if _, ok := processedPaths[mount]; ok {
+			return partitionStats
+		}
+		select {
+		case <-ctx.Done():
+			return partitionStats
+		default:
+			if partitionStat, warning := buildPartitionStat(mount); warning == nil {
+				if partitionStat.Device != "" {
+					partitionStats = append(partitionStats, partitionStat)
+				}
+			} else {
+				warnings.Add(warning)
+			}
+		}
+	}
+	return partitionStats
 }
 
 func buildPartitionStat(path string) (PartitionStat, error) {
@@ -207,20 +224,21 @@ func buildPartitionStat(path string) (PartitionStat, error) {
 
 	if driveType == windows.DRIVE_REMOVABLE || driveType == windows.DRIVE_FIXED ||
 		driveType == windows.DRIVE_REMOTE || driveType == windows.DRIVE_CDROM {
-		volPath, _ := windows.UTF16PtrFromString(path + "/")
-		volumeName := make([]byte, 256)
-		fsName := make([]byte, 256)
-		var serialNumber, maxComponentLength, fsFlags int64
+		volPath, _ := windows.UTF16PtrFromString(path + `\`)
+		volumeName := make([]byte, maxVolumeNameLength) // As documented, MAX_PATH+1 is the max length for volume name
+		fsName := make([]byte, maxFileSystemNameLength) // As documented, MAX_PATH+1 is the max length for file system name
+		var fsFlags int64
 
+		// https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getvolumeinformationw
 		ret, _, err := procGetVolumeInformation.Call(
 			uintptr(unsafe.Pointer(volPath)),
 			uintptr(unsafe.Pointer(&volumeName[0])),
-			uintptr(len(volumeName)),
-			uintptr(unsafe.Pointer(&serialNumber)),
-			uintptr(unsafe.Pointer(&maxComponentLength)),
+			uintptr(maxVolumeNameLength),
+			uintptr(0), // serial number
+			uintptr(0), // max component length
 			uintptr(unsafe.Pointer(&fsFlags)),
 			uintptr(unsafe.Pointer(&fsName[0])),
-			uintptr(len(fsName)),
+			uintptr(maxFileSystemNameLength),
 		)
 
 		if ret == 0 {
@@ -230,12 +248,12 @@ func buildPartitionStat(path string) (PartitionStat, error) {
 			return PartitionStat{}, err
 		}
 
-		opts := []string{"rw"}
+		opts := []string{rw}
 		if fsFlags&fileReadOnlyVolume != 0 {
-			opts = []string{"ro"}
+			opts = []string{ro}
 		}
 		if fsFlags&fileFileCompression != 0 {
-			opts = append(opts, "compress")
+			opts = append(opts, compress)
 		}
 
 		return PartitionStat{
@@ -310,17 +328,34 @@ func LabelWithContext(_ context.Context, _ string) (string, error) {
 }
 
 // getVolumePaths returns the path for the given volume name.
-func getVolumePaths(volNameBuf []uint16) ([]string, error) {
-	volPathsBuf := make([]uint16, volumePathBufferLength)
+func getVolumePaths(ctx context.Context, volNameBuf []uint16) ([]string, error) {
+	// https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getvolumepathnamesforvolumenamew
+	// Consider that NTFS supports paths longer than windows.MAX_PATH
+
 	returnLen := uint32(0)
-	if result, _, err := procGetVolumePathNamesForVolumeNameW.Call(
+	firstResult, _, volumePathFirstErr := procGetVolumePathNamesForVolumeNameW.Call(
+		uintptr(unsafe.Pointer(&volNameBuf[0])),
+		uintptr(0),
+		uintptr(0),
+		uintptr(unsafe.Pointer(&returnLen)))
+	if firstResult == 0 && volumePathFirstErr != windows.ERROR_MORE_DATA {
+		return nil, fmt.Errorf("failed to get volume paths size for volume %s: %w", windows.UTF16ToString(volNameBuf), volumePathFirstErr)
+	}
+
+	if ctx.Err() != nil {
+		return nil, ctx.Err() // Context canceled, don't retry the system call
+	}
+
+	volPathsBuf := make([]uint16, returnLen)
+	ok, _, volumePathNamesErr := procGetVolumePathNamesForVolumeNameW.Call(
 		uintptr(unsafe.Pointer(&volNameBuf[0])),
 		uintptr(unsafe.Pointer(&volPathsBuf[0])),
-		uintptr(volumePathBufferLength),
-		uintptr(unsafe.Pointer(&returnLen))); err != nil && result == 0 {
-		return nil, err
+		uintptr(returnLen),
+		uintptr(unsafe.Pointer(&returnLen)))
+	if ok != 0 {
+		return split0(volPathsBuf, int(returnLen)), nil
 	}
-	return split0(volPathsBuf, int(returnLen)), nil
+	return nil, fmt.Errorf("failed to get volume paths for volume %s: %w", windows.UTF16ToString(volNameBuf), volumePathNamesErr)
 }
 
 // split0 iterates through s16 upto `end` and slices `s16` into sub-slices separated by the null character (uint16(0)).
@@ -342,4 +377,26 @@ func split0(s16 []uint16, end int) []string {
 	}
 
 	return ss
+}
+
+// processLogicalDrives processes logical drives and updates partitionStats and processedPaths.
+func processLogicalDrives(ctx context.Context, logicalDrives []string, partitionStats []PartitionStat, processedPaths map[string]struct{}, warnings *Warnings) ([]PartitionStat, map[string]struct{}) {
+	for _, drive := range logicalDrives {
+		select {
+		case <-ctx.Done():
+			return partitionStats, processedPaths
+		default:
+			if len(drive) > 0 && drive[0] >= 'A' && drive[0] <= 'Z' {
+				v := drive[0]
+				path := string(v) + ":"
+				if partitionStat, statErr := buildPartitionStat(path); statErr == nil {
+					processedPaths[partitionStat.Mountpoint+`\`] = struct{}{}
+					partitionStats = append(partitionStats, partitionStat)
+				} else {
+					warnings.Add(statErr)
+				}
+			}
+		}
+	}
+	return partitionStats, processedPaths
 }
