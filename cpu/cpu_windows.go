@@ -116,6 +116,12 @@ func Info() ([]InfoStat, error) {
 	return InfoWithContext(context.Background())
 }
 
+// this function iterates over each set bit in the package affinity mask, each bit represent a logical processor in a group (assuming you are iteriang over a package mask)
+// the function is used also to compute the global logical processor number
+// https://learn.microsoft.com/en-us/windows/win32/procthread/processor-groups
+// see https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-group_affinity
+// and https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-processor_relationship
+// and https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-system_logical_processor_information_ex
 func forEachSetBit64(mask uint64, fn func(bit int)) {
 	m := mask
 	for m != 0 {
@@ -170,6 +176,7 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 		for i, ga := range pkg.processor.groupMask {
 			g := int(ga.group)
 			forEachSetBit64(uint64(ga.mask), func(bit int) {
+				// the global logical processor label
 				globalLpl := g*int(maxLogicalProcessorsPerGroup) + bit
 				if globalLpl >= 0 {
 					logicalCount++
