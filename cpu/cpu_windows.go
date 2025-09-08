@@ -58,12 +58,12 @@ const (
 	win32_SystemProcessorPerformanceInfoSize = uint32(unsafe.Sizeof(win32_SystemProcessorPerformanceInformation{})) //nolint:revive //FIXME
 )
 
-type Relationship uint32
+type relationship uint32
 
 // https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getlogicalprocessorinformationex
 const (
-	relationProcessorCore    = Relationship(0)
-	relationProcessorPackage = Relationship(3)
+	relationProcessorCore    = relationship(0)
+	relationProcessorPackage = relationship(3)
 )
 
 const (
@@ -279,7 +279,7 @@ type systemLogicalProcessorInformationEx struct {
 	processor    processorRelationship
 }
 
-func getSystemLogicalProcessorInformationEx(relationship Relationship) ([]systemLogicalProcessorInformationEx, error) {
+func getSystemLogicalProcessorInformationEx(relationship relationship) ([]systemLogicalProcessorInformationEx, error) {
 	var length uint32
 	// First call to determine the required buffer size
 	_, _, err := procGetLogicalProcessorInformationEx.Call(uintptr(relationship), 0, uintptr(unsafe.Pointer(&length)))
