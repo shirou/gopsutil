@@ -174,10 +174,6 @@ func PercentWithContext(ctx context.Context, interval time.Duration, percpu bool
 	return calculateAllBusy(cpuTimes1, cpuTimes2)
 }
 
-func percentUsedFromLastCall(percpu bool) ([]float64, error) {
-	return percentUsedFromLastCallWithContext(context.Background(), percpu)
-}
-
 func percentUsedFromLastCallWithContext(ctx context.Context, percpu bool) ([]float64, error) {
 	cpuTimes, err := TimesWithContext(ctx, percpu)
 	if err != nil {
