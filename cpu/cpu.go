@@ -56,7 +56,6 @@ type lastPercent struct {
 
 var (
 	lastCPUPercent lastPercent
-	invoke         common.Invoker = common.Invoke{}
 )
 
 func init() {
