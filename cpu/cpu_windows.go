@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/bits"
 	"strconv"
 	"unsafe"
 
@@ -57,6 +58,20 @@ const (
 	win32_SystemProcessorPerformanceInfoSize = uint32(unsafe.Sizeof(win32_SystemProcessorPerformanceInformation{})) //nolint:revive //FIXME
 )
 
+type relationship uint32
+
+// https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getlogicalprocessorinformationex
+const (
+	relationProcessorCore    = relationship(0)
+	relationProcessorPackage = relationship(3)
+)
+
+const (
+	kAffinitySize = unsafe.Sizeof(int(0))
+	// https://learn.microsoft.com/en-us/windows-hardware/drivers/kernel/interrupt-affinity-and-priority
+	maxLogicalProcessorsPerGroup = uint32(unsafe.Sizeof(kAffinitySize * 8))
+)
+
 // Times returns times stat per cpu and combined for all CPUs
 func Times(percpu bool) ([]TimesStat, error) {
 	return TimesWithContext(context.Background(), percpu)
@@ -101,6 +116,21 @@ func Info() ([]InfoStat, error) {
 	return InfoWithContext(context.Background())
 }
 
+// this function iterates over each set bit in the package affinity mask, each bit represent a logical processor in a group (assuming you are iteriang over a package mask)
+// the function is used also to compute the global logical processor number
+// https://learn.microsoft.com/en-us/windows/win32/procthread/processor-groups
+// see https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-group_affinity
+// and https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-processor_relationship
+// and https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-system_logical_processor_information_ex
+func forEachSetBit64(mask uint64, fn func(bit int)) {
+	m := mask
+	for m != 0 {
+		b := bits.TrailingZeros64(m)
+		fn(b)
+		m &= m - 1
+	}
+}
+
 func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 	var ret []InfoStat
 	var dst []win32_Processor
@@ -121,12 +151,40 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 			Family:     strconv.FormatUint(uint64(l.Family), 10),
 			VendorID:   l.Manufacturer,
 			ModelName:  l.Name,
-			Cores:      int32(l.NumberOfLogicalProcessors),
+			Cores:      int32(l.NumberOfLogicalProcessors), // TO BE REMOVED, set by getSystemLogicalProcessorInformationEx
 			PhysicalID: procID,
 			Mhz:        float64(l.MaxClockSpeed),
 			Flags:      []string{},
 		}
 		ret = append(ret, cpu)
+	}
+
+	processorPackages, err := getSystemLogicalProcessorInformationEx(relationProcessorPackage)
+	if err != nil {
+		// return an error whem wmi will be removed
+		// return ret, fmt.Errorf("failed to get processor package information: %w", err)
+		return ret, nil
+	}
+
+	if len(processorPackages) != len(ret) {
+		// this should never happen, but it's kept for safety until wmi is removed
+		return ret, nil
+	}
+
+	for _, pkg := range processorPackages {
+		logicalCount := 0
+		for i, ga := range pkg.processor.groupMask {
+			g := int(ga.group)
+			forEachSetBit64(uint64(ga.mask), func(bit int) {
+				// the global logical processor label
+				globalLpl := g*int(maxLogicalProcessorsPerGroup) + bit
+				if globalLpl >= 0 {
+					logicalCount++
+				}
+			})
+
+			ret[i].Cores = int32(logicalCount)
+		}
 	}
 
 	return ret, nil
@@ -207,7 +265,7 @@ type systemInfo struct {
 }
 
 type groupAffinity struct {
-	mask     uintptr // https://learn.microsoft.com/it-it/windows-hardware/drivers/kernel/interrupt-affinity-and-priority#about-kaffinity
+	mask     uintptr // https://learn.microsoft.com/en-us/windows-hardware/drivers/kernel/interrupt-affinity-and-priority#about-kaffinity
 	group    uint16
 	reserved [3]uint16
 }
@@ -223,43 +281,43 @@ type processorRelationship struct {
 
 // https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-system_logical_processor_information_ex
 type systemLogicalProcessorInformationEx struct {
-	Relationship uint32
-	Size         uint32
-	Processor    processorRelationship
+	relationship uint32
+	size         uint32
+	processor    processorRelationship
 }
 
-func getPhysicalCoreCount() (int, error) {
+func getSystemLogicalProcessorInformationEx(relationship relationship) ([]systemLogicalProcessorInformationEx, error) {
 	var length uint32
-	const relationAll = 0xffff
-	const relationProcessorCore = 0x0
-
 	// First call to determine the required buffer size
-	_, _, err := procGetLogicalProcessorInformationEx.Call(uintptr(relationAll), 0, uintptr(unsafe.Pointer(&length)))
+	_, _, err := procGetLogicalProcessorInformationEx.Call(uintptr(relationship), 0, uintptr(unsafe.Pointer(&length)))
 	if err != nil && !errors.Is(err, windows.ERROR_INSUFFICIENT_BUFFER) {
-		return 0, fmt.Errorf("failed to get buffer size: %w", err)
+		return nil, fmt.Errorf("failed to get buffer size: %w", err)
 	}
 
 	// Allocate the buffer
 	buffer := make([]byte, length)
 
 	// Second call to retrieve the processor information
-	_, _, err = procGetLogicalProcessorInformationEx.Call(uintptr(relationAll), uintptr(unsafe.Pointer(&buffer[0])), uintptr(unsafe.Pointer(&length)))
+	_, _, err = procGetLogicalProcessorInformationEx.Call(uintptr(relationship), uintptr(unsafe.Pointer(&buffer[0])), uintptr(unsafe.Pointer(&length)))
 	if err != nil && !errors.Is(err, windows.NTE_OP_OK) {
-		return 0, fmt.Errorf("failed to get logical processor information: %w", err)
+		return nil, fmt.Errorf("failed to get logical processor information: %w", err)
 	}
 
-	// Iterate through the buffer to count physical cores
+	// Convert the byte slice into a slice of systemLogicalProcessorInformationEx structs
 	offset := uintptr(0)
-	ncpus := 0
+	var infos []systemLogicalProcessorInformationEx
 	for offset < uintptr(length) {
 		info := (*systemLogicalProcessorInformationEx)(unsafe.Pointer(uintptr(unsafe.Pointer(&buffer[0])) + offset))
-		if info.Relationship == relationProcessorCore {
-			ncpus++
-		}
-		offset += uintptr(info.Size)
+		infos = append(infos, *info)
+		offset += uintptr(info.size)
 	}
 
-	return ncpus, nil
+	return infos, nil
+}
+
+func getPhysicalCoreCount() (int, error) {
+	infos, err := getSystemLogicalProcessorInformationEx(relationProcessorCore)
+	return len(infos), err
 }
 
 func CountsWithContext(_ context.Context, logical bool) (int, error) {
