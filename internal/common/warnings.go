@@ -3,12 +3,17 @@ package common
 
 import "fmt"
 
+const maxWarnings = 100 // An arbitrary limit to avoid excessive memory usage, it has no sense to store thousands of errors
+
 type Warnings struct {
 	List    []error
 	Verbose bool
 }
 
 func (w *Warnings) Add(err error) {
+	if len(w.List) >= maxWarnings {
+		return
+	}
 	w.List = append(w.List, err)
 }
 
