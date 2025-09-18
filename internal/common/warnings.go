@@ -3,7 +3,7 @@ package common
 
 import "fmt"
 
-const maxWarnings = 100 // An arbitrary limit to avoid excessive memory usage, it has no sense to store thousands of errors
+const maxWarnings = 100 // An arbitrary limit to avoid excessive memory usage, it has no sense to store hundreds of errors
 const tooManyErrorsMessage = "too many errors reported, next errors were discarded"
 
 type Warnings struct {
