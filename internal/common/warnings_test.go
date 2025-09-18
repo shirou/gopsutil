@@ -46,12 +46,13 @@ func TestWarnings_ErrorNonVerbose(t *testing.T) {
 
 func TestWarnings_ErrorTooMany(t *testing.T) {
 	w := &Warnings{Verbose: true}
-	for i := 0; i < maxWarnings+1; i++ {
+	for i := range maxWarnings + 1 {
 		w.Add(fmt.Errorf("err%d", i))
 	}
 	msg := w.Error()
 	assert.Contains(t, msg, tooManyErrorsMessage, "Expected too many errors message in verbose output")
 	w.Verbose = false
 	msg = w.Error()
-	assert.Equal(t, tooManyErrorsMessage, msg, "Expected too many errors message in non-verbose output")
+	expected := fmt.Sprintf("%s > %v - %s", numberOfWarningsMessage, maxWarnings, tooManyErrorsMessage)
+	assert.Equal(t, expected, msg, "Expected too many errors message in non-verbose output")
 }
