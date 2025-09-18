@@ -5,6 +5,7 @@ import "fmt"
 
 const maxWarnings = 100 // An arbitrary limit to avoid excessive memory usage, it has no sense to store hundreds of errors
 const tooManyErrorsMessage = "too many errors reported, next errors were discarded"
+const numberOfWarningsMessage = "Number of warnings:"
 
 type Warnings struct {
 	List          []error
@@ -39,7 +40,7 @@ func (w *Warnings) Error() string {
 		return str
 	}
 	if w.tooManyErrors {
-		return tooManyErrorsMessage
+		return fmt.Sprintf("%s > %v - %s", numberOfWarningsMessage, maxWarnings, tooManyErrorsMessage)
 	}
-	return fmt.Sprintf("Number of warnings: %v", len(w.List))
+	return fmt.Sprintf("%s %v", numberOfWarningsMessage, len(w.List))
 }
