@@ -11,18 +11,18 @@ import (
 
 func TestWarnings_AddAndReference(t *testing.T) {
 	w := &Warnings{}
-	assert.Nil(t, w.Reference(), "Expected nil reference for empty warnings")
+	assert.NoError(t, w.Reference(), "Expected nil reference for empty warnings")
 	w.Add(errors.New("first error"))
-	assert.NotNil(t, w.Reference(), "Expected non-nil reference after adding error")
-	assert.Equal(t, 1, len(w.List), "Expected 1 warning")
+	assert.Error(t, w.Reference(), "Expected non-nil reference after adding error")
+	assert.Len(t, w.List, 1, "Expected 1 warning")
 }
 
 func TestWarnings_MaxLimit(t *testing.T) {
 	w := &Warnings{}
-	for i := 0; i < maxWarnings+10; i++ {
+	for i := range maxWarnings + 10 {
 		w.Add(fmt.Errorf("error %d", i))
 	}
-	assert.Equal(t, maxWarnings, len(w.List), "Expected maxWarnings warnings")
+	assert.Len(t, w.List, maxWarnings, "Expected maxWarnings warnings")
 	assert.True(t, w.tooManyErrors, "Expected tooManyErrors to be true after exceeding maxWarnings")
 }
 
