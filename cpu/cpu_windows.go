@@ -149,6 +149,9 @@ func getProcessorPowerInformation(ctx context.Context) ([]processorPowerInformat
 	if countErr != nil {
 		return nil, fmt.Errorf("failed to get logical processor count: %w", countErr)
 	}
+	if numLP <= 0 {
+		return nil, fmt.Errorf("invalid logical processor count: %d", numLP)
+	}
 
 	ppiSize := uintptr(numLP) * unsafe.Sizeof(processorPowerInformation{})
 	buf := make([]byte, ppiSize)
