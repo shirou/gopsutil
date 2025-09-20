@@ -172,6 +172,7 @@ func PartitionsWithContext(ctx context.Context, _ bool) ([]PartitionStat, error)
 					break
 				}
 				warnings.Add(fmt.Errorf("failed to find next volume: %w", err))
+				break
 			}
 		}
 	}
