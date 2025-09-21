@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"math/bits"
 	"strconv"
+	"syscall"
 	"unsafe"
 
 	"github.com/yusufpapurcu/wmi"
@@ -20,6 +21,7 @@ import (
 var (
 	procGetNativeSystemInfo              = common.Modkernel32.NewProc("GetNativeSystemInfo")
 	procGetLogicalProcessorInformationEx = common.Modkernel32.NewProc("GetLogicalProcessorInformationEx")
+	procGetSystemFirmwareTable           = common.Modkernel32.NewProc("GetSystemFirmwareTable")
 )
 
 type win32_Processor struct { //nolint:revive //FIXME
@@ -56,6 +58,8 @@ const (
 
 	// size of systemProcessorPerformanceInfoSize in memory
 	win32_SystemProcessorPerformanceInfoSize = uint32(unsafe.Sizeof(win32_SystemProcessorPerformanceInformation{})) //nolint:revive //FIXME
+
+	firmwareTableProviderSignatureRSMB = 0x52534d42 // "RSMB"  https://gitlab.winehq.org/dreamer/wine/-/blame/wine-7.0-rc6/dlls/ntdll/unix/system.c#L230
 )
 
 type relationship uint32
@@ -284,6 +288,75 @@ type systemLogicalProcessorInformationEx struct {
 	relationship uint32
 	size         uint32
 	processor    processorRelationship
+}
+
+// getSMBIOSProcessorInfo reads the SMBIOS Type 4 (Processor Information) structure and returns the Processor Family and ProcessorId fields.
+// If not found, returns 0 and an empty string.
+func getSMBIOSProcessorInfo() (family uint8, processorId string, err error) {
+	// https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getsystemfirmwaretable
+	size, _, err := procGetSystemFirmwareTable.Call(
+		uintptr(firmwareTableProviderSignatureRSMB),
+		0,
+		0,
+		0,
+	)
+	if size == 0 {
+		return 0, "", fmt.Errorf("failed to get SMBIOS table size: %w", err)
+	}
+	buf := make([]byte, size)
+	ret, _, err := procGetSystemFirmwareTable.Call(
+		uintptr(firmwareTableProviderSignatureRSMB),
+		0,
+		uintptr(unsafe.Pointer(&buf[0])),
+		uintptr(size),
+	)
+	if ret == 0 {
+		return 0, "", fmt.Errorf("failed to read SMBIOS table: %w", err)
+	}
+	// https://wiki.osdev.org/System_Management_BIOS
+	i := 8 // skip SMBIOS header (first 8 bytes)
+	maxIterations := len(buf) * 2
+	iterations := 0
+	for i < len(buf) && iterations < maxIterations {
+		iterations++
+		if i+4 > len(buf) {
+			break
+		}
+		typ := buf[i]
+		length := buf[i+1]
+		if typ == 127 {
+			break
+		}
+		if typ == 4 && length >= 0x18 && i+int(length) <= len(buf) {
+			// Ensure we have enough bytes for procIdBytes
+			if i+16 > len(buf) {
+				break
+			}
+			family = buf[i+6]
+			procIdBytes := buf[i+8 : i+16]
+			eax := uint32(procIdBytes[0]) | uint32(procIdBytes[1])<<8 | uint32(procIdBytes[2])<<16 | uint32(procIdBytes[3])<<24
+			edx := uint32(procIdBytes[4]) | uint32(procIdBytes[5])<<8 | uint32(procIdBytes[6])<<16 | uint32(procIdBytes[7])<<24
+			procId := fmt.Sprintf("%08X%08X", edx, eax)
+			return family, procId, nil
+		}
+		// skip to next structure
+		j := i + int(length)
+		innerIterations := 0
+		maxInner := len(buf) // failsafe for inner loop
+		for j+1 < len(buf) && innerIterations < maxInner {
+			innerIterations++
+			if buf[j] == 0 && buf[j+1] == 0 {
+				j += 2
+				break
+			}
+			j++
+		}
+		if innerIterations >= maxInner {
+			break // malformed buffer, avoid infinite loop
+		}
+		i = j
+	}
+	return 0, "", fmt.Errorf("SMBIOS processor information not found: %w", syscall.ERROR_NOT_FOUND)
 }
 
 func getSystemLogicalProcessorInformationEx(relationship relationship) ([]systemLogicalProcessorInformationEx, error) {
