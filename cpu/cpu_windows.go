@@ -220,6 +220,13 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 		return ret, nil
 	}
 
+	family, processorId, smBIOSErr := getSMBIOSProcessorInfo()
+	if smBIOSErr != nil {
+		// return an error whem wmi will be removed
+		// return ret, smBIOSErr
+		return ret, nil
+	}
+
 	for i, pkg := range processorPackages {
 		logicalCount := 0
 		maxMhz := 0
@@ -239,6 +246,8 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 		}
 		ret[i].Mhz = float64(maxMhz)
 		ret[i].Cores = int32(logicalCount)
+		ret[i].Family = strconv.FormatUint(uint64(family), 10)
+		ret[i].PhysicalID = processorId
 	}
 
 	return ret, nil
