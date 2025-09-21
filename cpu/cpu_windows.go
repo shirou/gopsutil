@@ -22,6 +22,7 @@ var (
 	procGetNativeSystemInfo              = common.Modkernel32.NewProc("GetNativeSystemInfo")
 	procGetLogicalProcessorInformationEx = common.Modkernel32.NewProc("GetLogicalProcessorInformationEx")
 	procGetSystemFirmwareTable           = common.Modkernel32.NewProc("GetSystemFirmwareTable")
+	procCallNtPowerInformation           = common.ModPowrProf.NewProc("CallNtPowerInformation")
 )
 
 type win32_Processor struct { //nolint:revive //FIXME
@@ -49,6 +50,16 @@ type win32_SystemProcessorPerformanceInformation struct { //nolint:revive //FIXM
 	InterruptCount uint64 // ULONG needs to be uint64
 }
 
+// https://learn.microsoft.com/en-us/windows/win32/power/processor-power-information-str
+type processorPowerInformation struct {
+	number           uint32 // http://download.microsoft.com/download/a/d/f/adf1347d-08dc-41a4-9084-623b1194d4b2/MoreThan64proc.docx
+	maxMhz           uint32
+	currentMhz       uint32
+	mhzLimit         uint32
+	maxIdleState     uint32
+	currentIdleState uint32
+}
+
 const (
 	ClocksPerSec = 10000000.0
 
@@ -74,6 +85,8 @@ const (
 	kAffinitySize = unsafe.Sizeof(int(0))
 	// https://learn.microsoft.com/en-us/windows-hardware/drivers/kernel/interrupt-affinity-and-priority
 	maxLogicalProcessorsPerGroup = uint32(unsafe.Sizeof(kAffinitySize * 8))
+	// https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/ne-wdm-power_information_level
+	processorInformation = 11
 )
 
 // Times returns times stat per cpu and combined for all CPUs
@@ -135,6 +148,31 @@ func forEachSetBit64(mask uint64, fn func(bit int)) {
 	}
 }
 
+func getProcessorPowerInformation(ctx context.Context) ([]processorPowerInformation, error) {
+	numLP, countErr := CountsWithContext(ctx, true)
+	if countErr != nil {
+		return nil, fmt.Errorf("failed to get logical processor count: %w", countErr)
+	}
+	if numLP <= 0 {
+		return nil, fmt.Errorf("invalid logical processor count: %d", numLP)
+	}
+
+	ppiSize := uintptr(numLP) * unsafe.Sizeof(processorPowerInformation{})
+	buf := make([]byte, ppiSize)
+	ppi, _, err := procCallNtPowerInformation.Call(
+		uintptr(processorInformation),
+		0,
+		0,
+		uintptr(unsafe.Pointer(&buf[0])),
+		uintptr(ppiSize),
+	)
+	if ppi != 0 {
+		return nil, fmt.Errorf("CallNtPowerInformation failed with code %d: %w", ppi, err)
+	}
+	ppis := unsafe.Slice((*processorPowerInformation)(unsafe.Pointer(&buf[0])), numLP)
+	return ppis, nil
+}
+
 func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 	var ret []InfoStat
 	var dst []win32_Processor
@@ -175,20 +213,32 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 		return ret, nil
 	}
 
-	for _, pkg := range processorPackages {
+	ppis, powerInformationErr := getProcessorPowerInformation(ctx)
+	if powerInformationErr != nil {
+		// return an error whem wmi will be removed
+		// return ret, fmt.Errorf("failed to get processor power information: %w", err)
+		return ret, nil
+	}
+
+	for i, pkg := range processorPackages {
 		logicalCount := 0
-		for i, ga := range pkg.processor.groupMask {
+		maxMhz := 0
+		for _, ga := range pkg.processor.groupMask {
 			g := int(ga.group)
 			forEachSetBit64(uint64(ga.mask), func(bit int) {
 				// the global logical processor label
 				globalLpl := g*int(maxLogicalProcessorsPerGroup) + bit
-				if globalLpl >= 0 {
+				if globalLpl >= 0 && globalLpl < len(ppis) {
 					logicalCount++
+					m := int(ppis[globalLpl].maxMhz)
+					if m > maxMhz {
+						maxMhz = m
+					}
 				}
 			})
-
-			ret[i].Cores = int32(logicalCount)
 		}
+		ret[i].Mhz = float64(maxMhz)
+		ret[i].Cores = int32(logicalCount)
 	}
 
 	return ret, nil

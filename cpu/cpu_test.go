@@ -103,6 +103,7 @@ func TestInfo(t *testing.T) {
 	for _, vv := range v {
 		assert.NotEmptyf(t, vv.ModelName, "could not get CPU Info: %v", vv)
 	}
+	t.Log(v)
 }
 
 func testPercent(t *testing.T, percpu bool) {
