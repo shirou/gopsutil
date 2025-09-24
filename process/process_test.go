@@ -797,3 +797,10 @@ func BenchmarkProcesses(b *testing.B) {
 		require.NotEmpty(b, ps)
 	}
 }
+
+func BenchmarkProcessCPUTime(b *testing.B) {
+	p := testGetProcess()
+	for i := 0; i < b.N; i++ {
+		p.Times()
+	}
+}
