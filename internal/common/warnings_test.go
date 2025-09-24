@@ -7,13 +7,14 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestWarnings_AddAndReference(t *testing.T) {
 	w := &Warnings{}
-	assert.NoError(t, w.Reference(), "Expected nil reference for empty warnings")
+	require.NoError(t, w.Reference(), "Expected nil reference for empty warnings")
 	w.Add(errors.New("first error"))
-	assert.Error(t, w.Reference(), "Expected non-nil reference after adding error")
+	require.Error(t, w.Reference(), "Expected non-nil reference after adding error")
 	assert.Len(t, w.List, 1, "Expected 1 warning")
 }
 
