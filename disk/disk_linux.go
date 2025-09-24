@@ -244,18 +244,18 @@ func readMountFile(root string) (lines []string, useMounts bool, filename string
 	if err != nil {
 		var pathErr *os.PathError
 		if !errors.As(err, &pathErr) {
-			return
+			return lines, useMounts, filename, err
 		}
 		// if kernel does not support 1/mountinfo, fallback to 1/mounts (<2.6.26)
 		useMounts = true
 		filename = path.Join(root, "mounts")
 		lines, err = common.ReadLines(filename)
 		if err != nil {
-			return
+			return lines, useMounts, filename, err
 		}
-		return
+		return lines, useMounts, filename, err
 	}
-	return
+	return lines, useMounts, filename, err
 }
 
 func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {
