@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"math/bits"
 	"strconv"
+	"syscall"
 	"unsafe"
 
 	"github.com/yusufpapurcu/wmi"
@@ -20,6 +21,7 @@ import (
 var (
 	procGetNativeSystemInfo              = common.Modkernel32.NewProc("GetNativeSystemInfo")
 	procGetLogicalProcessorInformationEx = common.Modkernel32.NewProc("GetLogicalProcessorInformationEx")
+	procGetSystemFirmwareTable           = common.Modkernel32.NewProc("GetSystemFirmwareTable")
 	procCallNtPowerInformation           = common.ModPowrProf.NewProc("CallNtPowerInformation")
 )
 
@@ -67,6 +69,12 @@ const (
 
 	// size of systemProcessorPerformanceInfoSize in memory
 	win32_SystemProcessorPerformanceInfoSize = uint32(unsafe.Sizeof(win32_SystemProcessorPerformanceInformation{})) //nolint:revive //FIXME
+
+	firmwareTableProviderSignatureRSMB = 0x52534d42 // "RSMB"  https://gitlab.winehq.org/dreamer/wine/-/blame/wine-7.0-rc6/dlls/ntdll/unix/system.c#L230
+	smBiosHeaderSize                   = 8          // SMBIOS header size
+	smbiosEndOfTable                   = 127        // Minimum length for processor structure
+	smbiosTypeProcessor                = 4          // SMBIOS Type 4: Processor Information
+	smbiosProcessorMinLength           = 0x18       // Minimum length for processor structure
 )
 
 type relationship uint32
@@ -216,6 +224,13 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 		return ret, nil
 	}
 
+	family, processorId, smBIOSErr := getSMBIOSProcessorInfo()
+	if smBIOSErr != nil {
+		// return an error whem wmi will be removed
+		// return ret, smBIOSErr
+		return ret, nil
+	}
+
 	for i, pkg := range processorPackages {
 		logicalCount := 0
 		maxMhz := 0
@@ -235,6 +250,8 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 		}
 		ret[i].Mhz = float64(maxMhz)
 		ret[i].Cores = int32(logicalCount)
+		ret[i].Family = strconv.FormatUint(uint64(family), 10)
+		ret[i].PhysicalID = processorId
 	}
 
 	return ret, nil
@@ -334,6 +351,80 @@ type systemLogicalProcessorInformationEx struct {
 	relationship uint32
 	size         uint32
 	processor    processorRelationship
+}
+
+// getSMBIOSProcessorInfo reads the SMBIOS Type 4 (Processor Information) structure and returns the Processor Family and ProcessorId fields.
+// If not found, returns 0 and an empty string.
+func getSMBIOSProcessorInfo() (family uint8, processorId string, err error) {
+	// https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getsystemfirmwaretable
+	size, _, err := procGetSystemFirmwareTable.Call(
+		uintptr(firmwareTableProviderSignatureRSMB),
+		0,
+		0,
+		0,
+	)
+	if size == 0 {
+		return 0, "", fmt.Errorf("failed to get SMBIOS table size: %w", err)
+	}
+	buf := make([]byte, size)
+	ret, _, err := procGetSystemFirmwareTable.Call(
+		uintptr(firmwareTableProviderSignatureRSMB),
+		0,
+		uintptr(unsafe.Pointer(&buf[0])),
+		uintptr(size),
+	)
+	if ret == 0 {
+		return 0, "", fmt.Errorf("failed to read SMBIOS table: %w", err)
+	}
+	// https://wiki.osdev.org/System_Management_BIOS
+	i := smBiosHeaderSize // skip SMBIOS header (first 8 bytes)
+	maxIterations := len(buf) * 2
+	iterations := 0
+	for i < len(buf) && iterations < maxIterations {
+		iterations++
+		if i+4 > len(buf) {
+			break
+		}
+		typ := buf[i]
+		length := buf[i+1]
+		if typ == smbiosEndOfTable {
+			break
+		}
+		if typ == smbiosTypeProcessor && length >= smbiosProcessorMinLength && i+int(length) <= len(buf) {
+			// Ensure we have enough bytes for procIdBytes
+			if i+16 > len(buf) {
+				break
+			}
+			// Get the processor family from byte at offset 6
+			family = buf[i+6]
+			// Extract processor ID bytes (8 bytes total) from offsets 8-15
+			procIdBytes := buf[i+8 : i+16]
+			// Convert first 4 bytes to 32-bit EAX register value (little endian)
+			eax := uint32(procIdBytes[0]) | uint32(procIdBytes[1])<<8 | uint32(procIdBytes[2])<<16 | uint32(procIdBytes[3])<<24
+			// Convert last 4 bytes to 32-bit EDX register value (little endian)
+			edx := uint32(procIdBytes[4]) | uint32(procIdBytes[5])<<8 | uint32(procIdBytes[6])<<16 | uint32(procIdBytes[7])<<24
+			// Format processor ID as 16 character hex string (EDX+EAX)
+			procId := fmt.Sprintf("%08X%08X", edx, eax)
+			return family, procId, nil
+		}
+		// skip to next structure
+		j := i + int(length)
+		innerIterations := 0
+		maxInner := len(buf) // failsafe for inner loop
+		for j+1 < len(buf) && innerIterations < maxInner {
+			innerIterations++
+			if buf[j] == 0 && buf[j+1] == 0 {
+				j += 2
+				break
+			}
+			j++
+		}
+		if innerIterations >= maxInner {
+			break // malformed buffer, avoid infinite loop
+		}
+		i = j
+	}
+	return 0, "", fmt.Errorf("SMBIOS processor information not found: %w", syscall.ERROR_NOT_FOUND)
 }
 
 func getSystemLogicalProcessorInformationEx(relationship relationship) ([]systemLogicalProcessorInformationEx, error) {
