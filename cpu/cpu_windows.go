@@ -424,7 +424,7 @@ func getSMBIOSProcessorInfo() (family uint8, processorId string, err error) {
 		}
 		i = j
 	}
-	return 0, "", fmt.Errorf("SMBIOS processor information not found: %d", syscall.ERROR_NOT_FOUND)
+	return 0, "", fmt.Errorf("SMBIOS processor information not found: %w", syscall.ERROR_NOT_FOUND)
 }
 
 func getSystemLogicalProcessorInformationEx(relationship relationship) ([]systemLogicalProcessorInformationEx, error) {
