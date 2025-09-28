@@ -198,7 +198,7 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 		return ret, smBIOSErr
 	}
 
-	for _, pkg := range processorPackages {
+	for i, pkg := range processorPackages {
 		logicalCount := 0
 		maxMhz := 0
 		model := ""
@@ -227,12 +227,14 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 			})
 		}
 		ret = append(ret, InfoStat{
-			Mhz:        float64(maxMhz),
-			Cores:      int32(logicalCount),
+			CPU:        int32(i),
 			Family:     strconv.FormatUint(uint64(family), 10),
-			PhysicalID: processorId,
-			ModelName:  model,
 			VendorID:   vendorId,
+			ModelName:  model,
+			Cores:      int32(logicalCount),
+			PhysicalID: processorId,
+			Mhz:        float64(maxMhz),
+			Flags:      []string{},
 		})
 	}
 
