@@ -443,7 +443,7 @@ func getPhysicalCoreCount() (int, error) {
 	return len(infos), err
 }
 
-func getRegistryStringValueIfUnset(key registry.Key, keyName string, value string) string {
+func getRegistryStringValueIfUnset(key registry.Key, keyName, value string) string {
 	if value != "" {
 		return value
 	}
