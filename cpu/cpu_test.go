@@ -102,6 +102,10 @@ func TestInfo(t *testing.T) {
 	assert.NotEmptyf(t, v, "could not get CPU Info")
 	for _, vv := range v {
 		assert.NotEmptyf(t, vv.ModelName, "could not get CPU Info: %v", vv)
+		assert.NotEmptyf(t, vv.VendorID, "could not get Vendor ID: %v", vv)
+		assert.NotEmptyf(t, vv.VendorID, "could not get CPU Family: %v", vv)
+		assert.Greaterf(t, vv.Mhz, float64(0), "could not get CPU Mhz: %v", vv)
+		assert.Greaterf(t, vv.Cores, int32(0), "could not get CPU Cores: %v", vv)
 	}
 	t.Log(v)
 }
