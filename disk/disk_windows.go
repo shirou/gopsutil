@@ -22,6 +22,7 @@ import (
 const (
 	volumeNameBufferLength = uint32(windows.MAX_PATH + 1)
 	volumePathBufferLength = volumeNameBufferLength
+	maxWarningsInDrive     = 5
 )
 
 var (
@@ -172,7 +173,10 @@ func PartitionsWithContext(ctx context.Context, _ bool) ([]PartitionStat, error)
 					break
 				}
 				warnings.Add(fmt.Errorf("failed to find next volume: %w", err))
-				break
+				if len(warnings.List) > maxWarningsInDrive {
+					break
+				}
+
 			}
 		}
 	}
