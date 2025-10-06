@@ -95,7 +95,7 @@ func UsageWithContext(_ context.Context, path string) (*UsageStat, error) {
 // PartitionsWithContext returns disk partitions.
 // It uses procGetLogicalDriveStringsW to get drives with drive letters and procFindFirstVolumeW to get volumes without drive letters.
 // Since the api calls don't have a timeout, this method uses context to set deadline by users.
-func PartitionsWithContext(ctx context.Context, _ bool) ([]PartitionStat, error) {
+func PartitionsWithContext(_ context.Context, _ bool) ([]PartitionStat, error) {
 	warnings := Warnings{Verbose: true}
 	processedPaths := make(map[string]struct{})
 	partitionStats := []PartitionStat{}
