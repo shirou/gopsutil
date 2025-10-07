@@ -332,7 +332,7 @@ func parseFieldsOnMountinfo(ctx context.Context, lines []string, all bool, fs []
 		// (1) (2) (3)   (4)   (5)      (6)      (7)   (8) (9)   (10)         (11)
 
 		// split the mountinfo line by the separator hyphen
-		parts := strings.Split(line, " - ")
+		parts := strings.SplitN(line, " - ", 2)
 		if len(parts) != 2 {
 			return nil, fmt.Errorf("found invalid mountinfo line in file %s: %s ", filename, line)
 		}
