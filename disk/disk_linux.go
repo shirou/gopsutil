@@ -341,6 +341,7 @@ func parseFieldsOnMountinfo(ctx context.Context, lines []string, all bool, fs []
 		blockDeviceID := fields[2]
 		mountPoint := fields[4]
 		mountOpts := strings.Split(fields[5], ",")
+		device := fields[3]
 
 		if rootDir := fields[3]; rootDir != "" && rootDir != "/" {
 			mountOpts = append(mountOpts, "bind")
@@ -348,7 +349,9 @@ func parseFieldsOnMountinfo(ctx context.Context, lines []string, all bool, fs []
 
 		fields = strings.Fields(parts[1])
 		fstype := fields[0]
-		device := fields[1]
+		if (fields[0] != fields[1]) || (fields[0] == fields[1] && device == "/") {
+			device = fields[1]
+		}
 
 		d := PartitionStat{
 			Device:     device,
