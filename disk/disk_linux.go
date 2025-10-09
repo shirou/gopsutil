@@ -327,6 +327,7 @@ func parseFieldsOnMountinfo(ctx context.Context, lines []string, all bool, fs []
 	ret := make([]PartitionStat, 0, len(lines))
 
 	for _, line := range lines {
+		// See proc_pid_mountinfo(5) (proc(5) on EL)
 		// a line of 1/mountinfo has the following structure:
 		// 36  35  98:0 /mnt1 /mnt2 rw,noatime master:1 - ext3 /dev/root rw,errors=continue
 		// (1) (2) (3)   (4)   (5)      (6)      (7)   (8) (9)   (10)         (11)
@@ -339,16 +340,27 @@ func parseFieldsOnMountinfo(ctx context.Context, lines []string, all bool, fs []
 
 		fields := strings.Fields(parts[0])
 		blockDeviceID := fields[2]
+		rootDir := fields[3]
 		mountPoint := fields[4]
 		mountOpts := strings.Split(fields[5], ",")
+		fields = strings.Fields(parts[1])
+		fsType := fields[0]
+		mntSrc := fields[1]
+		// Some virtual/non-storage filesystems do still have real sources (e.g. nsfs binds),
+		// but need to use the "root" field (field 4) instead of the "source" field (field 10).
+		// The "source" field is actually "*filesystem-specific" information".
+		device := rootDir
+		if (strings.HasPrefix(rootDir, "/") && strings.HasPrefix(mntSrc, "/")) {
+			device = mntSrc
+		}
 		device := fields[3]
 
-		if rootDir := fields[3]; rootDir != "" && rootDir != "/" {
+		if rootDir != "" && rootDir != "/" {
 			mountOpts = append(mountOpts, "bind")
 		}
 
-		fields = strings.Fields(parts[1])
-		fstype := fields[0]
+		// Use the "source" field for non-virtual real-sourced mounts instad of "root".
+		// The "source" field is actually "*filesystem-specific* information".
 		if (fields[0] != fields[1]) || (fields[0] == fields[1] && device == "/") {
 			device = fields[1]
 		}
@@ -361,6 +373,7 @@ func parseFieldsOnMountinfo(ctx context.Context, lines []string, all bool, fs []
 		}
 
 		if !all {
+			// Per fstab(5), 
 			if d.Device == "none" || !common.StringsHas(fs, d.Fstype) {
 				continue
 			}
