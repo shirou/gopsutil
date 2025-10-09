@@ -15,6 +15,7 @@ func Test_parseFieldsOnMountinfo(t *testing.T) {
 	fs := []string{"sysfs", "tmpfs"}
 
 	lines := []string{
+		"22 13 0:19 / /dev/shm rw,nosuid,nodev,noexec,relatime - tmpfs - rw", // PR #1931 issue #1284
 		"111 80 0:22 / /sys rw,nosuid,nodev,noexec,noatime shared:15 - sysfs sysfs rw",
 		"114 80 0:61 / /run rw,nosuid,nodev shared:18 - tmpfs none rw,mode=755",
 	}
@@ -26,6 +27,7 @@ func Test_parseFieldsOnMountinfo(t *testing.T) {
 		"all": {
 			all: true,
 			expect: []PartitionStat{
+				{Device: "-", Mountpoint: "/dev/shm", Fstype: "tmpfs", Opts: []string{"rw", "nosuid", "nodev", "noexec", "relatime"}},
 				{Device: "sysfs", Mountpoint: "/sys", Fstype: "sysfs", Opts: []string{"rw", "nosuid", "nodev", "noexec", "noatime"}},
 				{Device: "none", Mountpoint: "/run", Fstype: "tmpfs", Opts: []string{"rw", "nosuid", "nodev"}},
 			},
@@ -33,6 +35,7 @@ func Test_parseFieldsOnMountinfo(t *testing.T) {
 		"not all": {
 			all: false,
 			expect: []PartitionStat{
+				{Device: "-", Mountpoint: "/dev/shm", Fstype: "tmpfs", Opts: []string{"rw", "nosuid", "nodev", "noexec", "relatime"}},
 				{Device: "sysfs", Mountpoint: "/sys", Fstype: "sysfs", Opts: []string{"rw", "nosuid", "nodev", "noexec", "noatime"}},
 			},
 		},
