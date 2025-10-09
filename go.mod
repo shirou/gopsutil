@@ -1,6 +1,6 @@
 module github.com/shirou/gopsutil/v4
 
-go 1.23.0
+go 1.24.0
 
 require (
 	github.com/ebitengine/purego v0.9.0
@@ -10,7 +10,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/tklauser/go-sysconf v0.3.15
 	github.com/yusufpapurcu/wmi v1.2.4
-	golang.org/x/sys v0.35.0
+	golang.org/x/sys v0.37.0
 )
 
 require (
