@@ -49,7 +49,6 @@ func Test_parseFieldsOnMountinfo(t *testing.T) {
 		},
 	}
 
-	spew.Config.DisableMethods = true
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {
 			actual, err := parseFieldsOnMountinfo(context.Background(), lines, c.all, fs, "")
