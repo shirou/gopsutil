@@ -327,7 +327,6 @@ func parseFieldsOnMountinfo(ctx context.Context, lines []string, all bool, fs []
 	ret := make([]PartitionStat, 0, len(lines))
 	seenDevIDs := make(map[string]string)
 
-	fmt.Printf("all: %v\nfs: %#v\n", all, fs)
 	for _, line := range lines {
 		// See proc_pid_mountinfo(5) (proc(5) on EL)
 		// a line of 1/mountinfo has the following structure:
