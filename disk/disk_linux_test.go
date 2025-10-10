@@ -15,9 +15,12 @@ func Test_parseFieldsOnMountinfo(t *testing.T) {
 	fs := []string{"sysfs", "tmpfs"}
 
 	lines := []string{
-		"22 13 0:19 / /dev/shm rw,nosuid,nodev,noexec,relatime - tmpfs - rw", // PR #1931 issue #1284
-		"111 80 0:22 / /sys rw,nosuid,nodev,noexec,noatime shared:15 - sysfs sysfs rw",
-		"114 80 0:61 / /run rw,nosuid,nodev shared:18 - tmpfs none rw,mode=755",
+		"05   2 9:126 /           /              rw,noatime                      shared:1   - ext4  /dev/sda1 rw",
+		"06  35 98:0  /mnt1       /mnt2          rw,noatime                      master:1   - ext3  /dev/root rw,errors=continue",
+		"22  13 0:19  /           /dev/shm       rw,nosuid,nodev,noexec,relatime            - tmpfs -         rw",
+		"37  29  0:4  net:[12345] /run/netns/foo rw                              shared:552 - nsfs  nsfs      rw",
+		"111 80 0:22  /           /sys           rw,nosuid,nodev,noexec,noatime  shared:15  - sysfs sysfs     rw",
+		"114 80 0:61  /           /run           rw,nosuid,nodev                 shared:18  - tmpfs none      rw,mode=755",
 	}
 
 	cases := map[string]struct {
