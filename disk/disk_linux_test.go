@@ -16,7 +16,8 @@ func Test_parseFieldsOnMountinfo(t *testing.T) {
 
 	lines := []string{
 		"05   2 9:126 /           /              rw,noatime                      shared:1   - ext4  /dev/sda1 rw",
-		"06  35 98:0  /mnt1       /mnt2          rw,noatime                      master:1   - ext3  /dev/root rw,errors=continue",
+		"06   3 9:127 /           /foo           rw,noatime                      shared:1   - ext4  /dev/sda2 rw",
+		"07   3 9:127 /bar        /foo/bar       rw,noatime                      shared:1   - ext4  /dev/sda2 rw", // "bind mount" on /foo
 		"22  13 0:19  /           /dev/shm       rw,nosuid,nodev,noexec,relatime            - tmpfs -         rw",
 		"37  29  0:4  net:[12345] /run/netns/foo rw                              shared:552 - nsfs  nsfs      rw",
 		"111 80 0:22  /           /sys           rw,nosuid,nodev,noexec,noatime  shared:15  - sysfs sysfs     rw",
@@ -30,20 +31,25 @@ func Test_parseFieldsOnMountinfo(t *testing.T) {
 		"all": {
 			all: true,
 			expect: []PartitionStat{
-				{Device: "-", Mountpoint: "/dev/shm", Fstype: "tmpfs", Opts: []string{"rw", "nosuid", "nodev", "noexec", "relatime"}},
-				{Device: "sysfs", Mountpoint: "/sys", Fstype: "sysfs", Opts: []string{"rw", "nosuid", "nodev", "noexec", "noatime"}},
+				{Device: "/dev/sda1", Mountpoint: "/", Fstype: "ext4", Opts:[]string{"rw", "noatime"}},
+				{Device: "/dev/sda2", Mountpoint: "/foo", Fstype: "ext4", Opts:[]string{"rw", "noatime"}},
+				{Device: "/foo", Mountpoint: "/foo/bar", Fstype: "ext4", Opts:[]string{"rw", "noatime", "bind"}},
+				{Device: "none", Mountpoint: "/dev/shm", Fstype: "tmpfs", Opts: []string{"rw", "nosuid", "nodev", "noexec", "relatime"}},
+				{Device: "net:[12345]", Mountpoint: "/run/netns/foo", Fstype: "nsfs", Opts:[]string{"rw"}},
+				{Device: "none", Mountpoint: "/sys", Fstype: "sysfs", Opts: []string{"rw", "nosuid", "nodev", "noexec", "noatime"}},
 				{Device: "none", Mountpoint: "/run", Fstype: "tmpfs", Opts: []string{"rw", "nosuid", "nodev"}},
 			},
 		},
 		"not all": {
 			all: false,
 			expect: []PartitionStat{
-				{Device: "-", Mountpoint: "/dev/shm", Fstype: "tmpfs", Opts: []string{"rw", "nosuid", "nodev", "noexec", "relatime"}},
-				{Device: "sysfs", Mountpoint: "/sys", Fstype: "sysfs", Opts: []string{"rw", "nosuid", "nodev", "noexec", "noatime"}},
+				{Device: "/dev/sda1", Mountpoint: "/", Fstype: "ext4", Opts:[]string{"rw", "noatime"}},
+				{Device: "/dev/sda2", Mountpoint: "/foo", Fstype: "ext4", Opts:[]string{"rw", "noatime"}},
 			},
 		},
 	}
 
+	spew.Config.DisableMethods = true
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {
 			actual, err := parseFieldsOnMountinfo(context.Background(), lines, c.all, fs, "")
