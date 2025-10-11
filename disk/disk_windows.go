@@ -107,19 +107,23 @@ func PartitionsWithContext(_ context.Context, _ bool) ([]PartitionStat, error) {
 	bufferLen, _, err := procGetLogicalDriveStringsW.Call(
 		uintptr(0),
 		uintptr(0))
-
+	if !errors.Is(err, windows.ERROR_SUCCESS) {
+		return partitionStats, err // The call failed with an unexpected error
+	}
 	lpBuffer := make([]uint16, bufferLen)
 	// buffer can be longer than MAX_PATH
-	if diskret, _, err := procGetLogicalDriveStringsW.Call(
+	_, _, err = procGetLogicalDriveStringsW.Call(
 		uintptr(len(lpBuffer)),
-		uintptr(unsafe.Pointer(&lpBuffer[0]))); diskret == 0 {
-		return partitionStats, err
+		uintptr(unsafe.Pointer(&lpBuffer[0])))
+	if !errors.Is(err, windows.ERROR_SUCCESS) {
+		return partitionStats, err // The call failed with an unexpected error
 	}
+
 	drivesString := windows.UTF16ToString(lpBuffer)
 	drives := strings.Split(drivesString, "\x00")
 
 	for _, drive := range drives {
-		if len(drive) > 0 && drive[0] >= 'A' && drive[0] <= 'Z' {
+		if drive != "" && drive[0] >= 'A' && drive[0] <= 'Z' {
 			v := drive[0]
 			path := string(v) + ":"
 			if partitionStat, warning := buildPartitionStat(path); warning == nil {
@@ -299,7 +303,7 @@ func getVolumePaths(volNameBuf []uint16) ([]string, error) {
 		uintptr(0),
 		uintptr(0),
 		uintptr(unsafe.Pointer(&returnLen)))
-	if firstResult == 0 && volumePathFirstErr != windows.ERROR_MORE_DATA {
+	if firstResult == 0 && !errors.Is(volumePathFirstErr, windows.ERROR_MORE_DATA) {
 		return nil, fmt.Errorf("failed to get volume paths size for volume %s: %w", windows.UTF16ToString(volNameBuf), volumePathFirstErr)
 	}
 
