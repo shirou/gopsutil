@@ -220,9 +220,9 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 				registryKeyPath := filepath.Join(centralProcessorRegistryKey, strconv.Itoa(globalLpl))
 				key, err := registry.OpenKey(registry.LOCAL_MACHINE, registryKeyPath, registry.QUERY_VALUE|registry.READ)
 				if err == nil {
-					defer key.Close()
 					model = getRegistryStringValueIfUnset(key, "ProcessorNameString", model)
 					vendorId = getRegistryStringValueIfUnset(key, "VendorIdentifier", vendorId)
+					_ = key.Close()
 				}
 			})
 		}
