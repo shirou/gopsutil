@@ -325,42 +325,61 @@ func parseFieldsOnMounts(lines []string, all bool, fs []string) []PartitionStat 
 
 func parseFieldsOnMountinfo(ctx context.Context, lines []string, all bool, fs []string, filename string) ([]PartitionStat, error) {
 	ret := make([]PartitionStat, 0, len(lines))
+	seenDevIDs := make(map[string]string)
 
 	for _, line := range lines {
+		// See proc_pid_mountinfo(5) (proc(5) on EL)
 		// a line of 1/mountinfo has the following structure:
 		// 36  35  98:0 /mnt1 /mnt2 rw,noatime master:1 - ext3 /dev/root rw,errors=continue
 		// (1) (2) (3)   (4)   (5)      (6)      (7)   (8) (9)   (10)         (11)
 
 		// split the mountinfo line by the separator hyphen
-		parts := strings.Split(line, " - ")
+		parts := strings.SplitN(line, " - ", 2)
 		if len(parts) != 2 {
 			return nil, fmt.Errorf("found invalid mountinfo line in file %s: %s ", filename, line)
 		}
 
 		fields := strings.Fields(parts[0])
 		blockDeviceID := fields[2]
+		rootDir := fields[3]
 		mountPoint := fields[4]
 		mountOpts := strings.Split(fields[5], ",")
-
-		if rootDir := fields[3]; rootDir != "" && rootDir != "/" {
-			mountOpts = append(mountOpts, "bind")
+		fields = strings.Fields(parts[1])
+		fsType := fields[0]
+		mntSrc := fields[1]
+		isBind := false
+		// Per fstab(5), the device can be any string for non-storage-backed filesystems.
+		if !all && !strings.HasPrefix(mntSrc, "/") {
+			continue
+		}
+		// Some virtual/non-storage filesystems do still have real sources (e.g. nsfs binds),
+		// but need to use the "root" field (field 4) instead of the "source" field (field 10).
+		// The "source" field is actually "*filesystem-specific" information".
+		device := rootDir
+		if strings.HasPrefix(mntSrc, "/") {
+			device = mntSrc
+		} else if rootDir == "/" {
+			device = "none"
 		}
 
-		fields = strings.Fields(parts[1])
-		fstype := fields[0]
-		device := fields[1]
+		if _, ok := seenDevIDs[blockDeviceID]; ok {
+			// Bind mount; set the underlying mount path as the device.
+			device = seenDevIDs[blockDeviceID]
+			isBind = true
+			mountOpts = append(mountOpts, "bind")
+		}
+		
+		seenDevIDs[blockDeviceID] = mountPoint
+		
+		if !all && isBind {
+			continue
+		}
 
 		d := PartitionStat{
 			Device:     device,
 			Mountpoint: unescapeFstab(mountPoint),
-			Fstype:     fstype,
+			Fstype:     fsType,
 			Opts:       mountOpts,
-		}
-
-		if !all {
-			if d.Device == "none" || !common.StringsHas(fs, d.Fstype) {
-				continue
-			}
 		}
 
 		if strings.HasPrefix(d.Device, "/dev/mapper/") {
