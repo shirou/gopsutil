@@ -200,7 +200,7 @@ func buildPartitionStat(path string) (PartitionStat, error) {
 			uintptr(unsafe.Pointer(volPath)),
 			uintptr(unsafe.Pointer(&volumeName[0])),
 			uintptr(len(volumeName)),
-			uintptr(0), // serial numbrt
+			uintptr(0), // serial number
 			uintptr(0), // max component length
 			uintptr(unsafe.Pointer(&fsFlags)),
 			uintptr(unsafe.Pointer(&fsName[0])),
