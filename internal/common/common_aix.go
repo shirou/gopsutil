@@ -11,7 +11,7 @@ import (
 )
 
 func BootTimeWithContext(ctx context.Context, invoke Invoker) (btime uint64, err error) {
-	ut, err := UptimeWithContext(ctx)
+	ut, err := UptimeWithContext(ctx, invoke)
 	if err != nil {
 		return 0, err
 	}
