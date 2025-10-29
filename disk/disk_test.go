@@ -116,3 +116,37 @@ func TestIOCountersStat_String(t *testing.T) {
 	e := `{"readCount":100,"mergedReadCount":0,"writeCount":200,"mergedWriteCount":0,"readBytes":300,"writeBytes":400,"readTime":0,"writeTime":0,"iopsInProgress":0,"ioTime":0,"weightedIO":0,"name":"sd01","serialNumber":"SERIAL","label":""}`
 	assert.JSONEqf(t, e, v.String(), "DiskUsageStat string is invalid: %v", v)
 }
+
+func TestGetLogicalDrives(t *testing.T) {
+	drives, err := getLogicalDrives()
+	require.NoError(t, err)
+	assert.Greater(t, len(drives), 0)
+	for _, d := range drives {
+		assert.NotEmpty(t, d)
+	}
+	assert.Contains(t, drives, `C:\`)
+}
+
+func TestBuildPartitionStat(t *testing.T) {
+	volumeC := `C:\`
+	part, err := buildPartitionStat(volumeC)
+	require.NoError(t, err)
+	assert.Equal(t, volumeC, part.Mountpoint)
+	assert.Equal(t, volumeC, part.Device)
+	assert.Equal(t, "NTFS", part.Fstype) // NTFS should be the only allowed fs on C: drive since windows Vista, maybe in future could be also reFS
+	assert.Contains(t, part.Opts, rw)    // C: must have atleast rw option
+}
+
+func TestProcessLogicalDrives(t *testing.T) {
+	drives := []string{`C:\`}
+	partitionStats := []PartitionStat{}
+	processedPaths := map[string]struct{}{}
+	warnings := Warnings{}
+
+	parts := processLogicalDrives(drives, processedPaths, partitionStats, warnings)
+	assert.Len(t, parts, 1)
+	assert.Equal(t, "C:", parts[0].Mountpoint)
+	assert.Equal(t, "C:", parts[0].Device)
+	assert.Equal(t, "NTFS", parts[0].Fstype)
+	assert.Contains(t, parts[0].Opts, rw)
+}
