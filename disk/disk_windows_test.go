@@ -10,7 +10,7 @@ import (
 func TestGetLogicalDrives(t *testing.T) {
 	drives, err := getLogicalDrives()
 	require.NoError(t, err)
-	assert.Greater(t, len(drives), 0)
+	assert.NotEmpty(t, drives)
 	for _, d := range drives {
 		assert.NotEmpty(t, d)
 	}
