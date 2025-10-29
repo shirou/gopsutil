@@ -610,7 +610,7 @@ func getProcInodesAllWithContext(ctx context.Context, root string, maxConn int) 
 	return ret, nil
 }
 
-// decodeAddress decode addresse represents addr in proc/net/*
+// decodeAddress decode address represents addr in proc/net/*
 // ex:
 // "0500000A:0016" -> "10.0.0.5", 22
 // "0085002452100113070057A13F025401:0035" -> "2400:8500:1301:1052:a157:7:154:23f", 53
