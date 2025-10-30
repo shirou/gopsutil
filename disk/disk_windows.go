@@ -114,7 +114,7 @@ func PartitionsWithContext(_ context.Context, _ bool) ([]PartitionStat, error) {
 	partitionStats := []PartitionStat{}
 
 	// Get drives with drive letters (including remote drives, ex: SMB shares)
-	drives, logicalDrivesErr := getLogicalDrives()
+	drives, err := getLogicalDrives()
 	if logicalDrivesErr != nil {
 		return partitionStats, logicalDrivesErr
 	}
