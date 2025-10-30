@@ -128,7 +128,7 @@ func PartitionsWithContext(_ context.Context, _ bool) ([]PartitionStat, error) {
 
 func processVolumesMountedAsFolders(partitionStats []PartitionStat, warnings Warnings, processedPaths map[string]struct{}) []PartitionStat {
 	volNameBuf := make([]uint16, maxVolumeNameLength)
-	nextVolHandle, _, logicalDrivesErr := procFindFirstVolumeW.Call(
+	nextVolHandle, _, err := procFindFirstVolumeW.Call(
 		uintptr(unsafe.Pointer(&volNameBuf[0])),
 		uintptr(maxVolumeNameLength))
 	if windows.Handle(nextVolHandle) == windows.InvalidHandle {
