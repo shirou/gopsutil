@@ -188,6 +188,7 @@ func processLogicalDrives(drives []string, processedPaths map[string]struct{}, p
 	return partitionStats
 }
 
+// getLogicalDrives retrieves all logical drives using GetLogicalDriveStringsW.
 // We first call GetLogicalDriveStringsW with a buffer length of 0 to get the required buffer size.
 // https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getlogicaldrivestringsw
 func getLogicalDrives() ([]string, error) {
