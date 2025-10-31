@@ -25,6 +25,18 @@ const (
 	maxWarningsInDrive      = 5
 )
 
+// https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getvolumeinformationa#parameters
+const (
+	rw       = "rw"
+	ro       = "ro"
+	compress = "compress"
+)
+
+const (
+	firstPossibleDriveLetter = 'A'
+	lastPossibleDriveLetter  = 'Z'
+)
+
 var (
 	procGetDiskFreeSpaceExW              = common.Modkernel32.NewProc("GetDiskFreeSpaceExW")
 	procGetLogicalDriveStringsW          = common.Modkernel32.NewProc("GetLogicalDriveStringsW")
@@ -102,46 +114,26 @@ func PartitionsWithContext(_ context.Context, _ bool) ([]PartitionStat, error) {
 	partitionStats := []PartitionStat{}
 
 	// Get drives with drive letters (including remote drives, ex: SMB shares)
-	// We first call GetLogicalDriveStringsW with a buffer length of 0 to get the required buffer size.
-	// https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getlogicaldrivestringsw
-	bufferLen, _, err := procGetLogicalDriveStringsW.Call(
-		uintptr(0),
-		uintptr(0))
-	if !errors.Is(err, windows.ERROR_SUCCESS) {
-		return partitionStats, err // The call failed with an unexpected error
-	}
-	lpBuffer := make([]uint16, bufferLen)
-	// buffer can be longer than MAX_PATH
-	_, _, err = procGetLogicalDriveStringsW.Call(
-		uintptr(len(lpBuffer)),
-		uintptr(unsafe.Pointer(&lpBuffer[0])))
-	if !errors.Is(err, windows.ERROR_SUCCESS) {
-		return partitionStats, err // The call failed with an unexpected error
+	drives, err := getLogicalDrives()
+	if err != nil {
+		return partitionStats, err
 	}
 
-	drivesString := windows.UTF16ToString(lpBuffer)
-	drives := strings.Split(drivesString, "\x00")
-
-	for _, drive := range drives {
-		if drive != "" && drive[0] >= 'A' && drive[0] <= 'Z' {
-			v := drive[0]
-			path := string(v) + ":"
-			if partitionStat, warning := buildPartitionStat(path); warning == nil {
-				processedPaths[partitionStat.Mountpoint+"\\"] = struct{}{}
-				partitionStats = append(partitionStats, partitionStat)
-			} else {
-				warnings.Add(warning)
-			}
-		}
-	}
+	partitionStats = processLogicalDrives(drives, processedPaths, partitionStats, warnings)
 
 	// Get volumes without drive letters (ex: mounted folders with no drive letter)
+	partitionStats = processVolumesMountedAsFolders(partitionStats, warnings, processedPaths)
+	return partitionStats, warnings.Reference()
+}
+
+func processVolumesMountedAsFolders(partitionStats []PartitionStat, warnings Warnings, processedPaths map[string]struct{}) []PartitionStat {
 	volNameBuf := make([]uint16, maxVolumeNameLength)
 	nextVolHandle, _, err := procFindFirstVolumeW.Call(
 		uintptr(unsafe.Pointer(&volNameBuf[0])),
 		uintptr(maxVolumeNameLength))
 	if windows.Handle(nextVolHandle) == windows.InvalidHandle {
-		return partitionStats, fmt.Errorf("failed to get first-volume: %w", err)
+		warnings.Add(fmt.Errorf("failed to get first-volume: %w", err))
+		return partitionStats
 	}
 	defer procFindVolumeClose.Call(nextVolHandle)
 	for {
@@ -177,7 +169,47 @@ func PartitionsWithContext(_ context.Context, _ bool) ([]PartitionStat, error) {
 			}
 		}
 	}
-	return partitionStats, nil
+	return partitionStats
+}
+
+func processLogicalDrives(drives []string, processedPaths map[string]struct{}, partitionStats []PartitionStat, warnings Warnings) []PartitionStat {
+	for _, drive := range drives {
+		if drive != "" && drive[0] >= firstPossibleDriveLetter && drive[0] <= lastPossibleDriveLetter {
+			v := drive[0]
+			path := string(v) + ":"
+			if partitionStat, warning := buildPartitionStat(path); warning == nil {
+				processedPaths[partitionStat.Mountpoint+"\\"] = struct{}{}
+				partitionStats = append(partitionStats, partitionStat)
+			} else {
+				warnings.Add(warning)
+			}
+		}
+	}
+	return partitionStats
+}
+
+// getLogicalDrives retrieves all logical drives using GetLogicalDriveStringsW.
+// We first call GetLogicalDriveStringsW with a buffer length of 0 to get the required buffer size.
+// https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getlogicaldrivestringsw
+func getLogicalDrives() ([]string, error) {
+	bufferLen, _, err := procGetLogicalDriveStringsW.Call(
+		uintptr(0),
+		uintptr(0))
+	if !errors.Is(err, windows.ERROR_SUCCESS) {
+		return nil, err // The call failed with an unexpected error
+	}
+	lpBuffer := make([]uint16, bufferLen)
+	// buffer can be longer than MAX_PATH
+	_, _, err = procGetLogicalDriveStringsW.Call(
+		uintptr(len(lpBuffer)),
+		uintptr(unsafe.Pointer(&lpBuffer[0])))
+	if !errors.Is(err, windows.ERROR_SUCCESS) {
+		return nil, err // The call failed with an unexpected error
+	}
+
+	drivesString := windows.UTF16ToString(lpBuffer)
+	drives := strings.Split(drivesString, "\x00")
+	return drives, nil
 }
 
 func buildPartitionStat(path string) (PartitionStat, error) {
@@ -214,12 +246,12 @@ func buildPartitionStat(path string) (PartitionStat, error) {
 			return PartitionStat{}, err
 		}
 
-		opts := []string{"rw"}
+		opts := []string{rw}
 		if fsFlags&fileReadOnlyVolume != 0 {
-			opts = []string{"ro"}
+			opts = []string{ro}
 		}
 		if fsFlags&fileFileCompression != 0 {
-			opts = append(opts, "compress")
+			opts = append(opts, compress)
 		}
 
 		return PartitionStat{
@@ -244,7 +276,7 @@ func IOCountersWithContext(_ context.Context, names ...string) (map[string]IOCou
 		return drivemap, err
 	}
 	for _, v := range lpBuffer[:lpBufferLen] {
-		if v < 'A' || v > 'Z' {
+		if v < firstPossibleDriveLetter || v > lastPossibleDriveLetter {
 			continue
 		}
 		path := string(rune(v)) + ":"
@@ -255,7 +287,7 @@ func IOCountersWithContext(_ context.Context, names ...string) (map[string]IOCou
 		}
 		szDevice := `\\.\` + path
 		const IOCTL_DISK_PERFORMANCE = 0x70020
-		h, err := windows.CreateFile(syscall.StringToUTF16Ptr(szDevice), 0, windows.FILE_SHARE_READ|windows.FILE_SHARE_WRITE, nil, windows.OPEN_EXISTING, 0, 0)
+		h, err := windows.CreateFile(windows.StringToUTF16Ptr(szDevice), 0, windows.FILE_SHARE_READ|windows.FILE_SHARE_WRITE, nil, windows.OPEN_EXISTING, 0, 0)
 		if err != nil {
 			if errors.Is(err, windows.ERROR_FILE_NOT_FOUND) {
 				continue
