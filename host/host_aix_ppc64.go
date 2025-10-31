@@ -1,5 +1,4 @@
 //go:build aix && ppc64 && cgo
-// +build aix,ppc64,cgo
 
 // Guessed at from the following document:
 // https://www.ibm.com/docs/sl/ibm-mq/9.2?topic=platforms-standard-data-types-aix-linux-windows
