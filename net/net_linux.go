@@ -50,26 +50,25 @@ func IOCountersByFileWithContext(_ context.Context, pernic bool, filename string
 		return nil, err
 	}
 
-	parts := make([]string, 2)
-
 	statlen := len(lines) - 1
 
 	ret := make([]IOCountersStat, 0, statlen)
 
 	for _, line := range lines[2:] {
+		// Split interface name and stats data at the last ":"
 		separatorPos := strings.LastIndex(line, ":")
 		if separatorPos == -1 {
 			continue
 		}
-		parts[0] = line[0:separatorPos]
-		parts[1] = line[separatorPos+1:]
+		interfacePart := line[0:separatorPos]
+		statsPart := line[separatorPos+1:]
 
-		interfaceName := strings.TrimSpace(parts[0])
+		interfaceName := strings.TrimSpace(interfacePart)
 		if interfaceName == "" {
 			continue
 		}
 
-		fields := strings.Fields(strings.TrimSpace(parts[1]))
+		fields := strings.Fields(strings.TrimSpace(statsPart))
 		bytesRecv, err := strconv.ParseUint(fields[0], 10, 64)
 		if err != nil {
 			return ret, err
