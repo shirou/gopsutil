@@ -115,8 +115,8 @@ func PartitionsWithContext(_ context.Context, _ bool) ([]PartitionStat, error) {
 
 	// Get drives with drive letters (including remote drives, ex: SMB shares)
 	drives, err := getLogicalDrives()
-	if logicalDrivesErr != nil {
-		return partitionStats, logicalDrivesErr
+	if err != nil {
+		return partitionStats, err
 	}
 
 	partitionStats = processLogicalDrives(drives, processedPaths, partitionStats, warnings)
@@ -132,7 +132,7 @@ func processVolumesMountedAsFolders(partitionStats []PartitionStat, warnings War
 		uintptr(unsafe.Pointer(&volNameBuf[0])),
 		uintptr(maxVolumeNameLength))
 	if windows.Handle(nextVolHandle) == windows.InvalidHandle {
-		warnings.Add(fmt.Errorf("failed to get first-volume: %w", logicalDrivesErr))
+		warnings.Add(fmt.Errorf("failed to get first-volume: %w", err))
 		return partitionStats
 	}
 	defer procFindVolumeClose.Call(nextVolHandle)
