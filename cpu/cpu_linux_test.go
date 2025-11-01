@@ -2,6 +2,7 @@
 package cpu
 
 import (
+	"context"
 	"errors"
 	"os/exec"
 	"strconv"
@@ -41,7 +42,7 @@ func TestParseStatLine_424(t *testing.T) {
 }
 
 func TestCountsAgainstLscpu(t *testing.T) {
-	cmd := exec.Command("lscpu")
+	cmd := exec.CommandContext(context.Background(), "lscpu")
 	cmd.Env = []string{"LC_ALL=C"}
 	out, err := cmd.Output()
 	if err != nil {

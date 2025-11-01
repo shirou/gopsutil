@@ -3,6 +3,7 @@ package process
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -280,11 +281,12 @@ func TestLong_Name_With_Spaces(t *testing.T) {
 		t.Fatalf("unable to write temp file %v", err)
 	}
 	require.NoErrorf(t, tmpfile.Close(), "unable to close temp file")
+	ctx := context.Background()
 
-	err = exec.Command("go", "build", "-o", tmpfile.Name()+".exe", tmpfile.Name()).Run()
+	err = exec.CommandContext(ctx, "go", "build", "-o", tmpfile.Name()+".exe", tmpfile.Name()).Run()
 	require.NoErrorf(t, err, "unable to build temp file %v", err)
 
-	cmd := exec.Command(tmpfile.Name() + ".exe")
+	cmd := exec.CommandContext(ctx, tmpfile.Name()+".exe")
 
 	require.NoError(t, cmd.Start())
 	time.Sleep(100 * time.Millisecond)
@@ -319,11 +321,12 @@ func TestLong_Name(t *testing.T) {
 		t.Fatalf("unable to write temp file %v", err)
 	}
 	require.NoErrorf(t, tmpfile.Close(), "unable to close temp file")
+	ctx := context.Background()
 
-	err = exec.Command("go", "build", "-o", tmpfile.Name()+".exe", tmpfile.Name()).Run()
+	err = exec.CommandContext(ctx, "go", "build", "-o", tmpfile.Name()+".exe", tmpfile.Name()).Run()
 	require.NoErrorf(t, err, "unable to build temp file %v", err)
 
-	cmd := exec.Command(tmpfile.Name() + ".exe")
+	cmd := exec.CommandContext(ctx, tmpfile.Name()+".exe")
 
 	require.NoError(t, cmd.Start())
 	time.Sleep(100 * time.Millisecond)
@@ -351,7 +354,8 @@ func TestName_Against_Python(t *testing.T) {
 	if err != nil {
 		t.Skipf("python3 not found: %s", err)
 	}
-	if out, err := exec.Command(py3Path, "-c", "import psutil").CombinedOutput(); err != nil {
+	ctx := context.Background()
+	if out, err := exec.CommandContext(ctx, py3Path, "-c", "import psutil").CombinedOutput(); err != nil {
 		t.Skipf("psutil not found for %s: %s", py3Path, out)
 	}
 
@@ -368,7 +372,7 @@ func TestName_Against_Python(t *testing.T) {
 	}
 	require.NoErrorf(t, tmpfile.Chmod(0o744), "unable to chmod u+x temp file")
 	require.NoErrorf(t, tmpfile.Close(), "unable to close temp file")
-	cmd := exec.Command(tmpfilepath)
+	cmd := exec.CommandContext(ctx, tmpfilepath)
 	outPipe, _ := cmd.StdoutPipe()
 	scanner := bufio.NewScanner(outPipe)
 	cmd.Start()
@@ -468,6 +472,7 @@ func TestParent(t *testing.T) {
 
 func TestConnections(t *testing.T) {
 	p := testGetProcess()
+	ctx := context.Background()
 
 	addr, err := net.ResolveTCPAddr("tcp", "localhost:0") // dynamically get a random open port from OS
 	require.NoErrorf(t, err, "unable to resolve localhost: %v", err)
@@ -494,8 +499,8 @@ func TestConnections(t *testing.T) {
 			panic(err)
 		}
 	}()
-
-	conn, err := net.Dial("tcp", tcpServerAddr)
+	d := &net.Dialer{}
+	conn, err := d.DialContext(ctx, "tcp", tcpServerAddr)
 	require.NoErrorf(t, err, "unable to dial %v: %v", tcpServerAddr, err)
 	defer conn.Close()
 
@@ -533,12 +538,13 @@ func TestConnections(t *testing.T) {
 
 func TestChildren(t *testing.T) {
 	p := testGetProcess()
+	ctx := context.Background()
 
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command("ping", "localhost", "-n", "4")
+		cmd = exec.CommandContext(ctx, "ping", "localhost", "-n", "4")
 	} else {
-		cmd = exec.Command("sleep", "3")
+		cmd = exec.CommandContext(ctx, "sleep", "3")
 	}
 	require.NoError(t, cmd.Start())
 	time.Sleep(100 * time.Millisecond)
@@ -637,11 +643,12 @@ func TestOpenFiles(t *testing.T) {
 }
 
 func TestKill(t *testing.T) {
+	ctx := context.Background()
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command("ping", "localhost", "-n", "4")
+		cmd = exec.CommandContext(ctx, "ping", "localhost", "-n", "4")
 	} else {
-		cmd = exec.Command("sleep", "3")
+		cmd = exec.CommandContext(ctx, "sleep", "3")
 	}
 	require.NoError(t, cmd.Start())
 	time.Sleep(100 * time.Millisecond)
@@ -659,11 +666,12 @@ func TestKill(t *testing.T) {
 }
 
 func TestIsRunning(t *testing.T) {
+	ctx := context.Background()
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command("ping", "localhost", "-n", "2")
+		cmd = exec.CommandContext(ctx, "ping", "localhost", "-n", "2")
 	} else {
-		cmd = exec.Command("sleep", "1")
+		cmd = exec.CommandContext(ctx, "sleep", "1")
 	}
 	cmd.Start()
 	p, err := NewProcess(int32(cmd.Process.Pid))
@@ -701,11 +709,12 @@ func TestEnviron(t *testing.T) {
 		t.Fatalf("unable to write temp file %v", err)
 	}
 	require.NoErrorf(t, tmpfile.Close(), "unable to close temp file")
+	ctx := context.Background()
 
-	err = exec.Command("go", "build", "-o", tmpfile.Name()+".exe", tmpfile.Name()).Run()
+	err = exec.CommandContext(ctx, "go", "build", "-o", tmpfile.Name()+".exe", tmpfile.Name()).Run()
 	require.NoErrorf(t, err, "unable to build temp file %v", err)
 
-	cmd := exec.Command(tmpfile.Name() + ".exe")
+	cmd := exec.CommandContext(ctx, tmpfile.Name()+".exe")
 
 	cmd.Env = []string{"testkey=envvalue"}
 
