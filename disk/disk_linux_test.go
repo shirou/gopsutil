@@ -12,8 +12,6 @@ import (
 )
 
 func Test_parseFieldsOnMountinfo(t *testing.T) {
-	fs := []string{"sysfs", "tmpfs"}
-
 	lines := []string{
 		"05   2 9:126 /           /              rw,noatime                      shared:1   - ext4  /dev/sda1 rw",
 		"06   3 9:127 /           /foo           rw,noatime                      shared:1   - ext4  /dev/sda2 rw",
@@ -31,11 +29,11 @@ func Test_parseFieldsOnMountinfo(t *testing.T) {
 		"all": {
 			all: true,
 			expect: []PartitionStat{
-				{Device: "/dev/sda1", Mountpoint: "/", Fstype: "ext4", Opts:[]string{"rw", "noatime"}},
-				{Device: "/dev/sda2", Mountpoint: "/foo", Fstype: "ext4", Opts:[]string{"rw", "noatime"}},
-				{Device: "/foo", Mountpoint: "/foo/bar", Fstype: "ext4", Opts:[]string{"rw", "noatime", "bind"}},
+				{Device: "/dev/sda1", Mountpoint: "/", Fstype: "ext4", Opts: []string{"rw", "noatime"}},
+				{Device: "/dev/sda2", Mountpoint: "/foo", Fstype: "ext4", Opts: []string{"rw", "noatime"}},
+				{Device: "/foo", Mountpoint: "/foo/bar", Fstype: "ext4", Opts: []string{"rw", "noatime", "bind"}},
 				{Device: "none", Mountpoint: "/dev/shm", Fstype: "tmpfs", Opts: []string{"rw", "nosuid", "nodev", "noexec", "relatime"}},
-				{Device: "net:[12345]", Mountpoint: "/run/netns/foo", Fstype: "nsfs", Opts:[]string{"rw"}},
+				{Device: "net:[12345]", Mountpoint: "/run/netns/foo", Fstype: "nsfs", Opts: []string{"rw"}},
 				{Device: "none", Mountpoint: "/sys", Fstype: "sysfs", Opts: []string{"rw", "nosuid", "nodev", "noexec", "noatime"}},
 				{Device: "none", Mountpoint: "/run", Fstype: "tmpfs", Opts: []string{"rw", "nosuid", "nodev"}},
 			},
@@ -43,15 +41,15 @@ func Test_parseFieldsOnMountinfo(t *testing.T) {
 		"not all": {
 			all: false,
 			expect: []PartitionStat{
-				{Device: "/dev/sda1", Mountpoint: "/", Fstype: "ext4", Opts:[]string{"rw", "noatime"}},
-				{Device: "/dev/sda2", Mountpoint: "/foo", Fstype: "ext4", Opts:[]string{"rw", "noatime"}},
+				{Device: "/dev/sda1", Mountpoint: "/", Fstype: "ext4", Opts: []string{"rw", "noatime"}},
+				{Device: "/dev/sda2", Mountpoint: "/foo", Fstype: "ext4", Opts: []string{"rw", "noatime"}},
 			},
 		},
 	}
 
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {
-			actual, err := parseFieldsOnMountinfo(context.Background(), lines, c.all, fs, "")
+			actual, err := parseFieldsOnMountinfo(context.Background(), lines, c.all, "")
 			require.NoError(t, err)
 			assert.Equal(t, c.expect, actual)
 		})
