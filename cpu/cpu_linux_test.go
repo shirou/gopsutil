@@ -2,6 +2,7 @@
 package cpu
 
 import (
+	"context"
 	"errors"
 	"os/exec"
 	"strconv"
@@ -41,7 +42,7 @@ func TestParseStatLine_424(t *testing.T) {
 }
 
 func TestCountsAgainstLscpu(t *testing.T) {
-	cmd := exec.Command("lscpu")
+	cmd := exec.CommandContext(context.Background(), "lscpu")
 	cmd.Env = []string{"LC_ALL=C"}
 	out, err := cmd.Output()
 	if err != nil {
@@ -78,10 +79,14 @@ func TestCountsAgainstLscpu(t *testing.T) {
 	expectedPhysical := coresPerSocket * sockets * books * drawers
 	expectedLogical := expectedPhysical * threadsPerCore
 	physical, err := Counts(false)
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoError(t, err)
 	logical, err := Counts(true)
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoError(t, err)
 	assert.Equalf(t, expectedPhysical, physical, "expected %v, got %v", expectedPhysical, physical)
 	assert.Equalf(t, expectedLogical, logical, "expected %v, got %v", expectedLogical, logical)

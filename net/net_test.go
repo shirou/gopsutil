@@ -2,6 +2,7 @@
 package net
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"runtime"
@@ -55,10 +56,14 @@ func TestConnectionStatString(t *testing.T) {
 
 func TestIOCountersAll(t *testing.T) {
 	v, err := IOCounters(false)
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "Could not get NetIOCounters: %v", err)
 	per, err := IOCounters(true)
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "Could not get NetIOCounters: %v", err)
 	assert.Lenf(t, v, 1, "Could not get NetIOCounters: %v", v)
 	assert.Equalf(t, "all", v[0].Name, "Invalid NetIOCounters: %v", v)
@@ -85,7 +90,9 @@ func TestIOCountersAll(t *testing.T) {
 
 func TestIOCountersPerNic(t *testing.T) {
 	v, err := IOCounters(true)
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "Could not get NetIOCounters: %v", err)
 	assert.NotEmptyf(t, v, "Could not get NetIOCounters: %v", v)
 	for _, vv := range v {
@@ -116,7 +123,9 @@ func TestGetNetIOCountersAll(t *testing.T) {
 
 func TestInterfaces(t *testing.T) {
 	v, err := Interfaces()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "Could not get NetInterfaceStat: %v", err)
 	assert.NotEmptyf(t, v, "Could not get NetInterfaceStat: %v", err)
 	for _, vv := range v {
@@ -126,7 +135,9 @@ func TestInterfaces(t *testing.T) {
 
 func TestProtoCountersStatsAll(t *testing.T) {
 	v, err := ProtoCounters(nil)
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "Could not get NetProtoCounters: %v", err)
 	require.NotEmptyf(t, v, "Could not get NetProtoCounters: %v", err)
 	for _, vv := range v {
@@ -137,7 +148,9 @@ func TestProtoCountersStatsAll(t *testing.T) {
 
 func TestProtoCountersStats(t *testing.T) {
 	v, err := ProtoCounters([]string{"tcp", "ip"})
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "Could not get NetProtoCounters: %v", err)
 	require.NotEmptyf(t, v, "Could not get NetProtoCounters: %v", err)
 	require.Lenf(t, v, 2, "Go incorrect number of NetProtoCounters: %v", err)
@@ -155,7 +168,9 @@ func TestConnections(t *testing.T) {
 	}
 
 	v, err := Connections("inet")
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "could not get NetConnections: %v", err)
 	assert.NotEmptyf(t, v, "could not get NetConnections: %v", v)
 	for _, vv := range v {
@@ -176,7 +191,9 @@ func TestFilterCounters(t *testing.T) {
 	}
 
 	v, err := FilterCounters()
-	common.SkipIfNotImplementedErr(t, err)
+	if errors.Is(err, common.ErrNotImplementedError) {
+		t.Skip("not implemented")
+	}
 	require.NoErrorf(t, err, "could not get NetConnections: %v", err)
 	assert.NotEmptyf(t, v, "could not get NetConnections: %v", v)
 	for _, vv := range v {

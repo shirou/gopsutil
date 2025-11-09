@@ -17,6 +17,7 @@ linters:
     - contextcheck
     - durationcheck
     - errorlint
+    - fatcontext
     - gocritic
     - gomodguard
     - gosec
@@ -26,6 +27,7 @@ linters:
     - misspell
     - nakedret
     - nilnesserr
+    - noctx
     - nolintlint
     - perfsprint
     - predeclared
@@ -107,6 +109,8 @@ linters:
         - name: superfluous-else
           arguments:
             - "preserveScope"
+        - name: time-date
+        - name: time-equal
         - name: time-naming
         - name: unexported-return
         - name: unnecessary-stmt

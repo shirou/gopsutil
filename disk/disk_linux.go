@@ -244,18 +244,18 @@ func readMountFile(root string) (lines []string, useMounts bool, filename string
 	if err != nil {
 		var pathErr *os.PathError
 		if !errors.As(err, &pathErr) {
-			return
+			return lines, useMounts, filename, err
 		}
 		// if kernel does not support 1/mountinfo, fallback to 1/mounts (<2.6.26)
 		useMounts = true
 		filename = path.Join(root, "mounts")
 		lines, err = common.ReadLines(filename)
 		if err != nil {
-			return
+			return lines, useMounts, filename, err
 		}
-		return
+		return lines, useMounts, filename, err
 	}
-	return
+	return lines, useMounts, filename, err
 }
 
 func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {
@@ -498,8 +498,9 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 		// Since `name` here is already a basename, re-add the /dev path.
 		// This is not ideal, but we may break the API by changing how SerialNumberWithContext
 		// works.
-		d.SerialNumber, _ = SerialNumberWithContext(ctx, common.HostDevWithContext(ctx, name))
-		d.Label, _ = LabelWithContext(ctx, name)
+		deviceName := getDeviceName(name)
+		d.SerialNumber, _ = SerialNumberWithContext(ctx, common.HostDevWithContext(ctx, deviceName))
+		d.Label, _ = LabelWithContext(ctx, deviceName)
 
 		ret[name] = d
 	}
@@ -580,4 +581,24 @@ func getFsType(stat unix.Statfs_t) string {
 		return ""
 	}
 	return ret
+}
+
+// getDeviceName normalizes NVMe device names by converting controller notation
+// from diskstats format (nvmeXcYnZ) to actual device format (nvmeXnZ).
+// This handles the discrepancy where /proc/diskstats reports nvmeXcYnZ
+// but actual device files exist as /dev/nvmeXnZ.
+func getDeviceName(name string) string {
+	if !strings.HasPrefix(name, "nvme") {
+		return name
+	}
+
+	// Look for controller notation pattern: nvmeXcYnZ
+	if cIdx := strings.Index(name, "c"); cIdx > 4 { // "nvme" is 4 chars
+		if nIdx := strings.Index(name[cIdx:], "n"); nIdx > 0 {
+			// Convert nvmeXcYnZ to nvmeXnZ by removing "cY" part
+			return name[:cIdx] + name[cIdx+nIdx:]
+		}
+	}
+
+	return name
 }
