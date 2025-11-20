@@ -1,6 +1,7 @@
 package disk
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -8,7 +9,7 @@ import (
 )
 
 func TestGetLogicalDrives(t *testing.T) {
-	drives, err := getLogicalDrives()
+	drives, err := getLogicalDrives(context.Background())
 	require.NoError(t, err)
 	assert.NotEmpty(t, drives)
 	for _, d := range drives {
@@ -33,7 +34,7 @@ func TestProcessLogicalDrives(t *testing.T) {
 	processedPaths := map[string]struct{}{}
 	warnings := Warnings{}
 
-	parts := processLogicalDrives(drives, processedPaths, partitionStats, warnings)
+	parts := processLogicalDrives(context.Background(), drives, processedPaths, partitionStats, warnings)
 	assert.Len(t, parts, 1)
 	assert.Equal(t, "C:", parts[0].Mountpoint)
 	assert.Equal(t, "C:", parts[0].Device)
