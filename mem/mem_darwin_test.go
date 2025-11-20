@@ -4,6 +4,8 @@
 package mem
 
 import (
+	"context"
+	"fmt"
 	"strconv"
 	"strings"
 	"testing"
@@ -45,4 +47,19 @@ func TestVirtualMemoryDarwin(t *testing.T) {
 
 	assert.Positive(t, v.Wired)
 	assert.Less(t, v.Wired, v.Total)
+}
+
+func TestMemoryPressureWithContext(t *testing.T) {
+	p, err := MemoryPressureWithContext(context.Background())
+	outBytes, err2 := invoke.Command("/usr/sbin/sysctl", "vm.memory_pressure")
+	require.NoError(t, err)
+	require.NoError(t, err2)
+	outString := string(outBytes)
+	outString = strings.TrimSpace(outString)
+	outParts := strings.Split(outString, " ")
+	pressure, err := strconv.ParseInt(outParts[1], 10, 64)
+	fmt.Println(pressure)
+
+	require.NoError(t, err)
+	require.Equal(t, uint64(pressure), p)
 }
