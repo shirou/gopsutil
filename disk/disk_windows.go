@@ -142,9 +142,11 @@ func processVolumesMountedAsFolders(ctx context.Context, partitionStats []Partit
 
 func processVolumeLoop(ctx context.Context, nextVolHandle uintptr, volNameBuf []uint16, processedPaths map[string]struct{}, partitionStats []PartitionStat, warnings Warnings) []PartitionStat {
 	for {
-		if ctx.Err() != nil {
+		select {
+		case <-ctx.Done():
 			warnings.Add(fmt.Errorf("context cancelled while processing volumes: %w", ctx.Err()))
 			return partitionStats
+		default:
 		}
 
 		mounts, err := getVolumePaths(volNameBuf)
@@ -175,17 +177,19 @@ func processVolumeLoop(ctx context.Context, nextVolHandle uintptr, volNameBuf []
 
 func processMountsForVolume(ctx context.Context, mounts []string, processedPaths map[string]struct{}, partitionStats []PartitionStat, warnings Warnings) []PartitionStat {
 	for _, mount := range mounts {
-		if ctx.Err() != nil {
+		select {
+		case <-ctx.Done():
 			warnings.Add(fmt.Errorf("context cancelled while processing mount points per volume: %w", ctx.Err()))
 			return partitionStats
-		}
-		if _, ok := processedPaths[mount]; ok {
-			continue
-		}
-		if partitionStat, warning := buildPartitionStat(mount); warning == nil {
-			partitionStats = append(partitionStats, partitionStat)
-		} else {
-			warnings.Add(warning)
+		default:
+			if _, ok := processedPaths[mount]; ok {
+				continue
+			}
+			if partitionStat, warning := buildPartitionStat(mount); warning == nil {
+				partitionStats = append(partitionStats, partitionStat)
+			} else {
+				warnings.Add(warning)
+			}
 		}
 	}
 	return partitionStats
