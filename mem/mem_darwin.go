@@ -128,3 +128,12 @@ func VirtualMemoryWithContext(_ context.Context) (*VirtualMemoryStat, error) {
 		Wired:       pageSize * uint64(vmstat.wireCount),
 	}, nil
 }
+
+func MemoryPressureWithContext(_ context.Context) (uint64, error) {
+	b, err := unix.SysctlRaw("vm.memory_pressure")
+	if err != nil {
+		return 0, err
+	}
+	result := uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24
+	return result, err
+}
