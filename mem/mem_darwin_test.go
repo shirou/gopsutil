@@ -58,7 +58,6 @@ func TestMemoryPressureWithContext(t *testing.T) {
 	outString = strings.TrimSpace(outString)
 	outParts := strings.Split(outString, " ")
 	pressure, err := strconv.ParseInt(outParts[1], 10, 64)
-	fmt.Println(pressure)
 
 	require.NoError(t, err)
 	require.Equal(t, uint64(pressure), p)
