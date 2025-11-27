@@ -5,7 +5,6 @@ package mem
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"strings"
 	"testing"
