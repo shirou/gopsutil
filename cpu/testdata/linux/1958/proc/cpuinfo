@@ -1,0 +1,21 @@
+processor	: 0
+vendor_id	: HygonGenuine
+cpu family	: 24
+model		: 6
+model name	: Hygon C86-4G (OPN:5435)
+stepping	: 1
+microcode	: 0x90610009
+cpu MHz		: 2799.751
+cache size	: 512 KB
+physical id	: 0
+siblings	: 32
+core id		: 0
+cpu cores	: 16
+apicid		: 0
+initial apicid	: 0
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 16
+wp		: yes
+flags		: fpu vme de pse
+bogomips	: 5599.50

@@ -195,7 +195,7 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 
 	c := InfoStat{CPU: -1, Cores: 1}
 	for _, line := range lines {
-		fields := strings.Split(line, ":")
+		fields := strings.SplitN(line, ":", 2)
 		if len(fields) < 2 {
 			continue
 		}
@@ -476,7 +476,7 @@ func CountsWithContext(ctx context.Context, logical bool) (int, error) {
 			currentInfo = make(map[string]int)
 			continue
 		}
-		fields := strings.Split(line, ":")
+		fields := strings.SplitN(line, ":", 2)
 		if len(fields) < 2 {
 			continue
 		}
