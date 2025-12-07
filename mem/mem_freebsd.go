@@ -131,7 +131,7 @@ func SwapMemoryWithContext(_ context.Context) (*SwapMemoryStat, error) {
 
 	var buf []byte
 	s := &SwapMemoryStat{}
-	for n := 0; n < c; n++ {
+	for n := range c {
 		buf, err = unix.SysctlRaw("vm.swap_info", n)
 		if err != nil {
 			return nil, err

@@ -290,8 +290,8 @@ func ConnectionsWithContext(ctx context.Context, kind string) ([]ConnectionStat,
 	if err != nil {
 		return nil, err
 	}
-	lines := strings.Split(string(out), "\n")
-	for _, line := range lines {
+	lines := strings.SplitSeq(string(out), "\n")
+	for line := range lines {
 		if !strings.HasPrefix(line, "tcp") && !strings.HasPrefix(line, "udp") {
 			continue
 		}

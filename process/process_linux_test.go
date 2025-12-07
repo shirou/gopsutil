@@ -184,7 +184,7 @@ func Benchmark_fillFromCommWithContext(b *testing.B) {
 	b.Setenv("HOST_PROC", "testdata/linux")
 	pid := 1060
 	p, _ := NewProcess(int32(pid))
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		p.fillFromCommWithContext(context.Background())
 	}
 }
@@ -193,7 +193,7 @@ func Benchmark_fillFromStatusWithContext(b *testing.B) {
 	b.Setenv("HOST_PROC", "testdata/linux")
 	pid := 1060
 	p, _ := NewProcess(int32(pid))
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		p.fillFromStatus()
 	}
 }

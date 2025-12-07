@@ -28,7 +28,7 @@ func HostIDWithContext(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	for _, line := range strings.Split(string(out), "\n") {
+	for line := range strings.SplitSeq(string(out), "\n") {
 		if strings.Contains(line, "IOPlatformUUID") {
 			parts := strings.SplitAfter(line, `" = "`)
 			if len(parts) == 2 {
@@ -70,7 +70,7 @@ func UsersWithContext(_ context.Context) ([]UserStat, error) {
 	entrySize := int(unsafe.Sizeof(Utmpx{}))
 	count := len(buf) / entrySize
 
-	for i := 0; i < count; i++ {
+	for i := range count {
 		b := buf[i*entrySize : i*entrySize+entrySize]
 
 		var u Utmpx

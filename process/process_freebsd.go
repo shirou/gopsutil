@@ -327,7 +327,7 @@ func ProcessesWithContext(ctx context.Context) ([]*Process, error) {
 	count := int(length / uint64(sizeOfKinfoProc))
 
 	// parse buf to procs
-	for i := 0; i < count; i++ {
+	for i := range count {
 		b := buf[i*sizeOfKinfoProc : (i+1)*sizeOfKinfoProc]
 		k, err := parseKinfoProc(b)
 		if err != nil {

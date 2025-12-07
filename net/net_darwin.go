@@ -112,7 +112,7 @@ func parseNetstatOutput(output string) ([]netstatInterface, error) {
 		return interfaces, nil
 	}
 
-	for index := 0; index < numberInterfaces; index++ {
+	for index := range numberInterfaces {
 		nsIface := netstatInterface{}
 		if nsIface.stat, nsIface.linkID, err = parseNetstatLine(lines[index+1]); err != nil {
 			return nil, err
@@ -209,10 +209,10 @@ func IOCountersWithContext(ctx context.Context, pernic bool) ([]IOCountersStat, 
 		if out, err = invoke.CommandWithContext(ctx, "ifconfig", "-l"); err != nil {
 			return nil, err
 		}
-		interfaceNames := strings.Fields(strings.TrimRight(string(out), endOfLine))
+		interfaceNames := strings.FieldsSeq(strings.TrimRight(string(out), endOfLine))
 
 		// for each of the interface name, run netstat if we don't have any stats yet
-		for _, interfaceName := range interfaceNames {
+		for interfaceName := range interfaceNames {
 			truncated := true
 			for index := range nsInterfaces {
 				if nsInterfaces[index].linkID != nil && nsInterfaces[index].stat.Name == interfaceName {

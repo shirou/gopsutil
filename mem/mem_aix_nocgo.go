@@ -44,7 +44,7 @@ func callSVMon(ctx context.Context, virt bool) (*VirtualMemoryStat, *SwapMemoryS
 	pagesize := uint64(4096)
 	vmem := &VirtualMemoryStat{}
 	swap := &SwapMemoryStat{}
-	for _, line := range strings.Split(string(out), "\n") {
+	for line := range strings.SplitSeq(string(out), "\n") {
 		if virt && strings.HasPrefix(line, "memory") {
 			p := strings.Fields(line)
 			if len(p) > 2 {

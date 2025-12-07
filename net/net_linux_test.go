@@ -41,7 +41,7 @@ func TestIOCountersByFileParsing(t *testing.T) {
 		interface1 = interface1[:len(interface1)-1]
 
 		// Replace the interfaces from the test case
-		proc := []byte(fmt.Sprintf("Inter-|   Receive                                                |  Transmit\n face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed\n  %s1       2    3    4    5     6          7         8        9       10    11    12    13     14       15          16\n    %s100 200    300   400    500     600          700         800 900 1000    1100    1200    1300    1400       1500          1600\n", testCase[0], testCase[1]))
+		proc := fmt.Appendf(nil, "Inter-|   Receive                                                |  Transmit\n face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed\n  %s1       2    3    4    5     6          7         8        9       10    11    12    13     14       15          16\n    %s100 200    300   400    500     600          700         800 900 1000    1100    1200    1300    1400       1500          1600\n", testCase[0], testCase[1])
 
 		// Write /proc/net/dev sample output
 		_, err = tmpfile.Write(proc)

@@ -74,7 +74,7 @@ func UsersWithContext(_ context.Context) ([]UserStat, error) {
 	entrySize := int(unsafe.Sizeof(Utmp{}))
 	count := len(buf) / entrySize
 
-	for i := 0; i < count; i++ {
+	for i := range count {
 		b := buf[i*entrySize : i*entrySize+entrySize]
 		var u Utmp
 		br := bytes.NewReader(b)

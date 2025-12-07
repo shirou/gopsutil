@@ -425,7 +425,7 @@ func TestCpuPercentLoop(t *testing.T) {
 	p := testGetProcess()
 	numcpu := runtime.NumCPU()
 
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		duration := time.Duration(100) * time.Microsecond
 		percent, err := p.Percent(duration)
 		if errors.Is(err, common.ErrNotImplementedError) {
@@ -780,27 +780,27 @@ func TestConcurrent(t *testing.T) {
 
 func BenchmarkNewProcess(b *testing.B) {
 	checkPid := os.Getpid()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		NewProcess(int32(checkPid))
 	}
 }
 
 func BenchmarkProcessName(b *testing.B) {
 	p := testGetProcess()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		p.Name()
 	}
 }
 
 func BenchmarkProcessPpid(b *testing.B) {
 	p := testGetProcess()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		p.Ppid()
 	}
 }
 
 func BenchmarkProcesses(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		ps, err := Processes()
 		require.NoError(b, err)
 		require.NotEmpty(b, ps)

@@ -721,7 +721,7 @@ func parseIPv4HexString(addr uint32) string {
 
 func parseIPv6HexString(addr [16]byte) string {
 	var ret [16]byte
-	for i := 0; i < 16; i++ {
+	for i := range 16 {
 		ret[i] = uint8(addr[i])
 	}
 

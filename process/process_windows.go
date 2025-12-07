@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"syscall"
 	"time"
 	"unicode/utf16"
@@ -280,10 +281,8 @@ func PidExistsWithContext(ctx context.Context, pid int32) (bool, error) {
 		if err != nil {
 			return false, err
 		}
-		for _, i := range pids {
-			if i == pid {
-				return true, err
-			}
+		if slices.Contains(pids, pid) {
+			return true, err
 		}
 		return false, err
 	}
@@ -1204,7 +1203,7 @@ func convertUTF16ToString(src []byte) string {
 	codePoints := make([]uint16, srcLen)
 
 	srcIdx := 0
-	for i := 0; i < srcLen; i++ {
+	for i := range srcLen {
 		codePoints[i] = uint16(src[srcIdx]) | uint16(src[srcIdx+1])<<8
 		srcIdx += 2
 	}

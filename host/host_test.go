@@ -126,7 +126,7 @@ func TestVirtualization(t *testing.T) {
 	wg := sync.WaitGroup{}
 	testCount := 10
 	wg.Add(testCount)
-	for i := 0; i < testCount; i++ {
+	for i := range testCount {
 		go func(j int) {
 			system, role, err := Virtualization()
 			defer wg.Done()
@@ -167,14 +167,14 @@ func TestPlatformInformation(t *testing.T) {
 
 func BenchmarkBootTimeWithCache(b *testing.B) {
 	EnableBootTimeCache(true)
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		BootTime()
 	}
 }
 
 func BenchmarkBootTimeWithoutCache(b *testing.B) {
 	EnableBootTimeCache(false)
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		BootTime()
 	}
 }

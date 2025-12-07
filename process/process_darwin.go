@@ -264,7 +264,7 @@ func callPsWithContext(ctx context.Context, arg string, pid int32, threadOption,
 		if nameOption {
 			lr = append(lr, l)
 		} else {
-			for _, r := range strings.Split(l, " ") {
+			for r := range strings.SplitSeq(l, " ") {
 				if r == "" {
 					continue
 				}

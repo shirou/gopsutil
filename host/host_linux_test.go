@@ -64,7 +64,6 @@ func TestGetlsbStruct(t *testing.T) {
 	}
 
 	for _, tt := range cases {
-		tt := tt
 		t.Run(tt.root, func(t *testing.T) {
 			ctx := context.WithValue(context.Background(),
 				common.EnvKey,

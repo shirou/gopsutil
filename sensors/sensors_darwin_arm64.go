@@ -58,7 +58,7 @@ func dumpNameValues(kvsN []string, kvsV []float64) []TemperatureStat {
 	count := len(kvsN)
 	temperatureMap := make(map[string]TemperatureStat)
 
-	for i := 0; i < count; i++ {
+	for i := range count {
 		temperatureMap[kvsN[i]] = TemperatureStat{
 			SensorKey:   kvsN[i],
 			Temperature: kvsV[i],
@@ -109,7 +109,7 @@ func (ta *temperatureArm) getProductNames(system unsafe.Pointer) []string {
 	defer ta.cfRelease(uintptr(str))
 
 	names := make([]string, 0, count)
-	for i = 0; i < count; i++ {
+	for i = range count {
 		sc := ta.cfArrayGetValueAtIndex(uintptr(matchingsrvs), i)
 		name := ioHIDServiceClientCopyProperty(uintptr(sc), uintptr(str))
 
@@ -144,7 +144,7 @@ func (ta *temperatureArm) getThermalValues(system unsafe.Pointer) []float64 {
 
 	var values []float64
 	var i int32
-	for i = 0; i < count; i++ {
+	for i = range count {
 		sc := ta.cfArrayGetValueAtIndex(uintptr(matchingsrvs), i)
 		event := ioHIDServiceClientCopyEvent(uintptr(sc), common.KIOHIDEventTypeTemperature, 0, 0)
 		temp := 0.0

@@ -172,7 +172,7 @@ func toUint32(key string) uint32 {
 	var ans uint32
 	var shift uint32 = 24
 
-	for i := 0; i < smcKeySize; i++ {
+	for i := range smcKeySize {
 		ans += uint32(key[i]) << shift
 		shift -= 8
 	}

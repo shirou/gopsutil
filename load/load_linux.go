@@ -82,8 +82,8 @@ func MiscWithContext(ctx context.Context) (*MiscStat, error) {
 	}
 
 	ret := &MiscStat{}
-	lines := strings.Split(string(out), "\n")
-	for _, line := range lines {
+	lines := strings.SplitSeq(string(out), "\n")
+	for line := range lines {
 		fields := strings.Fields(line)
 		if len(fields) != 2 {
 			continue

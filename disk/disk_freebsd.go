@@ -114,7 +114,7 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 
 	buf = buf[8:] // devstat.all has version in the head.
 	// parse buf to devstat
-	for i := 0; i < count; i++ {
+	for i := range count {
 		b := buf[i*sizeOfdevstat : i*sizeOfdevstat+sizeOfdevstat]
 		d, err := parsedevstat(b)
 		if err != nil {

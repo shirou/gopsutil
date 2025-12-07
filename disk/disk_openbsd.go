@@ -84,7 +84,7 @@ func IOCountersWithContext(_ context.Context, names ...string) (map[string]IOCou
 	count := int(uint64(length) / uint64(sizeOfDiskstats))
 
 	// parse buf to Diskstats
-	for i := 0; i < count; i++ {
+	for i := range count {
 		b := buf[i*sizeOfDiskstats : i*sizeOfDiskstats+sizeOfDiskstats]
 		d, err := parseDiskstats(b)
 		if err != nil {

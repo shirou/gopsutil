@@ -7,7 +7,7 @@ import (
 	"errors"
 	"regexp"
 	"runtime"
-	"sort"
+	"slices"
 	"sync"
 	"time"
 
@@ -196,7 +196,7 @@ func Pids() ([]int32, error) {
 
 func PidsWithContext(ctx context.Context) ([]int32, error) {
 	pids, err := pidsWithContext(ctx)
-	sort.Slice(pids, func(i, j int) bool { return pids[i] < pids[j] })
+	slices.Sort(pids)
 	return pids, err
 }
 

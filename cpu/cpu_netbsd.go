@@ -62,7 +62,7 @@ func TimesWithContext(_ context.Context, percpu bool) ([]TimesStat, error) {
 	}
 
 	var i uint32
-	for i = 0; i < ncpu; i++ {
+	for i = range ncpu {
 		mib := []int32{ctlKern, kernCpTime, int32(i)}
 		buf, _, err := common.CallSyscall(mib)
 		if err != nil {

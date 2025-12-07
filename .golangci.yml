@@ -25,6 +25,7 @@ linters:
     - importas
     - ineffassign
     - misspell
+    - modernize
     - nakedret
     - nilnesserr
     - noctx

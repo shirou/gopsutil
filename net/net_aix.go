@@ -185,9 +185,9 @@ func hasCorrectInetProto(kind, proto string) bool {
 
 func parseNetstatA(output, kind string) ([]ConnectionStat, error) {
 	var ret []ConnectionStat
-	lines := strings.Split(string(output), "\n")
+	lines := strings.SplitSeq(string(output), "\n")
 
-	for _, line := range lines {
+	for line := range lines {
 		fields := strings.Fields(line)
 		if len(fields) < 1 {
 			continue

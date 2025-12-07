@@ -104,7 +104,7 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 	}
 
 	ret := InfoStat{}
-	for _, line := range strings.Split(string(out), "\n") {
+	for line := range strings.SplitSeq(string(out), "\n") {
 		switch {
 		case strings.HasPrefix(line, "Number Of Processors:"):
 			p := strings.Fields(line)

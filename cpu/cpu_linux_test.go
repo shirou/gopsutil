@@ -54,8 +54,8 @@ func TestCountsAgainstLscpu(t *testing.T) {
 	var threadsPerCore, coresPerSocket, sockets, books, drawers int
 	books = 1
 	drawers = 1
-	lines := strings.Split(string(out), "\n")
-	for _, line := range lines {
+	lines := strings.SplitSeq(string(out), "\n")
+	for line := range lines {
 		fields := strings.Split(line, ":")
 		if len(fields) < 2 {
 			continue

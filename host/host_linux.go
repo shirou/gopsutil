@@ -96,7 +96,7 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 
 	ret := make([]UserStat, 0, count)
 
-	for i := 0; i < count; i++ {
+	for i := range count {
 		b := buf[i*sizeOfUtmp : (i+1)*sizeOfUtmp]
 
 		var u utmp
@@ -148,7 +148,7 @@ func getlsbStruct(ctx context.Context) (*lsbStruct, error) {
 		if err != nil {
 			return ret, err
 		}
-		for _, line := range strings.Split(string(out), "\n") {
+		for line := range strings.SplitSeq(string(out), "\n") {
 			field := strings.Split(line, ":")
 			if len(field) < 2 {
 				continue

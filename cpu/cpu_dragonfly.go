@@ -60,12 +60,12 @@ func TimesWithContext(_ context.Context, percpu bool) ([]TimesStat, error) {
 
 		// We can't do this in init due to the conflict with cpu.init()
 		if cpuTimesSize == 0 {
-			cpuTimesSize = int(reflect.TypeOf(cpuTimes{}).Size())
+			cpuTimesSize = int(reflect.TypeFor[cpuTimes]().Size())
 		}
 
 		ncpus := len(buf) / cpuTimesSize
 		ret := make([]TimesStat, 0, ncpus)
-		for i := 0; i < ncpus; i++ {
+		for i := range ncpus {
 			times := (*cpuTimes)(unsafe.Pointer(&buf[i*cpuTimesSize]))
 			if *times == emptyTimes {
 				// CPU not present
@@ -144,11 +144,11 @@ func parseDmesgBoot(fileName string) (InfoStat, error) {
 			}
 			c.Stepping = int32(t)
 		} else if matches := featuresMatch.FindStringSubmatch(line); matches != nil {
-			for _, v := range strings.Split(matches[1], ",") {
+			for v := range strings.SplitSeq(matches[1], ",") {
 				c.Flags = append(c.Flags, strings.ToLower(v))
 			}
 		} else if matches := featuresMatch2.FindStringSubmatch(line); matches != nil {
-			for _, v := range strings.Split(matches[1], ",") {
+			for v := range strings.SplitSeq(matches[1], ",") {
 				c.Flags = append(c.Flags, strings.ToLower(v))
 			}
 		}

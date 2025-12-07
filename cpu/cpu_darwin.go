@@ -92,19 +92,19 @@ func InfoWithContext(_ context.Context) ([]InfoStat, error) {
 	c.Stepping = int32(stepping)
 	features, err := unix.Sysctl("machdep.cpu.features")
 	if err == nil {
-		for _, v := range strings.Fields(features) {
+		for v := range strings.FieldsSeq(features) {
 			c.Flags = append(c.Flags, strings.ToLower(v))
 		}
 	}
 	leaf7Features, err := unix.Sysctl("machdep.cpu.leaf7_features")
 	if err == nil {
-		for _, v := range strings.Fields(leaf7Features) {
+		for v := range strings.FieldsSeq(leaf7Features) {
 			c.Flags = append(c.Flags, strings.ToLower(v))
 		}
 	}
 	extfeatures, err := unix.Sysctl("machdep.cpu.extfeatures")
 	if err == nil {
-		for _, v := range strings.Fields(extfeatures) {
+		for v := range strings.FieldsSeq(extfeatures) {
 			c.Flags = append(c.Flags, strings.ToLower(v))
 		}
 	}
