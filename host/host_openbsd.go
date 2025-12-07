@@ -36,11 +36,7 @@ func numProcs(ctx context.Context) (uint64, error) {
 	return uint64(len(procs)), nil
 }
 
-func PlatformInformationWithContext(_ context.Context) (string, string, string, error) {
-	platform := ""
-	family := ""
-	version := ""
-
+func PlatformInformationWithContext(_ context.Context) (platform, family, version string, err error) {
 	p, err := unix.Sysctl("kern.ostype")
 	if err == nil {
 		platform = strings.ToLower(p)
@@ -53,7 +49,7 @@ func PlatformInformationWithContext(_ context.Context) (string, string, string, 
 	return platform, family, version, nil
 }
 
-func VirtualizationWithContext(_ context.Context) (string, string, error) {
+func VirtualizationWithContext(_ context.Context) (system, role string, err error) {
 	return "", "", common.ErrNotImplementedError
 }
 

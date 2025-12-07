@@ -875,7 +875,7 @@ func (p *Process) setPpid(ppid int32) {
 	p.parent = ppid
 }
 
-func getFromSnapProcess(pid int32) (int32, int32, string, error) { //nolint:unparam //FIXME
+func getFromSnapProcess(pid int32) (ppid, threads int32, exe string, err error) { //nolint:unparam //FIXME
 	snap, err := windows.CreateToolhelp32Snapshot(windows.TH32CS_SNAPPROCESS, uint32(pid))
 	if err != nil {
 		return 0, 0, "", err

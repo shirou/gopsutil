@@ -201,6 +201,6 @@ func KernelArch() (arch string, err error) {
 	return arch, nil
 }
 
-func VirtualizationWithContext(_ context.Context) (string, string, error) {
+func VirtualizationWithContext(_ context.Context) (system, role string, err error) {
 	return "", "", common.ErrNotImplementedError
 }

@@ -29,7 +29,7 @@ func UsersWithContext(_ context.Context) ([]UserStat, error) {
 	return []UserStat{}, common.ErrNotImplementedError
 }
 
-func VirtualizationWithContext(_ context.Context) (string, string, error) {
+func VirtualizationWithContext(_ context.Context) (system, role string, err error) {
 	return "", "", common.ErrNotImplementedError
 }
 
@@ -37,7 +37,7 @@ func KernelVersionWithContext(_ context.Context) (string, error) {
 	return "", common.ErrNotImplementedError
 }
 
-func PlatformInformationWithContext(_ context.Context) (string, string, string, error) {
+func PlatformInformationWithContext(_ context.Context) (platform, family, version string, err error) {
 	return "", "", "", common.ErrNotImplementedError
 }
 

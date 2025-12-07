@@ -608,15 +608,16 @@ func (p *Process) fillFromLimitsWithContext(ctx context.Context) ([]RlimitStat, 
 }
 
 // Get list of /proc/(pid)/fd files
-func (p *Process) fillFromfdListWithContext(ctx context.Context) (string, []string, error) {
+func (p *Process) fillFromfdListWithContext(ctx context.Context) (statPath string, fnames []string, err error) {
 	pid := p.Pid
-	statPath := common.HostProcWithContext(ctx, strconv.Itoa(int(pid)), "fd")
-	d, err := os.Open(statPath)
+	statPath = common.HostProcWithContext(ctx, strconv.Itoa(int(pid)), "fd")
+	var d *os.File
+	d, err = os.Open(statPath)
 	if err != nil {
-		return statPath, []string{}, err
+		return statPath, nil, err
 	}
 	defer d.Close()
-	fnames, err := d.Readdirnames(-1)
+	fnames, err = d.Readdirnames(-1)
 	return statPath, fnames, err
 }
 
@@ -1023,11 +1024,12 @@ func (p *Process) fillFromStatusWithContext(ctx context.Context) error {
 	return nil
 }
 
-func (p *Process) fillFromTIDStat(tid int32) (uint64, int32, *cpu.TimesStat, int64, uint32, int32, *PageFaultsStat, error) {
-	return p.fillFromTIDStatWithContext(context.Background(), tid)
+func (p *Process) fillFromTIDStat(tid int32) (utime uint64, stime int32, times *cpu.TimesStat, rss int64, vsize uint32, processor int32, pf *PageFaultsStat, err error) {
+	utime, stime, times, rss, vsize, processor, pf, err = p.fillFromTIDStatWithContext(context.Background(), tid)
+	return utime, stime, times, rss, vsize, processor, pf, err
 }
 
-func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (uint64, int32, *cpu.TimesStat, int64, uint32, int32, *PageFaultsStat, error) {
+func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (utime uint64, stime int32, times *cpu.TimesStat, rss int64, vsize uint32, processor int32, pf *PageFaultsStat, err error) {
 	pid := p.Pid
 	var statPath string
 
@@ -1049,20 +1051,23 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
 
-	ppid, err := strconv.ParseInt(fields[4], 10, 32)
+	var ppid64 int64
+	ppid64, err = strconv.ParseInt(fields[4], 10, 32)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
-	utime, err := strconv.ParseFloat(fields[14], 64)
+	var utimeF float64
+	utimeF, err = strconv.ParseFloat(fields[14], 64)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
-
-	stime, err := strconv.ParseFloat(fields[15], 64)
+	var stimeF float64
+	stimeF, err = strconv.ParseFloat(fields[15], 64)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
-
+	utime = uint64(utimeF)
+	stime = int32(stimeF)
 	// There is no such thing as iotime in stat file.  As an approximation, we
 	// will use delayacct_blkio_ticks (aggregated block I/O delays, as per Linux
 	// docs).  Note: I am assuming at least Linux 2.6.18
@@ -1075,16 +1080,15 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 	} else {
 		iotime = 0 // e.g. SmartOS containers
 	}
-
 	cpuTimes := &cpu.TimesStat{
 		CPU:    "cpu",
-		User:   utime / float64(clockTicks),
-		System: stime / float64(clockTicks),
+		User:   float64(utime) / float64(clockTicks),
+		System: float64(stime) / float64(clockTicks),
 		Iowait: iotime / float64(clockTicks),
 	}
-
 	bootTime, _ := common.BootTimeWithContext(ctx, enableBootTimeCache)
-	t, err := strconv.ParseUint(fields[22], 10, 64)
+	var t uint64
+	t, err = strconv.ParseUint(fields[22], 10, 64)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
@@ -1129,10 +1133,10 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 		ChildMajorFaults: cMajFault,
 	}
 
-	return terminal, int32(ppid), cpuTimes, createTime, uint32(rtpriority), nice, faults, nil
+	return terminal, int32(ppid64), cpuTimes, createTime, uint32(rtpriority), nice, faults, nil
 }
 
-func (p *Process) fillFromStatWithContext(ctx context.Context) (uint64, int32, *cpu.TimesStat, int64, uint32, int32, *PageFaultsStat, error) {
+func (p *Process) fillFromStatWithContext(ctx context.Context) (utime uint64, stime int32, times *cpu.TimesStat, rss int64, vsize uint32, processor int32, pf *PageFaultsStat, err error) {
 	return p.fillFromTIDStatWithContext(ctx, -1)
 }
 

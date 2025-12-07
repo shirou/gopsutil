@@ -139,7 +139,7 @@ func readBootTimeStat(ctx context.Context) (uint64, error) {
 	return 0, errors.New("could not find btime")
 }
 
-func Virtualization() (string, string, error) {
+func Virtualization() (system, role string, err error) {
 	return VirtualizationWithContext(context.Background())
 }
 
@@ -150,9 +150,7 @@ var (
 	cachedVirtOnce  sync.Once
 )
 
-func VirtualizationWithContext(ctx context.Context) (string, string, error) {
-	var system, role string
-
+func VirtualizationWithContext(ctx context.Context) (system, role string, err error) {
 	// if cached already, return from cache
 	cachedVirtMutex.RLock() // unlock won't be deferred so concurrent reads don't wait for long
 	if cachedVirtMap != nil {

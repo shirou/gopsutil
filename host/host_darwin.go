@@ -94,11 +94,7 @@ func UsersWithContext(_ context.Context) ([]UserStat, error) {
 	return ret, nil
 }
 
-func PlatformInformationWithContext(ctx context.Context) (string, string, string, error) {
-	platform := ""
-	family := ""
-	pver := ""
-
+func PlatformInformationWithContext(ctx context.Context) (platform, family, pver string, err error) {
 	p, err := unix.Sysctl("kern.ostype")
 	if err == nil {
 		platform = strings.ToLower(p)
@@ -122,11 +118,11 @@ func PlatformInformationWithContext(ctx context.Context) (string, string, string
 	return platform, family, pver, nil
 }
 
-func VirtualizationWithContext(_ context.Context) (string, string, error) {
+func VirtualizationWithContext(_ context.Context) (system, role string, err error) {
 	return "", "", common.ErrNotImplementedError
 }
 
-func KernelVersionWithContext(_ context.Context) (string, error) {
+func KernelVersionWithContext(_ context.Context) (v string, err error) {
 	version, err := unix.Sysctl("kern.osrelease")
 	return strings.ToLower(version), err
 }

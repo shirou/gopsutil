@@ -49,7 +49,6 @@ linters:
         - hexLiteral
         - hugeParam
         - tooManyResultsChecker
-        - unnamedResult
       enable-all: true
     gomodguard:
       blocked:

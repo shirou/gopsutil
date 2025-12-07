@@ -20,24 +20,21 @@ func numProcs(_ context.Context) (uint64, error) {
 	return 0, common.ErrNotImplementedError
 }
 
-func PlatformInformationWithContext(_ context.Context) (string, string, string, error) {
-	platform := ""
-	family := ""
-	version := ""
-
-	p, err := unix.Sysctl("kern.ostype")
+func PlatformInformationWithContext(_ context.Context) (platform, family, version string, err error) {
+	var p string
+	p, err = unix.Sysctl("kern.ostype")
 	if err == nil {
 		platform = strings.ToLower(p)
 	}
-	v, err := unix.Sysctl("kern.osrelease")
+	var v string
+	v, err = unix.Sysctl("kern.osrelease")
 	if err == nil {
 		version = strings.ToLower(v)
 	}
-
 	return platform, family, version, nil
 }
 
-func VirtualizationWithContext(_ context.Context) (string, string, error) {
+func VirtualizationWithContext(_ context.Context) (system, role string, err error) {
 	return "", "", common.ErrNotImplementedError
 }
 

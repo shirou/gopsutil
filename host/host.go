@@ -130,7 +130,7 @@ func Users() ([]UserStat, error) {
 	return UsersWithContext(context.Background())
 }
 
-func PlatformInformation() (string, string, string, error) {
+func PlatformInformation() (platform, family, version string, err error) {
 	return PlatformInformationWithContext(context.Background())
 }
 
@@ -139,7 +139,7 @@ func HostID() (string, error) {
 	return HostIDWithContext(context.Background())
 }
 
-func Virtualization() (string, string, error) {
+func Virtualization() (system, role string, err error) {
 	return VirtualizationWithContext(context.Background())
 }
 

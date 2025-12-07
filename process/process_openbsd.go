@@ -358,12 +358,12 @@ func (p *Process) getKProc() (*KinfoProc, error) {
 	return &k, nil
 }
 
-func callKernProcSyscall(op, arg int32) ([]byte, uint64, error) {
+func callKernProcSyscall(op, arg int32) (buf []byte, length uint64, err error) {
 	mib := []int32{CTLKern, KernProc, op, arg, sizeOfKinfoProc, 0}
 	mibptr := unsafe.Pointer(&mib[0])
 	miblen := uint64(len(mib))
-	length := uint64(0)
-	_, _, err := unix.Syscall6(
+	length = uint64(0)
+	_, _, errno := unix.Syscall6(
 		unix.SYS___SYSCTL,
 		uintptr(mibptr),
 		uintptr(miblen),
@@ -371,8 +371,8 @@ func callKernProcSyscall(op, arg int32) ([]byte, uint64, error) {
 		uintptr(unsafe.Pointer(&length)),
 		0,
 		0)
-	if err != 0 {
-		return nil, length, err
+	if errno != 0 {
+		return nil, length, errno
 	}
 
 	count := int32(length / uint64(sizeOfKinfoProc))
@@ -380,8 +380,8 @@ func callKernProcSyscall(op, arg int32) ([]byte, uint64, error) {
 	mibptr = unsafe.Pointer(&mib[0])
 	miblen = uint64(len(mib))
 	// get proc info itself
-	buf := make([]byte, length)
-	_, _, err = unix.Syscall6(
+	buf = make([]byte, length)
+	_, _, errno = unix.Syscall6(
 		unix.SYS___SYSCTL,
 		uintptr(mibptr),
 		uintptr(miblen),
@@ -389,8 +389,8 @@ func callKernProcSyscall(op, arg int32) ([]byte, uint64, error) {
 		uintptr(unsafe.Pointer(&length)),
 		0,
 		0)
-	if err != 0 {
-		return buf, length, err
+	if errno != 0 {
+		return buf, length, errno
 	}
 
 	return buf, length, nil

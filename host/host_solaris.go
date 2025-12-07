@@ -95,7 +95,7 @@ func UsersWithContext(_ context.Context) ([]UserStat, error) {
 	return []UserStat{}, common.ErrNotImplementedError
 }
 
-func VirtualizationWithContext(_ context.Context) (string, string, error) {
+func VirtualizationWithContext(_ context.Context) (system, role string, err error) {
 	return "", "", common.ErrNotImplementedError
 }
 
@@ -131,7 +131,7 @@ func parseReleaseFile() (string, error) {
 }
 
 // parseUnameOutput returns platformFamily, kernelVersion and platformVersion
-func parseUnameOutput(ctx context.Context) (string, string, string, error) {
+func parseUnameOutput(ctx context.Context) (platform, version, release string, err error) {
 	out, err := invoke.CommandWithContext(ctx, "uname", "-srv")
 	if err != nil {
 		return "", "", "", err
@@ -150,13 +150,14 @@ func KernelVersionWithContext(ctx context.Context) (string, error) {
 	return kernelVersion, err
 }
 
-func PlatformInformationWithContext(ctx context.Context) (string, string, string, error) {
-	platform, err := parseReleaseFile()
+func PlatformInformationWithContext(ctx context.Context) (platform, family, version string, err error) {
+	platform, err = parseReleaseFile()
 	if err != nil {
 		return "", "", "", err
 	}
 
-	platformFamily, _, platformVersion, err := parseUnameOutput(ctx)
+	var platformFamily, platformVersion string
+	platformFamily, _, platformVersion, err = parseUnameOutput(ctx)
 	if err != nil {
 		return "", "", "", err
 	}

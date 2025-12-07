@@ -197,15 +197,16 @@ func (*Process) EnvironWithContext(_ context.Context) ([]string, error) {
 ** Internal functions
 **/
 
-func (p *Process) fillFromfdListWithContext(ctx context.Context) (string, []string, error) {
+func (p *Process) fillFromfdListWithContext(ctx context.Context) (statPath string, fnames []string, err error) {
 	pid := p.Pid
-	statPath := common.HostProcWithContext(ctx, strconv.Itoa(int(pid)), "fd")
-	d, err := os.Open(statPath)
+	statPath = common.HostProcWithContext(ctx, strconv.Itoa(int(pid)), "fd")
+	var d *os.File
+	d, err = os.Open(statPath)
 	if err != nil {
-		return statPath, []string{}, err
+		return statPath, nil, err
 	}
 	defer d.Close()
-	fnames, err := d.Readdirnames(-1)
+	fnames, err = d.Readdirnames(-1)
 	return statPath, fnames, err
 }
 

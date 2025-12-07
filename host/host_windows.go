@@ -240,7 +240,7 @@ func UsersWithContext(_ context.Context) ([]UserStat, error) {
 	return ret, common.ErrNotImplementedError
 }
 
-func VirtualizationWithContext(_ context.Context) (string, string, error) {
+func VirtualizationWithContext(_ context.Context) (system, role string, err error) {
 	return "", "", common.ErrNotImplementedError
 }
 

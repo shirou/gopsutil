@@ -389,6 +389,6 @@ func getSusePlatform(contents []string) string {
 	return "suse"
 }
 
-func VirtualizationWithContext(ctx context.Context) (string, string, error) {
+func VirtualizationWithContext(ctx context.Context) (system, role string, err error) {
 	return common.VirtualizationWithContext(ctx)
 }

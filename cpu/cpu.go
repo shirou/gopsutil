@@ -103,14 +103,14 @@ func (c InfoStat) String() string {
 	return string(s)
 }
 
-func getAllBusy(t TimesStat) (float64, float64) {
-	tot := t.Total()
+func getAllBusy(t TimesStat) (tot, busy float64) {
+	tot = t.Total()
 	if runtime.GOOS == "linux" {
 		tot -= t.Guest     // Linux 2.6.24+
 		tot -= t.GuestNice // Linux 3.2.0+
 	}
 
-	busy := tot - t.Idle - t.Iowait
+	busy = tot - t.Idle - t.Iowait
 
 	return tot, busy
 }

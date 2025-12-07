@@ -372,8 +372,8 @@ func (p *Process) CwdWithContext(_ context.Context) (string, error) {
 	return common.GoString(&vpi.vipPath[0]), nil
 }
 
-func procArgs(pid int32) ([]byte, int, error) {
-	procargs, _, err := common.CallSyscall([]int32{common.CTL_KERN, common.KERN_PROCARGS2, pid})
+func procArgs(pid int32) (procargs []byte, numargs int, err error) {
+	procargs, _, err = common.CallSyscall([]int32{common.CTL_KERN, common.KERN_PROCARGS2, pid})
 	if err != nil {
 		return nil, 0, err
 	}
