@@ -12,9 +12,13 @@ import (
 	"io"
 	"net"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"syscall"
+
+	"golang.org/x/sys/unix"
 
 	"github.com/shirou/gopsutil/v4/internal/common"
 )
@@ -402,10 +406,24 @@ func connectionsPidMaxWithoutUidsWithContext(ctx context.Context, kind string, p
 	if err != nil {
 		return nil, fmt.Errorf("could not get pid(s), %d: %w", pid, err)
 	}
-	return statsFromInodesWithContext(ctx, root, pid, tmap, inodes, skipUids)
+	namespaceInodes, err := uniqueNetnsPaths(root)
+	if err != nil {
+		return nil, fmt.Errorf("could not get net namespace inodes: %w", err)
+	}
+	results := []ConnectionStat{}
+	for k, v := range namespaceInodes {
+		stats, statsErr := switchNamespace[[]ConnectionStat](v, func() ([]ConnectionStat, error) {
+			return statsFromInodesWithContext(ctx, root, pid, tmap, inodes, skipUids, k.Ino)
+		})
+		if statsErr != nil {
+			return nil, fmt.Errorf("could not get stats from namespace %s: %w", v, statsErr)
+		}
+		results = append(results, stats...)
+	}
+	return results, nil
 }
 
-func statsFromInodesWithContext(ctx context.Context, root string, pid int32, tmap []netConnectionKindType, inodes map[string][]inodeMap, skipUids bool) ([]ConnectionStat, error) {
+func statsFromInodesWithContext(ctx context.Context, root string, pid int32, tmap []netConnectionKindType, inodes map[string][]inodeMap, skipUids bool, namespace uint64) ([]ConnectionStat, error) {
 	dupCheckMap := make(map[string]struct{})
 	var ret []ConnectionStat
 
@@ -438,13 +456,14 @@ func statsFromInodesWithContext(ctx context.Context, root string, pid int32, tma
 			}
 
 			conn := ConnectionStat{
-				Fd:     c.fd,
-				Family: c.family,
-				Type:   c.sockType,
-				Laddr:  c.laddr,
-				Raddr:  c.raddr,
-				Status: c.status,
-				Pid:    c.pid,
+				Fd:        c.fd,
+				Family:    c.family,
+				Type:      c.sockType,
+				Laddr:     c.laddr,
+				Raddr:     c.raddr,
+				Status:    c.status,
+				Pid:       c.pid,
+				Namespace: namespace,
 			}
 			if c.pid == 0 {
 				conn.Pid = c.boundPid
@@ -802,4 +821,78 @@ func updateMap(src, add map[string][]inodeMap) map[string][]inodeMap {
 		src[key] = append(a, value...)
 	}
 	return src
+}
+
+type nsKey struct {
+	Dev uint64
+	Ino uint64
+}
+
+func uniqueNetnsPaths(procDir string) (map[nsKey]string, error) {
+	entries, err := os.ReadDir(procDir)
+	if err != nil {
+		return nil, err
+	}
+
+	seen := make(map[nsKey]string)
+
+	for _, e := range entries {
+		if !e.IsDir() {
+			continue
+		}
+		pid := e.Name()
+		if _, err := strconv.Atoi(pid); err != nil {
+			continue
+		}
+
+		nsPath := filepath.Join(procDir, pid, "ns", "net")
+		var st syscall.Stat_t
+		if err := syscall.Stat(nsPath, &st); err != nil {
+			continue
+		}
+
+		key := nsKey{Dev: st.Dev, Ino: st.Ino}
+		if _, exists := seen[key]; exists {
+			continue
+		}
+		seen[key] = nsPath
+	}
+	return seen, nil
+}
+
+func switchNamespace[T any](targetNamespace string, f func() (T, error)) (ret T, err error) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
+	origFD, err := currentNetnsFD()
+	if err != nil {
+		return ret, fmt.Errorf("getting current namespace fd failed: %w", err)
+	}
+	defer unix.Close(origFD)
+
+	targetFD, err := openNetnsFD(targetNamespace)
+	if err != nil {
+		return ret, fmt.Errorf("opening target namespace fd failed: %w", err)
+	}
+
+	if setErr := unix.Setns(targetFD, unix.CLONE_NEWNET); setErr != nil {
+		unix.Close(targetFD)
+		return ret, fmt.Errorf("setns to target failed: %w", setErr)
+	}
+	unix.Close(targetFD)
+
+	defer unix.Setns(origFD, unix.CLONE_NEWNET)
+	return f()
+}
+
+func openNetnsFD(path string) (int, error) {
+	fd, err := unix.Open(path, unix.O_RDONLY|unix.O_CLOEXEC, 0)
+	if err != nil {
+		return -1, fmt.Errorf("opening file descriptor failed- %s: %w", path, err)
+	}
+	return fd, nil
+}
+
+func currentNetnsFD() (int, error) {
+	return openNetnsFD("/proc/self/ns/net")
 }

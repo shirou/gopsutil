@@ -32,14 +32,15 @@ type Addr struct {
 }
 
 type ConnectionStat struct {
-	Fd     uint32  `json:"fd"`
-	Family uint32  `json:"family"`
-	Type   uint32  `json:"type"`
-	Laddr  Addr    `json:"localaddr"`
-	Raddr  Addr    `json:"remoteaddr"`
-	Status string  `json:"status"`
-	Uids   []int32 `json:"uids"`
-	Pid    int32   `json:"pid"`
+	Fd        uint32  `json:"fd"`
+	Family    uint32  `json:"family"`
+	Type      uint32  `json:"type"`
+	Laddr     Addr    `json:"localaddr"`
+	Raddr     Addr    `json:"remoteaddr"`
+	Status    string  `json:"status"`
+	Uids      []int32 `json:"uids"`
+	Pid       int32   `json:"pid"`
+	Namespace uint64  `json:"namespace"`
 }
 
 // System wide stats about different network protocols
