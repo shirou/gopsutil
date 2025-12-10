@@ -236,7 +236,7 @@ Some code is ported from Ohai. Many thanks.
 |terminal            |x      |x        |x        |       |         |
 |io\_counters        |x      |x        |x        |       |x        |
 |nice                |x      |x        |x        |x      |x        |
-|num\_fds            |x      |         |         |       |x        |
+|num\_fds            |x      |         |         |x      |x        |
 |num\_ctx\_switches  |x      |         |         |       |         |
 |num\_threads        |x      |x        |x        |x      |x        |
 |cpu\_times          |x      |         |         |       |x        |
