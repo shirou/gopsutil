@@ -499,7 +499,7 @@ type procFDInfo struct {
 // It uses proc_pidinfo with PROC_PIDLISTFDS to query the kernel for the count
 // of open file descriptors. The method makes a single syscall and calculates
 // the count from the buffer size returned by the kernel.
-func (p *Process) NumFDsWithContext(ctx context.Context) (int32, error) {
+func (p *Process) NumFDsWithContext(_ context.Context) (int32, error) {
 	funcs, err := loadProcFuncs()
 	if err != nil {
 		return 0, err
