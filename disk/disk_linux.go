@@ -292,7 +292,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 	}
 
 	// use mountinfo
-	ret, err = parseFieldsOnMountinfo(ctx, lines, all, fs, filename)
+	ret, err = parseFieldsOnMountinfo(ctx, lines, all, filename)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing mountinfo file %s: %w", filename, err)
 	}
@@ -323,44 +323,75 @@ func parseFieldsOnMounts(lines []string, all bool, fs []string) []PartitionStat 
 	return ret
 }
 
-func parseFieldsOnMountinfo(ctx context.Context, lines []string, all bool, fs []string, filename string) ([]PartitionStat, error) {
+func parseFieldsOnMountinfo(ctx context.Context, lines []string, all bool, filename string) ([]PartitionStat, error) {
 	ret := make([]PartitionStat, 0, len(lines))
+	seenDevIDs := make(map[string]string)
 
 	for _, line := range lines {
-		// a line of 1/mountinfo has the following structure:
-		// 36  35  98:0 /mnt1 /mnt2 rw,noatime master:1 - ext3 /dev/root rw,errors=continue
-		// (1) (2) (3)   (4)   (5)      (6)      (7)   (8) (9)   (10)         (11)
+		// See proc_pid_mountinfo(5) (proc(5) on EL)
+		// A line of <filename> (<procfs root>/<pid>/mountinfo) has the following structure:
+		//	36  35  98:0 /mnt1 /mnt2 rw,noatime master:1 - ext3 /dev/root rw,errors=continue
+		//	(1) (2) (3)   (4)   (5)      (6)      (7)   (8) (9)   (10)         (11)
+		// Documentation is unclear if (6) is optional/may not be present, so it is conditionally parsed if present.
+		// (7) is optional and may not be present, but this function does not currently use it.
+		// Documentation is unclear if (11) is optional or not but this function does not currently use it.
 
-		// split the mountinfo line by the separator hyphen
-		parts := strings.Split(line, " - ")
+		// split the mountinfo line by the separator hyphen (`(8)` above)
+		parts := strings.SplitN(line, " - ", 2)
 		if len(parts) != 2 {
-			return nil, fmt.Errorf("found invalid mountinfo line in file %s: %s ", filename, line)
+			return nil, fmt.Errorf("found invalid mountinfo line in file %s (bad parts len): %s ", filename, line)
 		}
 
 		fields := strings.Fields(parts[0])
+		if len(fields) < 5 { // field (7) is optional, field (6) may(?) be optional
+			return nil, fmt.Errorf("found invalid mountinfo line in file %s (bad fields(1) len): %s ", filename, line)
+		}
 		blockDeviceID := fields[2]
+		rootDir := fields[3]
 		mountPoint := fields[4]
-		mountOpts := strings.Split(fields[5], ",")
+		mountOpts := []string{}
+		if len(fields) >= 6 {
+			mountOpts = strings.Split(fields[5], ",")
+		}
+		fields = strings.Fields(parts[1])
+		if len(fields) < 2 {
+			return nil, fmt.Errorf("found invalid mountinfo line in file %s (bad fields(2) len): %s ", filename, line)
+		}
+		fsType := fields[0]
+		mntSrc := fields[1]
+		isBind := false
+		// Per fstab(5), the device can be any string for non-storage-backed filesystems.
+		if !all && !strings.HasPrefix(mntSrc, "/") {
+			continue
+		}
+		// Some virtual/non-storage filesystems do still have real sources (e.g. nsfs binds),
+		// but need to use the "root" field (field 4) instead of the "source" field (field 10).
+		// The "source" field is actually "*filesystem-specific" information".
+		device := rootDir
+		if strings.HasPrefix(mntSrc, "/") {
+			device = mntSrc
+		} else if rootDir == "/" {
+			device = "none"
+		}
 
-		if rootDir := fields[3]; rootDir != "" && rootDir != "/" {
+		if _, ok := seenDevIDs[blockDeviceID]; ok {
+			// Bind mount; set the underlying mount path as the device.
+			device = seenDevIDs[blockDeviceID]
+			isBind = true
 			mountOpts = append(mountOpts, "bind")
 		}
 
-		fields = strings.Fields(parts[1])
-		fstype := fields[0]
-		device := fields[1]
+		seenDevIDs[blockDeviceID] = mountPoint
+
+		if !all && isBind {
+			continue
+		}
 
 		d := PartitionStat{
 			Device:     device,
 			Mountpoint: unescapeFstab(mountPoint),
-			Fstype:     fstype,
+			Fstype:     fsType,
 			Opts:       mountOpts,
-		}
-
-		if !all {
-			if d.Device == "none" || !common.StringsHas(fs, d.Fstype) {
-				continue
-			}
 		}
 
 		if strings.HasPrefix(d.Device, "/dev/mapper/") {
