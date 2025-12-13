@@ -851,7 +851,7 @@ func uniqueNetnsPaths(procDir string) (map[nsKey]string, error) {
 			continue
 		}
 
-		key := nsKey{Dev: st.Dev, Ino: st.Ino}
+		key := nsKey{Dev: uint64(st.Dev), Ino: uint64(st.Ino)}
 		if _, exists := seen[key]; exists {
 			continue
 		}
