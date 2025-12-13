@@ -488,3 +488,54 @@ func (p *Process) MemoryInfoWithContext(_ context.Context) (*MemoryInfoStat, err
 	}
 	return ret, nil
 }
+
+// procFDInfo represents a file descriptor entry from sys/proc_info.h
+type procFDInfo struct {
+	ProcFd     int32
+	ProcFdtype uint32
+}
+
+// NumFDsWithContext returns the number of file descriptors used by the process.
+// It uses proc_pidinfo with PROC_PIDLISTFDS to query the kernel for the count
+// of open file descriptors. The method makes a single syscall and calculates
+// the count from the buffer size returned by the kernel.
+func (p *Process) NumFDsWithContext(_ context.Context) (int32, error) {
+	funcs, err := loadProcFuncs()
+	if err != nil {
+		return 0, err
+	}
+	defer funcs.Close()
+
+	// First call: get required buffer size
+	bufferSize := funcs.procPidInfo(
+		p.Pid,
+		common.PROC_PIDLISTFDS,
+		0,
+		0, // NULL buffer
+		0, // 0 size
+	)
+	if bufferSize <= 0 {
+		return 0, fmt.Errorf("unknown error: proc_pidinfo returned %d", bufferSize)
+	}
+
+	// Allocate buffer of the required size
+	const sizeofProcFDInfo = int32(unsafe.Sizeof(procFDInfo{}))
+	numEntries := bufferSize / sizeofProcFDInfo
+	buf := make([]procFDInfo, numEntries)
+
+	// Second call: get actual data
+	ret := funcs.procPidInfo(
+		p.Pid,
+		common.PROC_PIDLISTFDS,
+		0,
+		uintptr(unsafe.Pointer(&buf[0])), // Real buffer
+		bufferSize,                       // Size from first call
+	)
+	if ret <= 0 {
+		return 0, fmt.Errorf("unknown error: proc_pidinfo returned %d", ret)
+	}
+
+	// Calculate actual number of FDs returned
+	numFDs := ret / sizeofProcFDInfo
+	return numFDs, nil
+}
