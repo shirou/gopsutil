@@ -100,3 +100,14 @@ func TestCountsLogicalAndroid_1037(t *testing.T) { // https://github.com/shirou/
 	expected := 8
 	assert.Equalf(t, expected, count, "expected %v, got %v", expected, count)
 }
+
+func TestCPUInfoModelNameWithColon_1958(t *testing.T) { // https://github.com/shirou/gopsutil/issues/1958
+	t.Setenv("HOST_PROC", "testdata/linux/1958/proc")
+
+	info, err := Info()
+	require.NoError(t, err)
+	require.Len(t, info, 1)
+
+	expected := "Hygon C86-4G (OPN:5435)"
+	assert.Equalf(t, expected, info[0].ModelName, "expected %v, got %v", expected, info[0].ModelName)
+}
