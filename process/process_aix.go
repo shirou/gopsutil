@@ -843,11 +843,11 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
 	if tid > -1 {
-		err = binary.Read(statFile, binary.LittleEndian, &aixlwpStat)
+		err = binary.Read(lwpStatFile, binary.LittleEndian, &aixlwpStat)
 		if err != nil {
 			return 0, 0, nil, 0, 0, 0, nil, err
 		}
-		err = binary.Read(infoFile, binary.LittleEndian, &aixlspPSinfo)
+		err = binary.Read(lwpInfoFile, binary.LittleEndian, &aixlspPSinfo)
 		if err != nil {
 			return 0, 0, nil, 0, 0, 0, nil, err
 		}
@@ -939,7 +939,20 @@ func readPidsFromDir(path string) ([]int32, error) {
 func splitProcStat(content []byte) []string {
 	nameStart := bytes.IndexByte(content, '(')
 	nameEnd := bytes.LastIndexByte(content, ')')
-	restFields := strings.Fields(string(content[nameEnd+2:])) // +2 skip ') '
+	
+	// Defensive checks for malformed input
+	if nameStart < 0 || nameEnd < 0 || nameStart >= nameEnd {
+		// Malformed input; return empty result to avoid panic
+		return []string{}
+	}
+	
+	// Ensure rest offset is within bounds
+	restStart := nameEnd + 2
+	if restStart > len(content) {
+		restStart = len(content)
+	}
+	
+	restFields := strings.Fields(string(content[restStart:])) // +2 skip ') '
 	name := content[nameStart+1 : nameEnd]
 	pid := strings.TrimSpace(string(content[:nameStart]))
 	fields := make([]string, 3, len(restFields)+3)
