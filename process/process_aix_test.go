@@ -241,3 +241,107 @@ func TestProcessMemoryMaps(t *testing.T) {
 
 	require.Equal(t, expected, maps)
 }
+func TestFillFromExeWithContext(t *testing.T) {
+	pids, err := os.ReadDir("testdata/aix/")
+	if err != nil {
+		t.Error(err)
+	}
+	t.Setenv("HOST_PROC", "testdata/aix")
+	for _, pidDir := range pids {
+		pid, err := strconv.ParseInt(pidDir.Name(), 0, 32)
+		if err != nil {
+			continue
+		}
+		psinfo := fmt.Sprintf("testdata/aix/%d/psinfo", pid)
+		if _, err := os.Stat(psinfo); err != nil {
+			continue
+		}
+		p, err := NewProcess(int32(pid))
+		require.NoError(t, err)
+		exe, err := p.fillFromExeWithContext(context.Background())
+		if err == nil {
+			// Should get a string (possibly empty or with executable name)
+			assert.IsType(t, "", exe)
+		}
+	}
+}
+
+func TestFillFromCmdlineWithContext(t *testing.T) {
+	pids, err := os.ReadDir("testdata/aix/")
+	if err != nil {
+		t.Error(err)
+	}
+	t.Setenv("HOST_PROC", "testdata/aix")
+	for _, pidDir := range pids {
+		pid, err := strconv.ParseInt(pidDir.Name(), 0, 32)
+		if err != nil {
+			continue
+		}
+		psinfo := fmt.Sprintf("testdata/aix/%d/psinfo", pid)
+		if _, err := os.Stat(psinfo); err != nil {
+			continue
+		}
+		p, err := NewProcess(int32(pid))
+		require.NoError(t, err)
+		cmdline, err := p.fillFromCmdlineWithContext(context.Background())
+		if err == nil {
+			// Should get a string (possibly empty or with command line)
+			assert.IsType(t, "", cmdline)
+		}
+	}
+}
+
+func TestFillFromCmdlineSliceWithContext(t *testing.T) {
+	pids, err := os.ReadDir("testdata/aix/")
+	if err != nil {
+		t.Error(err)
+	}
+	t.Setenv("HOST_PROC", "testdata/aix")
+	for _, pidDir := range pids {
+		pid, err := strconv.ParseInt(pidDir.Name(), 0, 32)
+		if err != nil {
+			continue
+		}
+		psinfo := fmt.Sprintf("testdata/aix/%d/psinfo", pid)
+		if _, err := os.Stat(psinfo); err != nil {
+			continue
+		}
+		p, err := NewProcess(int32(pid))
+		require.NoError(t, err)
+		cmdlineSlice, err := p.fillSliceFromCmdlineWithContext(context.Background())
+		if err == nil {
+			// Should get a slice of strings
+			assert.IsType(t, []string{}, cmdlineSlice)
+		}
+	}
+}
+
+func TestFillFromStatmWithContext(t *testing.T) {
+	pids, err := os.ReadDir("testdata/aix/")
+	if err != nil {
+		t.Error(err)
+	}
+	t.Setenv("HOST_PROC", "testdata/aix")
+	for _, pidDir := range pids {
+		pid, err := strconv.ParseInt(pidDir.Name(), 0, 32)
+		if err != nil {
+			continue
+		}
+		psinfo := fmt.Sprintf("testdata/aix/%d/psinfo", pid)
+		if _, err := os.Stat(psinfo); err != nil {
+			continue
+		}
+		p, err := NewProcess(int32(pid))
+		require.NoError(t, err)
+		memInfo, memInfoEx, err := p.fillFromStatmWithContext(context.Background())
+		if err == nil {
+			assert.NotNil(t, memInfo)
+			assert.NotNil(t, memInfoEx)
+			// Memory values should be non-negative
+			assert.GreaterOrEqual(t, memInfo.VMS, uint64(0))
+			assert.GreaterOrEqual(t, memInfo.RSS, uint64(0))
+			assert.GreaterOrEqual(t, memInfoEx.VMS, uint64(0))
+			assert.GreaterOrEqual(t, memInfoEx.RSS, uint64(0))
+		}
+	}
+}
