@@ -1028,9 +1028,14 @@ func (p *Process) fillFromStatusWithContext(ctx context.Context) error {
 			p.status = Stop // SSTOP
 		case 4:
 			p.status = Zombie // SZOMB
+		case 5:
+			p.status = Idle // SIDL
+		case 6:
+			p.status = Wait // SWAIT
+		case 7:
+			p.status = Running // SORPHAN - treat as running
 		default:
-			// Unknown status code - leave empty or try Linux-style conversion
-			p.status = convertStatusChar(string([]byte{aixStat.Stat}))
+			p.status = UnknownState
 		}
 	}
 
