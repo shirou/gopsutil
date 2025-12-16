@@ -49,6 +49,7 @@ func BootTimeWithContext(ctx context.Context) (btime uint64, err error) {
 // Examples of ps -o etimes -p 1 output:
 // 124-01:40:39 (with days)
 // 15:03:02 (without days, hours only)
+// 01:02 (just-rebooted systems, minutes and seconds)
 func UptimeWithContext(ctx context.Context) (uint64, error) {
 	out, err := invoke.CommandWithContext(ctx, "ps", "-o", "etimes", "-p", "1")
 	if err != nil {
@@ -92,7 +93,8 @@ func parseUptime(etimes string) uint64 {
 
 	// Parse time portions (either HH:MM:SS or MM:SS)
 	timeParts := strings.Split(etimes, ":")
-	if len(timeParts) == 3 {
+	switch len(timeParts) {
+	case 3:
 		// HH:MM:SS format
 		var err error
 		hours, err = strconv.ParseUint(timeParts[0], 10, 64)
@@ -109,7 +111,7 @@ func parseUptime(etimes string) uint64 {
 		if err != nil {
 			return 0
 		}
-	} else if len(timeParts) == 2 {
+	case 2:
 		// MM:SS format (just-rebooted systems)
 		var err error
 		mins, err = strconv.ParseUint(timeParts[0], 10, 64)
@@ -121,7 +123,7 @@ func parseUptime(etimes string) uint64 {
 		if err != nil {
 			return 0
 		}
-	} else {
+	default:
 		return 0
 	}
 

@@ -15,17 +15,17 @@ func TestParseUptimeValidInput(t *testing.T) {
 		expected uint64
 	}{
 		// Format: MINUTES:SECONDS (just-rebooted systems, hours dropped when 0)
-		{"00:13", 0},   // 13 seconds rounds down to 0 minutes
-		{"01:00", 1},   // 1 minute
-		{"01:02", 1},   // 1 minute, 2 seconds
+		{"00:13", 0}, // 13 seconds rounds down to 0 minutes
+		{"01:00", 1}, // 1 minute
+		{"01:02", 1}, // 1 minute, 2 seconds
 		// Format: HOURS:MINUTES:SECONDS (no days, hours > 0)
 		{"01:00:00", 60},  // 1 hour
 		{"05:00:00", 300}, // 5 hours
 		{"15:03:02", 903}, // 15 hours, 3 minutes, 2 seconds
 		// Format: DAYS-HOURS:MINUTES:SECONDS (with days)
-		{"2-20:00:00", 4080},   // 2 days, 20 hours
-		{"4-00:29:00", 5789},   // 4 days, 29 minutes
-		{"83-18:29:00", 120629}, // 83 days, 18 hours, 29 minutes
+		{"2-20:00:00", 4080},     // 2 days, 20 hours
+		{"4-00:29:00", 5789},     // 4 days, 29 minutes
+		{"83-18:29:00", 120629},  // 83 days, 18 hours, 29 minutes
 		{"124-01:40:39", 178660}, // 124 days, 1 hour, 40 minutes, 39 seconds
 	}
 	for _, tc := range testCases {
@@ -36,7 +36,7 @@ func TestParseUptimeValidInput(t *testing.T) {
 
 func TestParseUptimeInvalidInput(t *testing.T) {
 	testCases := []string{
-		"",              // blank
+		"",             // blank
 		"invalid",      // invalid string
 		"01:02",        // incomplete time format (missing seconds)
 		"1-2:3",        // incomplete time format after dash
