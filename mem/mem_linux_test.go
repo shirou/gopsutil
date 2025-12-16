@@ -69,6 +69,7 @@ var virtualMemoryTests = []struct {
 			HugePagesRsvd:  0,
 			HugePagesSurp:  0,
 			HugePageSize:   2097152,
+			Percpu:         19595264,
 		},
 	},
 	{
