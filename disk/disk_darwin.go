@@ -74,6 +74,12 @@ func PartitionsWithContext(_ context.Context, _ bool) ([]PartitionStat, error) {
 		if stat.Flags&unix.MNT_NODEV != 0 {
 			opts = append(opts, "nodev")
 		}
+		if stat.Flags&unix.MNT_LOCAL != 0 {
+			opts = append(opts, "local")
+		}
+		if stat.Flags&unix.MNT_CPROTECT != 0 {
+			opts = append(opts, "protect")
+		}
 		d := PartitionStat{
 			Device:     common.ByteToString(stat.Mntfromname[:]),
 			Mountpoint: common.ByteToString(stat.Mntonname[:]),
