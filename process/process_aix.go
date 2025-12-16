@@ -612,9 +612,119 @@ func (p *Process) parsePidFromRmsock(output string) int32 {
 }
 
 func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]MemoryMapsStat, error) {
-	// AIX /proc does not provide detailed memory maps in a text format
-	// The maps would require parsing binary procfs structures not currently exposed
-	return nil, common.ErrNotImplementedError
+	// Use AIX procmap command to retrieve detailed memory address space maps
+	// procmap provides information about memory regions including HEAP, STACK, TEXT, etc.
+	pid := p.Pid
+
+	cmd := exec.CommandContext(ctx, "procmap", "-X", fmt.Sprintf("%d", pid))
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	return p.parseMemoryMaps(string(output)), nil
+}
+
+// parseMemoryMaps parses procmap output and returns a list of MemoryMapsStat
+// procmap -X output format:
+// 1 : /etc/init
+//
+// Start-ADD         End-ADD               SIZE MODE  PSIZ  TYPE       VSID             MAPPED OBJECT
+// 0                 10000000           262144K r--   m     KERTXT     10002
+// 10000000          1000ce95               51K r-x   s     MAINTEXT   8b8117           init
+// 200003d8          20036288              215K rw-   sm    MAINDATA   890192           init
+func (p *Process) parseMemoryMaps(output string) *[]MemoryMapsStat {
+	maps := make([]MemoryMapsStat, 0)
+	lines := strings.Split(output, "\n")
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "Start-ADD") || strings.Contains(line, ":") && !strings.HasPrefix(line, "Start") {
+			// Skip header lines, empty lines, and the first line with PID info
+			continue
+		}
+
+		fields := strings.Fields(line)
+		if len(fields) < 6 {
+			continue
+		}
+
+		mapStat := MemoryMapsStat{}
+
+		// Parse start address (hex)
+		_, err := strconv.ParseUint(fields[0], 16, 64)
+		if err != nil {
+			continue
+		}
+
+		// Parse end address (hex)
+		_, err = strconv.ParseUint(fields[1], 16, 64)
+		if err != nil {
+			continue
+		}
+
+		// Parse SIZE (e.g., "51K", "262144K", "215K")
+		size := parseSizeField(fields[2])
+
+		// MODE is in fields[3] (e.g., "r--", "r-x", "rw-")
+		// PSIZ is in fields[4] (e.g., "m", "s", "sm")
+		// TYPE is in fields[5] (e.g., "KERTXT", "MAINTEXT", "MAINDATA", "HEAP", "STACK", "SLIBTEXT")
+
+		mapType := fields[5]
+
+		// Path/name: remaining fields after VSID (fields[6])
+		// The VSID is at fields[6], and mapped object starts at fields[7] or later
+		pathStart := 7
+		var mapPath string
+		if pathStart < len(fields) {
+			pathParts := fields[pathStart:]
+			mapPath = strings.Join(pathParts, " ")
+		}
+
+		// Set MemoryMapsStat fields
+		mapStat.Size = size
+		mapStat.Rss = size // RSS approximation: use the size field
+		mapStat.Path = mapPath
+
+		// Populate descriptive path with type information if not set
+		if mapStat.Path == "" {
+			mapStat.Path = "[" + strings.ToLower(mapType) + "]"
+		}
+
+		maps = append(maps, mapStat)
+	}
+
+	return &maps
+}
+
+// parseSizeField converts procmap size field (e.g., "7K", "10M", "100") to bytes
+func parseSizeField(sizeStr string) uint64 {
+	sizeStr = strings.TrimSpace(sizeStr)
+
+	// Check for unit suffixes
+	if strings.HasSuffix(sizeStr, "K") || strings.HasSuffix(sizeStr, "k") {
+		numStr := sizeStr[:len(sizeStr)-1]
+		if num, err := strconv.ParseUint(numStr, 10, 64); err == nil {
+			return num * 1024
+		}
+	} else if strings.HasSuffix(sizeStr, "M") || strings.HasSuffix(sizeStr, "m") {
+		numStr := sizeStr[:len(sizeStr)-1]
+		if num, err := strconv.ParseUint(numStr, 10, 64); err == nil {
+			return num * 1024 * 1024
+		}
+	} else if strings.HasSuffix(sizeStr, "G") || strings.HasSuffix(sizeStr, "g") {
+		numStr := sizeStr[:len(sizeStr)-1]
+		if num, err := strconv.ParseUint(numStr, 10, 64); err == nil {
+			return num * 1024 * 1024 * 1024
+		}
+	}
+
+	// No suffix, try to parse as plain number (bytes)
+	if num, err := strconv.ParseUint(sizeStr, 10, 64); err == nil {
+		return num
+	}
+
+	return 0
 }
 
 func (p *Process) EnvironWithContext(ctx context.Context) ([]string, error) {
