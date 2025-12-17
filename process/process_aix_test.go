@@ -394,18 +394,6 @@ func TestPageFaultsWithContext(t *testing.T) {
 	}
 }
 
-func TestNumCtxSwitchesWithContext(t *testing.T) {
-	// Get current process
-	ctx := context.Background()
-	p := Process{Pid: int32(os.Getpid())}
-
-	ctxSwitches, err := p.NumCtxSwitchesWithContext(ctx)
-	// Context switches may not be available on all AIX systems
-	if err == nil {
-		assert.NotNil(t, ctxSwitches)
-	}
-}
-
 func TestRlimitUsageWithContext(t *testing.T) {
 	// Get current process
 	ctx := context.Background()
@@ -453,4 +441,29 @@ func TestCPUAffinityWithContext(t *testing.T) {
 			assert.GreaterOrEqual(t, cpu, int32(0))
 		}
 	}
+}
+func TestCPUPercentWithContext(t *testing.T) {
+	// Get current process
+	ctx := context.Background()
+	p := Process{Pid: int32(os.Getpid())}
+
+	percent, err := p.CPUPercentWithContext(ctx)
+	require.NoError(t, err)
+	// CPU percent should be >= 0
+	assert.GreaterOrEqual(t, percent, float64(0))
+	// CPU percent should not exceed 100 * number of CPUs (but ps can sometimes report >100% on single CPU)
+	assert.Less(t, percent, float64(500)) // sanity check to avoid absurd values
+}
+
+func TestSignalsPendingWithContext(t *testing.T) {
+	// Get current process
+	ctx := context.Background()
+	p := Process{Pid: int32(os.Getpid())}
+
+	sigInfo, err := p.SignalsPendingWithContext(ctx)
+	require.NoError(t, err)
+	// SignalInfoStat should be valid (may have zero pending signals for normal process)
+	assert.NotNil(t, &sigInfo)
+	// PendingProcess should be >= 0
+	assert.GreaterOrEqual(t, sigInfo.PendingProcess, uint64(0))
 }

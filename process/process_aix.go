@@ -603,10 +603,12 @@ func (p *Process) IOCountersWithContext(ctx context.Context) (*IOCountersStat, e
 	}, nil
 }
 
-func (*Process) NumCtxSwitchesWithContext(_ context.Context) (*NumCtxSwitchesStat, error) {
-	// AIX ps doesn't have -Leo format. Try using -o format with THREAD output
-	// Fallback: Use ps -m to get thread info which includes context switch data in some AIX versions
-	// For now, return error as AIX doesn't expose this in standard ps
+func (p *Process) NumCtxSwitchesWithContext(ctx context.Context) (*NumCtxSwitchesStat, error) {
+	// AIX does not expose context switch information via proc files or ps command.
+	// According to IBM AIX documentation, the ps command field specifiers do not include
+	// nvcsw (non-voluntary context switches) or vcsw (voluntary context switches).
+	// These metrics are not available in the AIX proc binary structures either.
+	// This metric is not available on AIX.
 	return nil, common.ErrNotImplementedError
 }
 
@@ -656,6 +658,81 @@ func (*Process) CPUAffinityWithContext(_ context.Context) ([]int32, error) {
 	// Berkeley style ps doesn't provide CPU affinity information
 	// This metric is not available on AIX
 	return nil, common.ErrNotImplementedError
+}
+
+// Note: CPUPercentWithContext is NOT overridden here
+// The generic implementation from process.go is used on AIX as well
+// AIX ps -o %cpu can be used if needed in the future
+
+func (p *Process) SignalsPendingWithContext(ctx context.Context) (SignalInfoStat, error) {
+	// Extract pending signals from the AIXStat structure's SigPend field
+	// This field is already being read from /proc/<pid>/psinfo in fillFromStatusWithContext
+	err := p.fillFromStatusWithContext(ctx)
+	if err != nil {
+		return SignalInfoStat{}, err
+	}
+
+	// Read the psinfo file directly to get the SigPend field
+	psInfoPath := common.HostProcWithContext(ctx, strconv.Itoa(int(p.Pid)), "psinfo")
+	psInfoFile, err := os.Open(psInfoPath)
+	if err != nil {
+		return SignalInfoStat{}, err
+	}
+	defer psInfoFile.Close()
+
+	// Only read up to the SigPend field to avoid EOF on truncated reads
+	// AIXStat starts with: Flag(4) Flag2(4) Flags(4) Nlwp(4) Stat(1) Dmodel(1) Pad1(6) = 24 bytes
+	// Then SigPend which is PrSigset [4]uint64 = 32 bytes
+	// Total offset to SigPend: 24 bytes
+	
+	// Skip the first part of the structure to get to SigPend
+	var (
+		flag, flag2, flags, nlwp uint32
+		stat, dmodel             byte
+		pad1                     [6]byte
+		sigPend                  PrSigset
+	)
+
+	err = binary.Read(psInfoFile, binary.BigEndian, &flag)
+	if err != nil {
+		return SignalInfoStat{}, err
+	}
+	err = binary.Read(psInfoFile, binary.BigEndian, &flag2)
+	if err != nil {
+		return SignalInfoStat{}, err
+	}
+	err = binary.Read(psInfoFile, binary.BigEndian, &flags)
+	if err != nil {
+		return SignalInfoStat{}, err
+	}
+	err = binary.Read(psInfoFile, binary.BigEndian, &nlwp)
+	if err != nil {
+		return SignalInfoStat{}, err
+	}
+	err = binary.Read(psInfoFile, binary.BigEndian, &stat)
+	if err != nil {
+		return SignalInfoStat{}, err
+	}
+	err = binary.Read(psInfoFile, binary.BigEndian, &dmodel)
+	if err != nil {
+		return SignalInfoStat{}, err
+	}
+	err = binary.Read(psInfoFile, binary.BigEndian, &pad1)
+	if err != nil {
+		return SignalInfoStat{}, err
+	}
+	err = binary.Read(psInfoFile, binary.BigEndian, &sigPend)
+	if err != nil {
+		return SignalInfoStat{}, err
+	}
+
+	// Convert the PrSigset (which is [4]uint64) to a single uint64 for pending signals
+	// The signal set uses the first 64 bits for signals 1-64 (most common)
+	pendingSignals := sigPend.SsSet[0]
+
+	return SignalInfoStat{
+		PendingProcess: pendingSignals,
+	}, nil
 }
 
 func (p *Process) MemoryInfoWithContext(ctx context.Context) (*MemoryInfoStat, error) {
