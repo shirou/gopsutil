@@ -17,6 +17,7 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/shirou/gopsutil/v4/cpu"
 	"github.com/shirou/gopsutil/v4/internal/common"
@@ -33,14 +34,66 @@ const prioProcess = 0 // linux/resource.h
 var clockTicks = 100 // default value
 
 func init() {
-	// TODO: Once the sysconf library supports AIX, use the commented code below
-	// clkTck, err := sysconf.Sysconf(sysconf.SC_CLK_TCK)
-	// ignore errors
-	// if err == nil {
-	// 	clockTicks = int(clkTck)
-	// }
+	// Initialize clock ticks from AIX schedo configuration
+	// AIX default: 1 clock tick = 10ms (100 ticks/second)
+	// Can be modified via schedo big_tick_size parameter
+	clockTicks = getAIXClockTicks()
+}
 
-	// For now, this will use the hard coded default of 100
+// getAIXClockTicks retrieves the actual clock tick frequency from AIX scheduler configuration.
+// AIX maintains this through the schedo command, specifically the big_tick_size parameter.
+// The default is 1 tick = 10ms, but this can be tuned via:
+//
+//	schedo -o big_tick_size=<value>
+//
+// where value * 10ms is the actual tick interval.
+//
+// Since we cannot directly access kernel parameters from userspace reliably,
+// we use the schedo command to query big_tick_size and calculate the actual clock ticks.
+// If schedo is unavailable or returns an error, we default to the standard 100 ticks/second (10ms).
+func getAIXClockTicks() int {
+	const defaultClockTicks = 100 // Default: 100 ticks/second = 10ms per tick
+
+	// Try to query big_tick_size from schedo
+	// Format: schedo -o big_tick_size (displays current value without changing)
+	cmd := exec.Command("schedo", "-o", "big_tick_size")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	cmd = exec.CommandContext(ctx, "schedo", "-o", "big_tick_size")
+
+	output, err := cmd.Output()
+	if err != nil {
+		// schedo unavailable or failed; use default
+		return defaultClockTicks
+	}
+
+	// Parse output format: "big_tick_size = <value>"
+	// Example: "big_tick_size = 1"
+	outputStr := strings.TrimSpace(string(output))
+	parts := strings.Split(outputStr, "=")
+	if len(parts) < 2 {
+		return defaultClockTicks
+	}
+
+	tickMultiplier, err := strconv.Atoi(strings.TrimSpace(parts[1]))
+	if err != nil {
+		return defaultClockTicks
+	}
+
+	// big_tick_size is a multiplier for 10ms ticks
+	// Calculate actual clock ticks per second: 1000ms / (tickMultiplier * 10ms)
+	if tickMultiplier <= 0 {
+		return defaultClockTicks
+	}
+
+	// 100 ticks/second / tickMultiplier = actual ticks per second
+	// For example: if big_tick_size=2, then 100/2 = 50 ticks/second
+	actualTicks := defaultClockTicks / tickMultiplier
+	if actualTicks < 1 {
+		actualTicks = 1 // Ensure at least 1 tick per second
+	}
+
+	return actualTicks
 }
 
 type PrTimestruc64T struct {
@@ -467,148 +520,18 @@ func (p *Process) OpenFilesWithContext(ctx context.Context) ([]OpenFilesStat, er
 }
 
 func (p *Process) ConnectionsWithContext(ctx context.Context) ([]net.ConnectionStat, error) {
-	// TODO: Once net module ConnectionsPidWithContext is properly implemented for AIX,
-	// consider using that instead of gathering connections directly via netstat/rmsock.
-	// Original implementation:
-	// return net.ConnectionsPidWithContext(ctx, "all", p.Pid)
-	return p.ConnectionsMaxWithContext(ctx, 0)
+	return net.ConnectionsPidWithContext(ctx, "all", p.Pid)
 }
 
 func (p *Process) ConnectionsMaxWithContext(ctx context.Context, maxConn int) ([]net.ConnectionStat, error) {
-	// TODO: Once net module ConnectionsPidMaxWithContext is properly implemented for AIX,
-	// consider using that instead of gathering connections directly via netstat/rmsock.
-	// Original implementation:
-	// return net.ConnectionsPidMaxWithContext(ctx, "all", p.Pid, maxConn)
-	return p.getConnectionsUsingNetstat(ctx, maxConn)
+	return net.ConnectionsPidMaxWithContext(ctx, "all", p.Pid, maxConn)
 }
 
 // getConnectionsUsingNetstat retrieves network connections using AIX netstat command.
-// TODO: Once net module provides native AIX connection support, this may be moved or replaced.
-// Currently uses direct netstat command execution as AIX net module doesn't expose per-process connections.
+// DEPRECATED: Use net module's ConnectionsPidMaxWithContext instead
+// This function is kept for backward compatibility but delegates to the net module
 func (p *Process) getConnectionsUsingNetstat(ctx context.Context, maxConn int) ([]net.ConnectionStat, error) {
-	var conns []net.ConnectionStat
-
-	// Get all listening sockets using netstat
-	cmd := exec.CommandContext(ctx, "netstat", "-Aan")
-	output, err := cmd.Output()
-	if err != nil {
-		return conns, err
-	}
-
-	lines := strings.Split(string(output), "\n")
-	count := 0
-
-	for _, line := range lines {
-		if maxConn > 0 && count >= maxConn {
-			break
-		}
-
-		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "Address") {
-			continue
-		}
-
-		// Parse netstat output to find sockets
-		// Format: Address    Family  Type      Use  Recv-Q Send-Q    Inode  Conn  Routes
-		fields := strings.Fields(line)
-		if len(fields) < 2 {
-			continue
-		}
-
-		sockAddr := fields[0]
-
-		// Try to resolve the socket to get PID using rmsock
-		// For TCP connections
-		connStat, err := p.resolveSockToPid(ctx, sockAddr, "tcp")
-		if err == nil && connStat != nil && connStat.Pid == p.Pid {
-			conns = append(conns, *connStat)
-			count++
-			continue
-		}
-
-		// Try for UDP connections
-		connStat, err = p.resolveSockToPid(ctx, sockAddr, "udp")
-		if err == nil && connStat != nil && connStat.Pid == p.Pid {
-			conns = append(conns, *connStat)
-			count++
-		}
-	}
-
-	return conns, nil
-}
-
-// resolveSockToPid uses AIX rmsock command to resolve a socket address to a PID.
-// TODO: Once net module provides native AIX connection support, this helper may no longer be needed.
-// Currently necessary as AIX does not expose per-process socket information in /proc like Linux does.
-func (p *Process) resolveSockToPid(ctx context.Context, sockAddr string, protocol string) (*net.ConnectionStat, error) {
-	var cmdName string
-
-	if protocol == "tcp" {
-		cmdName = "rmsock"
-	} else if protocol == "udp" {
-		cmdName = "rmsock"
-	} else {
-		return nil, fmt.Errorf("unsupported protocol: %s", protocol)
-	}
-
-	// Execute rmsock to resolve socket
-	// Format for TCP: rmsock <socket_address> tcpcb
-	// Format for UDP: rmsock <socket_address> inpcb
-	var tcpOrUdp string
-	if protocol == "tcp" {
-		tcpOrUdp = "tcpcb"
-	} else {
-		tcpOrUdp = "inpcb"
-	}
-
-	cmd := exec.CommandContext(ctx, cmdName, sockAddr, tcpOrUdp)
-	output, err := cmd.Output()
-	if err != nil {
-		return nil, err
-	}
-
-	// Parse rmsock output to extract connection info
-	// Output format varies, but typically includes PID information
-	outputStr := string(output)
-
-	// Try to find PID in the output
-	// This is a simple heuristic - may need adjustment based on actual output format
-	pid := p.parsePidFromRmsock(outputStr)
-	if pid != p.Pid {
-		return nil, fmt.Errorf("PID mismatch: expected %d, got %d", p.Pid, pid)
-	}
-
-	// Build connection stat from parsed info
-	connStat := &net.ConnectionStat{
-		Fd:     0,
-		Family: 0,
-		Type:   0,
-		Laddr:  net.Addr{IP: "", Port: 0},
-		Raddr:  net.Addr{IP: "", Port: 0},
-		Status: "",
-		Pid:    p.Pid,
-	}
-
-	return connStat, nil
-}
-
-// parsePidFromRmsock extracts PID from rmsock output (heuristic).
-// TODO: Refine parsing logic once AIX rmsock output format is fully understood.
-// Currently uses a basic heuristic to find numeric PIDs in the output.
-func (p *Process) parsePidFromRmsock(output string) int32 {
-	// This is a basic implementation - AIX rmsock output format needs verification
-	// Look for patterns like "PID: <number>" or similar
-	lines := strings.Split(output, "\n")
-	for _, line := range lines {
-		// Try to find numeric patterns that might be PIDs
-		fields := strings.Fields(line)
-		for _, field := range fields {
-			if pid, err := strconv.ParseInt(field, 10, 32); err == nil && pid > 0 {
-				return int32(pid)
-			}
-		}
-	}
-	return 0
+	return net.ConnectionsPidMaxWithContext(ctx, "all", p.Pid, maxConn)
 }
 
 func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]MemoryMapsStat, error) {

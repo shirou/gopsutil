@@ -6,6 +6,7 @@ package net
 import (
 	"context"
 	"fmt"
+	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
@@ -295,6 +296,199 @@ func ConnectionsPidMaxWithoutUidsWithContext(ctx context.Context, kind string, p
 	return connectionsPidMaxWithoutUidsWithContext(ctx, kind, pid, maxConn, true)
 }
 
-func connectionsPidMaxWithoutUidsWithContext(_ context.Context, _ string, _ int32, _ int, _ bool) ([]ConnectionStat, error) {
-	return []ConnectionStat{}, common.ErrNotImplementedError
+func connectionsPidMaxWithoutUidsWithContext(ctx context.Context, _ string, pid int32, maxConn int, _ bool) ([]ConnectionStat, error) {
+	// If pid is 0, return all connections
+	if pid == 0 {
+		return getAIXConnections(ctx, maxConn)
+	}
+
+	// For specific PID, filter connections to just that process
+	return getAIXConnectionsForPid(ctx, pid, maxConn)
+}
+
+// getAIXConnections retrieves all network connections from AIX
+func getAIXConnections(ctx context.Context, maxConn int) ([]ConnectionStat, error) {
+	var conns []ConnectionStat
+
+	// Get all listening sockets using netstat
+	cmd := exec.CommandWithContext(ctx, "netstat", "-Aan")
+	output, err := cmd.Output()
+	if err != nil {
+		return conns, err
+	}
+
+	lines := strings.Split(string(output), "\n")
+	count := 0
+
+	for _, line := range lines {
+		if maxConn > 0 && count >= maxConn {
+			break
+		}
+
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "Address") {
+			continue
+		}
+
+		// Parse netstat output to find sockets
+		// Format: Address    Family  Type      Use  Recv-Q Send-Q    Inode  Conn  Routes
+		fields := strings.Fields(line)
+		if len(fields) < 2 {
+			continue
+		}
+
+		sockAddr := fields[0]
+
+		// Try to resolve the socket to get connection info using rmsock
+		// For TCP connections
+		connStat, err := resolveAIXSockToConnection(ctx, sockAddr, "tcp")
+		if err == nil && connStat != nil {
+			conns = append(conns, *connStat)
+			count++
+			continue
+		}
+
+		// Try for UDP connections
+		connStat, err = resolveAIXSockToConnection(ctx, sockAddr, "udp")
+		if err == nil && connStat != nil {
+			conns = append(conns, *connStat)
+			count++
+		}
+	}
+
+	return conns, nil
+}
+
+// getAIXConnectionsForPid retrieves network connections for a specific process on AIX
+func getAIXConnectionsForPid(ctx context.Context, pid int32, maxConn int) ([]ConnectionStat, error) {
+	var conns []ConnectionStat
+
+	// Get all listening sockets using netstat
+	cmd := exec.CommandWithContext(ctx, "netstat", "-Aan")
+	output, err := cmd.Output()
+	if err != nil {
+		return conns, err
+	}
+
+	lines := strings.Split(string(output), "\n")
+	count := 0
+
+	for _, line := range lines {
+		if maxConn > 0 && count >= maxConn {
+			break
+		}
+
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "Address") {
+			continue
+		}
+
+		// Parse netstat output to find sockets
+		fields := strings.Fields(line)
+		if len(fields) < 2 {
+			continue
+		}
+
+		sockAddr := fields[0]
+
+		// Try to resolve the socket to get connection info using rmsock
+		// For TCP connections
+		connStat, err := resolveAIXSockToConnectionForPid(ctx, sockAddr, "tcp", pid)
+		if err == nil && connStat != nil {
+			conns = append(conns, *connStat)
+			count++
+			continue
+		}
+
+		// Try for UDP connections
+		connStat, err = resolveAIXSockToConnectionForPid(ctx, sockAddr, "udp", pid)
+		if err == nil && connStat != nil {
+			conns = append(conns, *connStat)
+			count++
+		}
+	}
+
+	return conns, nil
+}
+
+// resolveAIXSockToConnection uses AIX rmsock command to resolve a socket address to connection info
+func resolveAIXSockToConnection(ctx context.Context, sockAddr string, protocol string) (*ConnectionStat, error) {
+	if protocol != "tcp" && protocol != "udp" {
+		return nil, fmt.Errorf("unsupported protocol: %s", protocol)
+	}
+
+	// Execute rmsock to resolve socket
+	// Format for TCP: rmsock <socket_address> tcpcb
+	// Format for UDP: rmsock <socket_address> inpcb
+	var tcpOrUdp string
+	if protocol == "tcp" {
+		tcpOrUdp = "tcpcb"
+	} else {
+		tcpOrUdp = "inpcb"
+	}
+
+	cmd := exec.CommandWithContext(ctx, "rmsock", sockAddr, tcpOrUdp)
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	// Parse rmsock output to extract connection info
+	outputStr := string(output)
+
+	// Try to find PID in the output
+	pid := parseAIXRmsockPid(outputStr)
+	if pid == 0 {
+		return nil, fmt.Errorf("could not extract PID from rmsock output")
+	}
+
+	// Build connection stat from parsed info
+	connStat := &ConnectionStat{
+		Fd:     0,
+		Family: 0,
+		Type:   0,
+		Laddr:  Addr{IP: "", Port: 0},
+		Raddr:  Addr{IP: "", Port: 0},
+		Status: "",
+		Pid:    pid,
+	}
+
+	return connStat, nil
+}
+
+// resolveAIXSockToConnectionForPid resolves socket to connection only if it matches the target PID
+func resolveAIXSockToConnectionForPid(ctx context.Context, sockAddr string, protocol string, targetPid int32) (*ConnectionStat, error) {
+	connStat, err := resolveAIXSockToConnection(ctx, sockAddr, protocol)
+	if err != nil {
+		return nil, err
+	}
+
+	if connStat == nil {
+		return nil, fmt.Errorf("connection stat is nil")
+	}
+
+	if connStat.Pid != targetPid {
+		return nil, fmt.Errorf("PID mismatch: expected %d, got %d", targetPid, connStat.Pid)
+	}
+
+	return connStat, nil
+}
+
+// parseAIXRmsockPid extracts PID from rmsock output (heuristic).
+// Currently uses a basic heuristic to find numeric PIDs in the output.
+// This may need refinement based on actual AIX rmsock output format.
+func parseAIXRmsockPid(output string) int32 {
+	// This is a basic implementation - AIX rmsock output format needs verification
+	// Look for patterns like "PID: <number>" or similar
+	lines := strings.Split(output, "\n")
+	for _, line := range lines {
+		// Try to find numeric patterns that might be PIDs
+		fields := strings.Fields(line)
+		for _, field := range fields {
+			if pid, err := strconv.ParseInt(field, 10, 32); err == nil && pid > 0 {
+				return int32(pid)
+			}
+		}
+	}
+	return 0
 }
