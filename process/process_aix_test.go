@@ -442,6 +442,7 @@ func TestCPUAffinityWithContext(t *testing.T) {
 		}
 	}
 }
+
 func TestCPUPercentWithContext(t *testing.T) {
 	// Get current process
 	ctx := context.Background()

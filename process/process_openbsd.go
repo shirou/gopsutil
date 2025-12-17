@@ -399,3 +399,7 @@ func callKernProcSyscall(op, arg int32) ([]byte, uint64, error) {
 
 	return buf, length, nil
 }
+
+func (*Process) SignalsPendingWithContext(_ context.Context) (SignalInfoStat, error) {
+	return SignalInfoStat{}, common.ErrNotImplementedError
+}
