@@ -330,13 +330,6 @@ func (p *Process) ExeWithContext(_ context.Context) (string, error) {
 	return buf.GoString(), nil
 }
 
-// sys/proc_info.h
-type vnodePathInfo struct {
-	_       [152]byte
-	vipPath [common.MAXPATHLEN]byte
-	_       [1176]byte
-}
-
 // CwdWithContext retrieves the Current Working Directory for the given process.
 // It uses the proc_pidinfo from libproc and will only work for processes the
 // EUID can access.  Otherwise "operation not permitted" will be returned as the
@@ -353,7 +346,7 @@ func (p *Process) CwdWithContext(_ context.Context) (string, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
-	var vpi vnodePathInfo
+	var vpi VnodePathInfo
 	const vpiSize = int32(unsafe.Sizeof(vpi))
 	ret := funcs.procPidInfo(p.Pid, common.PROC_PIDVNODEPATHINFO, 0, uintptr(unsafe.Pointer(&vpi)), vpiSize)
 	errno, _ := funcs.lib.Dlsym("errno")
@@ -369,11 +362,11 @@ func (p *Process) CwdWithContext(_ context.Context) (string, error) {
 	if ret != vpiSize {
 		return "", fmt.Errorf("too few bytes; expected %d, got %d", vpiSize, ret)
 	}
-	return common.GoString(&vpi.vipPath[0]), nil
+	return common.GoString((*byte)(unsafe.Pointer(&vpi.Cdir.Path[0]))), nil
 }
 
 func procArgs(pid int32) ([]byte, int, error) {
-	procargs, _, err := common.CallSyscall([]int32{common.CTL_KERN, common.KERN_PROCARGS2, pid})
+	procargs, err := unix.SysctlRaw("kern.procargs2", int(pid))
 	if err != nil {
 		return nil, 0, err
 	}
