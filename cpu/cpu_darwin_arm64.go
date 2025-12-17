@@ -69,6 +69,7 @@ func getFrequency() (float64, error) {
 			// combine the bytes into a uint32 value
 			b := buf[length-8 : length-4]
 			pCoreHz = binary.LittleEndian.Uint32(b)
+			cfRelease(uintptr(pCoreRef))
 			ioObjectRelease(service)
 			break
 		}
