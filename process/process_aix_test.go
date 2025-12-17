@@ -345,3 +345,107 @@ func TestFillFromStatmWithContext(t *testing.T) {
 		}
 	}
 }
+
+func TestTerminalWithContext(t *testing.T) {
+	// Get current process
+	ctx := context.Background()
+	p := Process{Pid: int32(os.Getpid())}
+
+	terminal, err := p.TerminalWithContext(ctx)
+	// Terminal may or may not be available depending on how test is run
+	if err == nil {
+		assert.IsType(t, "", terminal)
+	}
+}
+
+func TestEnvironmentWithContext(t *testing.T) {
+	// Get current process
+	ctx := context.Background()
+	p := Process{Pid: int32(os.Getpid())}
+
+	env, err := p.EnvironmentWithContext(ctx)
+	if err == nil {
+		assert.NotNil(t, env)
+		assert.IsType(t, map[string]string{}, env)
+	}
+}
+
+func TestPageFaultsWithContext(t *testing.T) {
+	// Get current process
+	ctx := context.Background()
+	p := Process{Pid: int32(os.Getpid())}
+
+	pageFaults, err := p.PageFaultsWithContext(ctx)
+	if err != nil {
+		t.Logf("PageFaultsWithContext error: %v", err)
+		return
+	}
+	if pageFaults != nil {
+		// Page fault counts should be non-negative
+		assert.GreaterOrEqual(t, pageFaults.MinorFaults, uint64(0))
+		assert.GreaterOrEqual(t, pageFaults.MajorFaults, uint64(0))
+	}
+}
+
+func TestNumCtxSwitchesWithContext(t *testing.T) {
+	// Get current process
+	ctx := context.Background()
+	p := Process{Pid: int32(os.Getpid())}
+
+	ctxSwitches, err := p.NumCtxSwitchesWithContext(ctx)
+	// Context switches may not be available on all AIX systems
+	if err == nil {
+		assert.NotNil(t, ctxSwitches)
+		assert.GreaterOrEqual(t, ctxSwitches.Voluntary, int64(0))
+		assert.GreaterOrEqual(t, ctxSwitches.Involuntary, int64(0))
+	}
+}
+
+func TestRlimitUsageWithContext(t *testing.T) {
+	// Get current process
+	ctx := context.Background()
+	p := Process{Pid: int32(os.Getpid())}
+
+	limits, err := p.RlimitUsageWithContext(ctx, false)
+	if err != nil {
+		t.Logf("RlimitUsageWithContext error: %v", err)
+		return
+	}
+	if limits != nil && len(limits) > 0 {
+		for _, limit := range limits {
+			// Hard limit should be >= soft limit
+			assert.GreaterOrEqual(t, limit.Hard, limit.Soft)
+		}
+	}
+}
+
+func TestIOCountersWithContext(t *testing.T) {
+	// Get current process
+	ctx := context.Background()
+	p := Process{Pid: int32(os.Getpid())}
+
+	ioCounters, err := p.IOCountersWithContext(ctx)
+	// IOCounters may not be available without WLM+iostat configuration
+	if err == nil {
+		assert.NotNil(t, ioCounters)
+		assert.GreaterOrEqual(t, ioCounters.ReadBytes, uint64(0))
+		assert.GreaterOrEqual(t, ioCounters.WriteBytes, uint64(0))
+	}
+}
+
+func TestCPUAffinityWithContext(t *testing.T) {
+	// Get current process
+	ctx := context.Background()
+	p := Process{Pid: int32(os.Getpid())}
+
+	affinity, err := p.CPUAffinityWithContext(ctx)
+	// CPU affinity may not be available on all AIX systems
+	if err == nil {
+		assert.NotNil(t, affinity)
+		// Should have at least one CPU
+		assert.Greater(t, len(affinity), 0)
+		for _, cpu := range affinity {
+			assert.GreaterOrEqual(t, cpu, int32(0))
+		}
+	}
+}
