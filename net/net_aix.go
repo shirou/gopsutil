@@ -6,7 +6,6 @@ package net
 import (
 	"context"
 	"fmt"
-	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
@@ -311,8 +310,7 @@ func getAIXConnections(ctx context.Context, maxConn int) ([]ConnectionStat, erro
 	var conns []ConnectionStat
 
 	// Get all listening sockets using netstat
-	cmd := exec.CommandWithContext(ctx, "netstat", "-Aan")
-	output, err := cmd.Output()
+	output, err := invoke.CommandWithContext(ctx, "netstat", "-Aan")
 	if err != nil {
 		return conns, err
 	}
@@ -364,8 +362,7 @@ func getAIXConnectionsForPid(ctx context.Context, pid int32, maxConn int) ([]Con
 	var conns []ConnectionStat
 
 	// Get all listening sockets using netstat
-	cmd := exec.CommandWithContext(ctx, "netstat", "-Aan")
-	output, err := cmd.Output()
+	output, err := invoke.CommandWithContext(ctx, "netstat", "-Aan")
 	if err != nil {
 		return conns, err
 	}
@@ -379,33 +376,74 @@ func getAIXConnectionsForPid(ctx context.Context, pid int32, maxConn int) ([]Con
 		}
 
 		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "Address") {
+		if line == "" || strings.HasPrefix(line, "Address") || strings.HasPrefix(line, "PCB/ADDR") {
 			continue
 		}
 
-		// Parse netstat output to find sockets
+		// Parse netstat output: PCB/ADDR Proto Recv-Q Send-Q Local Address Foreign Address (state)
+		// Example: f1000f00055cc3c0 tcp4       0      0  192.168.242.122.22    24.236.207.124.40326  ESTABLISHED
 		fields := strings.Fields(line)
-		if len(fields) < 2 {
+		if len(fields) < 7 {
 			continue
 		}
 
 		sockAddr := fields[0]
+		proto := fields[1]
+		localAddr := fields[4]
+		remoteAddr := fields[5]
+		state := fields[6]
 
-		// Try to resolve the socket to get connection info using rmsock
-		// For TCP connections
-		connStat, err := resolveAIXSockToConnectionForPid(ctx, sockAddr, "tcp", pid)
-		if err == nil && connStat != nil {
-			conns = append(conns, *connStat)
-			count++
+		// Determine protocol type (tcp or udp)
+		var protocol string
+		if strings.HasPrefix(proto, "tcp") {
+			protocol = "tcp"
+		} else if strings.HasPrefix(proto, "udp") {
+			protocol = "udp"
+		} else {
 			continue
 		}
 
-		// Try for UDP connections
-		connStat, err = resolveAIXSockToConnectionForPid(ctx, sockAddr, "udp", pid)
-		if err == nil && connStat != nil {
-			conns = append(conns, *connStat)
-			count++
+		// Try to resolve the socket to get PID using rmsock
+		resolvedPid := resolveAIXSockToPid(ctx, sockAddr, protocol)
+		if resolvedPid != pid {
+			// This connection doesn't belong to our target PID
+			continue
 		}
+
+		// Parse addresses
+		laddr := parseAIXAddress(localAddr)
+		raddr := parseAIXAddress(remoteAddr)
+
+		// Determine socket type and family
+		var socketType uint32
+		var socketFamily uint32
+
+		// Set socket type based on protocol
+		if protocol == "tcp" {
+			socketType = syscall.SOCK_STREAM
+		} else {
+			socketType = syscall.SOCK_DGRAM
+		}
+
+		// Set socket family based on proto string (tcp4, tcp6, udp4, udp6)
+		if strings.HasSuffix(proto, "6") {
+			socketFamily = syscall.AF_INET6
+		} else {
+			socketFamily = syscall.AF_INET
+		}
+
+		connStat := ConnectionStat{
+			Fd:     0,
+			Family: socketFamily,
+			Type:   socketType,
+			Laddr:  laddr,
+			Raddr:  raddr,
+			Status: state,
+			Pid:    pid,
+		}
+
+		conns = append(conns, connStat)
+		count++
 	}
 
 	return conns, nil
@@ -427,8 +465,7 @@ func resolveAIXSockToConnection(ctx context.Context, sockAddr string, protocol s
 		tcpOrUdp = "inpcb"
 	}
 
-	cmd := exec.CommandWithContext(ctx, "rmsock", sockAddr, tcpOrUdp)
-	output, err := cmd.Output()
+	output, err := invoke.CommandWithContext(ctx, "rmsock", sockAddr, tcpOrUdp)
 	if err != nil {
 		return nil, err
 	}
@@ -474,21 +511,73 @@ func resolveAIXSockToConnectionForPid(ctx context.Context, sockAddr string, prot
 	return connStat, nil
 }
 
-// parseAIXRmsockPid extracts PID from rmsock output (heuristic).
-// Currently uses a basic heuristic to find numeric PIDs in the output.
-// This may need refinement based on actual AIX rmsock output format.
+// parseAIXRmsockPid extracts PID from rmsock output
+// Expected format: "The socket 0xf1000f00055be808 is being held by proccess 14287304 (sshd)."
 func parseAIXRmsockPid(output string) int32 {
-	// This is a basic implementation - AIX rmsock output format needs verification
-	// Look for patterns like "PID: <number>" or similar
-	lines := strings.Split(output, "\n")
-	for _, line := range lines {
-		// Try to find numeric patterns that might be PIDs
-		fields := strings.Fields(line)
-		for _, field := range fields {
-			if pid, err := strconv.ParseInt(field, 10, 32); err == nil && pid > 0 {
-				return int32(pid)
-			}
+	// Use regex to extract PID from rmsock output
+	// Pattern: "proccess <PID> ("
+	re := regexp.MustCompile(`proccess\s+(\d+)\s+\(`)
+	matches := re.FindStringSubmatch(output)
+	if len(matches) > 1 {
+		if pid, err := strconv.ParseInt(matches[1], 10, 32); err == nil {
+			return int32(pid)
 		}
 	}
 	return 0
+}
+
+// resolveAIXSockToPid uses rmsock to get the PID holding a socket, returns 0 if unable to resolve
+func resolveAIXSockToPid(ctx context.Context, sockAddr string, protocol string) int32 {
+	if protocol != "tcp" && protocol != "udp" {
+		return 0
+	}
+
+	var tcpOrUdp string
+	if protocol == "tcp" {
+		tcpOrUdp = "tcpcb"
+	} else {
+		tcpOrUdp = "inpcb"
+	}
+
+	output, err := invoke.CommandWithContext(ctx, "rmsock", sockAddr, tcpOrUdp)
+	// Note: rmsock may exit with status 1 even on successful resolution
+	// So we try to parse the output regardless of error status
+
+	outputStr := string(output)
+	pid := parseAIXRmsockPid(outputStr)
+
+	if pid == 0 && err != nil {
+		// If we got a "Wait for exiting processes" message, it's a transient cleanup situation - skip silently
+		if strings.Contains(outputStr, "Wait for exiting processes") {
+			return 0
+		}
+		// For other errors, log debug info if we couldn't parse a PID
+		// Uncomment for debugging: fmt.Fprintf(os.Stderr, "DEBUG: rmsock %s %s failed: %v, output: %s\n", sockAddr, tcpOrUdp, err, outputStr)
+	}
+
+	return pid
+}
+
+// parseAIXAddress parses an AIX address string like "192.168.242.122.22" or "24.236.207.124.40326"
+// Format: IP_OCTETS separated by dots, with port as last octet(s) after the IP
+func parseAIXAddress(addrStr string) Addr {
+	if addrStr == "*.*" {
+		return Addr{IP: "", Port: 0}
+	}
+
+	parts := strings.Split(addrStr, ".")
+	if len(parts) < 2 {
+		return Addr{IP: "", Port: 0}
+	}
+
+	// Last part is the port
+	port := 0
+	if p, err := strconv.Atoi(parts[len(parts)-1]); err == nil {
+		port = p
+	}
+
+	// Join all but last part as IP
+	ip := strings.Join(parts[:len(parts)-1], ".")
+
+	return Addr{IP: ip, Port: uint32(port)}
 }
