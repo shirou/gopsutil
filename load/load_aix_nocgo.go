@@ -44,6 +44,73 @@ func AvgWithContext(ctx context.Context) (*AvgStat, error) {
 	return nil, common.ErrNotImplementedError
 }
 
+// parseVmstatLine parses a single line of vmstat output and extracts context switches, interrupts, and syscalls
+// Format: r  b   avm   fre  re  pi  po  fr   sr  cy  in   sy  cs us sy id wa    pc    ec
+func parseVmstatLine(line string) (ctxt int, interrupts int, syscalls int, err error) {
+	fields := strings.Fields(line)
+	if len(fields) < 13 {
+		return 0, 0, 0, common.ErrNotImplementedError
+	}
+
+	// Column indices in vmstat output (0-based):
+	// in = interrupts (index 10)
+	// sy = system calls (index 11)
+	// cs = context switches (index 12)
+	if v, err := strconv.Atoi(fields[10]); err == nil {
+		interrupts = v
+	}
+	if v, err := strconv.Atoi(fields[11]); err == nil {
+		syscalls = v
+	}
+	if v, err := strconv.Atoi(fields[12]); err == nil {
+		ctxt = v
+	}
+
+	return ctxt, interrupts, syscalls, nil
+}
+
+// SystemCallsWithContext returns the number of system calls since boot
+func SystemCallsWithContext(ctx context.Context) (int, error) {
+	out, err := common.Invoke{}.CommandWithContext(ctx, "vmstat", "1", "1")
+	if err != nil {
+		return 0, err
+	}
+
+	lines := strings.Split(string(out), "\n")
+	// Last non-empty line contains the data
+	for i := len(lines) - 1; i >= 0; i-- {
+		line := strings.TrimSpace(lines[i])
+		if line == "" {
+			continue
+		}
+		_, _, syscalls, err := parseVmstatLine(line)
+		return syscalls, err
+	}
+
+	return 0, common.ErrNotImplementedError
+}
+
+// InterruptsWithContext returns the number of interrupts since boot
+func InterruptsWithContext(ctx context.Context) (int, error) {
+	out, err := common.Invoke{}.CommandWithContext(ctx, "vmstat", "1", "1")
+	if err != nil {
+		return 0, err
+	}
+
+	lines := strings.Split(string(out), "\n")
+	// Last non-empty line contains the data
+	for i := len(lines) - 1; i >= 0; i-- {
+		line := strings.TrimSpace(lines[i])
+		if line == "" {
+			continue
+		}
+		_, interrupts, _, err := parseVmstatLine(line)
+		return interrupts, err
+	}
+
+	return 0, common.ErrNotImplementedError
+}
+
 func MiscWithContext(ctx context.Context) (*MiscStat, error) {
 	out, err := common.Invoke{}.CommandWithContext(ctx, "ps", "-e", "-o", "state")
 	if err != nil {
@@ -79,5 +146,31 @@ func MiscWithContext(ctx context.Context) (*MiscStat, error) {
 		ret.ProcsTotal++
 	}
 
+	// Get context switches from vmstat
+	ctxt, _, _, err := getVmstatMetrics(ctx)
+	if err == nil {
+		ret.Ctxt = ctxt
+	}
+
 	return ret, nil
+}
+
+// getVmstatMetrics parses vmstat output and returns context switches, interrupts, and syscalls
+func getVmstatMetrics(ctx context.Context) (int, int, int, error) {
+	out, err := common.Invoke{}.CommandWithContext(ctx, "vmstat", "1", "1")
+	if err != nil {
+		return 0, 0, 0, err
+	}
+
+	lines := strings.Split(string(out), "\n")
+	// Last non-empty line contains the data
+	for i := len(lines) - 1; i >= 0; i-- {
+		line := strings.TrimSpace(lines[i])
+		if line == "" {
+			continue
+		}
+		return parseVmstatLine(line)
+	}
+
+	return 0, 0, 0, common.ErrNotImplementedError
 }
