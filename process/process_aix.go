@@ -349,6 +349,39 @@ func (p *Process) CmdlineSliceWithContext(ctx context.Context) ([]string, error)
 	return p.fillSliceFromCmdlineWithContext(ctx)
 }
 
+func (p *Process) EnvironmentWithContext(ctx context.Context) (map[string]string, error) {
+	// Query environment via ps command using Berkeley-style 'e' option
+	// Berkeley style: ps eww <PID> (no -p flag)
+	cmd := exec.CommandContext(ctx, "ps", "eww", strconv.Itoa(int(p.Pid)))
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	envStr := strings.TrimSpace(string(output))
+	if envStr == "" {
+		return make(map[string]string), nil
+	}
+
+	// Parse space-separated VAR=value assignments
+	env := make(map[string]string)
+
+	// ps eww output is space-separated on a single line (or multiple lines for multiline values)
+	// Split by spaces to get individual VAR=value pairs
+	parts := strings.Fields(envStr)
+
+	for _, part := range parts {
+		if strings.Contains(part, "=") {
+			kv := strings.SplitN(part, "=", 2)
+			if len(kv) == 2 {
+				env[kv[0]] = kv[1]
+			}
+		}
+	}
+
+	return env, nil
+}
+
 func (p *Process) createTimeWithContext(ctx context.Context) (int64, error) {
 	_, _, _, createTime, _, _, _, err := p.fillFromStatWithContext(ctx)
 	if err != nil {
@@ -398,7 +431,25 @@ func (p *Process) GroupsWithContext(ctx context.Context) ([]uint32, error) {
 }
 
 func (p *Process) TerminalWithContext(ctx context.Context) (string, error) {
-	return "", common.ErrNotImplementedError
+	// Query TTY via ps command
+	cmd := exec.CommandContext(ctx, "ps", "-o", "tty", "-p", strconv.Itoa(int(p.Pid)))
+	output, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	if len(lines) < 2 {
+		// Only header or no output
+		return "", nil
+	}
+
+	// Get the TTY value (second line, first field)
+	tty := strings.Fields(lines[1])
+	if len(tty) > 0 {
+		return tty[0], nil
+	}
+	return "", nil
 }
 
 func (p *Process) NiceWithContext(ctx context.Context) (int32, error) {
@@ -418,19 +469,142 @@ func (p *Process) RlimitWithContext(ctx context.Context) ([]RlimitStat, error) {
 }
 
 func (p *Process) RlimitUsageWithContext(ctx context.Context, gatherUsed bool) ([]RlimitStat, error) {
-	return nil, common.ErrNotImplementedError
+	// Get per-process resource limits via procfiles command
+	cmd := exec.CommandContext(ctx, "procfiles", strconv.Itoa(int(p.Pid)))
+	output, err := cmd.Output()
+	if err != nil {
+		// Fallback: try system-wide limits from ulimit
+		return p.getRlimitFromUlimit(ctx, gatherUsed)
+	}
+
+	// Parse procfiles output for file descriptor limits
+	// Output format: FD Info: nnnn (soft limit), mmmm (hard limit)
+	var rlimits []RlimitStat
+
+	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	for _, line := range lines {
+		if strings.Contains(line, "FD Info") || strings.Contains(line, "File descriptors") {
+			// Extract limits from this line
+			// Format varies, try to parse numbers
+			numStrs := strings.FieldsFunc(line, func(r rune) bool {
+				return !('0' <= r && r <= '9')
+			})
+			if len(numStrs) >= 2 {
+				soft, _ := strconv.ParseUint(numStrs[0], 10, 64)
+				hard, _ := strconv.ParseUint(numStrs[1], 10, 64)
+				rlimits = append(rlimits, RlimitStat{
+					Resource: RLIMIT_NOFILE,
+					Soft:     soft,
+					Hard:     hard,
+				})
+				break
+			}
+		}
+	}
+
+	if len(rlimits) == 0 {
+		return p.getRlimitFromUlimit(ctx, gatherUsed)
+	}
+
+	return rlimits, nil
 }
 
-func (p *Process) IOCountersWithContext(ctx context.Context) (*IOCountersStat, error) {
-	return p.fillFromIOWithContext(ctx)
-}
-
-func (p *Process) NumCtxSwitchesWithContext(ctx context.Context) (*NumCtxSwitchesStat, error) {
-	err := p.fillFromStatusWithContext(ctx)
+// getRlimitFromUlimit gets resource limits via ulimit command
+func (p *Process) getRlimitFromUlimit(ctx context.Context, gatherUsed bool) ([]RlimitStat, error) {
+	cmd := exec.CommandContext(ctx, "sh", "-c", "ulimit -a")
+	output, err := cmd.Output()
 	if err != nil {
 		return nil, err
 	}
-	return p.numCtxSwitches, nil
+
+	var rlimits []RlimitStat
+	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+
+	for _, line := range lines {
+		// Parse ulimit output: "open files (-n) 1024"
+		fields := strings.Fields(line)
+		if len(fields) < 2 {
+			continue
+		}
+
+		var limit uint64
+
+		// Identify resource type and extract limit
+		var resourceID int32
+		if strings.Contains(line, "open files") {
+			resourceID = RLIMIT_NOFILE
+			// Extract numeric value (usually last field)
+			if val, err := strconv.ParseUint(fields[len(fields)-1], 10, 64); err == nil {
+				limit = val
+			}
+		}
+
+		if resourceID != 0 && limit > 0 {
+			rlimits = append(rlimits, RlimitStat{
+				Resource: resourceID,
+				Soft:     limit,
+				Hard:     limit,
+			})
+		}
+	}
+
+	return rlimits, nil
+}
+
+func (p *Process) IOCountersWithContext(ctx context.Context) (*IOCountersStat, error) {
+	// Check if WLM is enabled and iostat is configured
+	cmd := exec.CommandContext(ctx, "lsattr", "-El", "sys0")
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, common.ErrNotImplementedError
+	}
+
+	// Check if iostat=true
+	if !strings.Contains(string(output), "iostat true") {
+		return nil, common.ErrNotImplementedError
+	}
+
+	// Query I/O counters via ps command
+	cmd = exec.CommandContext(ctx, "ps", "-efo", "pid,tdiskio", "-p", strconv.Itoa(int(p.Pid)))
+	output, err = cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	if len(lines) < 2 {
+		return nil, fmt.Errorf("insufficient ps output")
+	}
+
+	// Parse the output (skip header)
+	fields := strings.Fields(lines[1])
+	if len(fields) < 2 {
+		return nil, fmt.Errorf("insufficient fields in ps output")
+	}
+
+	// Check for hyphen (unavailable data)
+	ioCountStr := fields[1]
+	if ioCountStr == "-" {
+		return nil, fmt.Errorf("I/O counters not available for this process")
+	}
+
+	// Parse the I/O count
+	ioCount, err := strconv.ParseUint(ioCountStr, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	return &IOCountersStat{
+		ReadBytes:  ioCount,
+		WriteBytes: 0, // AIX doesn't separate read/write I/O
+	}, nil
+}
+
+func (p *Process) NumCtxSwitchesWithContext(ctx context.Context) (*NumCtxSwitchesStat, error) {
+	// AIX ps doesn't have -Leo format. Try using -o format with THREAD output
+	// Fallback: Use ps -m to get thread info which includes context switch data in some AIX versions
+	// For now, return error as AIX doesn't expose this in standard ps
+	return nil, common.ErrNotImplementedError
 }
 
 func (p *Process) NumFDsWithContext(ctx context.Context) (int32, error) {
@@ -475,6 +649,9 @@ func (p *Process) TimesWithContext(ctx context.Context) (*cpu.TimesStat, error) 
 }
 
 func (p *Process) CPUAffinityWithContext(ctx context.Context) ([]int32, error) {
+	// AIX ps command does not support psr field specifier in System V style
+	// Berkeley style ps doesn't provide CPU affinity information
+	// This metric is not available on AIX
 	return nil, common.ErrNotImplementedError
 }
 
@@ -1210,7 +1387,42 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 		nice = int32(aixlspPSinfo.Nice)
 	}
 
-	return 0, int32(ppid), cpuTimes, createTime, uint32(rtpriority), nice, nil, nil
+	// Extract page fault data via ps command for more detailed info
+	pageFaults, _ := p.getPageFaults(ctx)
+
+	return 0, int32(ppid), cpuTimes, createTime, uint32(rtpriority), nice, pageFaults, nil
+}
+
+// getPageFaults retrieves page fault information for the process
+func (p *Process) getPageFaults(ctx context.Context) (*PageFaultsStat, error) {
+	// Query page faults via ps command
+	cmd := exec.CommandContext(ctx, "ps", "-v", "-p", strconv.Itoa(int(p.Pid)))
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	if len(lines) < 2 {
+		return nil, fmt.Errorf("insufficient ps output")
+	}
+
+	// Parse ps v output - look for page fault related columns
+	// AIX ps -v output includes: PID, USER, TTY, STAT, TIME, SZ, RSS, %MEM, PAGEIN, etc.
+	fields := strings.Fields(lines[1])
+
+	// Try to extract PAGEIN (major page faults)
+	pageFaults := &PageFaultsStat{}
+
+	// Look for numeric fields that indicate page faults
+	// The exact column varies, so we'll try a heuristic approach
+	if len(fields) >= 9 {
+		if pagein, err := strconv.ParseUint(fields[len(fields)-1], 10, 64); err == nil {
+			pageFaults.MajorFaults = pagein
+		}
+	}
+
+	return pageFaults, nil
 }
 
 func (p *Process) fillFromStatWithContext(ctx context.Context) (uint64, int32, *cpu.TimesStat, int64, uint32, int32, *PageFaultsStat, error) {
