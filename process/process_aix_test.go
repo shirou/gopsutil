@@ -464,6 +464,4 @@ func TestSignalsPendingWithContext(t *testing.T) {
 	require.NoError(t, err)
 	// SignalInfoStat should be valid (may have zero pending signals for normal process)
 	assert.NotNil(t, &sigInfo)
-	// PendingProcess should be >= 0
-	assert.GreaterOrEqual(t, sigInfo.PendingProcess, uint64(0))
 }

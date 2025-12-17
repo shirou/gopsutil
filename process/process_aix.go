@@ -603,7 +603,7 @@ func (p *Process) IOCountersWithContext(ctx context.Context) (*IOCountersStat, e
 	}, nil
 }
 
-func (p *Process) NumCtxSwitchesWithContext(ctx context.Context) (*NumCtxSwitchesStat, error) {
+func (*Process) NumCtxSwitchesWithContext(_ context.Context) (*NumCtxSwitchesStat, error) {
 	// AIX does not expose context switch information via proc files or ps command.
 	// According to IBM AIX documentation, the ps command field specifiers do not include
 	// nvcsw (non-voluntary context switches) or vcsw (voluntary context switches).
@@ -684,7 +684,7 @@ func (p *Process) SignalsPendingWithContext(ctx context.Context) (SignalInfoStat
 	// AIXStat starts with: Flag(4) Flag2(4) Flags(4) Nlwp(4) Stat(1) Dmodel(1) Pad1(6) = 24 bytes
 	// Then SigPend which is PrSigset [4]uint64 = 32 bytes
 	// Total offset to SigPend: 24 bytes
-	
+
 	// Skip the first part of the structure to get to SigPend
 	var (
 		flag, flag2, flags, nlwp uint32
