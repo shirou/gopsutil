@@ -4,9 +4,11 @@
 package host
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseUptimeValidInput(t *testing.T) {
@@ -38,4 +40,30 @@ func TestParseUptimeInvalidInput(t *testing.T) {
 		got := parseUptime(tc)
 		assert.LessOrEqualf(t, got, 0, "parseUptime(%q) expected zero to be returned, received %v", tc, got)
 	}
+}
+
+func TestFDLimitsWithContext(t *testing.T) {
+	ctx := context.Background()
+	soft, hard, err := FDLimitsWithContext(ctx)
+	require.NoError(t, err)
+
+	// Both limits should be positive
+	assert.Greater(t, soft, uint64(0), "Soft limit should be > 0")
+	assert.Greater(t, hard, uint64(0), "Hard limit should be > 0")
+
+	// Hard limit should be >= soft limit
+	assert.GreaterOrEqual(t, hard, soft, "Hard limit should be >= soft limit")
+
+	// Reasonable ranges for AIX (typically 1024-32767, or unlimited which is max int64)
+	assert.GreaterOrEqual(t, soft, uint64(256), "Soft limit should be >= 256")
+}
+
+func TestFDLimits(t *testing.T) {
+	soft, hard, err := FDLimits()
+	require.NoError(t, err)
+
+	// Both limits should be positive
+	assert.Greater(t, soft, uint64(0))
+	assert.Greater(t, hard, uint64(0))
+	assert.GreaterOrEqual(t, hard, soft)
 }
