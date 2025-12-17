@@ -46,6 +46,11 @@ func ParseUptime(uptime string) uint64 {
 	var days, hours, mins uint64
 	var err error
 
+	// Need at least 4 fields to be valid (time "up" number unit,...)
+	if len(ut) < 4 {
+		return 0
+	}
+
 	switch ut[3] {
 	case "day,", "days,":
 		days, err = strconv.ParseUint(ut[2], 10, 64)
@@ -55,7 +60,7 @@ func ParseUptime(uptime string) uint64 {
 
 		// day provided along with a single hour or hours
 		// ie: up 2 days, 20 hrs,
-		if ut[5] == "hr," || ut[5] == "hrs," {
+		if len(ut) > 5 && (ut[5] == "hr," || ut[5] == "hrs,") {
 			hours, err = strconv.ParseUint(ut[4], 10, 64)
 			if err != nil {
 				return 0
@@ -64,7 +69,7 @@ func ParseUptime(uptime string) uint64 {
 
 		// mins provided along with a single min or mins
 		// ie: up 4 days, 29 mins,
-		if ut[5] == "min," || ut[5] == "mins," {
+		if len(ut) > 5 && (ut[5] == "min," || ut[5] == "mins,") {
 			mins, err = strconv.ParseUint(ut[4], 10, 64)
 			if err != nil {
 				return 0
@@ -73,7 +78,7 @@ func ParseUptime(uptime string) uint64 {
 
 		// alternatively day provided with hh:mm
 		// ie: up 83 days, 18:29
-		if strings.Contains(ut[4], ":") {
+		if len(ut) > 4 && strings.Contains(ut[4], ":") {
 			hm := strings.Split(ut[4], ":")
 			hours, err = strconv.ParseUint(hm[0], 10, 64)
 			if err != nil {

@@ -38,7 +38,7 @@ func TestParseUptimeInvalidInput(t *testing.T) {
 
 	for _, tc := range testCases {
 		got := parseUptime(tc)
-		assert.LessOrEqualf(t, got, 0, "parseUptime(%q) expected zero to be returned, received %v", tc, got)
+		assert.Equalf(t, uint64(0), got, "parseUptime(%q) expected zero to be returned, received %v", tc, got)
 	}
 }
 

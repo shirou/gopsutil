@@ -15,8 +15,19 @@ import (
 
 var separator = regexp.MustCompile(`,?\s+`)
 
+// testInvoker is used for dependency injection in tests
+var testInvoker common.Invoker
+
+// getInvoker returns the test invoker if set, otherwise returns the default
+func getInvoker() common.Invoker {
+	if testInvoker != nil {
+		return testInvoker
+	}
+	return common.Invoke{}
+}
+
 func AvgWithContext(ctx context.Context) (*AvgStat, error) {
-	line, err := common.Invoke{}.CommandWithContext(ctx, "uptime")
+	line, err := getInvoker().CommandWithContext(ctx, "uptime")
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +82,7 @@ func parseVmstatLine(line string) (ctxt int, interrupts int, syscalls int, err e
 
 // SystemCallsWithContext returns the number of system calls since boot
 func SystemCallsWithContext(ctx context.Context) (int, error) {
-	out, err := common.Invoke{}.CommandWithContext(ctx, "vmstat", "1", "1")
+	out, err := getInvoker().CommandWithContext(ctx, "vmstat", "1", "1")
 	if err != nil {
 		return 0, err
 	}
@@ -92,7 +103,7 @@ func SystemCallsWithContext(ctx context.Context) (int, error) {
 
 // InterruptsWithContext returns the number of interrupts since boot
 func InterruptsWithContext(ctx context.Context) (int, error) {
-	out, err := common.Invoke{}.CommandWithContext(ctx, "vmstat", "1", "1")
+	out, err := getInvoker().CommandWithContext(ctx, "vmstat", "1", "1")
 	if err != nil {
 		return 0, err
 	}
@@ -112,7 +123,7 @@ func InterruptsWithContext(ctx context.Context) (int, error) {
 }
 
 func MiscWithContext(ctx context.Context) (*MiscStat, error) {
-	out, err := common.Invoke{}.CommandWithContext(ctx, "ps", "-e", "-o", "state")
+	out, err := getInvoker().CommandWithContext(ctx, "ps", "-e", "-o", "state")
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +168,7 @@ func MiscWithContext(ctx context.Context) (*MiscStat, error) {
 
 // getVmstatMetrics parses vmstat output and returns context switches, interrupts, and syscalls
 func getVmstatMetrics(ctx context.Context) (int, int, int, error) {
-	out, err := common.Invoke{}.CommandWithContext(ctx, "vmstat", "1", "1")
+	out, err := getInvoker().CommandWithContext(ctx, "vmstat", "1", "1")
 	if err != nil {
 		return 0, 0, 0, err
 	}
