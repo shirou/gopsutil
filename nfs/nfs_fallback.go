@@ -10,7 +10,7 @@ import (
 )
 
 // ClientStatsWithContext returns NFS client statistics
-func ClientStatsWithContext(ctx context.Context) (*NFSClientStat, error) {
+func ClientStatsWithContext(_ context.Context) (*NFSClientStat, error) {
 	return nil, common.ErrNotImplementedError
 }
 
@@ -20,7 +20,7 @@ func ClientStats() (*NFSClientStat, error) {
 }
 
 // ServerStatsWithContext returns NFS server statistics
-func ServerStatsWithContext(ctx context.Context) (*NFSServerStat, error) {
+func ServerStatsWithContext(_ context.Context) (*NFSServerStat, error) {
 	return nil, common.ErrNotImplementedError
 }
 

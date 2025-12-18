@@ -20,7 +20,7 @@ func TestClientStatsWithContext(t *testing.T) {
 		return
 	}
 	assert.NotNil(t, stats)
-	assert.GreaterOrEqual(t, stats.Calls, uint64(0))
+	_ = stats // uint64 >= 0 is always true, suppress warning
 }
 
 func TestServerStatsWithContext(t *testing.T) {
@@ -33,5 +33,5 @@ func TestServerStatsWithContext(t *testing.T) {
 		return
 	}
 	assert.NotNil(t, stats)
-	assert.GreaterOrEqual(t, stats.Calls, uint64(0))
+	_ = stats // uint64 >= 0 is always true, suppress warning
 }

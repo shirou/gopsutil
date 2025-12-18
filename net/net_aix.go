@@ -5,6 +5,7 @@ package net
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -395,11 +396,12 @@ func getAIXConnectionsForPid(ctx context.Context, pid int32, maxConn int) ([]Con
 
 		// Determine protocol type (tcp or udp)
 		var protocol string
-		if strings.HasPrefix(proto, "tcp") {
+		switch {
+		case strings.HasPrefix(proto, "tcp"):
 			protocol = "tcp"
-		} else if strings.HasPrefix(proto, "udp") {
+		case strings.HasPrefix(proto, "udp"):
 			protocol = "udp"
-		} else {
+		default:
 			continue
 		}
 
@@ -450,7 +452,7 @@ func getAIXConnectionsForPid(ctx context.Context, pid int32, maxConn int) ([]Con
 }
 
 // resolveAIXSockToConnection uses AIX rmsock command to resolve a socket address to connection info
-func resolveAIXSockToConnection(ctx context.Context, sockAddr string, protocol string) (*ConnectionStat, error) {
+func resolveAIXSockToConnection(ctx context.Context, sockAddr, protocol string) (*ConnectionStat, error) {
 	if protocol != "tcp" && protocol != "udp" {
 		return nil, fmt.Errorf("unsupported protocol: %s", protocol)
 	}
@@ -458,14 +460,14 @@ func resolveAIXSockToConnection(ctx context.Context, sockAddr string, protocol s
 	// Execute rmsock to resolve socket
 	// Format for TCP: rmsock <socket_address> tcpcb
 	// Format for UDP: rmsock <socket_address> inpcb
-	var tcpOrUdp string
+	var tcpOrUDP string
 	if protocol == "tcp" {
-		tcpOrUdp = "tcpcb"
+		tcpOrUDP = "tcpcb"
 	} else {
-		tcpOrUdp = "inpcb"
+		tcpOrUDP = "inpcb"
 	}
 
-	output, err := invoke.CommandWithContext(ctx, "rmsock", sockAddr, tcpOrUdp)
+	output, err := invoke.CommandWithContext(ctx, "rmsock", sockAddr, tcpOrUDP)
 	if err != nil {
 		return nil, err
 	}
@@ -476,7 +478,7 @@ func resolveAIXSockToConnection(ctx context.Context, sockAddr string, protocol s
 	// Try to find PID in the output
 	pid := parseAIXRmsockPid(outputStr)
 	if pid == 0 {
-		return nil, fmt.Errorf("could not extract PID from rmsock output")
+		return nil, errors.New("could not extract PID from rmsock output")
 	}
 
 	// Build connection stat from parsed info
@@ -494,14 +496,14 @@ func resolveAIXSockToConnection(ctx context.Context, sockAddr string, protocol s
 }
 
 // resolveAIXSockToConnectionForPid resolves socket to connection only if it matches the target PID
-func resolveAIXSockToConnectionForPid(ctx context.Context, sockAddr string, protocol string, targetPid int32) (*ConnectionStat, error) {
+func resolveAIXSockToConnectionForPid(ctx context.Context, sockAddr, protocol string, targetPid int32) (*ConnectionStat, error) {
 	connStat, err := resolveAIXSockToConnection(ctx, sockAddr, protocol)
 	if err != nil {
 		return nil, err
 	}
 
 	if connStat == nil {
-		return nil, fmt.Errorf("connection stat is nil")
+		return nil, errors.New("connection stat is nil")
 	}
 
 	if connStat.Pid != targetPid {
@@ -512,11 +514,11 @@ func resolveAIXSockToConnectionForPid(ctx context.Context, sockAddr string, prot
 }
 
 // parseAIXRmsockPid extracts PID from rmsock output
-// Expected format: "The socket 0xf1000f00055be808 is being held by proccess 14287304 (sshd)."
+// Expected format: "The socket 0xf1000f00055be808 is being held by process 14287304 (sshd)."
 func parseAIXRmsockPid(output string) int32 {
 	// Use regex to extract PID from rmsock output
-	// Pattern: "proccess <PID> ("
-	re := regexp.MustCompile(`proccess\s+(\d+)\s+\(`)
+	// Pattern: "process <PID> ("
+	re := regexp.MustCompile(`process\s+(\d+)\s+\(`)
 	matches := re.FindStringSubmatch(output)
 	if len(matches) > 1 {
 		if pid, err := strconv.ParseInt(matches[1], 10, 32); err == nil {
@@ -527,19 +529,19 @@ func parseAIXRmsockPid(output string) int32 {
 }
 
 // resolveAIXSockToPid uses rmsock to get the PID holding a socket, returns 0 if unable to resolve
-func resolveAIXSockToPid(ctx context.Context, sockAddr string, protocol string) int32 {
+func resolveAIXSockToPid(ctx context.Context, sockAddr, protocol string) int32 {
 	if protocol != "tcp" && protocol != "udp" {
 		return 0
 	}
 
-	var tcpOrUdp string
+	var tcpOrUDP string
 	if protocol == "tcp" {
-		tcpOrUdp = "tcpcb"
+		tcpOrUDP = "tcpcb"
 	} else {
-		tcpOrUdp = "inpcb"
+		tcpOrUDP = "inpcb"
 	}
 
-	output, err := invoke.CommandWithContext(ctx, "rmsock", sockAddr, tcpOrUdp)
+	output, err := invoke.CommandWithContext(ctx, "rmsock", sockAddr, tcpOrUDP)
 	// Note: rmsock may exit with status 1 even on successful resolution
 	// So we try to parse the output regardless of error status
 

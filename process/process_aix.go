@@ -8,7 +8,7 @@ import (
 	"context"
 	"encoding/binary"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"math"
 	"os"
 	"os/exec"
@@ -56,10 +56,9 @@ func getAIXClockTicks() int {
 
 	// Try to query big_tick_size from schedo
 	// Format: schedo -o big_tick_size (displays current value without changing)
-	cmd := exec.Command("schedo", "-o", "big_tick_size")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	cmd = exec.CommandContext(ctx, "schedo", "-o", "big_tick_size")
+	cmd := exec.CommandContext(ctx, "schedo", "-o", "big_tick_size")
 
 	output, err := cmd.Output()
 	if err != nil {
@@ -124,7 +123,7 @@ type PrSiginfo64 struct {
 	SiImm    int32     // immediate data
 	SiStatus int32     // exit value or signal
 	Pad1     uint32    // reserved for future use
-	SiUid    uint64    // real user id of sending process
+	SiUID    uint64    // real user id of sending process
 	SiPid    uint64    // sending process id
 	SiAddr   prptr64   // address of faulting instruction
 	SiBand   int64     // band event for SIGPOLL
@@ -250,7 +249,7 @@ type AIXPSInfo struct {
 	Flag2  uint32         // process flags from proc struct p_flag2
 	Nlwp   uint32         // number of threads in process
 	Pad1   uint32         // reserved for future use
-	Uid    uint64         // real user id
+	UID    uint64         // real user id
 	Euid   uint64         // effective user id
 	Gid    uint64         // real group id
 	Egid   uint64         // effective group id
@@ -352,6 +351,7 @@ func (p *Process) CmdlineSliceWithContext(ctx context.Context) ([]string, error)
 func (p *Process) EnvironmentWithContext(ctx context.Context) (map[string]string, error) {
 	// Query environment via ps command using Berkeley-style 'e' option
 	// Berkeley style: ps eww <PID> (no -p flag)
+	//nolint:gosec // Process ID from internal tracking, not untrusted input
 	cmd := exec.CommandContext(ctx, "ps", "eww", strconv.Itoa(int(p.Pid)))
 	output, err := cmd.Output()
 	if err != nil {
@@ -402,7 +402,7 @@ func (p *Process) StatusWithContext(ctx context.Context) ([]string, error) {
 	return []string{p.status}, nil
 }
 
-func (p *Process) ForegroundWithContext(ctx context.Context) (bool, error) {
+func (*Process) ForegroundWithContext(_ context.Context) (bool, error) {
 	return false, common.ErrNotImplementedError
 }
 
@@ -432,6 +432,7 @@ func (p *Process) GroupsWithContext(ctx context.Context) ([]uint32, error) {
 
 func (p *Process) TerminalWithContext(ctx context.Context) (string, error) {
 	// Query TTY via ps command
+	//nolint:gosec // Process ID from internal tracking, not untrusted input
 	cmd := exec.CommandContext(ctx, "ps", "-o", "tty", "-p", strconv.Itoa(int(p.Pid)))
 	output, err := cmd.Output()
 	if err != nil {
@@ -460,7 +461,7 @@ func (p *Process) NiceWithContext(ctx context.Context) (int32, error) {
 	return nice, nil
 }
 
-func (p *Process) IOniceWithContext(ctx context.Context) (int32, error) {
+func (*Process) IOniceWithContext(_ context.Context) (int32, error) {
 	return 0, common.ErrNotImplementedError
 }
 
@@ -470,6 +471,7 @@ func (p *Process) RlimitWithContext(ctx context.Context) ([]RlimitStat, error) {
 
 func (p *Process) RlimitUsageWithContext(ctx context.Context, gatherUsed bool) ([]RlimitStat, error) {
 	// Get per-process resource limits via procfiles command
+	//nolint:gosec // Process ID from internal tracking, not untrusted input
 	cmd := exec.CommandContext(ctx, "procfiles", strconv.Itoa(int(p.Pid)))
 	output, err := cmd.Output()
 	if err != nil {
@@ -487,7 +489,7 @@ func (p *Process) RlimitUsageWithContext(ctx context.Context, gatherUsed bool) (
 			// Extract limits from this line
 			// Format varies, try to parse numbers
 			numStrs := strings.FieldsFunc(line, func(r rune) bool {
-				return !('0' <= r && r <= '9')
+				return r < '0' || r > '9'
 			})
 			if len(numStrs) >= 2 {
 				soft, _ := strconv.ParseUint(numStrs[0], 10, 64)
@@ -510,7 +512,7 @@ func (p *Process) RlimitUsageWithContext(ctx context.Context, gatherUsed bool) (
 }
 
 // getRlimitFromUlimit gets resource limits via ulimit command
-func (p *Process) getRlimitFromUlimit(ctx context.Context, gatherUsed bool) ([]RlimitStat, error) {
+func (*Process) getRlimitFromUlimit(ctx context.Context, _ bool) ([]RlimitStat, error) {
 	cmd := exec.CommandContext(ctx, "sh", "-c", "ulimit -a")
 	output, err := cmd.Output()
 	if err != nil {
@@ -565,6 +567,7 @@ func (p *Process) IOCountersWithContext(ctx context.Context) (*IOCountersStat, e
 	}
 
 	// Query I/O counters via ps command
+	//nolint:gosec // Process ID from internal tracking, not untrusted input
 	cmd = exec.CommandContext(ctx, "ps", "-efo", "pid,tdiskio", "-p", strconv.Itoa(int(p.Pid)))
 	output, err = cmd.Output()
 	if err != nil {
@@ -573,19 +576,19 @@ func (p *Process) IOCountersWithContext(ctx context.Context) (*IOCountersStat, e
 
 	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
 	if len(lines) < 2 {
-		return nil, fmt.Errorf("insufficient ps output")
+		return nil, errors.New("insufficient ps output")
 	}
 
 	// Parse the output (skip header)
 	fields := strings.Fields(lines[1])
 	if len(fields) < 2 {
-		return nil, fmt.Errorf("insufficient fields in ps output")
+		return nil, errors.New("insufficient fields in ps output")
 	}
 
 	// Check for hyphen (unavailable data)
 	ioCountStr := fields[1]
 	if ioCountStr == "-" {
-		return nil, fmt.Errorf("I/O counters not available for this process")
+		return nil, errors.New("I/O counters not available for this process")
 	}
 
 	// Parse the I/O count
@@ -600,7 +603,7 @@ func (p *Process) IOCountersWithContext(ctx context.Context) (*IOCountersStat, e
 	}, nil
 }
 
-func (p *Process) NumCtxSwitchesWithContext(ctx context.Context) (*NumCtxSwitchesStat, error) {
+func (*Process) NumCtxSwitchesWithContext(_ context.Context) (*NumCtxSwitchesStat, error) {
 	// AIX ps doesn't have -Leo format. Try using -o format with THREAD output
 	// Fallback: Use ps -m to get thread info which includes context switch data in some AIX versions
 	// For now, return error as AIX doesn't expose this in standard ps
@@ -648,7 +651,7 @@ func (p *Process) TimesWithContext(ctx context.Context) (*cpu.TimesStat, error) 
 	return cpuTimes, nil
 }
 
-func (p *Process) CPUAffinityWithContext(ctx context.Context) ([]int32, error) {
+func (*Process) CPUAffinityWithContext(_ context.Context) ([]int32, error) {
 	// AIX ps command does not support psr field specifier in System V style
 	// Berkeley style ps doesn't provide CPU affinity information
 	// This metric is not available on AIX
@@ -679,7 +682,7 @@ func (p *Process) PageFaultsWithContext(ctx context.Context) (*PageFaultsStat, e
 	return pageFaults, nil
 }
 
-func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
+func (*Process) ChildrenWithContext(_ context.Context) ([]*Process, error) {
 	return nil, common.ErrNotImplementedError
 }
 
@@ -705,18 +708,20 @@ func (p *Process) ConnectionsMaxWithContext(ctx context.Context, maxConn int) ([
 }
 
 // getConnectionsUsingNetstat retrieves network connections using AIX netstat command.
-// DEPRECATED: Use net module's ConnectionsPidMaxWithContext instead
-// This function is kept for backward compatibility but delegates to the net module
+// This function is kept for backward compatibility but delegates to the net module.
+//
+// Deprecated: Use net module's ConnectionsPidMaxWithContext instead
 func (p *Process) getConnectionsUsingNetstat(ctx context.Context, maxConn int) ([]net.ConnectionStat, error) {
 	return net.ConnectionsPidMaxWithContext(ctx, "all", p.Pid, maxConn)
 }
 
-func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]MemoryMapsStat, error) {
+func (p *Process) MemoryMapsWithContext(ctx context.Context, _ bool) (*[]MemoryMapsStat, error) {
 	// Use AIX procmap command to retrieve detailed memory address space maps
 	// procmap provides information about memory regions including HEAP, STACK, TEXT, etc.
 	pid := p.Pid
 
-	cmd := exec.CommandContext(ctx, "procmap", "-X", fmt.Sprintf("%d", pid))
+	//nolint:gosec // Process ID from internal tracking, not untrusted input
+	cmd := exec.CommandContext(ctx, "procmap", "-X", strconv.Itoa(int(pid)))
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, err
@@ -733,7 +738,7 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 // 0                 10000000           262144K r--   m     KERTXT     10002
 // 10000000          1000ce95               51K r-x   s     MAINTEXT   8b8117           init
 // 200003d8          20036288              215K rw-   sm    MAINDATA   890192           init
-func (p *Process) parseMemoryMaps(output string) *[]MemoryMapsStat {
+func (*Process) parseMemoryMaps(output string) *[]MemoryMapsStat {
 	maps := make([]MemoryMapsStat, 0)
 	lines := strings.Split(output, "\n")
 
@@ -802,17 +807,18 @@ func parseSizeField(sizeStr string) uint64 {
 	sizeStr = strings.TrimSpace(sizeStr)
 
 	// Check for unit suffixes
-	if strings.HasSuffix(sizeStr, "K") || strings.HasSuffix(sizeStr, "k") {
+	switch {
+	case strings.HasSuffix(sizeStr, "K") || strings.HasSuffix(sizeStr, "k"):
 		numStr := sizeStr[:len(sizeStr)-1]
 		if num, err := strconv.ParseUint(numStr, 10, 64); err == nil {
 			return num * 1024
 		}
-	} else if strings.HasSuffix(sizeStr, "M") || strings.HasSuffix(sizeStr, "m") {
+	case strings.HasSuffix(sizeStr, "M") || strings.HasSuffix(sizeStr, "m"):
 		numStr := sizeStr[:len(sizeStr)-1]
 		if num, err := strconv.ParseUint(numStr, 10, 64); err == nil {
 			return num * 1024 * 1024
 		}
-	} else if strings.HasSuffix(sizeStr, "G") || strings.HasSuffix(sizeStr, "g") {
+	case strings.HasSuffix(sizeStr, "G") || strings.HasSuffix(sizeStr, "g"):
 		numStr := sizeStr[:len(sizeStr)-1]
 		if num, err := strconv.ParseUint(numStr, 10, 64); err == nil {
 			return num * 1024 * 1024 * 1024
@@ -827,7 +833,7 @@ func parseSizeField(sizeStr string) uint64 {
 	return 0
 }
 
-func (p *Process) EnvironWithContext(ctx context.Context) ([]string, error) {
+func (*Process) EnvironWithContext(_ context.Context) ([]string, error) {
 	// AIX /proc does not expose environment variables in a standard text format
 	// Envp in psinfo is a user-space pointer that is not directly accessible
 	return nil, common.ErrNotImplementedError
@@ -849,7 +855,7 @@ func limitToUint(val string) (uint64, error) {
 }
 
 // Get num_fds from /proc/(pid)/limits (not available in AIX)
-func (p *Process) fillFromLimitsWithContext(ctx context.Context) ([]RlimitStat, error) {
+func (*Process) fillFromLimitsWithContext(_ context.Context) ([]RlimitStat, error) {
 	// AIX /proc does not expose resource limits in a standard procfs location
 	return nil, common.ErrNotImplementedError
 }
@@ -878,7 +884,7 @@ func (p *Process) fillFromfdWithContext(ctx context.Context) (int32, []*OpenFile
 	var openfiles []*OpenFilesStat
 	for _, fd := range fnames {
 		fpath := filepath.Join(statPath, fd)
-		filepath, err := os.Readlink(fpath)
+		linkPath, err := os.Readlink(fpath)
 		if err != nil {
 			continue
 		}
@@ -887,7 +893,7 @@ func (p *Process) fillFromfdWithContext(ctx context.Context) (int32, []*OpenFile
 			return numFDs, openfiles, err
 		}
 		o := &OpenFilesStat{
-			Path: filepath,
+			Path: linkPath,
 			Fd:   t,
 		}
 		openfiles = append(openfiles, o)
@@ -1061,15 +1067,15 @@ func readStringFromAddressSpace(fd int, addr int64) (string, error) {
 	}
 
 	// Read null-terminated string
-	result := ""
+	var result strings.Builder
 	for i := offset; i < int64(len(buffer)) && i < offset+int64(maxStrLen); i++ {
 		if buffer[i] == 0 {
 			break
 		}
-		result += string(buffer[i])
+		result.WriteByte(buffer[i])
 	}
 
-	return result, nil
+	return result.String(), nil
 }
 
 // Get cmdline from /proc/(pid)/psinfo by reading from address space
@@ -1150,7 +1156,7 @@ func extractFnameString(psinfo *AIXPSInfo) string {
 }
 
 // Get IO status from /proc/(pid)/status (not available in AIX)
-func (p *Process) fillFromIOWithContext(ctx context.Context) (*IOCountersStat, error) {
+func (*Process) fillFromIOWithContext(_ context.Context) (*IOCountersStat, error) {
 	// AIX does not expose detailed I/O counters in /proc; return nil
 	return nil, common.ErrNotImplementedError
 }
@@ -1271,7 +1277,7 @@ func (p *Process) fillFromStatusWithContext(ctx context.Context) error {
 		err = binary.Read(infoFile, binary.BigEndian, &aixPSinfo)
 		if err == nil {
 			// Extract UIDs: real UID, effective UID, saved UID (use effective as third), and fsuid (use effective)
-			p.uids = []uint32{uint32(aixPSinfo.Uid), uint32(aixPSinfo.Euid), uint32(aixPSinfo.Euid), uint32(aixPSinfo.Euid)}
+			p.uids = []uint32{uint32(aixPSinfo.UID), uint32(aixPSinfo.Euid), uint32(aixPSinfo.Euid), uint32(aixPSinfo.Euid)}
 			// Extract GIDs: real GID, effective GID, saved GID (use effective as third), and fsgid (use effective)
 			p.gids = []uint32{uint32(aixPSinfo.Gid), uint32(aixPSinfo.Egid), uint32(aixPSinfo.Egid), uint32(aixPSinfo.Egid)}
 			// Extract number of threads from Nlwp field
@@ -1365,8 +1371,7 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 	utime := float64(aixStat.Utime.TvSec)
 	stime := float64(aixStat.Stime.TvSec)
 
-	var iotime float64
-	iotime = 0 // TODO: Figure out actual iotime for AIX
+	iotime := 0.0 // TODO: Figure out actual iotime for AIX
 
 	cpuTimes := &cpu.TimesStat{
 		CPU:    "cpu",
@@ -1396,6 +1401,7 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 // getPageFaults retrieves page fault information for the process
 func (p *Process) getPageFaults(ctx context.Context) (*PageFaultsStat, error) {
 	// Query page faults via ps command
+	//nolint:gosec // Process ID from internal tracking, not untrusted input
 	cmd := exec.CommandContext(ctx, "ps", "-v", "-p", strconv.Itoa(int(p.Pid)))
 	output, err := cmd.Output()
 	if err != nil {
@@ -1404,7 +1410,7 @@ func (p *Process) getPageFaults(ctx context.Context) (*PageFaultsStat, error) {
 
 	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
 	if len(lines) < 2 {
-		return nil, fmt.Errorf("insufficient ps output")
+		return nil, errors.New("insufficient ps output")
 	}
 
 	// Parse ps v output - look for page fault related columns

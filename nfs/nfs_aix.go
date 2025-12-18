@@ -74,7 +74,7 @@ func ServerStats() (*NFSServerStat, error) {
 //
 // Each RPC section has subsections for "Connection oriented" (TCP) and "Connectionless" (UDP)
 // NFS sections report per-operation statistics broken down by NFSv2 and NFSv3
-func parseNfsstat(output string, stats *StatsStat) error {
+func parseNfsstat(output string, stats *StatsStat) error { //nolint:unparam // stats is used in nested parsing
 	lines := strings.Split(output, "\n")
 
 	var section string       // Track current section: "server_rpc", "server_nfs", "client_rpc", "client_nfs"
@@ -153,7 +153,9 @@ func parseNfsstat(output string, stats *StatsStat) error {
 // parseRPCServerLine parses an RPC server statistics line from AIX nfsstat
 // AIX reports separate metrics for "Connection oriented" (TCP) and "Connectionless" (UDP) transports
 // Both have: calls badcalls nullrecv badlen xdrcall dupchecks dupreqs
-func parseRPCServerLine(line string, transportMode string, stats *RPCServerStat) error {
+//
+//nolint:unparam // transportMode parameter needed for consistency with caller
+func parseRPCServerLine(line, transportMode string, stats *RPCServerStat) error {
 	// Skip header lines
 	if strings.Contains(line, "calls") && strings.Contains(line, "badcalls") {
 		return nil
@@ -165,20 +167,10 @@ func parseRPCServerLine(line string, transportMode string, stats *RPCServerStat)
 	}
 
 	// Parse based on transport mode and field count
-	if transportMode == "connection_oriented" {
+	switch transportMode {
+	case "connection_oriented", "connectionless":
 		if len(fields) >= 7 {
-			// Connection oriented: calls badcalls nullrecv badlen xdrcall dupchecks dupreqs
-			stats.Calls += parseUint64(fields[0])
-			stats.BadCalls += parseUint64(fields[1])
-			stats.NullRecv += parseUint64(fields[2])
-			stats.BadLen += parseUint64(fields[3])
-			stats.XdrCall += parseUint64(fields[4])
-			stats.DupChecks += parseUint64(fields[5])
-			stats.DupReqs += parseUint64(fields[6])
-		}
-	} else if transportMode == "connectionless" {
-		if len(fields) >= 7 {
-			// Connectionless: calls badcalls nullrecv badlen xdrcall dupchecks dupreqs
+			// Both modes have: calls badcalls nullrecv badlen xdrcall dupchecks dupreqs
 			stats.Calls += parseUint64(fields[0])
 			stats.BadCalls += parseUint64(fields[1])
 			stats.NullRecv += parseUint64(fields[2])
@@ -188,7 +180,6 @@ func parseRPCServerLine(line string, transportMode string, stats *RPCServerStat)
 			stats.DupReqs += parseUint64(fields[6])
 		}
 	}
-
 	return nil
 }
 
@@ -196,7 +187,9 @@ func parseRPCServerLine(line string, transportMode string, stats *RPCServerStat)
 // AIX reports separate metrics for "Connection oriented" (TCP) and "Connectionless" (UDP) transports
 // Connection oriented has: calls badcalls badxids timeouts newcreds badverfs timers nomem cantconn interrupts
 // Connectionless has: calls badcalls retrans badxids timeouts newcreds badverfs timers nomem cantsend
-func parseRPCClientLine(line string, transportMode string, stats *RPCClientStat) error {
+//
+//nolint:unparam // transportMode parameter needed for consistency with caller
+func parseRPCClientLine(line, transportMode string, stats *RPCClientStat) error {
 	// Skip header lines
 	if strings.Contains(line, "calls") {
 		return nil
@@ -207,7 +200,8 @@ func parseRPCClientLine(line string, transportMode string, stats *RPCClientStat)
 		return nil
 	}
 
-	if transportMode == "connection_oriented" {
+	switch transportMode {
+	case "connection_oriented":
 		// Connection oriented: calls badcalls badxids timeouts newcreds badverfs timers
 		if len(fields) >= 7 {
 			stats.Calls += parseUint64(fields[0])
@@ -218,13 +212,7 @@ func parseRPCClientLine(line string, transportMode string, stats *RPCClientStat)
 			stats.BadVerfs += parseUint64(fields[5])
 			stats.Timers += parseUint64(fields[6])
 		}
-		// nomem cantconn interrupts (on next iteration for these fields)
-		if len(fields) >= 3 && (strings.HasPrefix(line, "nomem") || strings.HasPrefix(line, "0")) {
-			if strings.HasPrefix(line, "nomem") || (len(fields) == 3 && fields[0] != "nomem") {
-				return nil // Skip this parse, it's a different line
-			}
-		}
-	} else if transportMode == "connectionless" {
+	case "connectionless":
 		// Connectionless: calls badcalls retrans badxids timeouts newcreds badverfs
 		if len(fields) >= 7 {
 			stats.Calls += parseUint64(fields[0])
@@ -235,41 +223,14 @@ func parseRPCClientLine(line string, transportMode string, stats *RPCClientStat)
 			stats.NewCreds += parseUint64(fields[5])
 			stats.BadVerfs += parseUint64(fields[6])
 		}
-		// timers nomem cantsend (on next iteration)
-		if len(fields) == 3 && strings.HasPrefix(line, "0") {
-			stats.Timers += parseUint64(fields[0])
-			stats.NoMem += parseUint64(fields[1])
-			stats.CantSend += parseUint64(fields[2])
-		}
 	}
-
-	// Parse nomem/cantconn/interrupts/timers lines (3 fields)
-	if len(fields) == 3 {
-		// Check if this is a continuation line
-		first, _ := strconv.ParseUint(fields[0], 10, 64)
-		_ = first // Use the parsed value to detect numeric line
-		if strings.HasPrefix(line, "nomem") {
-			stats.NoMem += parseUint64(fields[0])
-			if transportMode == "connection_oriented" {
-				stats.CantConn += parseUint64(fields[1])
-			} else {
-				stats.Timers += parseUint64(fields[1])
-			}
-			stats.Interrupts += parseUint64(fields[2])
-		} else if strings.HasPrefix(line, "timers") {
-			stats.Timers += parseUint64(fields[0])
-			stats.NoMem += parseUint64(fields[1])
-			stats.CantSend += parseUint64(fields[2])
-		}
-	}
-
 	return nil
 }
 
 // parseNFSServerLine parses an NFS server statistics line from AIX nfsstat
 // AIX reports per-operation statistics broken down by NFSv2 and NFSv3
 // Format: "calls badcalls public_v2 public_v3" followed by per-operation stats with percentages
-func parseNFSServerLine(line string, nfsVersion string, stats *NFSServerStat) error {
+func parseNFSServerLine(line, nfsVersion string, stats *NFSServerStat) error {
 	// Parse "Server nfs:" header line
 	if strings.Contains(line, "calls") && strings.Contains(line, "badcalls") {
 		fields := strings.Fields(line)
@@ -322,7 +283,7 @@ func parseNFSServerLine(line string, nfsVersion string, stats *NFSServerStat) er
 // parseNFSClientLine parses an NFS client statistics line from AIX nfsstat
 // AIX reports per-operation statistics broken down by NFSv2 and NFSv3
 // Format: "calls badcalls clgets cltoomany" followed by per-operation stats with percentages
-func parseNFSClientLine(line string, nfsVersion string, stats *NFSClientStat) error {
+func parseNFSClientLine(line, nfsVersion string, stats *NFSClientStat) error {
 	// Parse header line: calls badcalls clgets cltoomany
 	if strings.HasPrefix(line, "calls") && strings.Contains(line, "badcalls") {
 		return nil
@@ -355,7 +316,7 @@ func parseNFSClientLine(line string, nfsVersion string, stats *NFSClientStat) er
 // AIX output format: operation1 count1% operation2 count2% ...
 // Example: "null       0 0%       getattr    0 0%       setattr    0 0%"
 // Operations are specific to the NFS version context (v2 or v3)
-func parseNFSOperationLine(line string, nfsVersion string, operations map[string]uint64) error {
+func parseNFSOperationLine(line, nfsVersion string, operations map[string]uint64) error {
 	// Format: operation1 count1% operation2 count2% ...
 	// Split on whitespace and process pairs of (operation, count)
 	fields := strings.Fields(line)

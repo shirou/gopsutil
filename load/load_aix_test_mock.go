@@ -36,7 +36,7 @@ func (m *MockInvoker) Command(name string, arg ...string) ([]byte, error) {
 }
 
 // CommandWithContext implements the Invoker interface
-func (m *MockInvoker) CommandWithContext(ctx context.Context, name string, arg ...string) ([]byte, error) {
+func (m *MockInvoker) CommandWithContext(_ context.Context, name string, arg ...string) ([]byte, error) {
 	key := name + " " + strings.Join(arg, " ")
 	if output, ok := m.commands[key]; ok {
 		return output, nil

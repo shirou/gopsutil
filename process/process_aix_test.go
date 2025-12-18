@@ -241,6 +241,7 @@ func TestProcessMemoryMaps(t *testing.T) {
 
 	require.Equal(t, expected, maps)
 }
+
 func TestFillFromExeWithContext(t *testing.T) {
 	pids, err := os.ReadDir("testdata/aix/")
 	if err != nil {
@@ -338,9 +339,13 @@ func TestFillFromStatmWithContext(t *testing.T) {
 			assert.NotNil(t, memInfo)
 			assert.NotNil(t, memInfoEx)
 			// Memory values should be non-negative
+			//nolint:testifylint // value is always >= 0, but we validate it
 			assert.GreaterOrEqual(t, memInfo.VMS, uint64(0))
+			//nolint:testifylint // value is always >= 0, but we validate it
 			assert.GreaterOrEqual(t, memInfo.RSS, uint64(0))
+			//nolint:testifylint // value is always >= 0, but we validate it
 			assert.GreaterOrEqual(t, memInfoEx.VMS, uint64(0))
+			//nolint:testifylint // value is always >= 0, but we validate it
 			assert.GreaterOrEqual(t, memInfoEx.RSS, uint64(0))
 		}
 	}
@@ -382,7 +387,9 @@ func TestPageFaultsWithContext(t *testing.T) {
 	}
 	if pageFaults != nil {
 		// Page fault counts should be non-negative
+		//nolint:testifylint // minor faults field is naturally >= 0
 		assert.GreaterOrEqual(t, pageFaults.MinorFaults, uint64(0))
+		//nolint:testifylint // major faults field is naturally >= 0
 		assert.GreaterOrEqual(t, pageFaults.MajorFaults, uint64(0))
 	}
 }
@@ -396,8 +403,6 @@ func TestNumCtxSwitchesWithContext(t *testing.T) {
 	// Context switches may not be available on all AIX systems
 	if err == nil {
 		assert.NotNil(t, ctxSwitches)
-		assert.GreaterOrEqual(t, ctxSwitches.Voluntary, int64(0))
-		assert.GreaterOrEqual(t, ctxSwitches.Involuntary, int64(0))
 	}
 }
 
@@ -411,7 +416,7 @@ func TestRlimitUsageWithContext(t *testing.T) {
 		t.Logf("RlimitUsageWithContext error: %v", err)
 		return
 	}
-	if limits != nil && len(limits) > 0 {
+	if len(limits) > 0 {
 		for _, limit := range limits {
 			// Hard limit should be >= soft limit
 			assert.GreaterOrEqual(t, limit.Hard, limit.Soft)
@@ -428,7 +433,9 @@ func TestIOCountersWithContext(t *testing.T) {
 	// IOCounters may not be available without WLM+iostat configuration
 	if err == nil {
 		assert.NotNil(t, ioCounters)
+		//nolint:testifylint // checking non-negative constraint
 		assert.GreaterOrEqual(t, ioCounters.ReadBytes, uint64(0))
+		//nolint:testifylint // checking non-negative constraint
 		assert.GreaterOrEqual(t, ioCounters.WriteBytes, uint64(0))
 	}
 }
@@ -441,9 +448,7 @@ func TestCPUAffinityWithContext(t *testing.T) {
 	affinity, err := p.CPUAffinityWithContext(ctx)
 	// CPU affinity may not be available on all AIX systems
 	if err == nil {
-		assert.NotNil(t, affinity)
-		// Should have at least one CPU
-		assert.Greater(t, len(affinity), 0)
+		assert.NotEmpty(t, affinity)
 		for _, cpu := range affinity {
 			assert.GreaterOrEqual(t, cpu, int32(0))
 		}

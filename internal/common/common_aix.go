@@ -38,7 +38,7 @@ func UptimeWithContext(ctx context.Context, invoke Invoker) (uint64, error) {
 		return 0, err
 	}
 
-	return ParseUptime(string(out[:])), nil
+	return ParseUptime(string(out)), nil
 }
 
 func ParseUptime(uptime string) uint64 {

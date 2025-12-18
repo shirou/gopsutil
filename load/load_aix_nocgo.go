@@ -57,7 +57,7 @@ func AvgWithContext(ctx context.Context) (*AvgStat, error) {
 
 // parseVmstatLine parses a single line of vmstat output and extracts context switches, interrupts, and syscalls
 // Format: r  b   avm   fre  re  pi  po  fr   sr  cy  in   sy  cs us sy id wa    pc    ec
-func parseVmstatLine(line string) (ctxt int, interrupts int, syscalls int, err error) {
+func parseVmstatLine(line string) (ctxt, interrupts, syscalls int, err error) {
 	fields := strings.Fields(line)
 	if len(fields) < 13 {
 		return 0, 0, 0, common.ErrNotImplementedError

@@ -48,8 +48,8 @@ func TestFDLimitsWithContext(t *testing.T) {
 	require.NoError(t, err)
 
 	// Both limits should be positive
-	assert.Greater(t, soft, uint64(0), "Soft limit should be > 0")
-	assert.Greater(t, hard, uint64(0), "Hard limit should be > 0")
+	assert.Positive(t, soft, "Soft limit should be > 0")
+	assert.Positive(t, hard, "Hard limit should be > 0")
 
 	// Hard limit should be >= soft limit
 	assert.GreaterOrEqual(t, hard, soft, "Hard limit should be >= soft limit")
@@ -63,7 +63,7 @@ func TestFDLimits(t *testing.T) {
 	require.NoError(t, err)
 
 	// Both limits should be positive
-	assert.Greater(t, soft, uint64(0))
-	assert.Greater(t, hard, uint64(0))
+	assert.Positive(t, soft)
+	assert.Positive(t, hard)
 	assert.GreaterOrEqual(t, hard, soft)
 }

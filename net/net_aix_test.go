@@ -76,7 +76,7 @@ func TestConnectionsWithContext(t *testing.T) {
 	assert.IsType(t, []ConnectionStat{}, conns)
 
 	// Should have at least some connections
-	assert.Greater(t, len(conns), 0)
+	assert.NotEmpty(t, conns)
 
 	for _, conn := range conns {
 		// Verify connection fields

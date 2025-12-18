@@ -26,7 +26,7 @@ func TestMiscWithContextAIX(t *testing.T) {
 	assert.GreaterOrEqual(t, misc.ProcsTotal, misc.ProcsRunning+misc.ProcsBlocked)
 
 	// Context switches should be positive (system has been running)
-	assert.Greater(t, misc.Ctxt, 0, "Context switches should be > 0 since system is running")
+	assert.Positive(t, misc.Ctxt, "Context switches should be > 0 since system is running")
 }
 
 func TestMiscAIX(t *testing.T) {
@@ -47,7 +47,7 @@ func TestSystemCallsWithContext(t *testing.T) {
 	require.NoError(t, err)
 
 	// System calls should be positive since system is running
-	assert.Greater(t, syscalls, 0, "System calls should be > 0 since system is running")
+	assert.Positive(t, syscalls, "System calls should be > 0 since system is running")
 }
 
 func TestSystemCalls(t *testing.T) {
@@ -55,7 +55,7 @@ func TestSystemCalls(t *testing.T) {
 	require.NoError(t, err)
 
 	// System calls should be positive
-	assert.Greater(t, syscalls, 0)
+	assert.Positive(t, syscalls)
 }
 
 func TestInterruptsWithContext(t *testing.T) {
@@ -64,7 +64,7 @@ func TestInterruptsWithContext(t *testing.T) {
 	require.NoError(t, err)
 
 	// Interrupts should be positive since system is running
-	assert.Greater(t, interrupts, 0, "Interrupts should be > 0 since system is running")
+	assert.Positive(t, interrupts, "Interrupts should be > 0 since system is running")
 }
 
 func TestInterrupts(t *testing.T) {
@@ -72,5 +72,5 @@ func TestInterrupts(t *testing.T) {
 	require.NoError(t, err)
 
 	// Interrupts should be positive
-	assert.Greater(t, interrupts, 0)
+	assert.Positive(t, interrupts)
 }
