@@ -82,7 +82,6 @@ type VirtualMemoryStat struct {
 	HugePagesSurp  uint64 `json:"hugePagesSurp"`
 	HugePageSize   uint64 `json:"hugePageSize"`
 	AnonHugePages  uint64 `json:"anonHugePages"`
-	Percpu         uint64 `json:"percpu"`
 }
 
 type SwapMemoryStat struct {
