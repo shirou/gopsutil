@@ -2,6 +2,8 @@ package disk
 
 import (
 	"context"
+	"os"
+	"os/exec"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,13 +11,41 @@ import (
 )
 
 func TestGetLogicalDrives(t *testing.T) {
+	// Create a virtual drive using subst to ensure multiple drives exist
+	tempDir := t.TempDir()
+
+	// Find an unused drive letter (Y: to G:, reverse order)
+	var driveLetter string
+	for c := 'Y'; c >= 'G'; c-- {
+		testDrive := string(c) + ":"
+		_, err := os.Stat(testDrive + "\\")
+		if os.IsNotExist(err) {
+			driveLetter = testDrive
+			break
+		}
+	}
+	if driveLetter == "" {
+		t.Skip("No available drive letter for subst")
+	}
+	ctx := context.Background()
+	// Create virtual drive by using subst command
+	cmd := exec.CommandContext(ctx, "subst", driveLetter, tempDir)
+	if err := cmd.Run(); err != nil {
+		t.Skipf("subst command failed: %v", err)
+	}
+	t.Cleanup(func() {
+		exec.CommandContext(ctx, "subst", driveLetter, "/d").Run()
+	})
+
 	drives, err := getLogicalDrives(context.Background())
 	require.NoError(t, err)
 	assert.NotEmpty(t, drives)
 	for _, d := range drives {
 		assert.NotEmpty(t, d)
 	}
+	t.Log("Logical Drives:", drives)
 	assert.Contains(t, drives, `C:\`)
+	assert.Contains(t, drives, driveLetter+`\`)
 }
 
 func TestBuildPartitionStat(t *testing.T) {
