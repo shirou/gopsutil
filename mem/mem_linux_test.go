@@ -29,6 +29,7 @@ func TestExVirtualMemory(t *testing.T) {
 var virtualMemoryTests = []struct {
 	mockedRootFS string
 	stat         *VirtualMemoryStat
+	exStat       *ExVirtualMemory
 }{
 	{
 		"intelcorei5", &VirtualMemoryStat{
@@ -69,6 +70,14 @@ var virtualMemoryTests = []struct {
 			HugePagesRsvd:  0,
 			HugePagesSurp:  0,
 			HugePageSize:   2097152,
+		},
+		&ExVirtualMemory{
+			ActiveFile:   1121992 * 1024,
+			InactiveFile: 1683344 * 1024,
+			ActiveAnon:   3123508 * 1024,
+			InactiveAnon: 1186612 * 1024,
+			Unevictable:  32 * 1024,
+			Percpu:       19136 * 1024,
 		},
 	},
 	{
@@ -111,6 +120,14 @@ var virtualMemoryTests = []struct {
 			HugePagesSurp:  0,
 			HugePageSize:   0,
 		},
+		&ExVirtualMemory{
+			ActiveFile:   88280 * 1024,
+			InactiveFile: 8380 * 1024,
+			ActiveAnon:   17956 * 1024,
+			InactiveAnon: 0,
+			Unevictable:  0,
+			Percpu:       0,
+		},
 	},
 	{
 		"anonhugepages", &VirtualMemoryStat{
@@ -120,6 +137,14 @@ var virtualMemoryTests = []struct {
 			AnonHugePages: 50409472 * 1024,
 			Used:          136109264896,
 			UsedPercent:   50.96606579876596,
+		},
+		&ExVirtualMemory{
+			ActiveFile:   0,
+			InactiveFile: 0,
+			ActiveAnon:   0,
+			InactiveAnon: 0,
+			Unevictable:  0,
+			Percpu:       0,
 		},
 	},
 }
@@ -135,6 +160,22 @@ func TestVirtualMemoryLinux(t *testing.T) {
 			}
 			require.NoError(t, err)
 			assert.Truef(t, reflect.DeepEqual(stat, tt.stat), "got: %+v\nwant: %+v", stat, tt.stat)
+		})
+	}
+}
+
+func TestExVirtualMemoryLinux(t *testing.T) {
+	for _, tt := range virtualMemoryTests {
+		t.Run(tt.mockedRootFS, func(t *testing.T) {
+			t.Setenv("HOST_PROC", filepath.Join("testdata", "linux", "virtualmemory", tt.mockedRootFS, "proc"))
+
+			ex := NewExLinux()
+			exStat, err := ex.VirtualMemory()
+			if errors.Is(err, common.ErrNotImplementedError) {
+				t.Skip("not implemented")
+			}
+			require.NoError(t, err)
+			assert.Truef(t, reflect.DeepEqual(exStat, tt.exStat), "got: %+v\nwant: %+v", exStat, tt.exStat)
 		})
 	}
 }
