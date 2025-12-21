@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"syscall"
 	"unicode/utf16"
 	"unsafe"
@@ -239,8 +238,7 @@ func getLogicalDrives(ctx context.Context) ([]string, error) {
 		return nil, err // The call failed with an unexpected error
 	}
 
-	drivesString := windows.UTF16ToString(lpBuffer)
-	drives := strings.Split(drivesString, "\x00")
+	drives := split0(lpBuffer, int(bufferLen))
 	return drives, nil
 }
 
