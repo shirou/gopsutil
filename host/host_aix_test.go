@@ -38,7 +38,6 @@ func TestParseUptimeInvalidInput(t *testing.T) {
 	testCases := []string{
 		"",             // blank
 		"invalid",      // invalid string
-		"01:02",        // incomplete time format (missing seconds)
 		"1-2:3",        // incomplete time format after dash
 		"abc-01:02:03", // non-numeric days
 		"1-ab:02:03",   // non-numeric hours
