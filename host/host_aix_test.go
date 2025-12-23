@@ -14,12 +14,19 @@ func TestParseUptimeValidInput(t *testing.T) {
 		input    string
 		expected uint64
 	}{
-		{"11:54AM   up 13 mins,  1 user,  load average: 2.78, 2.62, 1.79", 13},
-		{"12:41PM   up 1 hr,  1 user,  load average: 2.47, 2.85, 2.83", 60},
-		{"07:43PM   up 5 hrs,  1 user,  load average: 3.27, 2.91, 2.72", 300},
-		{"11:18:23  up 83 days, 18:29,  4 users,  load average: 0.16, 0.03, 0.01", 120629},
-		{"08:47PM   up 2 days, 20 hrs, 1 user, load average: 2.47, 2.17, 2.17", 4080},
-		{"01:16AM   up 4 days, 29 mins,  1 user,  load average: 2.29, 2.31, 2.21", 5789},
+		// Format: MINUTES:SECONDS (just-rebooted systems, hours dropped when 0)
+		{"00:13", 0}, // 13 seconds rounds down to 0 minutes
+		{"01:00", 1}, // 1 minute
+		{"01:02", 1}, // 1 minute, 2 seconds
+		// Format: HOURS:MINUTES:SECONDS (no days, hours > 0)
+		{"01:00:00", 60},  // 1 hour
+		{"05:00:00", 300}, // 5 hours
+		{"15:03:02", 903}, // 15 hours, 3 minutes, 2 seconds
+		// Format: DAYS-HOURS:MINUTES:SECONDS (with days)
+		{"2-20:00:00", 4080},     // 2 days, 20 hours
+		{"4-00:29:00", 5789},     // 4 days, 29 minutes
+		{"83-18:29:00", 120629},  // 83 days, 18 hours, 29 minutes
+		{"124-01:40:39", 178660}, // 124 days, 1 hour, 40 minutes, 39 seconds
 	}
 	for _, tc := range testCases {
 		got := parseUptime(tc.input)
@@ -29,9 +36,11 @@ func TestParseUptimeValidInput(t *testing.T) {
 
 func TestParseUptimeInvalidInput(t *testing.T) {
 	testCases := []string{
-		"",    // blank
-		"2x",  // invalid string
-		"150", // integer
+		"",             // blank
+		"invalid",      // invalid string
+		"1-2:3",        // incomplete time format after dash
+		"abc-01:02:03", // non-numeric days
+		"1-ab:02:03",   // non-numeric hours
 	}
 
 	for _, tc := range testCases {

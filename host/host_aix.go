@@ -45,79 +45,91 @@ func BootTimeWithContext(ctx context.Context) (btime uint64, err error) {
 	return timeSince(ut), nil
 }
 
-// Parses result from uptime into minutes
-// Some examples of uptime output that this command handles:
-// 11:54AM   up 13 mins,  1 user,  load average: 2.78, 2.62, 1.79
-// 12:41PM   up 1 hr,  1 user,  load average: 2.47, 2.85, 2.83
-// 07:43PM   up 5 hrs,  1 user,  load average: 3.27, 2.91, 2.72
-// 11:18:23  up 83 days, 18:29,  4 users,  load average: 0.16, 0.03, 0.01
-// 08:47PM   up 2 days, 20 hrs, 1 user, load average: 2.47, 2.17, 2.17
-// 01:16AM   up 4 days, 29 mins,  1 user,  load average: 2.29, 2.31, 2.21
+// Uses ps to get the elapsed time for PID 1 in DAYS-HOURS:MINUTES:SECONDS format.
+// Examples of ps -o etimes -p 1 output:
+// 124-01:40:39 (with days)
+// 15:03:02 (without days, hours only)
+// 01:02 (just-rebooted systems, minutes and seconds)
 func UptimeWithContext(ctx context.Context) (uint64, error) {
-	out, err := invoke.CommandWithContext(ctx, "uptime")
+	out, err := invoke.CommandWithContext(ctx, "ps", "-o", "etimes", "-p", "1")
 	if err != nil {
 		return 0, err
 	}
 
-	return parseUptime(string(out)), nil
-}
-
-func parseUptime(uptime string) uint64 {
-	ut := strings.Fields(uptime)
-	var days, hours, mins uint64
-	var err error
-
-	switch ut[3] {
-	case "day,", "days,":
-		days, err = strconv.ParseUint(ut[2], 10, 64)
-		if err != nil {
-			return 0
-		}
-
-		// day provided along with a single hour or hours
-		// ie: up 2 days, 20 hrs,
-		if ut[5] == "hr," || ut[5] == "hrs," {
-			hours, err = strconv.ParseUint(ut[4], 10, 64)
-			if err != nil {
-				return 0
-			}
-		}
-
-		// mins provided along with a single min or mins
-		// ie: up 4 days, 29 mins,
-		if ut[5] == "min," || ut[5] == "mins," {
-			mins, err = strconv.ParseUint(ut[4], 10, 64)
-			if err != nil {
-				return 0
-			}
-		}
-
-		// alternatively day provided with hh:mm
-		// ie: up 83 days, 18:29
-		if strings.Contains(ut[4], ":") {
-			hm := strings.Split(ut[4], ":")
-			hours, err = strconv.ParseUint(hm[0], 10, 64)
-			if err != nil {
-				return 0
-			}
-			mins, err = strconv.ParseUint(strings.Trim(hm[1], ","), 10, 64)
-			if err != nil {
-				return 0
-			}
-		}
-	case "hr,", "hrs,":
-		hours, err = strconv.ParseUint(ut[2], 10, 64)
-		if err != nil {
-			return 0
-		}
-	case "min,", "mins,":
-		mins, err = strconv.ParseUint(ut[2], 10, 64)
-		if err != nil {
-			return 0
-		}
+	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
+	if len(lines) < 2 {
+		return 0, errors.New("ps output has fewer than 2 rows")
 	}
 
-	return (days * 24 * 60) + (hours * 60) + mins
+	// Extract the etimes value from the second row, trimming whitespace
+	etimes := strings.TrimSpace(lines[1])
+	return parseUptime(etimes), nil
+}
+
+// Parses etimes output from ps command into total minutes.
+// Handles formats like:
+// - "124-01:40:39" (DAYS-HOURS:MINUTES:SECONDS)
+// - "15:03:02" (HOURS:MINUTES:SECONDS)
+// - "01:02" (MINUTES:SECONDS, from just-rebooted systems)
+func parseUptime(etimes string) uint64 {
+	var days, hours, mins, secs uint64
+
+	// Check if days component is present (contains a dash)
+	if strings.Contains(etimes, "-") {
+		parts := strings.Split(etimes, "-")
+		if len(parts) != 2 {
+			return 0
+		}
+
+		var err error
+		days, err = strconv.ParseUint(parts[0], 10, 64)
+		if err != nil {
+			return 0
+		}
+
+		// Parse the HH:MM:SS portion
+		etimes = parts[1]
+	}
+
+	// Parse time portions (either HH:MM:SS or MM:SS)
+	timeParts := strings.Split(etimes, ":")
+	switch len(timeParts) {
+	case 3:
+		// HH:MM:SS format
+		var err error
+		hours, err = strconv.ParseUint(timeParts[0], 10, 64)
+		if err != nil {
+			return 0
+		}
+
+		mins, err = strconv.ParseUint(timeParts[1], 10, 64)
+		if err != nil {
+			return 0
+		}
+
+		secs, err = strconv.ParseUint(timeParts[2], 10, 64)
+		if err != nil {
+			return 0
+		}
+	case 2:
+		// MM:SS format (just-rebooted systems)
+		var err error
+		mins, err = strconv.ParseUint(timeParts[0], 10, 64)
+		if err != nil {
+			return 0
+		}
+
+		secs, err = strconv.ParseUint(timeParts[1], 10, 64)
+		if err != nil {
+			return 0
+		}
+	default:
+		return 0
+	}
+
+	// Convert to total minutes
+	totalMinutes := (days * 24 * 60) + (hours * 60) + mins + (secs / 60)
+	return totalMinutes
 }
 
 // This is a weak implementation due to the limitations on retrieving this data in AIX
