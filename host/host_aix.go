@@ -123,3 +123,44 @@ func KernelArch() (arch string, err error) {
 func VirtualizationWithContext(_ context.Context) (string, string, error) {
 	return "", "", common.ErrNotImplementedError
 }
+
+// FDLimitsWithContext returns the system-wide file descriptor limits on AIX
+// Returns (soft limit, hard limit, error)
+// Note: hard limit may be reported as "unlimited" on AIX, in which case returns math.MaxUint64
+func FDLimitsWithContext(ctx context.Context) (uint64, uint64, error) {
+	// Get soft limit via ulimit -n
+	out, err := getInvoker().CommandWithContext(ctx, "bash", "-c", "ulimit -n")
+	if err != nil {
+		return 0, 0, err
+	}
+	softStr := strings.TrimSpace(string(out))
+	soft, err := strconv.ParseUint(softStr, 10, 64)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	// Get hard limit via ulimit -Hn
+	out, err = getInvoker().CommandWithContext(ctx, "bash", "-c", "ulimit -Hn")
+	if err != nil {
+		return 0, 0, err
+	}
+	hardStr := strings.TrimSpace(string(out))
+
+	// Handle "unlimited" case - common on AIX
+	var hard uint64
+	if hardStr == "unlimited" {
+		hard = 1<<63 - 1 // Use max int64 as "unlimited"
+	} else {
+		hard, err = strconv.ParseUint(hardStr, 10, 64)
+		if err != nil {
+			return 0, 0, err
+		}
+	}
+
+	return soft, hard, nil
+}
+
+// FDLimits returns the system-wide file descriptor limits
+func FDLimits() (uint64, uint64, error) {
+	return FDLimitsWithContext(context.Background())
+}
