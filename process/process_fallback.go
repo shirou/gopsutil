@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BSD-3-Clause
-//go:build !darwin && !linux && !freebsd && !openbsd && !windows && !solaris && !plan9
+//go:build !darwin && !linux && !freebsd && !openbsd && !windows && !solaris && !plan9 && !aix
 
 package process
 
@@ -140,6 +140,10 @@ func (*Process) TimesWithContext(_ context.Context) (*cpu.TimesStat, error) {
 
 func (*Process) CPUAffinityWithContext(_ context.Context) ([]int32, error) {
 	return nil, common.ErrNotImplementedError
+}
+
+func (*Process) SignalsPendingWithContext(_ context.Context) (SignalInfoStat, error) {
+	return SignalInfoStat{}, common.ErrNotImplementedError
 }
 
 func (*Process) MemoryInfoWithContext(_ context.Context) (*MemoryInfoStat, error) {

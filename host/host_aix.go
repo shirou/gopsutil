@@ -26,8 +26,18 @@ func HostIDWithContext(ctx context.Context) (string, error) {
 	return strings.Split(string(out), "\n")[0], nil
 }
 
-func numProcs(_ context.Context) (uint64, error) {
-	return 0, common.ErrNotImplementedError
+func numProcs(ctx context.Context) (uint64, error) {
+	out, err := getInvoker().CommandWithContext(ctx, "sh", "-c", "ps aux | wc -l")
+	if err != nil {
+		return 0, err
+	}
+	countStr := strings.TrimSpace(string(out))
+	count, err := strconv.ParseUint(countStr, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	// ps aux includes header line, so subtract 1 to get actual process count
+	return count - 1, nil
 }
 
 func BootTimeWithContext(ctx context.Context) (btime uint64, err error) {
