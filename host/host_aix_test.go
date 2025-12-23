@@ -26,3 +26,29 @@ func TestUptimeWithContext(t *testing.T) {
 	require.NoError(t, err)
 	assert.Positive(t, uptime)
 }
+
+func TestFDLimitsWithContext(t *testing.T) {
+	ctx := context.Background()
+	soft, hard, err := FDLimitsWithContext(ctx)
+	require.NoError(t, err)
+
+	// Both limits should be positive
+	assert.Positive(t, soft, "Soft limit should be > 0")
+	assert.Positive(t, hard, "Hard limit should be > 0")
+
+	// Hard limit should be >= soft limit
+	assert.GreaterOrEqual(t, hard, soft, "Hard limit should be >= soft limit")
+
+	// Reasonable ranges for AIX (typically 1024-32767, or unlimited which is max int64)
+	assert.GreaterOrEqual(t, soft, uint64(256), "Soft limit should be >= 256")
+}
+
+func TestFDLimits(t *testing.T) {
+	soft, hard, err := FDLimits()
+	require.NoError(t, err)
+
+	// Both limits should be positive
+	assert.Positive(t, soft)
+	assert.Positive(t, hard)
+	assert.GreaterOrEqual(t, hard, soft)
+}
