@@ -539,3 +539,7 @@ func (p *Process) NumFDsWithContext(_ context.Context) (int32, error) {
 	numFDs := ret / sizeofProcFDInfo
 	return numFDs, nil
 }
+
+func (*Process) SignalsPendingWithContext(_ context.Context) (SignalInfoStat, error) {
+	return SignalInfoStat{}, common.ErrNotImplementedError
+}
