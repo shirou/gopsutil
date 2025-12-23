@@ -17,3 +17,13 @@ func Avg() (*AvgStat, error) {
 func Misc() (*MiscStat, error) {
 	return MiscWithContext(context.Background())
 }
+
+// SystemCalls returns the number of system calls since boot.
+func SystemCalls() (int, error) {
+	return SystemCallsWithContext(context.Background())
+}
+
+// Interrupts returns the number of interrupts since boot.
+func Interrupts() (int, error) {
+	return InterruptsWithContext(context.Background())
+}
