@@ -59,6 +59,8 @@ func callSVMon(ctx context.Context, virt bool) (*VirtualMemoryStat, *SwapMemoryS
 				}
 				if t, err := strconv.ParseUint(p[3], 10, 64); err == nil {
 					vmem.Free = t * pagesize
+					// Available is typically equal to Free on AIX
+					vmem.Available = vmem.Free
 				}
 			}
 		} else if strings.HasPrefix(line, "pg space") {
@@ -68,7 +70,12 @@ func callSVMon(ctx context.Context, virt bool) (*VirtualMemoryStat, *SwapMemoryS
 					swap.Total = t * pagesize
 				}
 				if t, err := strconv.ParseUint(p[3], 10, 64); err == nil {
-					swap.Free = swap.Total - t*pagesize
+					swapUsed := t * pagesize
+					swap.Used = swapUsed
+					swap.Free = swap.Total - swapUsed
+					if swap.Total > 0 {
+						swap.UsedPercent = 100 * float64(swap.Used) / float64(swap.Total)
+					}
 				}
 			}
 			break
