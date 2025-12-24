@@ -346,7 +346,7 @@ func (p *Process) CwdWithContext(_ context.Context) (string, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
-	var vpi VnodePathInfo
+	var vpi vnodePathInfo
 	const vpiSize = int32(unsafe.Sizeof(vpi))
 	ret := funcs.procPidInfo(p.Pid, common.PROC_PIDVNODEPATHINFO, 0, uintptr(unsafe.Pointer(&vpi)), vpiSize)
 	errno, _ := funcs.lib.Dlsym("errno")

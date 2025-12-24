@@ -211,7 +211,7 @@ type ProcTaskInfo struct {
 	Priority          int32
 }
 
-type VInfoStat struct {
+type vinfoStat struct {
 	Dev           uint32
 	Mode          uint16
 	Nlink         uint16
@@ -235,25 +235,25 @@ type VInfoStat struct {
 	Qspare        [2]int64
 }
 
-type Fsid struct {
+type fsid struct {
 	Val [2]int32
 }
 
-type VnodeInfo struct {
-	Stat VInfoStat
+type vnodeInfo struct {
+	Stat vinfoStat
 	Type int32
 	Pad  int32
-	Fsid Fsid
+	Fsid fsid
 }
 
-type VnodeInfoPath struct {
-	Vi   VnodeInfo
+type vnodeInfoPath struct {
+	Vi   vnodeInfo
 	Path [1024]int8
 }
 
-type VnodePathInfo struct {
-	Cdir VnodeInfoPath
-	Rdir VnodeInfoPath
+type vnodePathInfo struct {
+	Cdir vnodeInfoPath
+	Rdir vnodeInfoPath
 }
 
 type AuditinfoAddr struct {
