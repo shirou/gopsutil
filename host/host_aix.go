@@ -5,7 +5,6 @@ package host
 
 import (
 	"context"
-	"errors"
 	"strconv"
 	"strings"
 
@@ -17,8 +16,19 @@ const (
 	user_PROCESS = 7 //nolint:revive //FIXME
 )
 
+// testInvoker is used for dependency injection in tests
+var testInvoker common.Invoker
+
+// getInvoker returns the test invoker if set, otherwise returns the default
+func getInvoker() common.Invoker {
+	if testInvoker != nil {
+		return testInvoker
+	}
+	return invoke
+}
+
 func HostIDWithContext(ctx context.Context) (string, error) {
-	out, err := invoke.CommandWithContext(ctx, "uname", "-u")
+	out, err := getInvoker().CommandWithContext(ctx, "uname", "-u")
 	if err != nil {
 		return "", err
 	}
@@ -32,110 +42,18 @@ func numProcs(_ context.Context) (uint64, error) {
 }
 
 func BootTimeWithContext(ctx context.Context) (btime uint64, err error) {
-	ut, err := UptimeWithContext(ctx)
-	if err != nil {
-		return 0, err
-	}
-
-	if ut <= 0 {
-		return 0, errors.New("uptime was not set, so cannot calculate boot time from it")
-	}
-
-	ut *= 60
-	return timeSince(ut), nil
+	return common.BootTimeWithContext(ctx, getInvoker())
 }
 
 // Uses ps to get the elapsed time for PID 1 in DAYS-HOURS:MINUTES:SECONDS format.
-// Examples of ps -o etimes -p 1 output:
-// 124-01:40:39 (with days)
-// 15:03:02 (without days, hours only)
-// 01:02 (just-rebooted systems, minutes and seconds)
 func UptimeWithContext(ctx context.Context) (uint64, error) {
-	out, err := invoke.CommandWithContext(ctx, "ps", "-o", "etimes", "-p", "1")
-	if err != nil {
-		return 0, err
-	}
-
-	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
-	if len(lines) < 2 {
-		return 0, errors.New("ps output has fewer than 2 rows")
-	}
-
-	// Extract the etimes value from the second row, trimming whitespace
-	etimes := strings.TrimSpace(lines[1])
-	return parseUptime(etimes), nil
-}
-
-// Parses etimes output from ps command into total minutes.
-// Handles formats like:
-// - "124-01:40:39" (DAYS-HOURS:MINUTES:SECONDS)
-// - "15:03:02" (HOURS:MINUTES:SECONDS)
-// - "01:02" (MINUTES:SECONDS, from just-rebooted systems)
-func parseUptime(etimes string) uint64 {
-	var days, hours, mins, secs uint64
-
-	// Check if days component is present (contains a dash)
-	if strings.Contains(etimes, "-") {
-		parts := strings.Split(etimes, "-")
-		if len(parts) != 2 {
-			return 0
-		}
-
-		var err error
-		days, err = strconv.ParseUint(parts[0], 10, 64)
-		if err != nil {
-			return 0
-		}
-
-		// Parse the HH:MM:SS portion
-		etimes = parts[1]
-	}
-
-	// Parse time portions (either HH:MM:SS or MM:SS)
-	timeParts := strings.Split(etimes, ":")
-	switch len(timeParts) {
-	case 3:
-		// HH:MM:SS format
-		var err error
-		hours, err = strconv.ParseUint(timeParts[0], 10, 64)
-		if err != nil {
-			return 0
-		}
-
-		mins, err = strconv.ParseUint(timeParts[1], 10, 64)
-		if err != nil {
-			return 0
-		}
-
-		secs, err = strconv.ParseUint(timeParts[2], 10, 64)
-		if err != nil {
-			return 0
-		}
-	case 2:
-		// MM:SS format (just-rebooted systems)
-		var err error
-		mins, err = strconv.ParseUint(timeParts[0], 10, 64)
-		if err != nil {
-			return 0
-		}
-
-		secs, err = strconv.ParseUint(timeParts[1], 10, 64)
-		if err != nil {
-			return 0
-		}
-	default:
-		return 0
-	}
-
-	// Convert to total minutes
-	totalMinutes := (days * 24 * 60) + (hours * 60) + mins + (secs / 60)
-	return totalMinutes
+	return common.UptimeWithContext(ctx, getInvoker())
 }
 
 // This is a weak implementation due to the limitations on retrieving this data in AIX
 func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 	var ret []UserStat
-	out, err := invoke.CommandWithContext(ctx, "w")
+	out, err := getInvoker().CommandWithContext(ctx, "w")
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +92,7 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 // Much of this function could be static. However, to be future proofed, I've made it call the OS for the information in all instances.
 func PlatformInformationWithContext(ctx context.Context) (platform, family, version string, err error) {
 	// Set the platform (which should always, and only be, "AIX") from `uname -s`
-	out, err := invoke.CommandWithContext(ctx, "uname", "-s")
+	out, err := getInvoker().CommandWithContext(ctx, "uname", "-s")
 	if err != nil {
 		return "", "", "", err
 	}
@@ -184,7 +102,7 @@ func PlatformInformationWithContext(ctx context.Context) (platform, family, vers
 	family = strings.TrimRight(string(out), "\n")
 
 	// Set the version
-	out, err = invoke.CommandWithContext(ctx, "oslevel")
+	out, err = getInvoker().CommandWithContext(ctx, "oslevel")
 	if err != nil {
 		return "", "", "", err
 	}
@@ -194,7 +112,7 @@ func PlatformInformationWithContext(ctx context.Context) (platform, family, vers
 }
 
 func KernelVersionWithContext(ctx context.Context) (version string, err error) {
-	out, err := invoke.CommandWithContext(ctx, "oslevel", "-s")
+	out, err := getInvoker().CommandWithContext(ctx, "oslevel", "-s")
 	if err != nil {
 		return "", err
 	}
@@ -204,7 +122,7 @@ func KernelVersionWithContext(ctx context.Context) (version string, err error) {
 }
 
 func KernelArch() (arch string, err error) {
-	out, err := invoke.Command("bootinfo", "-y")
+	out, err := getInvoker().Command("bootinfo", "-y")
 	if err != nil {
 		return "", err
 	}
@@ -215,4 +133,45 @@ func KernelArch() (arch string, err error) {
 
 func VirtualizationWithContext(_ context.Context) (string, string, error) {
 	return "", "", common.ErrNotImplementedError
+}
+
+// FDLimitsWithContext returns the system-wide file descriptor limits on AIX
+// Returns (soft limit, hard limit, error)
+// Note: hard limit may be reported as "unlimited" on AIX, in which case returns math.MaxUint64
+func FDLimitsWithContext(ctx context.Context) (uint64, uint64, error) {
+	// Get soft limit via ulimit -n
+	out, err := getInvoker().CommandWithContext(ctx, "bash", "-c", "ulimit -n")
+	if err != nil {
+		return 0, 0, err
+	}
+	softStr := strings.TrimSpace(string(out))
+	soft, err := strconv.ParseUint(softStr, 10, 64)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	// Get hard limit via ulimit -Hn
+	out, err = getInvoker().CommandWithContext(ctx, "bash", "-c", "ulimit -Hn")
+	if err != nil {
+		return 0, 0, err
+	}
+	hardStr := strings.TrimSpace(string(out))
+
+	// Handle "unlimited" case - common on AIX
+	var hard uint64
+	if hardStr == "unlimited" {
+		hard = 1<<63 - 1 // Use max int64 as "unlimited"
+	} else {
+		hard, err = strconv.ParseUint(hardStr, 10, 64)
+		if err != nil {
+			return 0, 0, err
+		}
+	}
+
+	return soft, hard, nil
+}
+
+// FDLimits returns the system-wide file descriptor limits
+func FDLimits() (uint64, uint64, error) {
+	return FDLimitsWithContext(context.Background())
 }
