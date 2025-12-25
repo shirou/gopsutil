@@ -12,13 +12,7 @@ import (
 )
 
 func TemperaturesWithContext(_ context.Context) ([]TemperatureStat, error) {
-	ioKit, err := common.NewLibrary(common.IOKit)
-	if err != nil {
-		return nil, err
-	}
-	defer ioKit.Close()
-
-	smc, err := common.NewSMC(ioKit)
+	smc, err := common.NewSMC()
 	if err != nil {
 		return nil, err
 	}
