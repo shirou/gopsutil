@@ -157,6 +157,16 @@ type Label C.struct_label
 
 type ProcTaskInfo C.struct_proc_taskinfo
 
+type vinfoStat C.struct_vinfo_stat
+
+type fsid C.struct_fsid
+
+type vnodeInfo C.struct_vnode_info
+
+type vnodeInfoPath C.struct_vnode_info_path
+
+type vnodePathInfo C.struct_proc_vnodepathinfo
+
 type (
 	AuditinfoAddr C.struct_auditinfo_addr
 	AuMask        C.struct_au_mask
