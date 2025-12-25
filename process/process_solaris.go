@@ -165,6 +165,10 @@ func (*Process) MemoryInfoExWithContext(_ context.Context) (*MemoryInfoExStat, e
 	return nil, common.ErrNotImplementedError
 }
 
+func (*Process) SignalsPendingWithContext(_ context.Context) (SignalInfoStat, error) {
+	return SignalInfoStat{}, common.ErrNotImplementedError
+}
+
 func (*Process) PageFaultsWithContext(_ context.Context) (*PageFaultsStat, error) {
 	return nil, common.ErrNotImplementedError
 }

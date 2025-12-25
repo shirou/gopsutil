@@ -50,7 +50,9 @@ func TestVirtualMemory(t *testing.T) {
 		"Total should be computable (%v): %v", totalStr, v)
 
 	assert.True(t, runtime.GOOS == "windows" || v.Free > 0)
-	assert.Truef(t, runtime.GOOS == "windows" || v.Available > v.Free,
+	// On AIX, Available is typically equal to Free
+	// On other systems, Available should be >= Free
+	assert.Truef(t, runtime.GOOS == "windows" || v.Available >= v.Free,
 		"Free should be a subset of Available: %v", v)
 
 	inDelta := assert.InDelta
