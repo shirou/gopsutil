@@ -62,6 +62,7 @@ type VirtualMemoryStat struct {
 	Slab           uint64 `json:"slab"`
 	Sreclaimable   uint64 `json:"sreclaimable"`
 	Sunreclaim     uint64 `json:"sunreclaim"`
+	KernelStack    uint64 `json:"kernelStack"`
 	PageTables     uint64 `json:"pageTables"`
 	SwapCached     uint64 `json:"swapCached"`
 	CommitLimit    uint64 `json:"commitLimit"`
