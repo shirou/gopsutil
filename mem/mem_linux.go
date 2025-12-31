@@ -192,7 +192,7 @@ func fillFromMeminfoWithContext(ctx context.Context) (*VirtualMemoryStat, *ExVir
 			if err != nil {
 				return ret, retEx, err
 			}
-			ret.KernelStack = t * 1024
+			retEx.KernelStack = t * 1024
 		case "PageTables":
 			t, err := strconv.ParseUint(value, 10, 64)
 			if err != nil {

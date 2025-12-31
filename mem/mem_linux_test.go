@@ -51,7 +51,6 @@ var virtualMemoryTests = []struct {
 			Slab:           253771776,
 			Sreclaimable:   186470400,
 			Sunreclaim:     67301376,
-			KernelStack:    14224,
 			PageTables:     65241088,
 			SwapCached:     0,
 			CommitLimit:    16509730816,
@@ -79,6 +78,7 @@ var virtualMemoryTests = []struct {
 			InactiveAnon: 1186612 * 1024,
 			Unevictable:  32 * 1024,
 			Percpu:       19136 * 1024,
+			KernelStack:  14224 * 1024,
 		},
 	},
 	{
@@ -101,7 +101,6 @@ var virtualMemoryTests = []struct {
 			Slab:           9293824,
 			Sreclaimable:   2764800,
 			Sunreclaim:     6529024,
-			KernelStack:    624,
 			PageTables:     405504,
 			SwapCached:     0,
 			CommitLimit:    130289664,
@@ -129,6 +128,7 @@ var virtualMemoryTests = []struct {
 			InactiveAnon: 0,
 			Unevictable:  0,
 			Percpu:       0,
+			KernelStack:  624 * 1024,
 		},
 	},
 	{
