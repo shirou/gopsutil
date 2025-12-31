@@ -78,6 +78,7 @@ var virtualMemoryTests = []struct {
 			InactiveAnon: 1186612 * 1024,
 			Unevictable:  32 * 1024,
 			Percpu:       19136 * 1024,
+			KernelStack:  14224 * 1024,
 		},
 	},
 	{
@@ -127,6 +128,7 @@ var virtualMemoryTests = []struct {
 			InactiveAnon: 0,
 			Unevictable:  0,
 			Percpu:       0,
+			KernelStack:  624 * 1024,
 		},
 	},
 	{
