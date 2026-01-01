@@ -71,6 +71,31 @@ func Usage(path string) (*UsageStat, error) {
 	return UsageWithContext(context.Background(), path)
 }
 
+func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
+	type result struct {
+		usage *UsageStat
+		err   error
+	}
+
+	resultCh := make(chan result, 1)
+
+	go func() {
+		usage, err := getUsage(ctx, path)
+		resultCh <- result{usage: usage, err: err}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case res := <-resultCh:
+		if res.err != nil {
+			return nil, res.err
+		}
+
+		return res.usage, nil
+	}
+}
+
 // Partitions returns disk partitions. If all is false, returns
 // physical devices only (e.g. hard disks, cd-rom drives, USB keys)
 // and ignore all others (e.g. memory partitions such as /dev/shm)
