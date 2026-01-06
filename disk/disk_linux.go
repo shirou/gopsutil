@@ -605,7 +605,7 @@ func LabelWithContext(ctx context.Context, name string) (string, error) {
 	return label, nil
 }
 
-func getFsType(stat unix.Statfs_t) string {
+func getFsType(stat *unix.Statfs_t) string {
 	t := int64(stat.Type)
 	ret, ok := fsTypeMap[t]
 	if !ok {
