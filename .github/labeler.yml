@@ -33,11 +33,6 @@
     - any-glob-to-any-file:
       - 'net/**'
 
-'package:nfs':
-  - changed-files:
-    - any-glob-to-any-file:
-      - 'nfs/**'
-
 'package:process':
   - changed-files:
     - any-glob-to-any-file:
