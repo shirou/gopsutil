@@ -748,7 +748,7 @@ func (p *Process) OpenFilesWithContext(ctx context.Context) ([]OpenFilesStat, er
 		}
 
 		var fileName string
-		ch := make(chan struct{})
+		ch := make(chan struct{}, 1)
 
 		go func() {
 			var buf [syscall.MAX_LONG_PATH]uint16
