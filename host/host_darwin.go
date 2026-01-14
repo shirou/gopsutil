@@ -4,9 +4,7 @@
 package host
 
 import (
-	"bytes"
 	"context"
-	"encoding/binary"
 	"errors"
 	"io"
 	"os"
@@ -65,20 +63,16 @@ func UsersWithContext(_ context.Context) ([]UserStat, error) {
 	}
 
 	// Skip macOS utmpx header part
-	buf = buf[604:]
+	const ut32Size = int(unsafe.Sizeof(utmpx32{}))
+	buf = buf[ut32Size:]
 
-	entrySize := int(unsafe.Sizeof(Utmpx{}))
-	count := len(buf) / entrySize
+	count := len(buf) / ut32Size
 
-	for i := 0; i < count; i++ {
-		b := buf[i*entrySize : i*entrySize+entrySize]
+	for i := range count {
+		b := buf[i*ut32Size : i*ut32Size+ut32Size]
 
-		var u Utmpx
-		br := bytes.NewReader(b)
-		err := binary.Read(br, binary.LittleEndian, &u)
-		if err != nil {
-			continue
-		}
+		var u utmpx32
+		copy(unsafe.Slice((*byte)(unsafe.Pointer(&u)), len(b)), b)
 		if u.Type != user_PROCESS {
 			continue
 		}
