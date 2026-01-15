@@ -81,7 +81,7 @@ func (ta *temperatureArm) getSensors(system, sensors unsafe.Pointer) []Temperatu
 
 		nameRef := ta.iokit.IOHIDServiceClientCopyProperty(uintptr(sc), uintptr(str))
 		if nameRef != nil {
-			buf := common.NewCStr(ta.cf.CFStringGetLength(uintptr(nameRef)))
+			buf := common.NewCStr(common.GetCFStringBufLengthForUTF8(ta.cf.CFStringGetLength(uintptr(nameRef))))
 			ta.cf.CFStringGetCString(uintptr(nameRef), buf, buf.Length(), common.KCFStringEncodingUTF8)
 
 			name := buf.GoString()
