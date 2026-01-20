@@ -266,7 +266,7 @@ func (i *ioCounters) getDriveStat(d uint32) (*IOCountersStat, error) {
 	defer i.corefoundation.CFRelease(uintptr(key))
 	name := i.corefoundation.CFDictionaryGetValue(uintptr(props), uintptr(key))
 
-	buf := common.NewCStr(i.corefoundation.CFStringGetLength(uintptr(name)))
+	buf := common.NewCStr(common.GetCFStringBufLengthForUTF8(i.corefoundation.CFStringGetLength(uintptr(name))))
 	i.corefoundation.CFStringGetCString(uintptr(name), buf, buf.Length(), common.KCFStringEncodingUTF8)
 
 	stat, err := i.fillStat(parent)
