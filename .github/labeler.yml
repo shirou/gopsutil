@@ -110,3 +110,11 @@
     - any-glob-to-any-file:
       - '**/*_solaris.go'
       - '**/*_posix.go'
+
+'os:aix':
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/*_aix.go'
+      - '**/*_aix_test.go'
+      - '**/*_aix_*.go'
+      - '**/*_posix.go'
