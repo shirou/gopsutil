@@ -65,53 +65,58 @@ func Info() (*InfoStat, error) {
 
 func InfoWithContext(ctx context.Context) (*InfoStat, error) {
 	var err error
+	var errs []error
 	ret := &InfoStat{
 		OS: runtime.GOOS,
 	}
 
 	ret.Hostname, err = os.Hostname()
 	if err != nil && !errors.Is(err, common.ErrNotImplementedError) {
-		return nil, fmt.Errorf("getting hostname: %w", err)
+		errs = append(errs, fmt.Errorf("getting hostname: %w", err))
 	}
 
 	ret.Platform, ret.PlatformFamily, ret.PlatformVersion, err = PlatformInformationWithContext(ctx)
 	if err != nil && !errors.Is(err, common.ErrNotImplementedError) {
-		return nil, fmt.Errorf("getting platform information: %w", err)
+		errs = append(errs, fmt.Errorf("getting platform information: %w", err))
 	}
 
 	ret.KernelVersion, err = KernelVersionWithContext(ctx)
 	if err != nil && !errors.Is(err, common.ErrNotImplementedError) {
-		return nil, fmt.Errorf("getting kernel version: %w", err)
+		errs = append(errs, fmt.Errorf("getting kernel version: %w", err))
 	}
 
 	ret.KernelArch, err = KernelArch()
 	if err != nil && !errors.Is(err, common.ErrNotImplementedError) {
-		return nil, fmt.Errorf("getting kernel architecture: %w", err)
+		errs = append(errs, fmt.Errorf("getting kernel architecture: %w", err))
 	}
 
 	ret.VirtualizationSystem, ret.VirtualizationRole, err = VirtualizationWithContext(ctx)
 	if err != nil && !errors.Is(err, common.ErrNotImplementedError) {
-		return nil, fmt.Errorf("getting virtualization information: %w", err)
+		errs = append(errs, fmt.Errorf("getting virtualization information: %w", err))
 	}
 
 	ret.BootTime, err = BootTimeWithContext(ctx)
 	if err != nil && !errors.Is(err, common.ErrNotImplementedError) {
-		return nil, fmt.Errorf("getting boot time: %w", err)
+		errs = append(errs, fmt.Errorf("getting boot time: %w", err))
 	}
 
 	ret.Uptime, err = UptimeWithContext(ctx)
 	if err != nil && !errors.Is(err, common.ErrNotImplementedError) {
-		return nil, fmt.Errorf("getting uptime: %w", err)
+		errs = append(errs, fmt.Errorf("getting uptime: %w", err))
 	}
 
 	ret.Procs, err = numProcs(ctx)
 	if err != nil && !errors.Is(err, common.ErrNotImplementedError) {
-		return nil, fmt.Errorf("getting number of procs: %w", err)
+		errs = append(errs, fmt.Errorf("getting number of procs: %w", err))
 	}
 
 	ret.HostID, err = HostIDWithContext(ctx)
 	if err != nil && !errors.Is(err, common.ErrNotImplementedError) {
-		return nil, fmt.Errorf("getting host ID: %w", err)
+		errs = append(errs, fmt.Errorf("getting host ID: %w", err))
+	}
+
+	if len(errs) > 0 {
+		return nil, errors.Join(errs...)
 	}
 
 	return ret, nil
