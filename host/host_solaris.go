@@ -88,7 +88,7 @@ func UptimeWithContext(ctx context.Context) (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	return timeSince(bootTime), nil
+	return common.TimeSince(bootTime), nil
 }
 
 func UsersWithContext(_ context.Context) ([]UserStat, error) {

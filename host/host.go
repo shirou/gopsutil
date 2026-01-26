@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"os"
 	"runtime"
-	"time"
 
 	"github.com/shirou/gopsutil/v4/internal/common"
 )
@@ -145,12 +144,4 @@ func Virtualization() (string, string, error) {
 
 func KernelVersion() (string, error) {
 	return KernelVersionWithContext(context.Background())
-}
-
-func timeSince(ts uint64) uint64 {
-	return uint64(time.Now().Unix()) - ts
-}
-
-func timeSinceMillis(ts uint64) uint64 {
-	return uint64(time.Now().UnixMilli()) - ts
 }

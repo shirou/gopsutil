@@ -129,7 +129,7 @@ func BootTimeWithContext(_ context.Context) (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	t := uint64((time.Duration(timeSinceMillis(up)) * time.Millisecond).Seconds())
+	t := uint64((time.Duration(common.TimeSinceMillis(up)) * time.Millisecond).Seconds())
 	if enableBootTimeCache {
 		atomic.StoreUint64(&cachedBootTime, t)
 	}
