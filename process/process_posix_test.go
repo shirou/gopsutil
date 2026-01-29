@@ -9,6 +9,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/sys/unix"
+
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func Test_SendSignal(t *testing.T) {
@@ -16,4 +18,17 @@ func Test_SendSignal(t *testing.T) {
 
 	p, _ := NewProcess(int32(checkPid))
 	assert.NoErrorf(t, p.SendSignal(unix.SIGCONT), "send signal")
+}
+
+func TestGetTerminalMapPathsExist(t *testing.T) {
+	termmap, err := getTerminalMap()
+	if err != nil {
+		t.Skipf("getTerminalMap not available: %v", err)
+	}
+
+	for _, name := range termmap {
+		fullPath := common.HostDev(name)
+		_, err := os.Stat(fullPath)
+		assert.NoErrorf(t, err, "terminal device should exist: %s", fullPath)
+	}
 }
