@@ -1,4 +1,4 @@
-# gopsutil: psutil for golang
+# gopsutil: psutil for Go
 
 [![Test](https://github.com/shirou/gopsutil/actions/workflows/test.yml/badge.svg)](https://github.com/shirou/gopsutil/actions/workflows/test.yml) [![Go Reference](https://pkg.go.dev/badge/github.com/shirou/gopsutil/v4.svg)](https://pkg.go.dev/github.com/shirou/gopsutil/v4) [![Calendar Versioning](https://img.shields.io/badge/calver-vMAJOR.YY.MM-22bfda.svg)](https://calver.org/)
 
@@ -41,7 +41,7 @@ These have partial support:
 - CPU on DragonFly BSD (#893, Thank you @gballet!)
 - host on Linux RISC-V (#896, Thank you @tklauser!)
 
-All works are implemented without cgo by porting C structs to golang structs.
+All works are implemented without cgo by porting C structs to Go structs.
 
 ## Usage
 
