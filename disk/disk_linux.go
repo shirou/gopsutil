@@ -371,7 +371,7 @@ func parseFieldsOnMountinfo(ctx context.Context, lines []string, all bool, filen
 		if strings.HasPrefix(mntSrc, "/") {
 			device = mntSrc
 		} else if rootDir == "/" {
-			device = "none"
+			device = mntSrc
 		}
 
 		if _, ok := seenDevIDs[blockDeviceID]; ok {
