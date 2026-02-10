@@ -8,6 +8,8 @@ import (
 	"sync/atomic"
 
 	"golang.org/x/sys/unix"
+
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 // cachedBootTime must be accessed via atomic.Load/StoreUint64
@@ -37,5 +39,5 @@ func UptimeWithContext(ctx context.Context) (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	return timeSince(boot), nil
+	return common.TimeSince(boot), nil
 }
