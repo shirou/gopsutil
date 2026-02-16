@@ -329,6 +329,15 @@ func IOCountersWithContext(_ context.Context, names ...string) (map[string]IOCou
 		var diskPerformanceSize uint32
 		err = windows.DeviceIoControl(h, IOCTL_DISK_PERFORMANCE, nil, 0, (*byte)(unsafe.Pointer(&dPerformance)), uint32(unsafe.Sizeof(dPerformance)), &diskPerformanceSize, nil)
 		if err != nil {
+			// ERROR_INVALID_FUNCTION and ERROR_NOT_SUPPORTED indicate that
+			// the drive does not support IOCTL_DISK_PERFORMANCE (e.g. virtual
+			// drives like Google Drive, or systems where disk performance
+			// counters are disabled such as Windows Server 2016).
+			// Skip the drive and continue, matching psutil behavior:
+			// https://github.com/giampaolo/psutil/blob/544e9daa4f66a9f80d7bf6c7886d693ee42f0a13/psutil/arch/windows/disk.c#L146-L163
+			if errors.Is(err, windows.ERROR_INVALID_FUNCTION) || errors.Is(err, windows.ERROR_NOT_SUPPORTED) {
+				continue
+			}
 			return drivemap, err
 		}
 
