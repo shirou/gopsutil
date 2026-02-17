@@ -16,8 +16,19 @@ const (
 	user_PROCESS = 7 //nolint:revive //FIXME
 )
 
+// testInvoker is used for dependency injection in tests
+var testInvoker common.Invoker
+
+// getInvoker returns the test invoker if set, otherwise returns the default
+func getInvoker() common.Invoker {
+	if testInvoker != nil {
+		return testInvoker
+	}
+	return invoke
+}
+
 func HostIDWithContext(ctx context.Context) (string, error) {
-	out, err := invoke.CommandWithContext(ctx, "uname", "-u")
+	out, err := getInvoker().CommandWithContext(ctx, "uname", "-u")
 	if err != nil {
 		return "", err
 	}
@@ -31,18 +42,18 @@ func numProcs(_ context.Context) (uint64, error) {
 }
 
 func BootTimeWithContext(ctx context.Context) (btime uint64, err error) {
-	return common.BootTimeWithContext(ctx, invoke)
+	return common.BootTimeWithContext(ctx, getInvoker())
 }
 
 // Uses ps to get the elapsed time for PID 1 in DAYS-HOURS:MINUTES:SECONDS format.
 func UptimeWithContext(ctx context.Context) (uint64, error) {
-	return common.UptimeWithContext(ctx, invoke)
+	return common.UptimeWithContext(ctx, getInvoker())
 }
 
 // This is a weak implementation due to the limitations on retrieving this data in AIX
 func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 	var ret []UserStat
-	out, err := invoke.CommandWithContext(ctx, "w")
+	out, err := getInvoker().CommandWithContext(ctx, "w")
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +92,7 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 // Much of this function could be static. However, to be future proofed, I've made it call the OS for the information in all instances.
 func PlatformInformationWithContext(ctx context.Context) (platform, family, version string, err error) {
 	// Set the platform (which should always, and only be, "AIX") from `uname -s`
-	out, err := invoke.CommandWithContext(ctx, "uname", "-s")
+	out, err := getInvoker().CommandWithContext(ctx, "uname", "-s")
 	if err != nil {
 		return "", "", "", err
 	}
@@ -91,7 +102,7 @@ func PlatformInformationWithContext(ctx context.Context) (platform, family, vers
 	family = strings.TrimRight(string(out), "\n")
 
 	// Set the version
-	out, err = invoke.CommandWithContext(ctx, "oslevel")
+	out, err = getInvoker().CommandWithContext(ctx, "oslevel")
 	if err != nil {
 		return "", "", "", err
 	}
@@ -101,7 +112,7 @@ func PlatformInformationWithContext(ctx context.Context) (platform, family, vers
 }
 
 func KernelVersionWithContext(ctx context.Context) (version string, err error) {
-	out, err := invoke.CommandWithContext(ctx, "oslevel", "-s")
+	out, err := getInvoker().CommandWithContext(ctx, "oslevel", "-s")
 	if err != nil {
 		return "", err
 	}
@@ -111,7 +122,7 @@ func KernelVersionWithContext(ctx context.Context) (version string, err error) {
 }
 
 func KernelArch() (arch string, err error) {
-	out, err := invoke.Command("bootinfo", "-y")
+	out, err := getInvoker().Command("bootinfo", "-y")
 	if err != nil {
 		return "", err
 	}
