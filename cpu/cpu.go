@@ -91,7 +91,7 @@ func (c TimesStat) String() string {
 
 // Deprecated: Total returns the total number of seconds in a CPUTimesStat
 // Please do not use this internal function.
-func (c TimesStat) Total() float64 {
+func (c *TimesStat) Total() float64 {
 	total := c.User + c.System + c.Idle + c.Nice + c.Iowait + c.Irq +
 		c.Softirq + c.Steal + c.Guest + c.GuestNice
 
@@ -103,7 +103,7 @@ func (c InfoStat) String() string {
 	return string(s)
 }
 
-func getAllBusy(t TimesStat) (float64, float64) {
+func getAllBusy(t *TimesStat) (float64, float64) {
 	tot := t.Total()
 	if runtime.GOOS == "linux" {
 		tot -= t.Guest     // Linux 2.6.24+
@@ -115,7 +115,7 @@ func getAllBusy(t TimesStat) (float64, float64) {
 	return tot, busy
 }
 
-func calculateBusy(t1, t2 TimesStat) float64 {
+func calculateBusy(t1, t2 *TimesStat) float64 {
 	t1All, t1Busy := getAllBusy(t1)
 	t2All, t2Busy := getAllBusy(t2)
 
@@ -139,7 +139,7 @@ func calculateAllBusy(t1, t2 []TimesStat) ([]float64, error) {
 
 	ret := make([]float64, len(t1))
 	for i, t := range t2 {
-		ret[i] = calculateBusy(t1[i], t)
+		ret[i] = calculateBusy(&t1[i], &t)
 	}
 	return ret, nil
 }
