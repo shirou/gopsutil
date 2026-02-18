@@ -315,15 +315,14 @@ func (*Process) CPUAffinityWithContext(_ context.Context) ([]int32, error) {
 }
 
 func (p *Process) MemoryInfoWithContext(ctx context.Context) (*MemoryInfoStat, error) {
-	meminfo, _, err := p.fillFromStatmWithContext(ctx)
-	if err != nil {
+	if err := p.fillFromStatusWithContext(ctx); err != nil {
 		return nil, err
 	}
-	return meminfo, nil
+	return p.memInfo, nil
 }
 
 func (p *Process) MemoryInfoExWithContext(ctx context.Context) (*MemoryInfoExStat, error) {
-	_, memInfoEx, err := p.fillFromStatmWithContext(ctx)
+	memInfoEx, err := p.fillFromStatmWithContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -749,43 +748,38 @@ func (p *Process) fillFromIOWithContext(ctx context.Context) (*IOCountersStat, e
 }
 
 // Get memory info from /proc/(pid)/statm
-func (p *Process) fillFromStatmWithContext(ctx context.Context) (*MemoryInfoStat, *MemoryInfoExStat, error) {
+func (p *Process) fillFromStatmWithContext(ctx context.Context) (*MemoryInfoExStat, error) {
 	pid := p.Pid
 	memPath := common.HostProcWithContext(ctx, strconv.Itoa(int(pid)), "statm")
 	contents, err := os.ReadFile(memPath)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	fields := strings.Split(string(contents), " ")
 
 	vms, err := strconv.ParseUint(fields[0], 10, 64)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	rss, err := strconv.ParseUint(fields[1], 10, 64)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	memInfo := &MemoryInfoStat{
-		RSS: rss * pageSize,
-		VMS: vms * pageSize,
-	}
-
 	shared, err := strconv.ParseUint(fields[2], 10, 64)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	text, err := strconv.ParseUint(fields[3], 10, 64)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	lib, err := strconv.ParseUint(fields[4], 10, 64)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	dirty, err := strconv.ParseUint(fields[5], 10, 64)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	memInfoEx := &MemoryInfoExStat{
@@ -797,7 +791,7 @@ func (p *Process) fillFromStatmWithContext(ctx context.Context) (*MemoryInfoStat
 		Dirty:  dirty * pageSize,
 	}
 
-	return memInfo, memInfoEx, nil
+	return memInfoEx, nil
 }
 
 // Get name from /proc/(pid)/comm or /proc/(pid)/status
