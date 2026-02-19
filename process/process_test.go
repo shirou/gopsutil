@@ -283,10 +283,10 @@ func TestLong_Name_With_Spaces(t *testing.T) {
 	require.NoErrorf(t, tmpfile.Close(), "unable to close temp file")
 	ctx := context.Background()
 
-	err = exec.CommandContext(ctx, "go", "build", "-o", tmpfile.Name()+".exe", tmpfile.Name()).Run()
+	err = exec.CommandContext(ctx, "go", "build", "-o", tmpfile.Name()+".exe", tmpfile.Name()).Run() //nolint:gosec // test code
 	require.NoErrorf(t, err, "unable to build temp file %v", err)
 
-	cmd := exec.CommandContext(ctx, tmpfile.Name()+".exe")
+	cmd := exec.CommandContext(ctx, tmpfile.Name()+".exe") //nolint:gosec // test code
 
 	require.NoError(t, cmd.Start())
 	time.Sleep(100 * time.Millisecond)
@@ -323,10 +323,10 @@ func TestLong_Name(t *testing.T) {
 	require.NoErrorf(t, tmpfile.Close(), "unable to close temp file")
 	ctx := context.Background()
 
-	err = exec.CommandContext(ctx, "go", "build", "-o", tmpfile.Name()+".exe", tmpfile.Name()).Run()
+	err = exec.CommandContext(ctx, "go", "build", "-o", tmpfile.Name()+".exe", tmpfile.Name()).Run() //nolint:gosec // test code
 	require.NoErrorf(t, err, "unable to build temp file %v", err)
 
-	cmd := exec.CommandContext(ctx, tmpfile.Name()+".exe")
+	cmd := exec.CommandContext(ctx, tmpfile.Name()+".exe") //nolint:gosec // test code
 
 	require.NoError(t, cmd.Start())
 	time.Sleep(100 * time.Millisecond)
@@ -711,10 +711,10 @@ func TestEnviron(t *testing.T) {
 	require.NoErrorf(t, tmpfile.Close(), "unable to close temp file")
 	ctx := context.Background()
 
-	err = exec.CommandContext(ctx, "go", "build", "-o", tmpfile.Name()+".exe", tmpfile.Name()).Run()
+	err = exec.CommandContext(ctx, "go", "build", "-o", tmpfile.Name()+".exe", tmpfile.Name()).Run() //nolint:gosec // test code
 	require.NoErrorf(t, err, "unable to build temp file %v", err)
 
-	cmd := exec.CommandContext(ctx, tmpfile.Name()+".exe")
+	cmd := exec.CommandContext(ctx, tmpfile.Name()+".exe") //nolint:gosec // test code
 
 	cmd.Env = []string{"testkey=envvalue"}
 
