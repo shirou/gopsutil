@@ -1,0 +1,23 @@
+1 : /etc/init 
+
+Start-ADD         End-ADD               SIZE MODE  PSIZ  TYPE       VSID             MAPPED OBJECT
+0                 10000000           262144K r--   m     KERTXT     10002             
+10000000          1000ce95               51K r-x   s     MAINTEXT   8b8117           init 
+200003d8          20036288              215K rw-   sm    MAINDATA   890192           init 
+20036288          200f6300              768K rw-   sm    HEAP       890192            
+200f7000          2ff23000           260272K rw-   sm    STACK      890192            
+d0100000          d0192a75              586K r-x   m     SLIBTEXT   a000             /usr/lib/libc.a[shr.o] 
+d0193000          d019b33c               32K r-x   m     SLIBTEXT   a000             /usr/lib/libpthreads.a[shr_xpg5.o] 
+d019c480          d06152ce             4579K r-x   m     SLIBTEXT   a000             /usr/lib/libc.a[_shr.o] 
+d0616100          d06169c1                2K r-x   m     SLIBTEXT   a000             /usr/lib/libcrypt.a[shr.o] 
+d0617000          d06523c4              236K r-x   m     SLIBTEXT   a000             /usr/lib/libpthreads.a[_shr_xpg5.o] 
+d0653000          d06561f4               12K r-x   m     SLIBTEXT   a000             /usr/lib/libpthreads.a[shr_comm.o] 
+d0e88100          d0e8c3db               16K r-x   m     SLIBTEXT   a000             /usr/lib/libefs.a[shr.o] 
+f0100250          f0182600              520K rw-   sm    PLIBDATA   808181           /usr/lib/libc.a[shr.o] 
+f01832a0          f01fb388              480K rw-   sm    PLIBDATA   808181           /usr/lib/libc.a[_shr.o] 
+f01fc5c8          f01fc704                0K rw-   sm    PLIBDATA   808181           /usr/lib/libcrypt.a[shr.o] 
+f01fd000          f02407b8              269K rw-   sm    PLIBDATA   808181           /usr/lib/libpthreads.a[shr_comm.o] 
+f0241270          f02424b8                4K rw-   sm    PLIBDATA   808181           /usr/lib/libpthreads.a[shr_xpg5.o] 
+f0243000          f0246a10               14K rw-   sm    PLIBDATA   808181           /usr/lib/libpthreads.a[_shr_xpg5.o] 
+f043fe10          f04406f4                2K rw-   sm    PLIBDATA   808181           /usr/lib/libefs.a[shr.o] 
+                             Total   530211K
