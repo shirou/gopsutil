@@ -967,7 +967,7 @@ func (p *Process) EnvironWithContext(ctx context.Context) ([]string, error) {
 
 // isEnvVarName returns true if s is a valid POSIX environment variable name.
 func isEnvVarName(s string) bool {
-	if len(s) == 0 {
+	if s == "" {
 		return false
 	}
 	for i, c := range s {
@@ -1025,7 +1025,6 @@ func (p *Process) fillFromLimitsWithContext(ctx context.Context) ([]RlimitStat, 
 	}
 
 	attrs := "fsize fsize_hard core core_hard cpu cpu_hard data data_hard stack stack_hard rss rss_hard nofiles nofiles_hard"
-	//nolint:gosec // Username resolved from UID lookup, not untrusted input
 	cmd := exec.CommandContext(ctx, "lsuser", "-a")
 	cmd.Args = append(cmd.Args, strings.Fields(attrs)...)
 	cmd.Args = append(cmd.Args, u.Username)
@@ -1568,10 +1567,9 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 	statPath = common.HostProcWithContext(ctx, strconv.Itoa(int(pid)), "status")
 	infoPath = common.HostProcWithContext(ctx, strconv.Itoa(int(pid)), "psinfo")
 	if tid > -1 {
-		// Search for lwpstatus and lwpinfo files, handling unknown directory structures
 		tidStr := strconv.Itoa(int(tid))
-		basePath := common.HostProcWithContext(ctx, strconv.Itoa(int(pid)), "lwp", tidStr)
-		lwpStatPath, lwpInfoPath = findLwpFiles(basePath)
+		lwpStatPath = common.HostProcWithContext(ctx, strconv.Itoa(int(pid)), "lwp", tidStr, "lwpstatus")
+		lwpInfoPath = common.HostProcWithContext(ctx, strconv.Itoa(int(pid)), "lwp", tidStr, "lwpinfo")
 	}
 
 	// Open the binary files
@@ -1790,69 +1788,4 @@ func extractString(b []byte) string {
 	}
 	// No null terminator, return all bytes after trimming null bytes from the end
 	return strings.TrimRight(string(b), "\x00")
-}
-
-// findLwpFiles searches recursively for lwpstatus and lwpinfo files under a given directory.
-// AIX /proc/pid/lwp structure can vary, so this function explores the directory tree to find the files.
-func findLwpFiles(basePath string) (string, string) {
-	// First try the direct path: basePath/lwpstatus
-	directStatPath := filepath.Join(basePath, "lwpstatus")
-	directInfoPath := filepath.Join(basePath, "lwpinfo")
-	if _, err := os.Stat(directStatPath); err == nil {
-		return directStatPath, directInfoPath
-	}
-
-	// If direct path doesn't exist, recursively search the directory tree
-	statPath, infoPath := searchLwpFilesRecursive(basePath)
-	return statPath, infoPath
-}
-
-// searchLwpFilesRecursive recursively searches for lwpstatus and lwpinfo files.
-func searchLwpFilesRecursive(searchPath string) (string, string) {
-	d, err := os.Open(searchPath)
-	if err != nil {
-		return "", ""
-	}
-	defer d.Close()
-
-	entries, err := d.Readdirnames(-1)
-	if err != nil {
-		return "", ""
-	}
-
-	var statPath, infoPath string
-
-	for _, entry := range entries {
-		fullPath := filepath.Join(searchPath, entry)
-
-		// Check if this entry is one of our target files
-		if entry == "lwpstatus" && statPath == "" {
-			statPath = fullPath
-		}
-		if entry == "lwpinfo" && infoPath == "" {
-			infoPath = fullPath
-		}
-
-		// If we found both files, return immediately
-		if statPath != "" && infoPath != "" {
-			return statPath, infoPath
-		}
-
-		// Check if this is a directory and recurse into it
-		if info, err := os.Stat(fullPath); err == nil && info.IsDir() {
-			foundStatPath, foundInfoPath := searchLwpFilesRecursive(fullPath)
-			if foundStatPath != "" && statPath == "" {
-				statPath = foundStatPath
-			}
-			if foundInfoPath != "" && infoPath == "" {
-				infoPath = foundInfoPath
-			}
-			// If we found both files, return immediately
-			if statPath != "" && infoPath != "" {
-				return statPath, infoPath
-			}
-		}
-	}
-
-	return statPath, infoPath
 }
