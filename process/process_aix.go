@@ -263,8 +263,8 @@ type AIXPSInfo struct {
 	Rssize uint64         // resident set size in KB (1024) units
 	Start  PrTimestruc64T // process start time, time since epoch
 	Time   PrTimestruc64T // usr+sys cpu time for this process
-	Cid    int16          // corral id
-	Pad2   int16          // reserved for future use
+	Cid    uint16         // corral id
+	Pad2   uint16         // reserved for future use
 	Argc   uint32         // initial argument count
 	Argv   uint64         // address of initial argument vector in user process
 	Envp   uint64         // address of initial environment vector in user process
