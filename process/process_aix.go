@@ -405,6 +405,28 @@ func (p *Process) StatusWithContext(ctx context.Context) ([]string, error) {
 }
 
 func (*Process) ForegroundWithContext(_ context.Context) (bool, error) {
+	// AIX has no tpgid (terminal process group ID) in any procfs structure.
+	// The psinfo_t and pstatus_t structs contain pr_pgid, pr_sid, and
+	// pr_ttydev but no pr_tpgid field (/usr/include/sys/procfs.h verified
+	// on AIX 7.3). The ps command does not support -o tpgid, -o pgrp, or
+	// -o sid specifiers (only -o pgid works).
+	//
+	// The TIOCGPGRP ioctl (0x40047309, defined in golang.org/x/sys/unix
+	// zerrors_aix_ppc64.go) could theoretically be used: read pr_ttydev
+	// from psinfo -> resolve device path -> open tty -> ioctl to get
+	// foreground pgrp -> compare with pr_pgid. However this approach has
+	// significant issues:
+	//   - Opening another process's tty requires elevated privileges
+	//   - AIX has no devname() to convert dev_t to a device path
+	//   - Go's IoctlGetInt is broken on ppc64 big-endian (Go issue #60429);
+	//     must use IoctlGetUint32 instead
+	//   - Historical TIOCGPGRP bugs on AIX 6.1/7.1 (APARs IV64838/IV67163,
+	//     fixed Nov 2014)
+	//   - TOCTOU race between reading psinfo and querying the terminal
+	//
+	// No other library implements tpgid on AIX (Python psutil does not).
+	// Windows, Solaris, and Plan9 also return ErrNotImplementedError in
+	// gopsutil.
 	return false, common.ErrNotImplementedError
 }
 
@@ -464,6 +486,23 @@ func (p *Process) NiceWithContext(ctx context.Context) (int32, error) {
 }
 
 func (*Process) IOniceWithContext(_ context.Context) (int32, error) {
+	// AIX has no per-process I/O priority mechanism. There is no ionice
+	// command, no ioprio_get/ioprio_set syscalls (not in
+	// /usr/include/sys/syscall.h), and no ioprio kernel headers. The
+	// renice command only affects CPU scheduling priority (nice value).
+	//
+	// AIX's Workload Manager (WLM) provides class-level DKIO (disk I/O)
+	// resource management via wlmstat/wlmassign, but this operates on
+	// process classes, not individual processes, and IBM documentation
+	// notes DKIO metrics are "usually not significant." The ioo and
+	// schedo kernel tuneables contain no per-process I/O priority
+	// parameters. JFS2 and CIO/DIO are filesystem/mount-level features
+	// with no per-process scheduling. The getprocs64() procentry64 struct
+	// contains pi_pri and pi_nice but no I/O priority field.
+	//
+	// Every other gopsutil platform (including Linux) also returns
+	// ErrNotImplementedError for IOniceWithContext. Python psutil also
+	// does not implement ionice on AIX.
 	return 0, common.ErrNotImplementedError
 }
 
