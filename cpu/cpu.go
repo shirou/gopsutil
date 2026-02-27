@@ -152,6 +152,12 @@ func Percent(interval time.Duration, percpu bool) ([]float64, error) {
 }
 
 func PercentWithContext(ctx context.Context, interval time.Duration, percpu bool) ([]float64, error) {
+	// AIX TimesWithContext returns instantaneous percentages (not cumulative
+	// ticks), so the delta math in calculateBusy does not apply.
+	if runtime.GOOS == "aix" {
+		return aixPercent(ctx, percpu)
+	}
+
 	if interval <= 0 {
 		return percentUsedFromLastCallWithContext(ctx, percpu)
 	}
@@ -175,11 +181,29 @@ func PercentWithContext(ctx context.Context, interval time.Duration, percpu bool
 	return calculateAllBusy(cpuTimes1, cpuTimes2)
 }
 
+// aixPercent returns CPU busy percentages directly from TimesWithContext,
+// which on AIX already contains instantaneous percentage values.
+func aixPercent(ctx context.Context, percpu bool) ([]float64, error) {
+	times, err := TimesWithContext(ctx, percpu)
+	if err != nil {
+		return nil, err
+	}
+	ret := make([]float64, len(times))
+	for i, t := range times {
+		ret[i] = t.User + t.System + t.Iowait
+	}
+	return ret, nil
+}
+
 func percentUsedFromLastCall(percpu bool) ([]float64, error) {
 	return percentUsedFromLastCallWithContext(context.Background(), percpu)
 }
 
 func percentUsedFromLastCallWithContext(ctx context.Context, percpu bool) ([]float64, error) {
+	if runtime.GOOS == "aix" {
+		return aixPercent(ctx, percpu)
+	}
+
 	cpuTimes, err := TimesWithContext(ctx, percpu)
 	if err != nil {
 		return nil, err
