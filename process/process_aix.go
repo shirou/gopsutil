@@ -1548,12 +1548,18 @@ func readPidsFromDir(path string) ([]int32, error) {
 	if err != nil {
 		return nil, err
 	}
+	// AIX /proc can list the same PID multiple times, so deduplicate.
+	seen := make(map[int32]struct{}, len(fnames))
 	for _, fname := range fnames {
 		pid, err := strconv.ParseInt(fname, 10, 32)
 		if err != nil {
 			// if not numeric name, just skip
 			continue
 		}
+		if _, ok := seen[int32(pid)]; ok {
+			continue
+		}
+		seen[int32(pid)] = struct{}{}
 		ret = append(ret, int32(pid))
 	}
 
