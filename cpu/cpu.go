@@ -181,20 +181,6 @@ func PercentWithContext(ctx context.Context, interval time.Duration, percpu bool
 	return calculateAllBusy(cpuTimes1, cpuTimes2)
 }
 
-// aixPercent returns CPU busy percentages directly from TimesWithContext,
-// which on AIX already contains instantaneous percentage values.
-func aixPercent(ctx context.Context, percpu bool) ([]float64, error) {
-	times, err := TimesWithContext(ctx, percpu)
-	if err != nil {
-		return nil, err
-	}
-	ret := make([]float64, len(times))
-	for i, t := range times {
-		ret[i] = t.User + t.System + t.Iowait
-	}
-	return ret, nil
-}
-
 func percentUsedFromLastCall(percpu bool) ([]float64, error) {
 	return percentUsedFromLastCallWithContext(context.Background(), percpu)
 }
