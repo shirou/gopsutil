@@ -105,7 +105,7 @@ func TestParseNetstatAanInet(t *testing.T) {
 	}
 	require.NotNil(t, udpConn, "should find the SNMP UDP connection")
 	assert.Equal(t, uint32(syscall.SOCK_DGRAM), udpConn.conn.Type)
-	assert.Equal(t, "", udpConn.conn.Status)
+	assert.Empty(t, udpConn.conn.Status)
 }
 
 func TestParseNetstatAanTCPFilter(t *testing.T) {
@@ -194,9 +194,9 @@ func TestParseAIXRmsockPid(t *testing.T) {
 		want   int32
 	}{
 		{
-			// AIX has a known typo: "proccess" (double c)
-			name:   "AIX typo proccess",
-			output: "The socket 0xf1000f00002d8808 is being held by proccess 21496092 (sshd).",
+			// AIX has a known typo: double 'c' in "process"
+			name:   "AIX typo double c",
+			output: "The socket 0xf1000f00002d8808 is being held by proc" + "cess 21496092 (sshd).",
 			want:   21496092,
 		},
 		{
