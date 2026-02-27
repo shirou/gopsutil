@@ -26,8 +26,46 @@ var (
 	}
 )
 
-func IOCountersWithContext(_ context.Context, _ ...string) (map[string]IOCountersStat, error) {
-	return nil, common.ErrNotImplementedError
+func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOCountersStat, error) {
+	out, err := invoke.CommandWithContext(ctx, "iostat", "-d")
+	if err != nil {
+		return nil, err
+	}
+
+	ret := make(map[string]IOCountersStat)
+	lines := strings.Split(string(out), "\n")
+	for _, line := range lines {
+		fields := strings.Fields(line)
+		if len(fields) < 6 {
+			continue
+		}
+		// Skip the header line
+		if fields[0] == "Disks:" {
+			continue
+		}
+
+		name := fields[0]
+		if len(names) > 0 && !common.StringsHas(names, name) {
+			continue
+		}
+
+		kbRead, err := strconv.ParseUint(fields[4], 10, 64)
+		if err != nil {
+			continue
+		}
+		kbWritten, err := strconv.ParseUint(fields[5], 10, 64)
+		if err != nil {
+			continue
+		}
+
+		ret[name] = IOCountersStat{
+			Name:       name,
+			ReadBytes:  kbRead * 1024,
+			WriteBytes: kbWritten * 1024,
+		}
+	}
+
+	return ret, nil
 }
 
 func PartitionsWithContext(ctx context.Context, _ bool) ([]PartitionStat, error) {
