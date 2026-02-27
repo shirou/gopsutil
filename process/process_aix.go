@@ -526,11 +526,13 @@ func (p *Process) IOCountersWithContext(ctx context.Context) (*IOCountersStat, e
 }
 
 func (*Process) NumCtxSwitchesWithContext(_ context.Context) (*NumCtxSwitchesStat, error) {
-	// AIX does not expose context switch information via proc files or ps command.
-	// According to IBM AIX documentation, the ps command field specifiers do not include
-	// nvcsw (non-voluntary context switches) or vcsw (voluntary context switches).
-	// These metrics are not available in the AIX proc binary structures either.
-	// This metric is not available on AIX.
+	// AIX does not expose per-process context switch counts. The ps command
+	// field specifiers do not include nvcsw or vcsw. The procfs binary
+	// structures (pstatus_t, psinfo_t) contain no context switch fields.
+	// The vmstat command provides system-wide context switch rates but not
+	// per-process. The only path to per-process data is the cgo perfstat
+	// library (perfstat_process_t.num_ctx_switches), which is unavailable
+	// in nocgo builds.
 	return nil, common.ErrNotImplementedError
 }
 
@@ -576,9 +578,14 @@ func (p *Process) TimesWithContext(ctx context.Context) (*cpu.TimesStat, error) 
 }
 
 func (*Process) CPUAffinityWithContext(_ context.Context) ([]int32, error) {
-	// AIX ps command does not support psr field specifier in System V style
-	// Berkeley style ps doesn't provide CPU affinity information
-	// This metric is not available on AIX
+	// AIX uses bindprocessor(1) for CPU binding, not Linux-style affinity
+	// bitmasks. "bindprocessor -q <pid>" can report which CPU a process is
+	// bound to, but the semantics differ from Linux sched_getaffinity: AIX
+	// binding is a single-CPU assignment, not a bitmask of allowed CPUs.
+	// Mapping this to []int32 would be misleading since an unbound AIX
+	// process is eligible for all CPUs but bindprocessor reports nothing.
+	// The cgo perfstat path could provide this via perfstat_process_t, but
+	// that is unavailable in nocgo builds.
 	return nil, common.ErrNotImplementedError
 }
 
@@ -1368,9 +1375,14 @@ func extractFnameString(psinfo *AIXPSInfo) string {
 	return string(trimmed)
 }
 
-// Get IO status from /proc/(pid)/status (not available in AIX)
 func (*Process) fillFromIOWithContext(_ context.Context) (*IOCountersStat, error) {
-	// AIX does not expose detailed I/O counters in /proc; return nil
+	// AIX /proc does not expose per-process I/O byte counters. The procfs
+	// binary structures (pstatus_t, psinfo_t) contain no read/write byte
+	// fields. The ps format specifier "tdiskio" provides only a single
+	// aggregate I/O count (see IOCountersWithContext above), not separate
+	// read/write byte totals. The cgo perfstat library
+	// (perfstat_process_t) could provide this data but is unavailable in
+	// nocgo builds.
 	return nil, common.ErrNotImplementedError
 }
 
