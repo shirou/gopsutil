@@ -868,10 +868,72 @@ func parseSizeField(sizeStr string) uint64 {
 	return 0
 }
 
-func (*Process) EnvironWithContext(_ context.Context) ([]string, error) {
-	// AIX /proc does not expose environment variables in a standard text format
-	// Envp in psinfo is a user-space pointer that is not directly accessible
-	return nil, common.ErrNotImplementedError
+func (p *Process) EnvironWithContext(ctx context.Context) ([]string, error) {
+	// Get the command line (without environment) to use as a separator.
+	//nolint:gosec // Process ID from internal tracking, not untrusted input
+	argsCmd := exec.CommandContext(ctx, "ps", "-o", "args=", "-p", strconv.Itoa(int(p.Pid)))
+	argsOut, err := argsCmd.Output()
+	if err != nil {
+		return nil, err
+	}
+	cmdline := strings.TrimSpace(string(argsOut))
+
+	// Get command + environment using BSD-style ps with 'e' flag.
+	//nolint:gosec // Process ID from internal tracking, not untrusted input
+	ewwCmd := exec.CommandContext(ctx, "ps", "eww", strconv.Itoa(int(p.Pid)))
+	ewwOut, err := ewwCmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	lines := strings.SplitN(string(ewwOut), "\n", 3)
+	if len(lines) < 2 {
+		return nil, errors.New("unexpected ps eww output")
+	}
+	// The data line is everything after the header.
+	dataLine := strings.TrimSpace(lines[1])
+
+	// Find where the known command line appears and take everything after it.
+	idx := strings.Index(dataLine, cmdline)
+	if idx < 0 {
+		return []string{}, nil
+	}
+	envStr := strings.TrimSpace(dataLine[idx+len(cmdline):])
+	if envStr == "" {
+		return []string{}, nil
+	}
+
+	// Parse space-separated KEY=VALUE tokens. Environment variable names
+	// match [A-Za-z_][A-Za-z0-9_]*. Tokens that don't start a new variable
+	// are appended to the previous value (handles values containing spaces).
+	tokens := strings.Fields(envStr)
+	var result []string
+	for _, tok := range tokens {
+		eqIdx := strings.IndexByte(tok, '=')
+		if eqIdx > 0 && isEnvVarName(tok[:eqIdx]) {
+			result = append(result, tok)
+		} else if len(result) > 0 {
+			result[len(result)-1] += " " + tok
+		}
+	}
+	return result, nil
+}
+
+// isEnvVarName returns true if s is a valid POSIX environment variable name.
+func isEnvVarName(s string) bool {
+	if len(s) == 0 {
+		return false
+	}
+	for i, c := range s {
+		if c == '_' || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') {
+			continue
+		}
+		if i > 0 && c >= '0' && c <= '9' {
+			continue
+		}
+		return false
+	}
+	return true
 }
 
 /**
