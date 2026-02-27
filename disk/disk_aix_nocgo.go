@@ -131,15 +131,17 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 					return nil, err
 				}
 			case `Used`:
-				ret.Used, err = strconv.ParseUint(fs[i], 10, 64)
+				used, err := strconv.ParseUint(fs[i], 10, 64)
 				if err != nil {
 					return nil, err
 				}
+				ret.Used = used * blocksize
 			case `Free`:
-				ret.Free, err = strconv.ParseUint(fs[i], 10, 64)
+				free, err := strconv.ParseUint(fs[i], 10, 64)
 				if err != nil {
 					return nil, err
 				}
+				ret.Free = free * blocksize
 			case `%Used`:
 				val, err := strconv.ParseInt(strings.ReplaceAll(fs[i], "%", ""), 10, 32)
 				if err != nil {
