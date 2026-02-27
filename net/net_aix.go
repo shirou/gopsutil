@@ -405,21 +405,21 @@ func connectionsPidMaxWithoutUidsWithContext(ctx context.Context, kind string, p
 	}
 
 	var conns []ConnectionStat
-	for _, entry := range entries {
+	for i := range entries {
 		if maxConn > 0 && len(conns) >= maxConn {
 			break
 		}
 
 		// Resolve PID via rmsock for inet connections
 		var connPid int32
-		if entry.proto != "unix" {
+		if entries[i].proto != "unix" {
 			var protocol string
-			if strings.HasPrefix(entry.proto, "tcp") {
+			if strings.HasPrefix(entries[i].proto, "tcp") {
 				protocol = "tcp"
 			} else {
 				protocol = "udp"
 			}
-			connPid = resolveAIXSockToPid(ctx, entry.sockAddr, protocol)
+			connPid = resolveAIXSockToPid(ctx, entries[i].sockAddr, protocol)
 		}
 
 		// If filtering by PID, skip non-matching connections
@@ -427,17 +427,17 @@ func connectionsPidMaxWithoutUidsWithContext(ctx context.Context, kind string, p
 			continue
 		}
 
-		entry.conn.Pid = connPid
-		conns = append(conns, entry.conn)
+		entries[i].conn.Pid = connPid
+		conns = append(conns, entries[i].conn)
 	}
 
 	return conns, nil
 }
 
 // rmsockPidRe matches PID in rmsock output. AIX rmsock has a known typo
-// spelling "process" as "proccess" (double c), so we match both spellings
+// spelling "process" with a double 'c', so we match both spellings
 // with proc+ess (one or more 'c').
-// Expected output: "The socket 0x... is being held by proccess 14287304 (sshd)."
+// Expected output: "The socket 0x... is being held by proc+ess <pid> (<name>)."
 var rmsockPidRe = regexp.MustCompile(`proc+ess\s+(\d+)\s+\(`)
 
 // parseAIXRmsockPid extracts PID from rmsock output.
