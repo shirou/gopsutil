@@ -17,6 +17,7 @@ import (
 	"unsafe"
 
 	"github.com/power-devops/perfstat"
+	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 func AvgWithContext(ctx context.Context) (*AvgStat, error) {
@@ -80,4 +81,12 @@ func MiscWithContext(ctx context.Context) (*MiscStat, error) {
 	}
 
 	return &ret, nil
+}
+
+func SystemCallsWithContext(_ context.Context) (int, error) {
+	return 0, common.ErrNotImplementedError
+}
+
+func InterruptsWithContext(_ context.Context) (int, error) {
+	return 0, common.ErrNotImplementedError
 }
