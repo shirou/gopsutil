@@ -147,7 +147,7 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 				if err != nil {
 					return nil, err
 				}
-				ret.UsedPercent = float64(val) / float64(100)
+				ret.UsedPercent = float64(val)
 			case `Ifree`:
 				ret.InodesFree, err = strconv.ParseUint(fs[i], 10, 64)
 				if err != nil {
@@ -163,7 +163,7 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 				if err != nil {
 					return nil, err
 				}
-				ret.InodesUsedPercent = float64(val) / float64(100)
+				ret.InodesUsedPercent = float64(val)
 			}
 		}
 
