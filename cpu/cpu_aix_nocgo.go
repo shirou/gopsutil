@@ -14,7 +14,7 @@ import (
 func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 	var ret []TimesStat
 	if percpu {
-		perOut, err := invoke.CommandWithContext(ctx, "sar", "-u", "-P", "ALL", "10", "1")
+		perOut, err := invoke.CommandWithContext(ctx, "sar", "-u", "-P", "ALL", "1", "1")
 		if err != nil {
 			return nil, err
 		}
@@ -25,11 +25,24 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 
 		hp := strings.Fields(lines[5]) // headers
 		for l := 6; l < len(lines)-1; l++ {
-			ct := &TimesStat{}
 			v := strings.Fields(lines[l]) // values
+			if len(v) == 0 {
+				continue
+			}
+
+			// Determine the CPU field position: first line has a timestamp
+			// prefix, continuation lines do not
+			cpuField := strings.TrimSpace(v[0])
+			if l == 6 && len(v) > 1 {
+				cpuField = strings.TrimSpace(v[1])
+			}
+			if _, err := strconv.Atoi(cpuField); err != nil {
+				continue
+			}
+
+			ct := &TimesStat{}
 			for i, header := range hp {
-				// We're done in any of these use cases
-				if i >= len(v) || v[0] == "-" {
+				if i >= len(v) {
 					break
 				}
 
@@ -60,11 +73,10 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 					}
 				}
 			}
-			// Valid CPU data, so append it
 			ret = append(ret, *ct)
 		}
 	} else {
-		out, err := invoke.CommandWithContext(ctx, "sar", "-u", "10", "1")
+		out, err := invoke.CommandWithContext(ctx, "sar", "-u", "1", "1")
 		if err != nil {
 			return nil, err
 		}
