@@ -84,9 +84,17 @@ func MiscWithContext(ctx context.Context) (*MiscStat, error) {
 }
 
 func SystemCallsWithContext(_ context.Context) (int, error) {
-	return 0, common.ErrNotImplementedError
+	c, err := perfstat.CpuTotalStat()
+	if err != nil {
+		return 0, err
+	}
+	return int(c.Syscall), nil
 }
 
 func InterruptsWithContext(_ context.Context) (int, error) {
-	return 0, common.ErrNotImplementedError
+	c, err := perfstat.CpuTotalStat()
+	if err != nil {
+		return 0, err
+	}
+	return int(c.DevIntrs), nil
 }

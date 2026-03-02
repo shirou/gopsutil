@@ -47,15 +47,35 @@ func (m *MockInvoker) CommandWithContext(_ context.Context, name string, arg ...
 
 // SetupSystemMetricsMock configures the mock for system metrics testing
 func (m *MockInvoker) SetupSystemMetricsMock() {
-	// AIX vmstat output
-	vmstatOutput := `System configuration: lcpu=8 mem=4096MB ent=0.20
-
-kthr    memory              page              faults              cpu          
------ ----------- ------------------------ ------------ -----------------------
- r  b   avm   fre  re  pi  po  fr   sr  cy  in   sy  cs us sy id wa    pc    ec
- 0  0 389541 553213   0   0   0   0    0   0   9 1083 669  1  1 98  0  0.01   6.5
+	// AIX vmstat -s output (cumulative since-boot counters)
+	vmstatSOutput := `           3492560274 total address trans. faults
+               116707 page ins
+              3595620 page outs
+                    0 paging space page ins
+                    0 paging space page outs
+                    0 total reclaims
+            627328604 zero filled pages faults
+                11232 executable filled pages faults
+                    0 pages examined by clock
+                    0 revolutions of the clock hand
+                    0 pages freed by the clock
+             46730047 backtracks
+                    0 free frame waits
+                    0 extend XPT waits
+                26953 pending I/O waits
+              3712327 start I/Os
+              1823837 iodones
+           5842393706 cpu context switches
+             33412179 device interrupts
+            357175605 software interrupts
+           2684865841 decrementer interrupts
+                 1106 mpc-sent interrupts
+                 1106 mpc-receive interrupts
+                    0 phantom interrupts
+                    0 traps
+          12918944607 syscalls
 `
-	m.SetResponse("vmstat", []string{"1", "1"}, vmstatOutput)
+	m.SetResponse("vmstat", []string{"-s"}, vmstatSOutput)
 
 	// AIX ps output for process state
 	psOutput := `STATE

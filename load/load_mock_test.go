@@ -25,8 +25,8 @@ func TestSystemCallsWithContextMock(t *testing.T) {
 	syscalls, err := SystemCallsWithContext(ctx)
 	require.NoError(t, err)
 
-	// Should extract 1083 from mock vmstat output
-	assert.Equal(t, 1083, syscalls)
+	// Should extract cumulative syscalls from vmstat -s output
+	assert.Equal(t, 12918944607, syscalls)
 }
 
 func TestInterruptsWithContextMock(t *testing.T) {
@@ -40,8 +40,8 @@ func TestInterruptsWithContextMock(t *testing.T) {
 	interrupts, err := InterruptsWithContext(ctx)
 	require.NoError(t, err)
 
-	// Should extract 9 from mock vmstat output
-	assert.Equal(t, 9, interrupts)
+	// Should extract cumulative device interrupts from vmstat -s output
+	assert.Equal(t, 33412179, interrupts)
 }
 
 func TestMiscWithContextMock(t *testing.T) {
@@ -63,8 +63,8 @@ func TestMiscWithContextMock(t *testing.T) {
 	assert.Equal(t, 8, misc.ProcsRunning)
 	assert.Equal(t, 2, misc.ProcsBlocked)
 
-	// Should extract 669 from mock vmstat output
-	assert.Equal(t, 669, misc.Ctxt)
+	// Should extract cumulative cpu context switches from vmstat -s output
+	assert.Equal(t, 5842393706, misc.Ctxt)
 }
 
 func TestSystemCallsMock(t *testing.T) {
@@ -76,7 +76,7 @@ func TestSystemCallsMock(t *testing.T) {
 
 	syscalls, err := SystemCalls()
 	require.NoError(t, err)
-	assert.Equal(t, 1083, syscalls)
+	assert.Equal(t, 12918944607, syscalls)
 }
 
 func TestInterruptsMock(t *testing.T) {
@@ -88,7 +88,7 @@ func TestInterruptsMock(t *testing.T) {
 
 	interrupts, err := Interrupts()
 	require.NoError(t, err)
-	assert.Equal(t, 9, interrupts)
+	assert.Equal(t, 33412179, interrupts)
 }
 
 func TestMiscMock(t *testing.T) {
@@ -104,5 +104,5 @@ func TestMiscMock(t *testing.T) {
 	assert.Equal(t, 10, misc.ProcsTotal)
 	assert.Equal(t, 8, misc.ProcsRunning)
 	assert.Equal(t, 2, misc.ProcsBlocked)
-	assert.Equal(t, 669, misc.Ctxt)
+	assert.Equal(t, 5842393706, misc.Ctxt)
 }

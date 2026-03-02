@@ -55,71 +55,16 @@ func AvgWithContext(ctx context.Context) (*AvgStat, error) {
 	return nil, common.ErrNotImplementedError
 }
 
-// parseVmstatLine parses a single line of vmstat output and extracts context switches, interrupts, and syscalls
-// Format: r  b   avm   fre  re  pi  po  fr   sr  cy  in   sy  cs us sy id wa    pc    ec
-func parseVmstatLine(line string) (ctxt, interrupts, syscalls int, err error) {
-	fields := strings.Fields(line)
-	if len(fields) < 13 {
-		return 0, 0, 0, common.ErrNotImplementedError
-	}
-
-	// Column indices in vmstat output (0-based):
-	// in = interrupts (index 10)
-	// sy = system calls (index 11)
-	// cs = context switches (index 12)
-	if v, err := strconv.Atoi(fields[10]); err == nil {
-		interrupts = v
-	}
-	if v, err := strconv.Atoi(fields[11]); err == nil {
-		syscalls = v
-	}
-	if v, err := strconv.Atoi(fields[12]); err == nil {
-		ctxt = v
-	}
-
-	return ctxt, interrupts, syscalls, nil
-}
-
-// SystemCallsWithContext returns the number of system calls since boot
+// SystemCallsWithContext returns the cumulative number of system calls since boot
 func SystemCallsWithContext(ctx context.Context) (int, error) {
-	out, err := getInvoker().CommandWithContext(ctx, "vmstat", "1", "1")
-	if err != nil {
-		return 0, err
-	}
-
-	lines := strings.Split(string(out), "\n")
-	// Last non-empty line contains the data
-	for i := len(lines) - 1; i >= 0; i-- {
-		line := strings.TrimSpace(lines[i])
-		if line == "" {
-			continue
-		}
-		_, _, syscalls, err := parseVmstatLine(line)
-		return syscalls, err
-	}
-
-	return 0, common.ErrNotImplementedError
+	_, _, syscalls, err := getVmstatMetrics(ctx)
+	return syscalls, err
 }
 
-// InterruptsWithContext returns the number of interrupts since boot
+// InterruptsWithContext returns the cumulative number of device interrupts since boot
 func InterruptsWithContext(ctx context.Context) (int, error) {
-	out, err := getInvoker().CommandWithContext(ctx, "vmstat", "1", "1")
-	if err != nil {
-		return 0, err
-	}
-
-	lines := strings.Split(string(out), "\n")
-	// Last non-empty line contains the data
-	for i := len(lines) - 1; i >= 0; i-- {
-		line := strings.TrimSpace(lines[i])
-		if line == "" {
-			continue
-		}
-		_, interrupts, _, err := parseVmstatLine(line)
-		return interrupts, err
-	}
-
-	return 0, common.ErrNotImplementedError
+	_, interrupts, _, err := getVmstatMetrics(ctx)
+	return interrupts, err
 }
 
 func MiscWithContext(ctx context.Context) (*MiscStat, error) {
@@ -166,22 +111,48 @@ func MiscWithContext(ctx context.Context) (*MiscStat, error) {
 	return ret, nil
 }
 
-// getVmstatMetrics parses vmstat output and returns context switches, interrupts, and syscalls
-func getVmstatMetrics(ctx context.Context) (int, int, int, error) {
-	out, err := getInvoker().CommandWithContext(ctx, "vmstat", "1", "1")
+// getVmstatMetrics runs vmstat -s and returns cumulative since-boot counters
+// for context switches, device interrupts, and syscalls.
+func getVmstatMetrics(ctx context.Context) (ctxt, interrupts, syscalls int, err error) {
+	out, err := getInvoker().CommandWithContext(ctx, "vmstat", "-s")
 	if err != nil {
 		return 0, 0, 0, err
 	}
 
+	// vmstat -s output format: <whitespace><number> <description>
+	// Example lines:
+	//   5842393706 cpu context switches
+	//      33412179 device interrupts
+	//  12918944607 syscalls
 	lines := strings.Split(string(out), "\n")
-	// Last non-empty line contains the data
-	for i := len(lines) - 1; i >= 0; i-- {
-		line := strings.TrimSpace(lines[i])
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
 		}
-		return parseVmstatLine(line)
+
+		// Split into number and description at the first space after the number
+		idx := strings.IndexByte(line, ' ')
+		if idx < 0 {
+			continue
+		}
+		valStr := line[:idx]
+		desc := strings.TrimSpace(line[idx+1:])
+
+		v, parseErr := strconv.Atoi(valStr)
+		if parseErr != nil {
+			continue
+		}
+
+		switch desc {
+		case "cpu context switches":
+			ctxt = v
+		case "device interrupts":
+			interrupts = v
+		case "syscalls":
+			syscalls = v
+		}
 	}
 
-	return 0, 0, 0, common.ErrNotImplementedError
+	return ctxt, interrupts, syscalls, nil
 }
