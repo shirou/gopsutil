@@ -52,7 +52,7 @@ func parseNetstatS(output string, protocols []string) ([]ProtoCountersStat, erro
 	sections := make(map[string][]string)
 	var currentProto string
 	for _, line := range strings.Split(output, "\n") {
-		if len(line) > 0 && line[0] != '\t' && line[0] != ' ' && strings.HasSuffix(strings.TrimSpace(line), ":") {
+		if line != "" && line[0] != '\t' && line[0] != ' ' && strings.HasSuffix(strings.TrimSpace(line), ":") {
 			currentProto = strings.TrimSuffix(strings.TrimSpace(line), ":")
 			continue
 		}
