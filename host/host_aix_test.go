@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
 // mockInvoker returns canned output for specific commands.
@@ -183,7 +182,46 @@ func TestKernelArch(t *testing.T) {
 
 func TestVirtualizationWithContext(t *testing.T) {
 	system, role, err := VirtualizationWithContext(context.TODO())
-	require.ErrorIs(t, err, common.ErrNotImplementedError)
+	require.NoError(t, err)
+	// On a real AIX system, we expect either powervm or wpar
+	if system != "" {
+		assert.Contains(t, []string{"powervm", "wpar"}, system)
+		assert.Equal(t, "guest", role)
+	}
+}
+
+func TestVirtualizationWithContext_LPAR(t *testing.T) {
+	withMockInvoker(t, map[string]string{
+		"uname -W": "0\n",
+		"uname -L": "25 soaix422\n",
+	})
+
+	system, role, err := VirtualizationWithContext(context.TODO())
+	require.NoError(t, err)
+	assert.Equal(t, "powervm", system)
+	assert.Equal(t, "guest", role)
+}
+
+func TestVirtualizationWithContext_WPAR(t *testing.T) {
+	withMockInvoker(t, map[string]string{
+		"uname -W": "2\n",
+		"uname -L": "25 soaix422\n",
+	})
+
+	system, role, err := VirtualizationWithContext(context.TODO())
+	require.NoError(t, err)
+	assert.Equal(t, "wpar", system)
+	assert.Equal(t, "guest", role)
+}
+
+func TestVirtualizationWithContext_BareMetal(t *testing.T) {
+	withMockInvoker(t, map[string]string{
+		"uname -W": "0\n",
+		"uname -L": "-1 NULL\n",
+	})
+
+	system, role, err := VirtualizationWithContext(context.TODO())
+	require.NoError(t, err)
 	assert.Empty(t, system)
 	assert.Empty(t, role)
 }
