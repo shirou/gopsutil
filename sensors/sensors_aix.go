@@ -13,10 +13,6 @@ const (
 	hostTemperatureScale = 1000.0 // Not part of the linked file, but kept just in case it becomes relevant
 )
 
-func VirtualizationWithContext(_ context.Context) (string, string, error) {
-	return "", "", common.ErrNotImplementedError
-}
-
 func TemperaturesWithContext(_ context.Context) ([]TemperatureStat, error) {
 	return []TemperatureStat{}, common.ErrNotImplementedError
 }
