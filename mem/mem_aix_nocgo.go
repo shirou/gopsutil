@@ -35,6 +35,49 @@ func SwapMemoryWithContext(ctx context.Context) (*SwapMemoryStat, error) {
 	return swap, nil
 }
 
+func SwapDevicesWithContext(ctx context.Context) ([]*SwapDevice, error) {
+	out, err := invoke.CommandWithContext(ctx, "lsps", "-a")
+	if err != nil {
+		return nil, err
+	}
+
+	// lsps -a output format:
+	// Page Space      Physical Volume   Volume Group    Size %Used   Active    Auto    Type   Chksum
+	// hd6             hdisk6            rootvg         512MB     3     yes     yes      lv       0
+	var ret []*SwapDevice
+	for _, line := range strings.Split(string(out), "\n") {
+		fields := strings.Fields(line)
+		if len(fields) < 5 {
+			continue
+		}
+		// Skip header line
+		if fields[0] == "Page" {
+			continue
+		}
+
+		sizeStr := strings.TrimSuffix(fields[3], "MB")
+		totalMB, err := strconv.ParseUint(sizeStr, 10, 64)
+		if err != nil {
+			continue
+		}
+
+		// %Used may be "NaNQ" for NFS paging spaces — treat as 0
+		pctUsed, err := strconv.ParseUint(fields[4], 10, 64)
+		if err != nil {
+			pctUsed = 0
+		}
+
+		totalBytes := totalMB * 1024 * 1024
+		usedBytes := totalBytes * pctUsed / 100
+		ret = append(ret, &SwapDevice{
+			Name:      fields[0],
+			UsedBytes: usedBytes,
+			FreeBytes: totalBytes - usedBytes,
+		})
+	}
+	return ret, nil
+}
+
 func callSVMon(ctx context.Context, virt bool) (*VirtualMemoryStat, *SwapMemoryStat, error) {
 	out, err := invoke.CommandWithContext(ctx, "svmon", "-G")
 	if err != nil {
