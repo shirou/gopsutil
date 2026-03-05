@@ -26,6 +26,10 @@ var (
 	}
 )
 
+func IOCountersWithContext(_ context.Context, _ ...string) (map[string]IOCountersStat, error) {
+	return nil, common.ErrNotImplementedError
+}
+
 func PartitionsWithContext(ctx context.Context, _ bool) ([]PartitionStat, error) {
 	var ret []PartitionStat
 
