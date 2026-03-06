@@ -26,10 +26,6 @@ func HostIDWithContext(ctx context.Context) (string, error) {
 	return strings.Split(string(out), "\n")[0], nil
 }
 
-func numProcs(_ context.Context) (uint64, error) {
-	return 0, common.ErrNotImplementedError
-}
-
 func BootTimeWithContext(ctx context.Context) (btime uint64, err error) {
 	return common.BootTimeWithContext(ctx, invoke)
 }
