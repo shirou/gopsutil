@@ -58,9 +58,17 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 }
 
 func CountsWithContext(ctx context.Context, logical bool) (int, error) {
-	c, err := perfstat.CpuTotalStat()
+	if logical {
+		c, err := perfstat.CpuTotalStat()
+		if err != nil {
+			return 0, err
+		}
+		return c.NCpusCfg, nil
+	}
+	// For physical count, use the number of online virtual CPUs (before SMT multiplications).
+	p, err := perfstat.LparInfo()
 	if err != nil {
 		return 0, err
 	}
-	return c.NCpusCfg, nil
+	return int(p.OnlineVCpus), nil
 }
