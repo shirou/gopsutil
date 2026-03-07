@@ -27,16 +27,16 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 			ret = append(ret, *ct)
 		}
 	} else {
-		c, err := perfstat.CpuUtilTotalStat()
+		c, err := perfstat.CpuTotalStat()
 		if err != nil {
 			return nil, err
 		}
 		ct := &TimesStat{
 			CPU:    "cpu-total",
-			Idle:   float64(c.IdlePct),
-			User:   float64(c.UserPct),
-			System: float64(c.KernPct),
-			Iowait: float64(c.WaitPct),
+			Idle:   float64(c.Idle),
+			User:   float64(c.User),
+			System: float64(c.Sys),
+			Iowait: float64(c.Wait),
 		}
 		ret = append(ret, *ct)
 	}
