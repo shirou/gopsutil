@@ -42,10 +42,11 @@ func IOCountersWithContext(_ context.Context, names ...string) (map[string]IOCou
 			WriteBytes: uint64(d.Wblks) * uint64(d.BSize),
 			// perfstat Rserv, Wserv, and WqTime are in nanoseconds;
 			// IOCountersStat expects milliseconds.
-			ReadTime:   uint64(d.Rserv) / 1_000_000,
-			WriteTime:  uint64(d.Wserv) / 1_000_000,
-			IoTime:     uint64(d.Time) * 1000 / clkTck, // d.Time is in kernel ticks; convert to ms
-			WeightedIO: uint64(d.WqTime) / 1_000_000,
+			ReadTime:       uint64(d.Rserv) / 1_000_000,
+			WriteTime:      uint64(d.Wserv) / 1_000_000,
+			IoTime:         uint64(d.Time) * 1000 / clkTck, // d.Time is in kernel ticks; convert to ms
+			WeightedIO:     uint64(d.WqTime) / 1_000_000,
+			IopsInProgress: uint64(d.QDepth),
 		}
 	}
 	return ret, nil
