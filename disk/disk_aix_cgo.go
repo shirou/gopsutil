@@ -68,7 +68,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 	if err != nil {
 		return nil, err
 	}
-	ret := make([]PartitionStat, len(f))
+	ret := make([]PartitionStat, 0, len(f))
 
 	for _, fs := range f {
 		fstyp, exists := FSType[fs.FSType]
