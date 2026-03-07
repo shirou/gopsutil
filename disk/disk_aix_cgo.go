@@ -3,6 +3,11 @@
 
 package disk
 
+/*
+#include <unistd.h>
+*/
+import "C"
+
 import (
 	"context"
 	"fmt"
@@ -21,6 +26,8 @@ func IOCountersWithContext(_ context.Context, names ...string) (map[string]IOCou
 		nameSet[n] = true
 	}
 
+	clkTck := uint64(C.sysconf(C._SC_CLK_TCK))
+
 	ret := make(map[string]IOCountersStat, len(disks))
 	for _, d := range disks {
 		if len(nameSet) > 0 && !nameSet[d.Name] {
@@ -37,7 +44,7 @@ func IOCountersWithContext(_ context.Context, names ...string) (map[string]IOCou
 			// IOCountersStat expects milliseconds.
 			ReadTime:   uint64(d.Rserv) / 1_000_000,
 			WriteTime:  uint64(d.Wserv) / 1_000_000,
-			IoTime:     uint64(d.Time), // Time is already in milliseconds
+			IoTime:     uint64(d.Time) * 1000 / clkTck, // d.Time is in kernel ticks; convert to ms
 			WeightedIO: uint64(d.WqTime) / 1_000_000,
 		}
 	}
