@@ -54,12 +54,12 @@ func parseNetstatLine(line string) (stat *IOCountersStat, linkID *uint, err erro
 
 	parsed := make([]uint64, 0, 7)
 	vv := []string{
-		columns[base+3], // Ipkts == PacketsRecv
-		columns[base+4], // Ierrs == Errin
-		columns[base+5], // Ibytes == BytesRecv
-		columns[base+6], // Opkts == PacketsSent
-		columns[base+7], // Oerrs == Errout
-		columns[base+8], // Obytes == BytesSent
+		columns[base+3],  // Ipkts == PacketsRecv
+		columns[base+4],  // Ierrs == Errin
+		columns[base+5],  // Ibytes == BytesRecv
+		columns[base+6],  // Opkts == PacketsSent
+		columns[base+7],  // Oerrs == Errout
+		columns[base+8],  // Obytes == BytesSent
 		columns[base+10], // Drop == Dropout
 	}
 
