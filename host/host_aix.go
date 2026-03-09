@@ -5,7 +5,6 @@ package host
 
 import (
 	"context"
-	"strconv"
 	"strings"
 
 	"github.com/shirou/gopsutil/v4/internal/common"
