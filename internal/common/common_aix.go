@@ -120,6 +120,13 @@ func ParseUptime(etimes string) uint64 {
 			if err != nil {
 				return 0
 			}
+		case 1:
+			// Raw seconds
+			var err error
+			secs, err = strconv.ParseUint(timeParts[0], 10, 64)
+			if err != nil {
+				return 0
+			}
 		default:
 			return 0
 		}
