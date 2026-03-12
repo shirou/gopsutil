@@ -3,29 +3,16 @@
 
 package host
 
-/*
-#include <procinfo.h>
-*/
-import "C"
-
 import (
 	"context"
-	"unsafe"
+
+	"github.com/power-devops/perfstat"
 )
 
 func numProcs(_ context.Context) (uint64, error) {
-	info := C.struct_procentry64{}
-	cpid := C.pid_t(0)
-	var count uint64
-	for {
-		n, err := C.getprocs64(unsafe.Pointer(&info), C.sizeof_struct_procentry64, nil, 0, &cpid, 1)
-		if err != nil {
-			return 0, err
-		}
-		if n == 0 {
-			break
-		}
-		count++
+	procs, err := perfstat.ProcessStat()
+	if err != nil {
+		return 0, err
 	}
-	return count, nil
+	return uint64(len(procs)), nil
 }
