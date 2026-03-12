@@ -48,11 +48,15 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 	if err != nil {
 		return nil, err
 	}
+	p, err := perfstat.LparInfo()
+	if err != nil {
+		return nil, err
+	}
 	info := InfoStat{
 		CPU:       0,
 		ModelName: c.Description,
 		Mhz:       float64(c.ProcessorHz / 1000000),
-		Cores:     int32(c.NCpusCfg),
+		Cores:     int32(p.OnlineVCpus),
 	}
 	result := []InfoStat{info}
 	return result, nil
