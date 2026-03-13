@@ -133,7 +133,7 @@ func (p *Process) GidsWithContext(_ context.Context) ([]uint32, error) {
 	}
 
 	gids := make([]uint32, 0, 3)
-	gids = append(gids, uint32(k.Eproc.Pcred.P_rgid), uint32(k.Eproc.Pcred.P_rgid), uint32(k.Eproc.Pcred.P_svgid))
+	gids = append(gids, uint32(k.Eproc.Pcred.P_rgid), uint32(k.Eproc.Ucred.Groups[0]), uint32(k.Eproc.Pcred.P_svgid))
 
 	return gids, nil
 }
