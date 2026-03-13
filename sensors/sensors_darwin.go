@@ -127,7 +127,7 @@ func readSMC(smc *common.SMC, key string) (*smcReturn, error) {
 	}
 
 	resultSmc.dataSize = uint32(result.keyInfo.dataSize)
-	resultSmc.dataType = uint32(result.keyInfo.dataSize)
+	resultSmc.dataType = uint32(result.keyInfo.dataType)
 
 	input.keyInfo.dataSize = result.keyInfo.dataSize
 	input.data8 = common.KSMCReadKey
