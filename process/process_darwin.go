@@ -465,9 +465,8 @@ func (p *Process) MemoryInfoWithContext(_ context.Context) (*MemoryInfoStat, err
 	funcs.lib.ProcPidInfo(p.Pid, common.PROC_PIDTASKINFO, 0, uintptr(unsafe.Pointer(&ti)), int32(unsafe.Sizeof(ti)))
 
 	ret := &MemoryInfoStat{
-		RSS:  uint64(ti.Resident_size),
-		VMS:  uint64(ti.Virtual_size),
-		Swap: uint64(ti.Pageins),
+		RSS: uint64(ti.Resident_size),
+		VMS: uint64(ti.Virtual_size),
 	}
 	return ret, nil
 }
