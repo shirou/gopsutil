@@ -48,7 +48,7 @@ func parseNetstatLine(line string) (stat *IOCountersStat, linkID *uint, err erro
 	if numberColumns < 12 {
 		base = 0
 	}
-	if numberColumns < 11 || numberColumns > 12 {
+	if numberColumns < 11 || numberColumns > 13 {
 		return nil, nil, fmt.Errorf("line %q do have an invalid number of columns %d", line, numberColumns)
 	}
 
