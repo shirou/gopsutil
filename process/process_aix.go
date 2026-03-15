@@ -55,7 +55,7 @@ type psinfo struct {
 	Flag2  uint32
 	Nlwp   uint32 // number of threads
 	_      uint32
-	Uid    uint64
+	UID    uint64
 	Euid   uint64
 	Gid    uint64
 	Egid   uint64
@@ -160,11 +160,11 @@ func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 	return "", nil
 }
 
-func (p *Process) TgidWithContext(_ context.Context) (int32, error) {
+func (*Process) TgidWithContext(_ context.Context) (int32, error) {
 	return 0, common.ErrNotImplementedError
 }
 
-func (p *Process) ExeWithContext(_ context.Context) (string, error) {
+func (*Process) ExeWithContext(_ context.Context) (string, error) {
 	return "", common.ErrNotImplementedError
 }
 
@@ -219,7 +219,7 @@ func (p *Process) createTimeWithContext(ctx context.Context) (int64, error) {
 	return psi.Start.Sec*1000 + int64(psi.Start.Nsec)/1000000, nil
 }
 
-func (p *Process) CwdWithContext(_ context.Context) (string, error) {
+func (*Process) CwdWithContext(_ context.Context) (string, error) {
 	return "", common.ErrNotImplementedError
 }
 
@@ -231,7 +231,7 @@ func (p *Process) StatusWithContext(ctx context.Context) ([]string, error) {
 	return []string{convertStatusChar(string([]byte{psi.Lwp.Sname}))}, nil
 }
 
-func (p *Process) ForegroundWithContext(_ context.Context) (bool, error) {
+func (*Process) ForegroundWithContext(_ context.Context) (bool, error) {
 	return false, common.ErrNotImplementedError
 }
 
@@ -241,7 +241,7 @@ func (p *Process) UidsWithContext(ctx context.Context) ([]uint32, error) {
 		return nil, err
 	}
 	// real, effective, saved (psinfo doesn't expose saved, use real as fallback)
-	return []uint32{uint32(psi.Uid), uint32(psi.Euid), uint32(psi.Uid)}, nil
+	return []uint32{uint32(psi.UID), uint32(psi.Euid), uint32(psi.UID)}, nil
 }
 
 func (p *Process) GidsWithContext(ctx context.Context) ([]uint32, error) {
@@ -253,11 +253,11 @@ func (p *Process) GidsWithContext(ctx context.Context) ([]uint32, error) {
 	return []uint32{uint32(psi.Gid), uint32(psi.Egid), uint32(psi.Gid)}, nil
 }
 
-func (p *Process) GroupsWithContext(_ context.Context) ([]uint32, error) {
+func (*Process) GroupsWithContext(_ context.Context) ([]uint32, error) {
 	return nil, common.ErrNotImplementedError
 }
 
-func (p *Process) TerminalWithContext(_ context.Context) (string, error) {
+func (*Process) TerminalWithContext(_ context.Context) (string, error) {
 	return "", common.ErrNotImplementedError
 }
 
@@ -270,7 +270,7 @@ func (p *Process) NiceWithContext(ctx context.Context) (int32, error) {
 	return int32(psi.Lwp.Nice), nil
 }
 
-func (p *Process) IOniceWithContext(_ context.Context) (int32, error) {
+func (*Process) IOniceWithContext(_ context.Context) (int32, error) {
 	return 0, common.ErrNotImplementedError
 }
 
@@ -278,15 +278,15 @@ func (p *Process) RlimitWithContext(ctx context.Context) ([]RlimitStat, error) {
 	return p.RlimitUsageWithContext(ctx, false)
 }
 
-func (p *Process) RlimitUsageWithContext(_ context.Context, _ bool) ([]RlimitStat, error) {
+func (*Process) RlimitUsageWithContext(_ context.Context, _ bool) ([]RlimitStat, error) {
 	return nil, common.ErrNotImplementedError
 }
 
-func (p *Process) NumCtxSwitchesWithContext(_ context.Context) (*NumCtxSwitchesStat, error) {
+func (*Process) NumCtxSwitchesWithContext(_ context.Context) (*NumCtxSwitchesStat, error) {
 	return nil, common.ErrNotImplementedError
 }
 
-func (p *Process) NumFDsWithContext(_ context.Context) (int32, error) {
+func (*Process) NumFDsWithContext(_ context.Context) (int32, error) {
 	return 0, common.ErrNotImplementedError
 }
 
@@ -298,7 +298,7 @@ func (p *Process) NumThreadsWithContext(ctx context.Context) (int32, error) {
 	return int32(psi.Nlwp), nil
 }
 
-func (p *Process) ThreadsWithContext(_ context.Context) (map[int32]*cpu.TimesStat, error) {
+func (*Process) ThreadsWithContext(_ context.Context) (map[int32]*cpu.TimesStat, error) {
 	return nil, common.ErrNotImplementedError
 }
 
@@ -316,7 +316,7 @@ func (p *Process) TimesWithContext(ctx context.Context) (*cpu.TimesStat, error) 
 	}, nil
 }
 
-func (p *Process) CPUAffinityWithContext(_ context.Context) ([]int32, error) {
+func (*Process) CPUAffinityWithContext(_ context.Context) ([]int32, error) {
 	return nil, common.ErrNotImplementedError
 }
 
@@ -332,11 +332,11 @@ func (p *Process) MemoryInfoWithContext(ctx context.Context) (*MemoryInfoStat, e
 	}, nil
 }
 
-func (p *Process) MemoryInfoExWithContext(_ context.Context) (*MemoryInfoExStat, error) {
+func (*Process) MemoryInfoExWithContext(_ context.Context) (*MemoryInfoExStat, error) {
 	return nil, common.ErrNotImplementedError
 }
 
-func (p *Process) PageFaultsWithContext(_ context.Context) (*PageFaultsStat, error) {
+func (*Process) PageFaultsWithContext(_ context.Context) (*PageFaultsStat, error) {
 	return nil, common.ErrNotImplementedError
 }
 
@@ -359,26 +359,26 @@ func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
 	return ret, nil
 }
 
-func (p *Process) OpenFilesWithContext(_ context.Context) ([]OpenFilesStat, error) {
+func (*Process) OpenFilesWithContext(_ context.Context) ([]OpenFilesStat, error) {
 	return nil, common.ErrNotImplementedError
 }
 
-func (p *Process) ConnectionsWithContext(_ context.Context) ([]net.ConnectionStat, error) {
+func (*Process) ConnectionsWithContext(_ context.Context) ([]net.ConnectionStat, error) {
 	return nil, common.ErrNotImplementedError
 }
 
-func (p *Process) ConnectionsMaxWithContext(_ context.Context, _ int) ([]net.ConnectionStat, error) {
+func (*Process) ConnectionsMaxWithContext(_ context.Context, _ int) ([]net.ConnectionStat, error) {
 	return nil, common.ErrNotImplementedError
 }
 
-func (p *Process) MemoryMapsWithContext(_ context.Context, _ bool) (*[]MemoryMapsStat, error) {
+func (*Process) MemoryMapsWithContext(_ context.Context, _ bool) (*[]MemoryMapsStat, error) {
 	return nil, common.ErrNotImplementedError
 }
 
-func (p *Process) IOCountersWithContext(_ context.Context) (*IOCountersStat, error) {
+func (*Process) IOCountersWithContext(_ context.Context) (*IOCountersStat, error) {
 	return nil, common.ErrNotImplementedError
 }
 
-func (p *Process) EnvironWithContext(_ context.Context) ([]string, error) {
+func (*Process) EnvironWithContext(_ context.Context) ([]string, error) {
 	return nil, common.ErrNotImplementedError
 }

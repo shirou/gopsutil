@@ -32,7 +32,7 @@ func writeFakePsinfo(t *testing.T, dir string, psi psinfo) {
 
 	var buf bytes.Buffer
 	require.NoError(t, binary.Write(&buf, binary.BigEndian, &psi))
-	require.NoError(t, os.WriteFile(filepath.Join(pidDir, "psinfo"), buf.Bytes(), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(pidDir, "psinfo"), buf.Bytes(), 0o600))
 }
 
 // setupFakeProc creates a temp directory with fake psinfo files,
@@ -40,8 +40,8 @@ func writeFakePsinfo(t *testing.T, dir string, psi psinfo) {
 func setupFakeProc(t *testing.T, procs ...psinfo) context.Context {
 	t.Helper()
 	dir := t.TempDir()
-	for _, psi := range procs {
-		writeFakePsinfo(t, dir, psi)
+	for i := range procs {
+		writeFakePsinfo(t, dir, procs[i])
 	}
 	t.Setenv("HOST_PROC", dir)
 	return context.Background()
@@ -51,7 +51,7 @@ func setupFakeProc(t *testing.T, procs ...psinfo) context.Context {
 var mockProc = fillPsinfo(psinfo{
 	Pid:    1234,
 	Ppid:   100,
-	Uid:    501,
+	UID:    501,
 	Euid:   502,
 	Gid:    20,
 	Egid:   21,
@@ -67,7 +67,7 @@ var mockProc = fillPsinfo(psinfo{
 var childProc = fillPsinfo(psinfo{
 	Pid:    5678,
 	Ppid:   1234,
-	Uid:    501,
+	UID:    501,
 	Euid:   501,
 	Gid:    20,
 	Egid:   20,
@@ -202,7 +202,7 @@ func TestPsinfoTimes(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "cpu", times.CPU)
 	assert.InDelta(t, 5.25, times.User, 1e-6)
-	assert.Equal(t, float64(0), times.System)
+	assert.InDelta(t, float64(0), times.System, 1e-6)
 }
 
 func TestPsinfoMemoryInfo(t *testing.T) {
