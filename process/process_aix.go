@@ -752,11 +752,17 @@ func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
 
 // readPpidFromStatus reads only the PPID from /proc/<pid>/status without
 // parsing the entire struct, avoiding the overhead of fillFromStatWithContext.
+// Falls back to /proc/<pid>/psinfo for zombie/kernel processes where status
+// doesn't exist.
 func readPpidFromStatus(ctx context.Context, pid int32) (int32, error) {
 	statPath := common.HostProcWithContext(ctx, strconv.Itoa(int(pid)), "status")
 	f, err := os.Open(statPath)
 	if err != nil {
-		return 0, err
+		if !os.IsNotExist(err) {
+			return 0, err
+		}
+		// status file doesn't exist (zombie/kernel thread) — fall back to psinfo
+		return readPpidFromPSInfo(ctx, pid)
 	}
 	defer f.Close()
 
@@ -765,6 +771,23 @@ func readPpidFromStatus(ctx context.Context, pid int32) (int32, error) {
 		return 0, err
 	}
 	return int32(stat.Ppid), nil
+}
+
+// readPpidFromPSInfo reads PPID from /proc/<pid>/psinfo as a fallback
+// for processes where /proc/<pid>/status doesn't exist.
+func readPpidFromPSInfo(ctx context.Context, pid int32) (int32, error) {
+	infoPath := common.HostProcWithContext(ctx, strconv.Itoa(int(pid)), "psinfo")
+	f, err := os.Open(infoPath)
+	if err != nil {
+		return 0, err
+	}
+	defer f.Close()
+
+	var psinfo AIXPSInfo
+	if err := binary.Read(f, binary.BigEndian, &psinfo); err != nil {
+		return 0, err
+	}
+	return int32(psinfo.Ppid), nil
 }
 
 func (p *Process) OpenFilesWithContext(ctx context.Context) ([]OpenFilesStat, error) {
@@ -1124,6 +1147,10 @@ func (p *Process) fillFromfdListWithContext(ctx context.Context) (string, []stri
 	statPath := common.HostProcWithContext(ctx, strconv.Itoa(int(pid)), "fd")
 	d, err := os.Open(statPath)
 	if err != nil {
+		if os.IsNotExist(err) {
+			// fd directory doesn't exist for zombie/kernel processes
+			return statPath, []string{}, nil
+		}
 		return statPath, []string{}, err
 	}
 	defer d.Close()
@@ -1166,6 +1193,10 @@ func (p *Process) fillFromCwdWithContext(ctx context.Context) (string, error) {
 	cwdPath := common.HostProcWithContext(ctx, strconv.Itoa(int(pid)), "cwd")
 	cwd, err := os.Readlink(cwdPath)
 	if err != nil {
+		if os.IsNotExist(err) {
+			// cwd symlink doesn't exist for zombie/kernel processes
+			return "", nil
+		}
 		return "", err
 	}
 	return string(cwd), nil
@@ -1473,65 +1504,70 @@ func (p *Process) fillFromStatus() error {
 
 func (p *Process) fillFromStatusWithContext(ctx context.Context) error {
 	pid := p.Pid
-	statusPath := common.HostProcWithContext(ctx, strconv.Itoa(int(pid)), "status")
-	statusFile, err := os.Open(statusPath)
-	if err != nil {
-		return err
-	}
-	defer statusFile.Close()
-
-	// Parse the binary AIXStat structure
-	var aixStat AIXStat
-	err = binary.Read(statusFile, binary.BigEndian, &aixStat)
-	if err != nil {
-		return err
-	}
 
 	p.numCtxSwitches = &NumCtxSwitchesStat{}
 	p.memInfo = &MemoryInfoStat{}
 	p.sigInfo = &SignalInfoStat{}
 
-	// Extract process state
-	p.status = convertStatusChar(string([]byte{aixStat.Stat}))
-	// Recognize AIX-specific status codes if the converted value is empty
-	if p.status == "" {
-		// Status byte not recognized - use AIX-specific status codes if needed
-		switch aixStat.Stat {
-		case 0:
-			p.status = "NONE"
-		case 1:
-			p.status = Running // SACTIVE
-		case 2:
-			p.status = Sleep // SSLEEP
-		case 3:
-			p.status = Stop // SSTOP
-		case 4:
-			p.status = Zombie // SZOMB
-		case 5:
-			p.status = Idle // SIDL
-		case 6:
-			p.status = Wait // SWAIT
-		case 7:
-			p.status = Running // SORPHAN - treat as running
-		default:
-			p.status = UnknownState
+	// Try reading /proc/<pid>/status for full process state
+	statusPath := common.HostProcWithContext(ctx, strconv.Itoa(int(pid)), "status")
+	statusFile, err := os.Open(statusPath)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	if err == nil {
+		defer statusFile.Close()
+
+		var aixStat AIXStat
+		err = binary.Read(statusFile, binary.BigEndian, &aixStat)
+		if err != nil {
+			return err
 		}
-	}
 
-	// Extract parent PID
-	p.parent = int32(aixStat.Ppid)
+		// Extract process state
+		p.status = convertStatusChar(string([]byte{aixStat.Stat}))
+		// Recognize AIX-specific status codes if the converted value is empty
+		if p.status == "" {
+			switch aixStat.Stat {
+			case 0:
+				p.status = "NONE"
+			case 1:
+				p.status = Running // SACTIVE
+			case 2:
+				p.status = Sleep // SSLEEP
+			case 3:
+				p.status = Stop // SSTOP
+			case 4:
+				p.status = Zombie // SZOMB
+			case 5:
+				p.status = Idle // SIDL
+			case 6:
+				p.status = Wait // SWAIT
+			case 7:
+				p.status = Running // SORPHAN - treat as running
+			default:
+				p.status = UnknownState
+			}
+		}
 
-	// Extract TGID (same as PID on AIX, as there's no separate TGID concept)
-	p.tgid = int32(aixStat.Pid)
+		// Extract parent PID
+		p.parent = int32(aixStat.Ppid)
 
-	// Cache bitness: dmodel field indicates 32-bit (0) or 64-bit (non-zero)
-	if aixStat.Dmodel == 0 {
-		aixBitnessCache.Store(p.Pid, int64(4))
+		// Extract TGID (same as PID on AIX, as there's no separate TGID concept)
+		p.tgid = int32(aixStat.Pid)
+
+		// Cache bitness: dmodel field indicates 32-bit (0) or 64-bit (non-zero)
+		if aixStat.Dmodel == 0 {
+			aixBitnessCache.Store(p.Pid, int64(4))
+		} else {
+			aixBitnessCache.Store(p.Pid, int64(8))
+		}
 	} else {
-		aixBitnessCache.Store(p.Pid, int64(8))
+		// status file doesn't exist (zombie/kernel thread) — mark as zombie
+		p.status = Zombie
 	}
 
-	// Also read psinfo for UID/GID and thread count
+	// Read psinfo for UID/GID, thread count, and PPID fallback
 	infoPath := common.HostProcWithContext(ctx, strconv.Itoa(int(pid)), "psinfo")
 	infoFile, err := os.Open(infoPath)
 	if err == nil {
@@ -1539,12 +1575,16 @@ func (p *Process) fillFromStatusWithContext(ctx context.Context) error {
 		var aixPSinfo AIXPSInfo
 		err = binary.Read(infoFile, binary.BigEndian, &aixPSinfo)
 		if err == nil {
-			// Extract UIDs: real UID, effective UID, saved UID (use effective as third), and fsuid (use effective)
 			p.uids = []uint32{uint32(aixPSinfo.UID), uint32(aixPSinfo.Euid), uint32(aixPSinfo.Euid), uint32(aixPSinfo.Euid)}
-			// Extract GIDs: real GID, effective GID, saved GID (use effective as third), and fsgid (use effective)
 			p.gids = []uint32{uint32(aixPSinfo.Gid), uint32(aixPSinfo.Egid), uint32(aixPSinfo.Egid), uint32(aixPSinfo.Egid)}
-			// Extract number of threads from Nlwp field
 			p.numThreads = int32(aixPSinfo.Nlwp)
+			// If status was missing, fill parent PID from psinfo
+			if p.parent == 0 {
+				p.parent = int32(aixPSinfo.Ppid)
+			}
+			if p.tgid == 0 {
+				p.tgid = int32(aixPSinfo.Pid)
+			}
 		}
 	}
 
@@ -1572,50 +1612,58 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 		lwpInfoPath = common.HostProcWithContext(ctx, strconv.Itoa(int(pid)), "lwp", tidStr, "lwpinfo")
 	}
 
-	// Open the binary files
-	statFile, err := os.Open(statPath)
-	if err != nil {
-		return 0, 0, nil, 0, 0, 0, nil, err
-	}
-	defer statFile.Close()
+	// psinfo is the minimum required file — always present for visible processes
 	infoFile, err := os.Open(infoPath)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
 	defer infoFile.Close()
-	if tid > -1 {
-		var err error
-		lwpStatFile, err = os.Open(lwpStatPath)
+
+	var aixPSinfo AIXPSInfo
+	err = binary.Read(infoFile, binary.BigEndian, &aixPSinfo)
+	if err != nil {
+		return 0, 0, nil, 0, 0, 0, nil, err
+	}
+
+	// Try to open /proc/<pid>/status — may not exist for zombie/kernel processes
+	var aixStat AIXStat
+	hasStatus := false
+	statFile, err := os.Open(statPath)
+	if err != nil && !os.IsNotExist(err) {
+		return 0, 0, nil, 0, 0, 0, nil, err
+	}
+	if err == nil {
+		defer statFile.Close()
+		err = binary.Read(statFile, binary.BigEndian, &aixStat)
 		if err != nil {
-			// If we can't open lwp files, just use the main process files (tid = -1 behavior)
-			// This is a graceful fallback for processes without thread info
+			return 0, 0, nil, 0, 0, 0, nil, err
+		}
+		hasStatus = true
+	}
+
+	// Try lwp files if requested and status exists
+	if tid > -1 && hasStatus {
+		var openErr error
+		lwpStatFile, openErr = os.Open(lwpStatPath)
+		if openErr != nil {
 			tid = -1
 		} else {
 			defer lwpStatFile.Close()
-			lwpInfoFile, err = os.Open(lwpInfoPath)
-			if err != nil {
-				// If we can't open lwp info, close the stat file and fall back
+			lwpInfoFile, openErr = os.Open(lwpInfoPath)
+			if openErr != nil {
 				lwpStatFile.Close()
 				tid = -1
 			} else {
 				defer lwpInfoFile.Close()
 			}
 		}
+	} else if tid > -1 {
+		// No status file means no lwp directory either
+		tid = -1
 	}
 
-	// We need to read a few binary files into a struct variables
-	var aixStat AIXStat
-	var aixPSinfo AIXPSInfo
 	var aixlwpStat LwpStatus
 	var aixlspPSinfo LwpsInfo
-	err = binary.Read(statFile, binary.BigEndian, &aixStat)
-	if err != nil {
-		return 0, 0, nil, 0, 0, 0, nil, err
-	}
-	err = binary.Read(infoFile, binary.BigEndian, &aixPSinfo)
-	if err != nil {
-		return 0, 0, nil, 0, 0, 0, nil, err
-	}
 	if tid > -1 {
 		err = binary.Read(lwpStatFile, binary.BigEndian, &aixlwpStat)
 		if err != nil {
@@ -1627,19 +1675,18 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 		}
 	}
 
-	// TODO: Figure out how to get terminal information for this process
-
-	ppid := aixStat.Ppid
-	utime := float64(aixStat.Utime.TvSec)
-	stime := float64(aixStat.Stime.TvSec)
-
-	iotime := 0.0 // TODO: Figure out actual iotime for AIX
-
-	cpuTimes := &cpu.TimesStat{
-		CPU:    "cpu",
-		User:   utime / float64(clockTicks),
-		System: stime / float64(clockTicks),
-		Iowait: iotime / float64(clockTicks),
+	// Use status for CPU times if available, otherwise zero
+	var ppid uint64
+	cpuTimes := &cpu.TimesStat{CPU: "cpu"}
+	if hasStatus {
+		ppid = uint64(aixStat.Ppid)
+		utime := float64(aixStat.Utime.TvSec)
+		stime := float64(aixStat.Stime.TvSec)
+		cpuTimes.User = utime / float64(clockTicks)
+		cpuTimes.System = stime / float64(clockTicks)
+	} else {
+		// Fall back to psinfo for PPID
+		ppid = aixPSinfo.Ppid
 	}
 
 	bootTime, _ := common.BootTimeWithContext(ctx, invoke)
