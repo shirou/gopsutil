@@ -51,6 +51,8 @@ func VirtualMemoryWithContext(_ context.Context) (*VirtualMemoryStat, error) {
 	if err := binary.Read(br, binary.LittleEndian, &bcs); err != nil {
 		return nil, err
 	}
+	// On OpenBSD, the buffer cache is the closest equivalent to both
+	// Linux's Buffers and Cached memory.
 	bcache := uint64(bcs.Numbufpages) * p
 
 	ret := &VirtualMemoryStat{
