@@ -50,6 +50,15 @@ func assertLoopbackStat(t *testing.T, err error, stat *IOCountersStat) {
 	assert.Equal(t, uint64(169411756), stat.BytesSent)
 }
 
+func TestParseNetstatLineNoAddressWithDrop(t *testing.T) {
+	stat, linkID, err := parseNetstatLine(
+		`gif0* 1280  <Link#2>                             5     0          0        0     0          0     0   3`,
+	)
+	assert.NoError(t, err)
+	assert.NotNil(t, linkID)
+	assert.Equal(t, uint64(3), stat.Dropout)
+}
+
 func TestParseNetstatLineLink(t *testing.T) {
 	stat, linkID, err := parseNetstatLine(
 		`lo0   16384 <Link#1>                        869107     0  169411755   869108     1  169411756     0   0`,
