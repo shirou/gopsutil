@@ -106,41 +106,45 @@ func parseLspsSize(s string) (uint64, error) {
 }
 
 func callSVMon(ctx context.Context, virt bool) (*VirtualMemoryStat, *SwapMemoryStat, error) {
-	out, err := invoke.CommandWithContext(ctx, "svmon", "-G")
+	out, err := invoke.CommandWithContext(ctx, "svmon", "-G", "-O", "unit=KB")
 	if err != nil {
 		return nil, nil, err
 	}
 
-	pagesize := uint64(4096)
 	vmem := &VirtualMemoryStat{}
 	swap := &SwapMemoryStat{}
 	for _, line := range strings.Split(string(out), "\n") {
 		if virt && strings.HasPrefix(line, "memory") {
+			// memory  size  inuse  free  pin  virtual  available  mmode
+			// Fields: 0     1      2     3    4        5          6        7
 			p := strings.Fields(line)
-			if len(p) > 2 {
+			if len(p) > 6 {
 				if t, err := strconv.ParseUint(p[1], 10, 64); err == nil {
-					vmem.Total = t * pagesize
+					vmem.Total = t * 1024
 				}
 				if t, err := strconv.ParseUint(p[2], 10, 64); err == nil {
-					vmem.Used = t * pagesize
+					vmem.Used = t * 1024
 					if vmem.Total > 0 {
 						vmem.UsedPercent = 100 * float64(vmem.Used) / float64(vmem.Total)
 					}
 				}
 				if t, err := strconv.ParseUint(p[3], 10, 64); err == nil {
-					vmem.Free = t * pagesize
-					// Available is typically equal to Free on AIX
-					vmem.Available = vmem.Free
+					vmem.Free = t * 1024
+				}
+				if t, err := strconv.ParseUint(p[6], 10, 64); err == nil {
+					vmem.Available = t * 1024
 				}
 			}
 		} else if strings.HasPrefix(line, "pg space") {
+			// "pg space" splits as: pg space total used
+			// Fields:               0  1     2     3
 			p := strings.Fields(line)
 			if len(p) > 3 {
 				if t, err := strconv.ParseUint(p[2], 10, 64); err == nil {
-					swap.Total = t * pagesize
+					swap.Total = t * 1024
 				}
 				if t, err := strconv.ParseUint(p[3], 10, 64); err == nil {
-					swapUsed := t * pagesize
+					swapUsed := t * 1024
 					swap.Used = swapUsed
 					swap.Free = swap.Total - swapUsed
 					if swap.Total > 0 {
