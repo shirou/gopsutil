@@ -5,6 +5,7 @@ package mem
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -40,12 +41,18 @@ func SwapDevicesWithContext(ctx context.Context) ([]*SwapDevice, error) {
 	if err != nil {
 		return nil, err
 	}
+	return parseLspsOutput(string(out))
+}
 
-	// lsps -a output format:
-	// Page Space      Physical Volume   Volume Group    Size %Used   Active    Auto    Type   Chksum
-	// hd6             hdisk6            rootvg         512MB     3     yes     yes      lv       0
+// parseLspsOutput parses the output of "lsps -a" into SwapDevice entries.
+//
+// lsps -a output format:
+//
+//	Page Space      Physical Volume   Volume Group    Size %Used   Active    Auto    Type   Chksum
+//	hd6             hdisk6            rootvg         512MB     3     yes     yes      lv       0
+func parseLspsOutput(output string) ([]*SwapDevice, error) {
 	var ret []*SwapDevice
-	for _, line := range strings.Split(string(out), "\n") {
+	for _, line := range strings.Split(output, "\n") {
 		fields := strings.Fields(line)
 		if len(fields) < 5 {
 			continue
@@ -55,8 +62,7 @@ func SwapDevicesWithContext(ctx context.Context) ([]*SwapDevice, error) {
 			continue
 		}
 
-		sizeStr := strings.TrimSuffix(fields[3], "MB")
-		totalMB, err := strconv.ParseUint(sizeStr, 10, 64)
+		totalBytes, err := parseLspsSize(fields[3])
 		if err != nil {
 			continue
 		}
@@ -67,7 +73,6 @@ func SwapDevicesWithContext(ctx context.Context) ([]*SwapDevice, error) {
 			pctUsed = 0
 		}
 
-		totalBytes := totalMB * 1024 * 1024
 		usedBytes := totalBytes * pctUsed / 100
 		ret = append(ret, &SwapDevice{
 			Name:      fields[0],
@@ -76,6 +81,28 @@ func SwapDevicesWithContext(ctx context.Context) ([]*SwapDevice, error) {
 		})
 	}
 	return ret, nil
+}
+
+// parseLspsSize parses a size string from lsps output (e.g., "512MB", "4GB", "1TB").
+func parseLspsSize(s string) (uint64, error) {
+	units := []struct {
+		suffix     string
+		multiplier uint64
+	}{
+		{"TB", 1024 * 1024 * 1024 * 1024},
+		{"GB", 1024 * 1024 * 1024},
+		{"MB", 1024 * 1024},
+	}
+	for _, u := range units {
+		if strings.HasSuffix(s, u.suffix) {
+			val, err := strconv.ParseUint(strings.TrimSuffix(s, u.suffix), 10, 64)
+			if err != nil {
+				return 0, err
+			}
+			return val * u.multiplier, nil
+		}
+	}
+	return 0, fmt.Errorf("unsupported size unit in %q", s)
 }
 
 func callSVMon(ctx context.Context, virt bool) (*VirtualMemoryStat, *SwapMemoryStat, error) {
