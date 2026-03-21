@@ -15,8 +15,19 @@ import (
 
 var separator = regexp.MustCompile(`,?\s+`)
 
+// testInvoker is used for dependency injection in tests
+var testInvoker common.Invoker
+
+// getInvoker returns the test invoker if set, otherwise returns the default
+func getInvoker() common.Invoker {
+	if testInvoker != nil {
+		return testInvoker
+	}
+	return common.Invoke{}
+}
+
 func AvgWithContext(ctx context.Context) (*AvgStat, error) {
-	line, err := invoke.CommandWithContext(ctx, "uptime")
+	line, err := getInvoker().CommandWithContext(ctx, "uptime")
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +56,7 @@ func AvgWithContext(ctx context.Context) (*AvgStat, error) {
 }
 
 func MiscWithContext(ctx context.Context) (*MiscStat, error) {
-	out, err := invoke.CommandWithContext(ctx, "ps", "-e", "-o", "state")
+	out, err := getInvoker().CommandWithContext(ctx, "ps", "-e", "-o", "state")
 	if err != nil {
 		return nil, err
 	}
