@@ -79,5 +79,14 @@ func MiscWithContext(ctx context.Context) (*MiscStat, error) {
 		ret.ProcsBlocked = int(cpuStat.iowait) + int(cpuStat.physio)
 	}
 
+	// Populate system-wide counters from perfstat.
+	// These are cumulative since-boot values matching vmstat -s output.
+	c, err := perfstat.CpuTotalStat()
+	if err == nil {
+		ret.SysCalls = int(c.Syscall)
+		ret.Interrupts = int(c.DevIntrs)
+		ret.Ctxt = int(c.Pswitch)
+	}
+
 	return &ret, nil
 }
