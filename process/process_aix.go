@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -601,8 +602,44 @@ func (p *Process) PageFaultsWithContext(ctx context.Context) (*PageFaultsStat, e
 	return pageFaults, nil
 }
 
-func (*Process) ChildrenWithContext(_ context.Context) ([]*Process, error) {
-	return nil, common.ErrNotImplementedError
+func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
+	pids, err := PidsWithContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ret := make([]*Process, 0)
+	for _, pid := range pids {
+		ppid, err := readPpidFromStatus(ctx, pid)
+		if err != nil {
+			continue
+		}
+		if ppid == p.Pid {
+			child, err := NewProcessWithContext(ctx, pid)
+			if err != nil {
+				continue
+			}
+			ret = append(ret, child)
+		}
+	}
+	sort.Slice(ret, func(i, j int) bool { return ret[i].Pid < ret[j].Pid })
+	return ret, nil
+}
+
+// readPpidFromStatus reads only the PPID from /proc/<pid>/status without
+// parsing the entire struct, avoiding the overhead of fillFromStatWithContext.
+func readPpidFromStatus(ctx context.Context, pid int32) (int32, error) {
+	statPath := common.HostProcWithContext(ctx, strconv.Itoa(int(pid)), "status")
+	f, err := os.Open(statPath)
+	if err != nil {
+		return 0, err
+	}
+	defer f.Close()
+
+	var stat AIXStat
+	if err := binary.Read(f, binary.BigEndian, &stat); err != nil {
+		return 0, err
+	}
+	return int32(stat.Ppid), nil
 }
 
 func (p *Process) OpenFilesWithContext(ctx context.Context) ([]OpenFilesStat, error) {
