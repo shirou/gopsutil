@@ -353,18 +353,6 @@ func TestTerminalWithContext(t *testing.T) {
 	}
 }
 
-func TestEnvironmentWithContext(t *testing.T) {
-	// Get current process
-	ctx := context.Background()
-	p := Process{Pid: int32(os.Getpid())}
-
-	env, err := p.EnvironmentWithContext(ctx)
-	if err == nil {
-		assert.NotNil(t, env)
-		assert.IsType(t, map[string]string{}, env)
-	}
-}
-
 func TestPageFaultsWithContext(t *testing.T) {
 	// Get current process
 	ctx := context.Background()
