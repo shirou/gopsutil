@@ -45,23 +45,44 @@ func AvgWithContext(ctx context.Context) (*AvgStat, error) {
 }
 
 func MiscWithContext(ctx context.Context) (*MiscStat, error) {
-	out, err := invoke.CommandWithContext(ctx, "ps", "-Ao", "state")
+	out, err := invoke.CommandWithContext(ctx, "ps", "-e", "-o", "state")
 	if err != nil {
 		return nil, err
 	}
 
 	ret := &MiscStat{}
-	for _, line := range strings.Split(string(out), "\n") {
-		ret.ProcsTotal++
-		switch line {
-		case "R":
-		case "A":
-			ret.ProcsRunning++
-		case "T":
-			ret.ProcsBlocked++
-		default:
+	lines := strings.Split(string(out), "\n")
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+
+		// Skip header line and empty lines
+		if line == "ST" || line == "STATE" || line == "S" || line == "" {
 			continue
 		}
+
+		// Count processes by state (AIX process states from official docs)
+		// A = Active (running or ready to run)
+		// W = Swapped (not in main memory)
+		// I = Idle (waiting for startup)
+		// Z = Zombie/defunct (terminated, waiting for parent)
+		// T = Stopped (trace stopped)
+		// O = Nonexistent
+		switch line {
+		case "A", "I":
+			// A = Active (running or ready to run)
+			// I = Intermediate (being created via fork — transient state where
+			//     the kernel is actively consuming CPU cycles, so classified as
+			//     running to match AIX's own definition of active processes)
+			ret.ProcsRunning++
+		case "W":
+			// Swapped processes (blocked/not runnable)
+			ret.ProcsBlocked++
+		case "Z", "T":
+			// Zombie or Stopped processes - counted in total only
+		}
+		ret.ProcsTotal++
 	}
+
 	return ret, nil
 }
