@@ -31,8 +31,113 @@ func ConntrackStatsWithContext(_ context.Context, _ bool) ([]ConntrackStat, erro
 	return nil, common.ErrNotImplementedError
 }
 
-func ProtoCountersWithContext(_ context.Context, _ []string) ([]ProtoCountersStat, error) {
-	return nil, common.ErrNotImplementedError
+func ProtoCountersWithContext(ctx context.Context, protocols []string) ([]ProtoCountersStat, error) {
+	out, err := invoke.CommandWithContext(ctx, "netstat", "-s")
+	if err != nil {
+		return nil, err
+	}
+	return parseNetstatS(string(out), protocols)
+}
+
+// parseNetstatS parses AIX netstat -s output into per-protocol statistics.
+// If protocols is nil or empty, all recognized protocols are returned.
+func parseNetstatS(output string, protocols []string) ([]ProtoCountersStat, error) {
+	wantAll := len(protocols) == 0
+	want := make(map[string]bool)
+	for _, p := range protocols {
+		want[strings.ToLower(p)] = true
+	}
+
+	// Split output into protocol sections. Section headers are "<proto>:" at column 0.
+	sections := make(map[string][]string)
+	var currentProto string
+	for _, line := range strings.Split(output, "\n") {
+		if line != "" && line[0] != '\t' && line[0] != ' ' && strings.HasSuffix(strings.TrimSpace(line), ":") {
+			currentProto = strings.TrimSuffix(strings.TrimSpace(line), ":")
+			continue
+		}
+		if currentProto != "" {
+			sections[currentProto] = append(sections[currentProto], line)
+		}
+	}
+
+	var ret []ProtoCountersStat
+	for proto, lines := range sections {
+		if !wantAll && !want[proto] {
+			continue
+		}
+
+		stats := make(map[string]int64)
+		for _, line := range lines {
+			// Only parse top-level stats (single-tab prefix).
+			// Skip sub-items (double-tab or deeper) to avoid double-counting.
+			if !strings.HasPrefix(line, "\t") || strings.HasPrefix(line, "\t\t") {
+				continue
+			}
+
+			trimmed := strings.TrimSpace(line)
+			if trimmed == "" {
+				continue
+			}
+
+			// Extract leading number. Format: "<number> <description>"
+			// Some lines have parenthetical data: "3958645 data packets (3187866062 bytes)"
+			idx := strings.IndexByte(trimmed, ' ')
+			if idx < 0 {
+				continue
+			}
+			val, err := strconv.ParseInt(trimmed[:idx], 10, 64)
+			if err != nil {
+				continue
+			}
+			desc := strings.TrimSpace(trimmed[idx+1:])
+			key := descToCamelCase(desc)
+			if key != "" {
+				stats[key] = val
+			}
+		}
+
+		if len(stats) > 0 {
+			ret = append(ret, ProtoCountersStat{
+				Protocol: proto,
+				Stats:    stats,
+			})
+		}
+	}
+	return ret, nil
+}
+
+// descToCamelCase converts a netstat -s description to a camelCase key.
+// e.g. "packets sent" -> "packetsSent", "total packets received" -> "totalPacketsReceived"
+// Parenthetical suffixes are stripped: "data packets (3187866062 bytes)" -> "dataPackets"
+// Hyphens and underscores are treated as word boundaries: "ack-only" -> "ackOnly", "icmp_error" -> "icmpError"
+func descToCamelCase(desc string) string {
+	// Strip parenthetical suffix
+	if idx := strings.IndexByte(desc, '('); idx > 0 {
+		desc = strings.TrimSpace(desc[:idx])
+	}
+
+	// Replace hyphens and underscores with spaces so they act as word boundaries
+	desc = strings.NewReplacer("-", " ", "_", " ").Replace(desc)
+
+	words := strings.Fields(desc)
+	if len(words) == 0 {
+		return ""
+	}
+
+	var b strings.Builder
+	for i, w := range words {
+		w = strings.ToLower(w)
+		if w == "" {
+			continue
+		}
+		if i == 0 {
+			b.WriteString(w)
+		} else {
+			b.WriteString(strings.ToUpper(w[:1]) + w[1:])
+		}
+	}
+	return b.String()
 }
 
 func parseNetstatNetLine(line string) (ConnectionStat, error) {
