@@ -12,6 +12,7 @@ import (
 	"math"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -376,88 +377,8 @@ func (p *Process) RlimitWithContext(ctx context.Context) ([]RlimitStat, error) {
 	return p.RlimitUsageWithContext(ctx, false)
 }
 
-func (p *Process) RlimitUsageWithContext(ctx context.Context, gatherUsed bool) ([]RlimitStat, error) {
-	// Get per-process resource limits via procfiles command
-	//nolint:gosec // Process ID from internal tracking, not untrusted input
-	cmd := exec.CommandContext(ctx, "procfiles", strconv.Itoa(int(p.Pid)))
-	output, err := cmd.Output()
-	if err != nil {
-		// Fallback: try system-wide limits from ulimit
-		return p.getRlimitFromUlimit(ctx, gatherUsed)
-	}
-
-	// Parse procfiles output for file descriptor limits
-	// Output format: FD Info: nnnn (soft limit), mmmm (hard limit)
-	var rlimits []RlimitStat
-
-	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
-	for _, line := range lines {
-		if strings.Contains(line, "FD Info") || strings.Contains(line, "File descriptors") {
-			// Extract limits from this line
-			// Format varies, try to parse numbers
-			numStrs := strings.FieldsFunc(line, func(r rune) bool {
-				return r < '0' || r > '9'
-			})
-			if len(numStrs) >= 2 {
-				soft, _ := strconv.ParseUint(numStrs[0], 10, 64)
-				hard, _ := strconv.ParseUint(numStrs[1], 10, 64)
-				rlimits = append(rlimits, RlimitStat{
-					Resource: RLIMIT_NOFILE,
-					Soft:     soft,
-					Hard:     hard,
-				})
-				break
-			}
-		}
-	}
-
-	if len(rlimits) == 0 {
-		return p.getRlimitFromUlimit(ctx, gatherUsed)
-	}
-
-	return rlimits, nil
-}
-
-// getRlimitFromUlimit gets resource limits via ulimit command
-func (*Process) getRlimitFromUlimit(ctx context.Context, _ bool) ([]RlimitStat, error) {
-	cmd := exec.CommandContext(ctx, "sh", "-c", "ulimit -a")
-	output, err := cmd.Output()
-	if err != nil {
-		return nil, err
-	}
-
-	var rlimits []RlimitStat
-	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
-
-	for _, line := range lines {
-		// Parse ulimit output: "open files (-n) 1024"
-		fields := strings.Fields(line)
-		if len(fields) < 2 {
-			continue
-		}
-
-		var limit uint64
-
-		// Identify resource type and extract limit
-		var resourceID int32
-		if strings.Contains(line, "open files") {
-			resourceID = RLIMIT_NOFILE
-			// Extract numeric value (usually last field)
-			if val, err := strconv.ParseUint(fields[len(fields)-1], 10, 64); err == nil {
-				limit = val
-			}
-		}
-
-		if resourceID != 0 && limit > 0 {
-			rlimits = append(rlimits, RlimitStat{
-				Resource: resourceID,
-				Soft:     limit,
-				Hard:     limit,
-			})
-		}
-	}
-
-	return rlimits, nil
+func (p *Process) RlimitUsageWithContext(ctx context.Context, _ bool) ([]RlimitStat, error) {
+	return p.fillFromLimitsWithContext(ctx)
 }
 
 func (p *Process) IOCountersWithContext(ctx context.Context) (*IOCountersStat, error) {
@@ -811,9 +732,125 @@ func limitToUint(val string) (uint64, error) {
 }
 
 // Get num_fds from /proc/(pid)/limits (not available in AIX)
-func (*Process) fillFromLimitsWithContext(_ context.Context) ([]RlimitStat, error) {
-	// AIX /proc does not expose resource limits in a standard procfs location
-	return nil, common.ErrNotImplementedError
+// fillFromLimitsWithContext returns resource limits for the process owner
+// by querying AIX's /etc/security/limits via the lsuser command.
+//
+// AIX does not expose per-process limits through /proc. Instead, limits are
+// configured per-user in /etc/security/limits. The lsuser command resolves
+// the inheritance chain (user stanza -> default stanza) and returns the
+// effective values. Size-based limits (fsize, core, data, stack, rss) are
+// stored in 512-byte blocks and converted to bytes here. A value of -1
+// means unlimited.
+//
+// Hard limits that are not explicitly set use these defaults:
+//   - fsize_hard = fsize, cpu_hard = cpu
+//   - core_hard = -1, data_hard = -1, rss_hard = -1, nofiles_hard = -1
+//   - stack_hard = 8388608 (blocks = 4 GB)
+func (p *Process) fillFromLimitsWithContext(ctx context.Context) ([]RlimitStat, error) {
+	uids, err := p.UidsWithContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if len(uids) == 0 {
+		return nil, errors.New("no UID available for process")
+	}
+	u, err := user.LookupId(strconv.Itoa(int(uids[0])))
+	if err != nil {
+		return nil, err
+	}
+
+	attrs := "fsize fsize_hard core core_hard cpu cpu_hard data data_hard stack stack_hard rss rss_hard nofiles nofiles_hard"
+	cmd := exec.CommandContext(ctx, "lsuser", "-a")
+	cmd.Args = append(cmd.Args, strings.Fields(attrs)...)
+	cmd.Args = append(cmd.Args, u.Username)
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	// Parse "username key=val key=val ..." output.
+	line := strings.TrimSpace(string(output))
+	vals := make(map[string]int64)
+	for _, field := range strings.Fields(line) {
+		kv := strings.SplitN(field, "=", 2)
+		if len(kv) != 2 {
+			continue
+		}
+		v, err := strconv.ParseInt(kv[1], 10, 64)
+		if err != nil {
+			continue
+		}
+		vals[kv[0]] = v
+	}
+
+	const blockSize = 512
+
+	// toBytes converts an AIX limit value: -1 means unlimited, size-based
+	// limits are in 512-byte blocks that need conversion to bytes.
+	toBytes := func(v int64, isBytes bool) uint64 {
+		if v == -1 {
+			return math.MaxUint64
+		}
+		if isBytes {
+			return uint64(v) * blockSize
+		}
+		return uint64(v)
+	}
+
+	// hardDefault returns the hard limit, applying AIX defaults when the
+	// _hard attribute was not explicitly set.
+	hardDefault := func(soft int64, hardKey string, defaultHard int64) int64 {
+		if v, ok := vals[hardKey]; ok {
+			return v
+		}
+		if defaultHard == 0 {
+			// Default is "same as soft"
+			return soft
+		}
+		return defaultHard
+	}
+
+	type limitDef struct {
+		resource    int32
+		softKey     string
+		hardKey     string
+		defaultHard int64 // 0 means "same as soft", -1 means unlimited
+		isBytes     bool  // true = 512-byte blocks, false = direct value
+	}
+
+	defs := []limitDef{
+		{RLIMIT_FSIZE, "fsize", "fsize_hard", 0, true},
+		{RLIMIT_CORE, "core", "core_hard", -1, true},
+		{RLIMIT_CPU, "cpu", "cpu_hard", 0, false},
+		{RLIMIT_DATA, "data", "data_hard", -1, true},
+		{RLIMIT_STACK, "stack", "stack_hard", 8388608, true},
+		{RLIMIT_RSS, "rss", "rss_hard", -1, true},
+		{RLIMIT_NOFILE, "nofiles", "nofiles_hard", -1, false},
+	}
+
+	var stats []RlimitStat
+	for _, d := range defs {
+		soft, ok := vals[d.softKey]
+		if !ok {
+			continue
+		}
+		hard := hardDefault(soft, d.hardKey, d.defaultHard)
+		softVal := toBytes(soft, d.isBytes)
+		hardVal := toBytes(hard, d.isBytes)
+		// AIX /etc/security/limits can have soft=-1 (unlimited) with a
+		// finite hard limit. The kernel clamps soft to hard at process
+		// creation, so reflect that here.
+		if softVal > hardVal {
+			softVal = hardVal
+		}
+		stats = append(stats, RlimitStat{
+			Resource: d.resource,
+			Soft:     softVal,
+			Hard:     hardVal,
+		})
+	}
+
+	return stats, nil
 }
 
 // Get list of /proc/(pid)/fd files
