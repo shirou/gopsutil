@@ -5,6 +5,7 @@ package disk
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -94,27 +95,40 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 		return nil, err
 	}
 
-	ret := &UsageStat{}
-
 	blocksize := uint64(512)
 	lines := strings.Split(string(out), "\n")
 	if len(lines) < 2 {
-		return &UsageStat{}, common.ErrNotImplementedError
+		return nil, common.ErrNotImplementedError
 	}
 
 	hf := strings.Fields(strings.ReplaceAll(lines[0], "Mounted on", "Path")) // headers
 	for line := 1; line < len(lines); line++ {
 		fs := strings.Fields(lines[line]) // values
+		if len(fs) < len(hf) {
+			continue
+		}
+
+		// Find the Path (Mounted on) column and check if it matches
+		mountPoint := ""
 		for i, header := range hf {
-			// We're done in any of these use cases
+			if header == "Path" {
+				mountPoint = fs[i]
+				break
+			}
+		}
+		if mountPoint != path {
+			continue
+		}
+
+		ret := &UsageStat{}
+		for i, header := range hf {
 			if i >= len(fs) {
 				break
 			}
 
 			switch header {
 			case `Filesystem`:
-				// This is not a valid fs for us to parse
-				if fs[i] == "/proc" || fs[i] == "/ahafs" || fs[i] != path {
+				if fs[i] == "/proc" || fs[i] == "/ahafs" {
 					break
 				}
 
@@ -125,38 +139,59 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 			case `Path`:
 				ret.Path = fs[i]
 			case `512-blocks`:
+				if fs[i] == "-" {
+					continue
+				}
 				total, err := strconv.ParseUint(fs[i], 10, 64)
-				ret.Total = total * blocksize
 				if err != nil {
 					return nil, err
 				}
+				ret.Total = total * blocksize
 			case `Used`:
+				if fs[i] == "-" {
+					continue
+				}
 				ret.Used, err = strconv.ParseUint(fs[i], 10, 64)
 				if err != nil {
 					return nil, err
 				}
 			case `Free`:
+				if fs[i] == "-" {
+					continue
+				}
 				ret.Free, err = strconv.ParseUint(fs[i], 10, 64)
 				if err != nil {
 					return nil, err
 				}
 			case `%Used`:
+				if fs[i] == "-" {
+					continue
+				}
 				val, err := strconv.ParseInt(strings.ReplaceAll(fs[i], "%", ""), 10, 32)
 				if err != nil {
 					return nil, err
 				}
 				ret.UsedPercent = float64(val) / float64(100)
 			case `Ifree`:
+				if fs[i] == "-" {
+					continue
+				}
 				ret.InodesFree, err = strconv.ParseUint(fs[i], 10, 64)
 				if err != nil {
 					return nil, err
 				}
 			case `Iused`:
+				if fs[i] == "-" {
+					continue
+				}
 				ret.InodesUsed, err = strconv.ParseUint(fs[i], 10, 64)
 				if err != nil {
 					return nil, err
 				}
 			case `%Iused`:
+				if fs[i] == "-" {
+					continue
+				}
 				val, err := strconv.ParseInt(strings.ReplaceAll(fs[i], "%", ""), 10, 32)
 				if err != nil {
 					return nil, err
@@ -168,11 +203,10 @@ func UsageWithContext(ctx context.Context, path string) (*UsageStat, error) {
 		// Calculated value, since it isn't returned by the command
 		ret.InodesTotal = ret.InodesUsed + ret.InodesFree
 
-		// Valid Usage data, so append it
 		return ret, nil
 	}
 
-	return ret, nil
+	return nil, fmt.Errorf("mountpoint %s not found", path)
 }
 
 func GetMountFSTypeWithContext(ctx context.Context, mp string) (string, error) {
