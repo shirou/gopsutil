@@ -149,6 +149,26 @@ func KernelArch() (arch string, err error) {
 	return arch, nil
 }
 
-func VirtualizationWithContext(_ context.Context) (string, string, error) {
-	return "", "", common.ErrNotImplementedError
+func VirtualizationWithContext(ctx context.Context) (string, string, error) {
+	// Check for WPAR (Workload Partition) first — most specific virtualization layer.
+	// uname -W returns "0" if not in a WPAR, or the WPAR ID if inside one.
+	out, err := getInvoker().CommandWithContext(ctx, "uname", "-W")
+	if err == nil {
+		wparID := strings.TrimSpace(string(out))
+		if wparID != "" && wparID != "0" {
+			return "wpar", "guest", nil
+		}
+	}
+
+	// Check for LPAR (Logical Partition) via PowerVM.
+	// uname -L returns "<id> <name>", e.g. "25 soaix422". If name is "NULL", no LPAR.
+	out, err = getInvoker().CommandWithContext(ctx, "uname", "-L")
+	if err == nil {
+		fields := strings.Fields(strings.TrimSpace(string(out)))
+		if len(fields) >= 2 && fields[1] != "NULL" {
+			return "powervm", "guest", nil
+		}
+	}
+
+	return "", "", nil
 }
