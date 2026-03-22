@@ -919,15 +919,15 @@ func buildSnapProcessMap() (map[uint32]windows.ProcessEntry32, error) {
 
 	var pe32 windows.ProcessEntry32
 	pe32.Size = uint32(unsafe.Sizeof(pe32))
-	if err = windows.Process32First(snap, &pe32); err != nil {
+	if err := windows.Process32First(snap, &pe32); err != nil {
 		return nil, err
 	}
 
 	snapMap := make(map[uint32]windows.ProcessEntry32)
 	for {
 		snapMap[pe32.ProcessID] = pe32
-		if err = windows.Process32Next(snap, &pe32); err != nil {
-			if err == windows.ERROR_NO_MORE_FILES {
+		if err := windows.Process32Next(snap, &pe32); err != nil {
+			if errors.Is(err, windows.ERROR_NO_MORE_FILES) {
 				break
 			}
 			return nil, err
