@@ -336,7 +336,9 @@ func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("could not get Name: %w", err)
 	}
 
-	return filepath.Base(exe), nil
+	name := filepath.Base(exe)
+	p.name = name
+	return name, nil
 }
 
 func (*Process) TgidWithContext(_ context.Context) (int32, error) {
@@ -925,7 +927,10 @@ func buildSnapProcessMap() (map[uint32]windows.ProcessEntry32, error) {
 	for {
 		snapMap[pe32.ProcessID] = pe32
 		if err = windows.Process32Next(snap, &pe32); err != nil {
-			break
+			if err == windows.ERROR_NO_MORE_FILES {
+				break
+			}
+			return nil, err
 		}
 	}
 	return snapMap, nil
@@ -941,7 +946,7 @@ func ProcessesWithContext(ctx context.Context) ([]*Process, error) {
 
 	snapMap, err := buildSnapProcessMap()
 	if err != nil {
-		return nil, err
+		return out, fmt.Errorf("could not build process snapshot: %w", err)
 	}
 
 	for _, pid := range pids {
