@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"unsafe"
 
 	"golang.org/x/sys/unix"
@@ -157,18 +158,31 @@ func LabelWithContext(_ context.Context, _ string) (string, error) {
 	return "", common.ErrNotImplementedError
 }
 
-func IOCountersWithContext(_ context.Context, names ...string) (map[string]IOCountersStat, error) {
-	iokit, err := common.NewIOKitLib()
-	if err != nil {
-		return nil, err
-	}
-	defer iokit.Close()
+// Keep IOKit and CoreFoundation libraries open for the process lifetime.
+// See: https://github.com/shirou/gopsutil/issues/1832
+var (
+	diskLibOnce sync.Once
+	diskIOKit   *common.IOKitLib
+	diskCF      *common.CoreFoundationLib
+	diskLibErr  error
+)
 
-	corefoundation, err := common.NewCoreFoundationLib()
-	if err != nil {
-		return nil, err
+func initDiskLibraries() {
+	diskIOKit, diskLibErr = common.NewIOKitLib()
+	if diskLibErr != nil {
+		return
 	}
-	defer corefoundation.Close()
+	diskCF, diskLibErr = common.NewCoreFoundationLib()
+}
+
+func IOCountersWithContext(_ context.Context, names ...string) (map[string]IOCountersStat, error) {
+	diskLibOnce.Do(initDiskLibraries)
+	if diskLibErr != nil {
+		return nil, diskLibErr
+	}
+
+	iokit := diskIOKit
+	corefoundation := diskCF
 
 	match := iokit.IOServiceMatching("IOMedia")
 
