@@ -321,6 +321,9 @@ func (p *Process) PpidWithContext(_ context.Context) (int32, error) {
 }
 
 func (p *Process) NameWithContext(ctx context.Context) (string, error) {
+	if p.name != "" {
+		return p.name, nil
+	}
 	if p.Pid == 0 {
 		return "System Idle Process", nil
 	}
@@ -587,6 +590,9 @@ func (p *Process) NumFDsWithContext(_ context.Context) (int32, error) {
 }
 
 func (p *Process) NumThreadsWithContext(_ context.Context) (int32, error) {
+	if p.numThreads != 0 {
+		return p.numThreads, nil
+	}
 	ppid, ret, _, err := getFromSnapProcess(p.Pid)
 	if err != nil {
 		return 0, err
@@ -597,6 +603,8 @@ func (p *Process) NumThreadsWithContext(_ context.Context) (int32, error) {
 	if p.getPpid() == 0 {
 		p.setPpid(ppid)
 	}
+
+	p.numThreads = ret
 
 	return ret, nil
 }
@@ -900,6 +908,29 @@ func getFromSnapProcess(pid int32) (int32, int32, string, error) { //nolint:unpa
 	return 0, 0, "", fmt.Errorf("couldn't find pid: %d", pid)
 }
 
+func buildSnapProcessMap() (map[uint32]windows.ProcessEntry32, error) {
+	snap, err := windows.CreateToolhelp32Snapshot(windows.TH32CS_SNAPPROCESS, 0)
+	if err != nil {
+		return nil, err
+	}
+	defer windows.CloseHandle(snap)
+
+	var pe32 windows.ProcessEntry32
+	pe32.Size = uint32(unsafe.Sizeof(pe32))
+	if err = windows.Process32First(snap, &pe32); err != nil {
+		return nil, err
+	}
+
+	snapMap := make(map[uint32]windows.ProcessEntry32)
+	for {
+		snapMap[pe32.ProcessID] = pe32
+		if err = windows.Process32Next(snap, &pe32); err != nil {
+			break
+		}
+	}
+	return snapMap, nil
+}
+
 func ProcessesWithContext(ctx context.Context) ([]*Process, error) {
 	out := []*Process{}
 
@@ -908,11 +939,23 @@ func ProcessesWithContext(ctx context.Context) ([]*Process, error) {
 		return out, fmt.Errorf("could not get Processes %w", err)
 	}
 
+	snapMap, err := buildSnapProcessMap()
+	if err != nil {
+		return nil, err
+	}
+
 	for _, pid := range pids {
 		p, err := NewProcessWithContext(ctx, pid)
 		if err != nil {
 			continue
 		}
+
+		if entry, ok := snapMap[uint32(pid)]; ok {
+			p.name = windows.UTF16ToString(entry.ExeFile[:])
+			p.setPpid(int32(entry.ParentProcessID))
+			p.numThreads = int32(entry.Threads)
+		}
+
 		out = append(out, p)
 	}
 
