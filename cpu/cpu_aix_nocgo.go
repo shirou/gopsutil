@@ -7,6 +7,7 @@ import (
 	"context"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/shirou/gopsutil/v4/internal/common"
 )
@@ -190,4 +191,34 @@ func CountsWithContext(ctx context.Context, _ bool) (int, error) {
 		return int(info[0].Cores), nil
 	}
 	return 0, err
+}
+
+// aixPercent returns CPU busy percentages by calling sar with the requested
+// interval. On AIX nocgo, sar returns instantaneous percentage values
+// (usr/sys/wio/idle summing to 100%), so delta math is not needed — the
+// percentage is computed directly as User + System, excluding Iowait, to
+// match the getAllBusy semantics used on other platforms.
+//
+// The interval parameter is converted to integer seconds and passed to sar
+// as the measurement window (minimum 1 second). This honors the interval
+// parameter from PercentWithContext rather than always using a fixed window.
+//
+// This function is only compiled for nocgo builds. The CGO build returns
+// ErrNotImplementedError so the caller falls through to the standard
+// delta-based calculation (since the CGO path returns cumulative tick
+// counters from perfstat, not percentages).
+func aixPercent(ctx context.Context, interval time.Duration, percpu bool) ([]float64, error) {
+	seconds := int(interval.Seconds())
+	if seconds < 1 {
+		seconds = 1
+	}
+	times, err := timesWithContextAndInterval(ctx, percpu, seconds)
+	if err != nil {
+		return nil, err
+	}
+	ret := make([]float64, len(times))
+	for i, t := range times {
+		ret[i] = t.User + t.System
+	}
+	return ret, nil
 }
