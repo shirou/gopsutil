@@ -54,7 +54,7 @@ func TestMiscStatString(t *testing.T) {
 		ProcsBlocked: 2,
 		Ctxt:         3,
 	}
-	e := `{"procsTotal":4,"procsCreated":5,"procsRunning":1,"procsBlocked":2,"ctxt":3}`
+	e := `{"procsTotal":4,"procsCreated":5,"procsRunning":1,"procsBlocked":2,"ctxt":3,"sysCalls":0,"interrupts":0}`
 	assert.JSONEqf(t, e, v.String(), "TestMiscString string is invalid: %v", v)
 	t.Log(e)
 }
