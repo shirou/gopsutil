@@ -9,6 +9,7 @@ import (
 	"encoding/binary"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/shirou/gopsutil/v4/internal/common"
 )
@@ -29,14 +30,39 @@ func getInvoker() common.Invoker {
 	return invoke
 }
 
-func HostIDWithContext(ctx context.Context) (string, error) {
-	out, err := getInvoker().CommandWithContext(ctx, "uname", "-u")
-	if err != nil {
-		return "", err
-	}
+// Static host information is cached because these values (hardware ID,
+// platform name, OS version, kernel version, architecture) do not change
+// at runtime. Caching avoids spawning subprocesses on repeated queries.
+var (
+	hostIDOnce sync.Once
+	hostIDVal  string
+	hostIDErr  error
 
-	// The command always returns an extra newline, so we make use of Split() to get only the first line
-	return strings.Split(string(out), "\n")[0], nil
+	platformOnce sync.Once
+	platformVal  string
+	familyVal    string
+	versionVal   string
+	platformErr  error
+
+	kernelVerOnce sync.Once
+	kernelVerVal  string
+	kernelVerErr  error
+
+	kernelArchOnce sync.Once
+	kernelArchVal  string
+	kernelArchErr  error
+)
+
+func HostIDWithContext(ctx context.Context) (string, error) {
+	hostIDOnce.Do(func() {
+		out, err := getInvoker().CommandWithContext(ctx, "uname", "-u")
+		if err != nil {
+			hostIDErr = err
+			return
+		}
+		hostIDVal = strings.Split(string(out), "\n")[0]
+	})
+	return hostIDVal, hostIDErr
 }
 
 func BootTimeWithContext(ctx context.Context) (btime uint64, err error) {
@@ -104,49 +130,57 @@ func UsersWithContext(_ context.Context) ([]UserStat, error) {
 	return ret, nil
 }
 
-// Much of this function could be static. However, to be future proofed, I've made it call the OS for the information in all instances.
+// PlatformInformationWithContext returns the platform name, family, and OS
+// version. These are immutable system identifiers cached after first query.
 func PlatformInformationWithContext(ctx context.Context) (platform, family, version string, err error) {
-	// Set the platform (which should always, and only be, "AIX") from `uname -s`
-	out, err := getInvoker().CommandWithContext(ctx, "uname", "-s")
-	if err != nil {
-		return "", "", "", err
-	}
-	platform = strings.TrimRight(string(out), "\n")
-
-	// Set the family
-	family = strings.TrimRight(string(out), "\n")
-
-	// Set the version
-	out, err = getInvoker().CommandWithContext(ctx, "oslevel")
-	if err != nil {
-		return "", "", "", err
-	}
-	version = strings.TrimRight(string(out), "\n")
-
-	return platform, family, version, nil
-}
-
-func KernelVersionWithContext(ctx context.Context) (version string, err error) {
-	out, err := getInvoker().CommandWithContext(ctx, "oslevel", "-s")
-	if err != nil {
-		return "", err
-	}
-	version = strings.TrimRight(string(out), "\n")
-
-	return version, nil
-}
-
-func KernelArch() (arch string, err error) {
-	out, err := getInvoker().Command("getconf", "KERNEL_BITMODE")
-	if err != nil {
-		out, err = getInvoker().Command("bootinfo", "-y")
+	platformOnce.Do(func() {
+		out, err := getInvoker().CommandWithContext(ctx, "uname", "-s")
 		if err != nil {
-			return "", err
+			platformErr = err
+			return
 		}
-	}
-	arch = strings.TrimRight(string(out), "\n")
+		platformVal = strings.TrimRight(string(out), "\n")
+		familyVal = platformVal
 
-	return arch, nil
+		out, err = getInvoker().CommandWithContext(ctx, "oslevel")
+		if err != nil {
+			platformErr = err
+			return
+		}
+		versionVal = strings.TrimRight(string(out), "\n")
+	})
+	return platformVal, familyVal, versionVal, platformErr
+}
+
+// KernelVersionWithContext returns the kernel version (e.g., "7300-03-00-2446").
+// This is an immutable system identifier cached after first query.
+func KernelVersionWithContext(ctx context.Context) (version string, err error) {
+	kernelVerOnce.Do(func() {
+		out, err := getInvoker().CommandWithContext(ctx, "oslevel", "-s")
+		if err != nil {
+			kernelVerErr = err
+			return
+		}
+		kernelVerVal = strings.TrimRight(string(out), "\n")
+	})
+	return kernelVerVal, kernelVerErr
+}
+
+// KernelArch returns the hardware architecture (e.g., "64").
+// This is an immutable system identifier cached after first query.
+func KernelArch() (arch string, err error) {
+	kernelArchOnce.Do(func() {
+		out, err := getInvoker().Command("getconf", "KERNEL_BITMODE")
+		if err != nil {
+			out, err = getInvoker().Command("bootinfo", "-y")
+			if err != nil {
+				kernelArchErr = err
+				return
+			}
+		}
+		kernelArchVal = strings.TrimRight(string(out), "\n")
+	})
+	return kernelArchVal, kernelArchErr
 }
 
 func VirtualizationWithContext(ctx context.Context) (string, string, error) {
