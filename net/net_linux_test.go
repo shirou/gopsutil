@@ -189,6 +189,114 @@ func TestDecodeAddress(t *testing.T) {
 	}
 }
 
+func TestConnectionDedupKey(t *testing.T) {
+	// Two unnamed UNIX sockets with different pid/fd should have different keys
+	c1 := connTmp{
+		fd:       3,
+		family:   syscall.AF_UNIX,
+		sockType: syscall.SOCK_STREAM,
+		laddr:    Addr{},
+		raddr:    Addr{},
+		status:   "NONE",
+		pid:      100,
+	}
+	c2 := connTmp{
+		fd:       4,
+		family:   syscall.AF_UNIX,
+		sockType: syscall.SOCK_STREAM,
+		laddr:    Addr{},
+		raddr:    Addr{},
+		status:   "NONE",
+		pid:      100,
+	}
+	c3 := connTmp{
+		fd:       3,
+		family:   syscall.AF_UNIX,
+		sockType: syscall.SOCK_STREAM,
+		laddr:    Addr{},
+		raddr:    Addr{},
+		status:   "NONE",
+		pid:      200,
+	}
+
+	k1 := connectionDedupKey(syscall.AF_UNIX, c1)
+	k2 := connectionDedupKey(syscall.AF_UNIX, c2)
+	k3 := connectionDedupKey(syscall.AF_UNIX, c3)
+
+	assert.NotEqual(t, k1, k2, "different fd same pid should produce different keys")
+	assert.NotEqual(t, k1, k3, "same fd different pid should produce different keys")
+
+	// Same unnamed UNIX socket should produce the same key
+	assert.Equal(t, k1, connectionDedupKey(syscall.AF_UNIX, c1))
+
+	// Named UNIX sockets with different paths should have different keys
+	c4 := connTmp{
+		fd:       3,
+		family:   syscall.AF_UNIX,
+		sockType: syscall.SOCK_STREAM,
+		laddr:    Addr{IP: "/var/run/a.sock"},
+		raddr:    Addr{},
+		status:   "NONE",
+		pid:      100,
+	}
+	c5 := connTmp{
+		fd:       3,
+		family:   syscall.AF_UNIX,
+		sockType: syscall.SOCK_STREAM,
+		laddr:    Addr{IP: "/var/run/b.sock"},
+		raddr:    Addr{},
+		status:   "NONE",
+		pid:      100,
+	}
+	assert.NotEqual(t, connectionDedupKey(syscall.AF_UNIX, c4), connectionDedupKey(syscall.AF_UNIX, c5))
+
+	// Inet sockets: same tuple should produce the same key regardless of pid/fd
+	c6 := connTmp{
+		fd:       3,
+		family:   syscall.AF_INET,
+		sockType: syscall.SOCK_STREAM,
+		laddr:    Addr{IP: "127.0.0.1", Port: 8080},
+		raddr:    Addr{IP: "10.0.0.1", Port: 443},
+		status:   "ESTABLISHED",
+		pid:      100,
+	}
+	c7 := connTmp{
+		fd:       5,
+		family:   syscall.AF_INET,
+		sockType: syscall.SOCK_STREAM,
+		laddr:    Addr{IP: "127.0.0.1", Port: 8080},
+		raddr:    Addr{IP: "10.0.0.1", Port: 443},
+		status:   "ESTABLISHED",
+		pid:      200,
+	}
+	assert.Equal(t, connectionDedupKey(syscall.AF_INET, c6), connectionDedupKey(syscall.AF_INET, c7),
+		"inet sockets with same tuple should dedup regardless of pid/fd")
+
+	// When pid/fd are unknown (0/0), inode should distinguish sockets
+	c8 := connTmp{
+		fd:       0,
+		family:   syscall.AF_UNIX,
+		sockType: syscall.SOCK_STREAM,
+		laddr:    Addr{},
+		raddr:    Addr{},
+		status:   "NONE",
+		pid:      0,
+		inode:    "111",
+	}
+	c9 := connTmp{
+		fd:       0,
+		family:   syscall.AF_UNIX,
+		sockType: syscall.SOCK_STREAM,
+		laddr:    Addr{},
+		raddr:    Addr{},
+		status:   "NONE",
+		pid:      0,
+		inode:    "222",
+	}
+	assert.NotEqual(t, connectionDedupKey(syscall.AF_UNIX, c8), connectionDedupKey(syscall.AF_UNIX, c9),
+		"unnamed unix sockets with unknown pid/fd should use inode in dedup key")
+}
+
 func TestReverse(t *testing.T) {
 	src := []byte{0x01, 0x02, 0x03}
 	assert.Equal(t, []byte{0x03, 0x02, 0x01}, Reverse(src))
