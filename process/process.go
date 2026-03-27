@@ -465,6 +465,11 @@ func (p *Process) Terminal() (string, error) {
 	return p.TerminalWithContext(context.Background())
 }
 
+// SignalsPending returns the signals pending for the process.
+func (p *Process) SignalsPending() (SignalInfoStat, error) {
+	return p.SignalsPendingWithContext(context.Background())
+}
+
 // Nice returns a nice value (priority).
 func (p *Process) Nice() (int32, error) {
 	return p.NiceWithContext(context.Background())
