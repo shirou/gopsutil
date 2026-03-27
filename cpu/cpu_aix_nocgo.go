@@ -7,9 +7,19 @@ import (
 	"context"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/shirou/gopsutil/v4/internal/common"
+)
+
+// prtconfOutput caches the output of prtconf, which returns static CPU
+// hardware information (model, speed, count) that does not change at runtime.
+// Caching avoids spawning a subprocess on every InfoWithContext call.
+var (
+	prtconfOnce   sync.Once
+	prtconfOutput []byte
+	prtconfErr    error
 )
 
 // TimesWithContext returns CPU time statistics using a default 1-second sar
@@ -135,10 +145,13 @@ func timesWithContextAndInterval(ctx context.Context, percpu bool, intervalSecon
 }
 
 func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
-	out, err := invoke.CommandWithContext(ctx, "prtconf")
-	if err != nil {
-		return nil, err
+	prtconfOnce.Do(func() {
+		prtconfOutput, prtconfErr = invoke.CommandWithContext(ctx, "prtconf")
+	})
+	if prtconfErr != nil {
+		return nil, prtconfErr
 	}
+	out := prtconfOutput
 
 	ret := InfoStat{}
 	for _, line := range strings.Split(string(out), "\n") {
