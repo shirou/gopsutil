@@ -25,7 +25,17 @@ type MiscStat struct {
 	ProcsCreated int `json:"procsCreated"`
 	ProcsRunning int `json:"procsRunning"`
 	ProcsBlocked int `json:"procsBlocked"`
-	Ctxt         int `json:"ctxt"`
+	// Ctxt is the cumulative number of context switches since boot.
+	// Populated on Linux (from /proc/stat) and AIX (from vmstat -s or perfstat).
+	Ctxt int `json:"ctxt"`
+	// SysCalls is the cumulative number of system calls since boot.
+	// Not all platforms populate this field; zero means unavailable.
+	// Populated on AIX (from vmstat -s or perfstat).
+	SysCalls int `json:"sysCalls"`
+	// Interrupts is the cumulative number of device interrupts since boot.
+	// Not all platforms populate this field; zero means unavailable.
+	// Populated on AIX (from vmstat -s or perfstat).
+	Interrupts int `json:"interrupts"`
 }
 
 func (m MiscStat) String() string {
