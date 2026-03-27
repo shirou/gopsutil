@@ -11,10 +11,34 @@ import (
 	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
+// TimesWithContext returns CPU time statistics using a default 1-second sar
+// sample window. On AIX nocgo, sar returns instantaneous percentage values
+// (usr/sys/wio/idle summing to 100%), not cumulative tick counters like other
+// platforms. See timesWithContextAndInterval for details.
 func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
+	return timesWithContextAndInterval(ctx, percpu, 1)
+}
+
+// timesWithContextAndInterval runs sar with the specified sample interval in
+// seconds and parses the output into TimesStat values. On AIX nocgo, sar
+// returns CPU usage as percentages over the sample window, not cumulative
+// counters. This means:
+//   - The returned values are bounded 0-100 and sum to ~100%
+//   - Delta math (subtracting two snapshots) does NOT apply
+//   - The interval controls the sar measurement window, not a sleep between snapshots
+//
+// This is called by TimesWithContext (with a 1-second default) and by
+// aixPercent (with the caller's requested interval) to honor the interval
+// parameter in PercentWithContext.
+func timesWithContextAndInterval(ctx context.Context, percpu bool, intervalSeconds int) ([]TimesStat, error) {
+	if intervalSeconds < 1 {
+		intervalSeconds = 1
+	}
+	sarInterval := strconv.Itoa(intervalSeconds)
+
 	var ret []TimesStat
 	if percpu {
-		perOut, err := invoke.CommandWithContext(ctx, "sar", "-u", "-P", "ALL", "10", "1")
+		perOut, err := invoke.CommandWithContext(ctx, "sar", "-u", "-P", "ALL", sarInterval, "1")
 		if err != nil {
 			return nil, err
 		}
@@ -25,11 +49,24 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 
 		hp := strings.Fields(lines[5]) // headers
 		for l := 6; l < len(lines)-1; l++ {
-			ct := &TimesStat{}
 			v := strings.Fields(lines[l]) // values
+			if len(v) == 0 {
+				continue
+			}
+
+			// Determine the CPU field position: first line has a timestamp
+			// prefix, continuation lines do not
+			cpuField := strings.TrimSpace(v[0])
+			if l == 6 && len(v) > 1 {
+				cpuField = strings.TrimSpace(v[1])
+			}
+			if _, err := strconv.Atoi(cpuField); err != nil {
+				continue
+			}
+
+			ct := &TimesStat{}
 			for i, header := range hp {
-				// We're done in any of these use cases
-				if i >= len(v) || v[0] == "-" {
+				if i >= len(v) {
 					break
 				}
 
@@ -60,11 +97,10 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 					}
 				}
 			}
-			// Valid CPU data, so append it
 			ret = append(ret, *ct)
 		}
 	} else {
-		out, err := invoke.CommandWithContext(ctx, "sar", "-u", "10", "1")
+		out, err := invoke.CommandWithContext(ctx, "sar", "-u", sarInterval, "1")
 		if err != nil {
 			return nil, err
 		}
