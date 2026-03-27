@@ -633,6 +633,10 @@ func (*Process) CPUAffinityWithContext(_ context.Context) ([]int32, error) {
 	return nil, common.ErrNotImplementedError
 }
 
+func (*Process) SignalsPendingWithContext(_ context.Context) (SignalInfoStat, error) {
+	return SignalInfoStat{}, common.ErrNotImplementedError
+}
+
 func (p *Process) MemoryInfoWithContext(_ context.Context) (*MemoryInfoStat, error) {
 	mem, err := getMemoryInfo(p.Pid)
 	if err != nil {
