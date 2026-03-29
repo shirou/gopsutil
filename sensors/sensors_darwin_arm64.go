@@ -5,6 +5,7 @@ package sensors
 
 import (
 	"context"
+	"sync"
 	"unsafe"
 
 	"github.com/shirou/gopsutil/v4/internal/common"
@@ -15,35 +16,48 @@ const (
 	kHIDPageAppleVendorTemperatureSensor = 5
 )
 
+// Keep IOKit and CoreFoundation libraries open for the process lifetime.
+// Opening and closing them on every call causes SIGBUS/SIGSEGV crashes
+// because the Go runtime (GC, timers) can interact with invalidated
+// library handles after Dlclose.
+// See: https://github.com/shirou/gopsutil/issues/1832
+var (
+	sensorLibOnce sync.Once
+	sensorIOKit   *common.IOKitLib
+	sensorCF      *common.CoreFoundationLib
+	sensorLibErr  error
+)
+
+func initSensorLibraries() {
+	sensorIOKit, sensorLibErr = common.NewIOKitLib()
+	if sensorLibErr != nil {
+		return
+	}
+	sensorCF, sensorLibErr = common.NewCoreFoundationLib()
+}
+
 func ReadTemperaturesArm() []TemperatureStat {
 	temperatures, _ := TemperaturesWithContext(context.Background())
 	return temperatures
 }
 
 func TemperaturesWithContext(_ context.Context) ([]TemperatureStat, error) {
-	iokit, err := common.NewIOKitLib()
-	if err != nil {
-		return nil, err
+	sensorLibOnce.Do(initSensorLibraries)
+	if sensorLibErr != nil {
+		return nil, sensorLibErr
 	}
-	defer iokit.Close()
-
-	cf, err := common.NewCoreFoundationLib()
-	if err != nil {
-		return nil, err
-	}
-	defer cf.Close()
 
 	ta := &temperatureArm{
-		iokit: iokit,
-		cf:    cf,
+		iokit: sensorIOKit,
+		cf:    sensorCF,
 	}
 
 	sensors := ta.matching(kHIDPageAppleVendor, kHIDPageAppleVendorTemperatureSensor)
-	defer cf.CFRelease(uintptr(sensors))
+	defer sensorCF.CFRelease(uintptr(sensors))
 
 	// Create HID system client
-	system := iokit.IOHIDEventSystemClientCreate(common.KCFAllocatorDefault)
-	defer cf.CFRelease(uintptr(system))
+	system := sensorIOKit.IOHIDEventSystemClientCreate(common.KCFAllocatorDefault)
+	defer sensorCF.CFRelease(uintptr(system))
 
 	return ta.getSensors(system, sensors), nil
 }
