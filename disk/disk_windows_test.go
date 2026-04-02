@@ -71,3 +71,39 @@ func TestProcessLogicalDrives(t *testing.T) {
 	assert.Equal(t, "NTFS", parts[0].Fstype)
 	assert.Contains(t, parts[0].Opts, rw)
 }
+
+func TestProcessVolumeLoopContinuesAfterGetVolumePathsError(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	getVolumePathsCalls := 0
+	findNextVolumeCalls := 0
+
+	parts := processVolumeLoopWith(
+		ctx,
+		1,
+		[]uint16{'v', 0},
+		map[string]struct{}{},
+		nil,
+		Warnings{},
+		func([]uint16) ([]string, error) {
+			getVolumePathsCalls++
+			if getVolumePathsCalls == 2 {
+				cancel()
+			}
+			return nil, assert.AnError
+		},
+		func(context.Context, []string, map[string]struct{}, []PartitionStat, Warnings) []PartitionStat {
+			t.Fatal("processMountsForVolume should not be called when getVolumePaths fails")
+			return nil
+		},
+		func(uintptr, []uint16) (bool, error) {
+			findNextVolumeCalls++
+			return true, nil
+		},
+	)
+
+	assert.Empty(t, parts)
+	assert.Equal(t, 1, getVolumePathsCalls)
+	assert.Equal(t, 1, findNextVolumeCalls)
+}
