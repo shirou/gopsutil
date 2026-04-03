@@ -51,7 +51,7 @@ func setupFakeProc(t *testing.T, procs ...psinfo) context.Context {
 var mockProc = fillPsinfo(psinfo{
 	Pid:    1234,
 	Ppid:   100,
-	UID:    501,
+	Uid:    501,
 	Euid:   502,
 	Gid:    20,
 	Egid:   21,
@@ -67,7 +67,7 @@ var mockProc = fillPsinfo(psinfo{
 var childProc = fillPsinfo(psinfo{
 	Pid:    5678,
 	Ppid:   1234,
-	UID:    501,
+	Uid:    501,
 	Euid:   501,
 	Gid:    20,
 	Egid:   20,

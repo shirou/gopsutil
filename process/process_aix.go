@@ -22,64 +22,6 @@ type MemoryMapsStat struct{}
 // MemoryInfoExStat is not available on AIX.
 type MemoryInfoExStat struct{}
 
-// prTimestruc64 mirrors timestruc64_t from sys/time.h
-type prTimestruc64 struct {
-	Sec  int64
-	Nsec int32
-	_    uint32
-}
-
-// lwpSinfo mirrors AIX lwpsinfo_t from sys/procfs.h
-type lwpSinfo struct {
-	LwpID   uint64
-	Addr    uint64
-	Wchan   uint64
-	Flag    uint32
-	Wtype   uint8
-	State   int8
-	Sname   byte // process state character: 'R','S','Z','T','I', etc
-	Nice    uint8
-	Pri     int32
-	Policy  uint32
-	Clname  [8]byte
-	Onpro   int32
-	Bindpro int32
-	Ptid    uint32
-	_       uint32
-	_       [7]uint64
-}
-
-// psinfo mirrors AIX psinfo_t from sys/procfs.h
-type psinfo struct {
-	Flag   uint32
-	Flag2  uint32
-	Nlwp   uint32 // number of threads
-	_      uint32
-	UID    uint64
-	Euid   uint64
-	Gid    uint64
-	Egid   uint64
-	Pid    uint64
-	Ppid   uint64
-	Pgid   uint64
-	Sid    uint64
-	Ttydev uint64
-	Addr   uint64
-	Size   uint64        // virtual memory size in KB (pr_size)
-	Rssize uint64        // resident set size in KB (pr_rssize)
-	Start  prTimestruc64 // process start time
-	Time   prTimestruc64 // combined user+system CPU time
-	Cid    uint16
-	_      uint16
-	Argc   uint32
-	Argv   uint64
-	Envp   uint64
-	Fname  [16]byte // executable name, null-terminated (max 15 chars)
-	Psargs [80]byte // process args, space-separated, null-terminated (max 79 chars)
-	_      [8]uint64
-	Lwp    lwpSinfo // representative LWP
-}
-
 func readPsinfo(ctx context.Context, pid int32) (*psinfo, error) {
 	f, err := os.Open(common.HostProcWithContext(ctx, strconv.Itoa(int(pid)), "psinfo"))
 	if err != nil {
@@ -94,7 +36,7 @@ func readPsinfo(ctx context.Context, pid int32) (*psinfo, error) {
 	return &psi, nil
 }
 
-func nullTerminatedBytes(b []byte) string {
+func nullTerminatedString(b []byte) string {
 	if idx := bytes.IndexByte(b, 0); idx >= 0 {
 		return string(b[:idx])
 	}
@@ -142,6 +84,7 @@ func (p *Process) PpidWithContext(ctx context.Context) (int32, error) {
 	if err != nil {
 		return 0, err
 	}
+	// psinfo stores PIDs as uint64; safe to truncate to int32 on AIX where PIDs fit in 32 bits.
 	return int32(psi.Ppid), nil
 }
 
@@ -150,7 +93,7 @@ func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if name := nullTerminatedBytes(psi.Fname[:]); name != "" {
+	if name := nullTerminatedString(psi.Fname[:]); name != "" {
 		return name, nil
 	}
 	// PID 0 is the swapper/idle process; its Fname is empty but ps shows "swapper".
@@ -175,10 +118,10 @@ func (p *Process) CmdlineWithContext(ctx context.Context) (string, error) {
 	}
 	// Psargs is empty for kernel threads, fall back to Fname (the executable name),
 	// which is what ps uses as well.
-	if args := nullTerminatedBytes(psi.Psargs[:]); args != "" {
+	if args := nullTerminatedString(psi.Psargs[:]); args != "" {
 		return args, nil
 	}
-	if name := nullTerminatedBytes(psi.Fname[:]); name != "" {
+	if name := nullTerminatedString(psi.Fname[:]); name != "" {
 		return name, nil
 	}
 	// PID 0 is the swapper/idle process, its Fname and Psargs are both empty
@@ -196,9 +139,9 @@ func (p *Process) CmdlineSliceWithContext(ctx context.Context) ([]string, error)
 	}
 	// Psargs is empty for kernel threads, fall back to Fname (the executable name),
 	// which is what ps uses as well.
-	args := nullTerminatedBytes(psi.Psargs[:])
+	args := nullTerminatedString(psi.Psargs[:])
 	if args == "" {
-		args = nullTerminatedBytes(psi.Fname[:])
+		args = nullTerminatedString(psi.Fname[:])
 	}
 	// PID 0 is the swapper/idle process, its Fname and Psargs are both empty
 	// but ps shows "swapper".
@@ -240,8 +183,9 @@ func (p *Process) UidsWithContext(ctx context.Context) ([]uint32, error) {
 	if err != nil {
 		return nil, err
 	}
+	// psinfo stores UIDs as uint64; safe to truncate to uint32 on AIX where UIDs fit in 32 bits.
 	// real, effective, saved (psinfo doesn't expose saved, use real as fallback)
-	return []uint32{uint32(psi.UID), uint32(psi.Euid), uint32(psi.UID)}, nil
+	return []uint32{uint32(psi.Uid), uint32(psi.Euid), uint32(psi.Uid)}, nil
 }
 
 func (p *Process) GidsWithContext(ctx context.Context) ([]uint32, error) {
@@ -249,6 +193,7 @@ func (p *Process) GidsWithContext(ctx context.Context) ([]uint32, error) {
 	if err != nil {
 		return nil, err
 	}
+	// psinfo stores GIDs as uint64; safe to truncate to uint32 on AIX where GIDs fit in 32 bits.
 	// real, effective, saved (psinfo doesn't expose saved, use real as fallback)
 	return []uint32{uint32(psi.Gid), uint32(psi.Egid), uint32(psi.Gid)}, nil
 }
@@ -351,6 +296,7 @@ func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
 		if err != nil {
 			continue
 		}
+		// psinfo stores PIDs as uint64; safe to truncate to int32 on AIX where PIDs fit in 32 bits.
 		if int32(psi.Ppid) == p.Pid {
 			// create Process struct directly to avoid the redundant PidExists check
 			ret = append(ret, &Process{Pid: pid})
