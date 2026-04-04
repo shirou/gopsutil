@@ -151,10 +151,9 @@ func processVolumeLoop(ctx context.Context, nextVolHandle uintptr, volNameBuf []
 		mounts, err := getVolumePaths(volNameBuf)
 		if err != nil {
 			warnings.Add(fmt.Errorf("failed to find paths for volume %s", windows.UTF16ToString(volNameBuf)))
-			continue
+		} else {
+			partitionStats = processMountsForVolume(ctx, mounts, processedPaths, partitionStats, warnings)
 		}
-
-		partitionStats = processMountsForVolume(ctx, mounts, processedPaths, partitionStats, warnings)
 
 		volNameBuf = make([]uint16, maxVolumeNameLength)
 		if volRet, _, err := procFindNextVolumeW.Call(
