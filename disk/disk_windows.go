@@ -140,20 +140,6 @@ func processVolumesMountedAsFolders(ctx context.Context, partitionStats []Partit
 }
 
 func processVolumeLoop(ctx context.Context, nextVolHandle uintptr, volNameBuf []uint16, processedPaths map[string]struct{}, partitionStats []PartitionStat, warnings Warnings) []PartitionStat {
-	return processVolumeLoopWith(ctx, nextVolHandle, volNameBuf, processedPaths, partitionStats, warnings, getVolumePaths, processMountsForVolume, findNextVolume)
-}
-
-func processVolumeLoopWith(
-	ctx context.Context,
-	nextVolHandle uintptr,
-	volNameBuf []uint16,
-	processedPaths map[string]struct{},
-	partitionStats []PartitionStat,
-	warnings Warnings,
-	getVolumePathsFn func([]uint16) ([]string, error),
-	processMountsForVolumeFn func(context.Context, []string, map[string]struct{}, []PartitionStat, Warnings) []PartitionStat,
-	findNextVolumeFn func(uintptr, []uint16) (bool, error),
-) []PartitionStat {
 	for {
 		select {
 		case <-ctx.Done():
@@ -162,19 +148,22 @@ func processVolumeLoopWith(
 		default:
 		}
 
-		mounts, err := getVolumePathsFn(volNameBuf)
+		mounts, err := getVolumePaths(volNameBuf)
 		if err != nil {
 			warnings.Add(fmt.Errorf("failed to find paths for volume %s", windows.UTF16ToString(volNameBuf)))
 		} else {
-			partitionStats = processMountsForVolumeFn(ctx, mounts, processedPaths, partitionStats, warnings)
+			partitionStats = processMountsForVolume(ctx, mounts, processedPaths, partitionStats, warnings)
 		}
 
 		volNameBuf = make([]uint16, maxVolumeNameLength)
-		done, err := findNextVolumeFn(nextVolHandle, volNameBuf)
-		if done {
-			break
-		}
-		if err != nil {
+		if volRet, _, err := procFindNextVolumeW.Call(
+			nextVolHandle,
+			uintptr(unsafe.Pointer(&volNameBuf[0])),
+			uintptr(maxVolumeNameLength)); err != nil && volRet == 0 {
+			var errno syscall.Errno
+			if errors.As(err, &errno) && errno == windows.ERROR_NO_MORE_FILES {
+				break
+			}
 			warnings.Add(fmt.Errorf("failed to find next volume: %w", err))
 			if len(warnings.List) > maxWarningsInDrive {
 				break
@@ -182,22 +171,6 @@ func processVolumeLoopWith(
 		}
 	}
 	return partitionStats
-}
-
-func findNextVolume(nextVolHandle uintptr, volNameBuf []uint16) (bool, error) {
-	volRet, _, err := procFindNextVolumeW.Call(
-		nextVolHandle,
-		uintptr(unsafe.Pointer(&volNameBuf[0])),
-		uintptr(maxVolumeNameLength),
-	)
-	if err != nil && volRet == 0 {
-		var errno syscall.Errno
-		if errors.As(err, &errno) && errno == windows.ERROR_NO_MORE_FILES {
-			return true, nil
-		}
-		return false, err
-	}
-	return false, nil
 }
 
 func processMountsForVolume(ctx context.Context, mounts []string, processedPaths map[string]struct{}, partitionStats []PartitionStat, warnings Warnings) []PartitionStat {
