@@ -4,9 +4,11 @@ package process
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/shirou/gopsutil/v4/cpu"
 	"github.com/shirou/gopsutil/v4/internal/common"
@@ -80,8 +82,16 @@ func (p *Process) CmdlineSliceWithContext(ctx context.Context) ([]string, error)
 	return p.fillSliceFromCmdlineWithContext(ctx)
 }
 
-func (*Process) createTimeWithContext(_ context.Context) (int64, error) {
-	return 0, common.ErrNotImplementedError
+func (p *Process) createTimeWithContext(ctx context.Context) (int64, error) {
+	v, err := p.getPsField(ctx, "etime")
+	if err != nil {
+		return 0, err
+	}
+	t, err := parsePsTime(v)
+	if err != nil {
+		return 0, err
+	}
+	return (time.Now().Unix() - int64(t)) * 1000, nil
 }
 
 func (p *Process) CwdWithContext(ctx context.Context) (string, error) {
@@ -149,16 +159,41 @@ func (*Process) ThreadsWithContext(_ context.Context) (map[int32]*cpu.TimesStat,
 	return nil, common.ErrNotImplementedError
 }
 
-func (*Process) TimesWithContext(_ context.Context) (*cpu.TimesStat, error) {
-	return nil, common.ErrNotImplementedError
+func (p *Process) TimesWithContext(ctx context.Context) (*cpu.TimesStat, error) {
+	v, err := p.getPsField(ctx, "time")
+	if err != nil {
+		return nil, err
+	}
+	t, err := parsePsTime(v)
+	if err != nil {
+		return nil, err
+	}
+	return &cpu.TimesStat{
+		User: t,
+	}, nil
 }
 
 func (*Process) CPUAffinityWithContext(_ context.Context) ([]int32, error) {
 	return nil, common.ErrNotImplementedError
 }
 
-func (*Process) MemoryInfoWithContext(_ context.Context) (*MemoryInfoStat, error) {
-	return nil, common.ErrNotImplementedError
+func (p *Process) MemoryInfoWithContext(ctx context.Context) (*MemoryInfoStat, error) {
+	rss, err := p.getPsField(ctx, "rss")
+	if err != nil {
+		return nil, err
+	}
+	vms, err := p.getPsField(ctx, "vsz")
+	if err != nil {
+		return nil, err
+	}
+
+	rssUint, _ := strconv.ParseUint(rss, 10, 64)
+	vmsUint, _ := strconv.ParseUint(vms, 10, 64)
+
+	return &MemoryInfoStat{
+		RSS: rssUint * 1024,
+		VMS: vmsUint * 1024,
+	}, nil
 }
 
 func (*Process) MemoryInfoExWithContext(_ context.Context) (*MemoryInfoExStat, error) {
@@ -301,4 +336,59 @@ func readPidsFromDir(path string) ([]int32, error) {
 	}
 
 	return ret, nil
+}
+
+func parsePsTime(s string) (float64, error) {
+	var days, hours, mins, secs float64
+	var err error
+
+	if strings.Contains(s, "-") {
+		parts := strings.Split(s, "-")
+		days, err = strconv.ParseFloat(parts[0], 64)
+		if err != nil {
+			return 0, err
+		}
+		s = parts[1]
+	}
+
+	parts := strings.Split(s, ":")
+	if len(parts) == 3 {
+		hours, err = strconv.ParseFloat(parts[0], 64)
+		if err != nil {
+			return 0, err
+		}
+		mins, err = strconv.ParseFloat(parts[1], 64)
+		if err != nil {
+			return 0, err
+		}
+		secs, err = strconv.ParseFloat(parts[2], 64)
+		if err != nil {
+			return 0, err
+		}
+	} else if len(parts) == 2 {
+		mins, err = strconv.ParseFloat(parts[0], 64)
+		if err != nil {
+			return 0, err
+		}
+		secs, err = strconv.ParseFloat(parts[1], 64)
+		if err != nil {
+			return 0, err
+		}
+	} else {
+		return 0, fmt.Errorf("invalid time format: %s", s)
+	}
+
+	return days*86400 + hours*3600 + mins*60 + secs, nil
+}
+
+func (p *Process) getPsField(ctx context.Context, field string) (string, error) {
+	out, err := invoke.CommandWithContext(ctx, "ps", "-o", field, "-p", strconv.Itoa(int(p.Pid)))
+	if err != nil {
+		return "", err
+	}
+	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
+	if len(lines) < 2 {
+		return "", fmt.Errorf("unexpected ps output: %s", out)
+	}
+	return strings.TrimSpace(lines[1]), nil
 }
