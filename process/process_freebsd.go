@@ -287,6 +287,10 @@ func (p *Process) MemoryInfoWithContext(_ context.Context) (*MemoryInfoStat, err
 	}, nil
 }
 
+func (*Process) SignalsPendingWithContext(_ context.Context) (SignalInfoStat, error) {
+	return SignalInfoStat{}, common.ErrNotImplementedError
+}
+
 func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
 	procs, err := ProcessesWithContext(ctx)
 	if err != nil {
