@@ -201,3 +201,7 @@ func (*Process) UsernameWithContext(_ context.Context) (string, error) {
 func (*Process) EnvironWithContext(_ context.Context) ([]string, error) {
 	return nil, common.ErrNotImplementedError
 }
+
+func (*Process) SignalsPendingWithContext(_ context.Context) (SignalInfoStat, error) {
+	return SignalInfoStat{}, common.ErrNotImplementedError
+}
