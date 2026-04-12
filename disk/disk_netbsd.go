@@ -103,7 +103,7 @@ func IOCountersWithContext(_ context.Context, _ ...string) (map[string]IOCounter
 	return ret, common.ErrNotImplementedError
 }
 
-func UsageWithContext(_ context.Context, path string) (*UsageStat, error) {
+func getUsage(_ context.Context, path string) (*UsageStat, error) {
 	stat := Statvfs{}
 	flag := uint64(1) // ST_WAIT/MNT_WAIT, see sys/fstypes.h
 
