@@ -79,6 +79,8 @@ func parseNetstatI(output string) ([]IOCountersStat, error) {
 }
 
 // parseEntstat extracts BytesSent and BytesRecv from entstat output.
+// The entstat two-column Transmit/Receive format (including the "Bytes:"
+// line) has been stable across AIX 4.3 through 7.3 (over 25 years).
 // The output has a two-column layout with Transmit on the left and Receive
 // on the right, e.g.:
 //
