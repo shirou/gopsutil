@@ -61,6 +61,7 @@ func SwapMemory() (*SwapMemoryStat, error) {
 	return SwapMemoryWithContext(context.Background())
 }
 
+// Reference: https://man.netbsd.org/swapctl.8
 func SwapMemoryWithContext(ctx context.Context) (*SwapMemoryStat, error) {
 	out, err := invoke.CommandWithContext(ctx, "swapctl", "-sk")
 	if err != nil {
