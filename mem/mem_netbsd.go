@@ -71,7 +71,7 @@ func SwapMemoryWithContext(ctx context.Context) (*SwapMemoryStat, error) {
 	var total, used, free uint64
 
 	_, err = fmt.Sscanf(line,
-		"total: %d 1K-blocks allocated, %d used, %d available",
+		"total: %d KBytes allocated, %d KBytes used, %d KBytes available",
 		&total, &used, &free)
 	if err != nil {
 		return nil, errors.New("failed to parse swapctl output")
