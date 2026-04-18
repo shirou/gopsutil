@@ -32,7 +32,7 @@ var portMatch = regexp.MustCompile(`(.*)\.(\d+)$`)
 // loopback (lo0). We detect this via field count and set base accordingly.
 //
 // Reference: https://man.netbsd.org/netstat.1
-func ParseNetstat(output string, mode string, iocs map[string]IOCountersStat) error {
+func ParseNetstat(output, mode string, iocs map[string]IOCountersStat) error {
 	// Minimum field counts when Address is absent.
 	minFields := map[string]int{
 		"inb": 5,
@@ -152,10 +152,10 @@ func IOCountersWithContext(ctx context.Context, pernic bool) ([]IOCountersStat, 
 
 	iocs := make(map[string]IOCountersStat)
 
-	if err = ParseNetstat(string(outBytes), "inb", iocs); err != nil {
+	if err := ParseNetstat(string(outBytes), "inb", iocs); err != nil {
 		return nil, err
 	}
-	if err = ParseNetstat(string(outPackets), "ind", iocs); err != nil {
+	if err := ParseNetstat(string(outPackets), "ind", iocs); err != nil {
 		return nil, err
 	}
 
