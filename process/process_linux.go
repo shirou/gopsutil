@@ -1046,6 +1046,9 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 	}
 	// Indexing from one, as described in `man proc` about the file /proc/[pid]/stat
 	fields := splitProcStat(contents)
+	if len(fields) < 23 {
+		return 0, 0, nil, 0, 0, 0, nil, fmt.Errorf("malformed stat file: expected at least 23 fields, got %d", len(fields))
+	}
 
 	terminal, err := strconv.ParseUint(fields[7], 10, 64)
 	if err != nil {
