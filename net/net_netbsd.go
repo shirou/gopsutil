@@ -17,7 +17,7 @@ import (
 
 var portMatch = regexp.MustCompile(`(.*)\.(\d+)$`)
 
-// ParseNetstat parses the output of "netstat -inb" (mode "inb") or
+// parseNetstat parses the output of "netstat -inb" (mode "inb") or
 // "netstat -ind" (mode "ind") and merges results into iocs.
 //
 // NetBSD netstat column layout (0-indexed fields after strings.Fields):
@@ -32,7 +32,7 @@ var portMatch = regexp.MustCompile(`(.*)\.(\d+)$`)
 // loopback (lo0). We detect this via field count and set base accordingly.
 //
 // Reference: https://man.netbsd.org/netstat.1
-func ParseNetstat(output, mode string, iocs map[string]IOCountersStat) error {
+func parseNetstat(output, mode string, iocs map[string]IOCountersStat) error {
 	// Minimum field counts when Address is absent.
 	minFields := map[string]int{
 		"inb": 5,
@@ -152,10 +152,10 @@ func IOCountersWithContext(ctx context.Context, pernic bool) ([]IOCountersStat, 
 
 	iocs := make(map[string]IOCountersStat)
 
-	if err := ParseNetstat(string(outBytes), "inb", iocs); err != nil {
+	if err := parseNetstat(string(outBytes), "inb", iocs); err != nil {
 		return nil, err
 	}
-	if err := ParseNetstat(string(outPackets), "ind", iocs); err != nil {
+	if err := parseNetstat(string(outPackets), "ind", iocs); err != nil {
 		return nil, err
 	}
 
