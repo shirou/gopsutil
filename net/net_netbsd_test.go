@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: BSD-3-Clause
+//go:build netbsd
+
 package net
 
 import (
 	"os"
 	"path/filepath"
-	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,10 +13,6 @@ import (
 )
 
 func TestParseNetstat(t *testing.T) {
-	if runtime.GOOS != "netbsd" {
-		t.SkipNow()
-	}
-
 	tests := []struct {
 		file string
 		mode string
