@@ -116,9 +116,12 @@ func KernelVersionWithContext(ctx context.Context) (version string, err error) {
 }
 
 func KernelArch() (arch string, err error) {
-	out, err := getInvoker().Command("bootinfo", "-y")
+	out, err := getInvoker().Command("getconf", "KERNEL_BITMODE")
 	if err != nil {
-		return "", err
+		out, err = getInvoker().Command("bootinfo", "-y")
+		if err != nil {
+			return "", err
+		}
 	}
 	arch = strings.TrimRight(string(out), "\n")
 
