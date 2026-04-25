@@ -28,6 +28,22 @@ func VirtualMemoryWithContext(ctx context.Context) (*VirtualMemoryStat, error) {
 	return &ret, nil
 }
 
+func SwapDevicesWithContext(_ context.Context) ([]*SwapDevice, error) {
+	ps, err := perfstat.PagingSpaceStat()
+	if err != nil {
+		return nil, err
+	}
+	var ret []*SwapDevice
+	for _, p := range ps {
+		ret = append(ret, &SwapDevice{
+			Name:      p.Name,
+			UsedBytes: uint64(p.MBUsed) * 1024 * 1024,
+			FreeBytes: uint64(p.MBSize-p.MBUsed) * 1024 * 1024,
+		})
+	}
+	return ret, nil
+}
+
 func SwapMemoryWithContext(ctx context.Context) (*SwapMemoryStat, error) {
 	m, err := perfstat.MemoryTotalStat()
 	if err != nil {
