@@ -1,0 +1,180 @@
+icmp:
+	0 calls to icmp_error
+	0 errors not generated because old message was icmp
+	Output histogram:
+		destination unreachable: 0
+	0 messages with bad code fields
+	0 messages < minimum length
+	0 bad checksums
+	0 messages with bad length
+	Input histogram:
+		destination unreachable: 0
+	0 message responses generated
+igmp:
+	0 messages received
+	0 messages received with too few bytes
+	0 messages received with bad checksum
+	0 membership queries received
+	0 membership queries received with invalid field(s)
+	0 membership reports received
+	0 membership reports received with invalid field(s)
+	0 membership reports received for groups to which we belong
+	0 membership reports sent
+tcp:
+	1001 packets sent
+		800 data packets (123456 bytes)
+		303 data packets (9876 bytes) retransmitted
+		100 ack-only packets (42 delayed)
+		0 URG only packets
+		0 window probe packets
+		0 window update packets
+		2 control packets
+		0 large sends
+		0 bytes sent using largesend
+		0 bytes is the biggest largesend
+	2002 packets received
+		700 acks (for 123456 bytes)
+		0 duplicate acks
+		0 acks for unsent data
+		1200 packets (987654 bytes) received in-sequence
+		0 completely duplicate packets (0 bytes)
+		0 old duplicate packets
+		0 packets with some dup. data (0 bytes duped)
+		0 out-of-order packets (0 bytes)
+		0 packets (0 bytes) of data after window
+		0 window probes
+		0 window update packets
+		0 packets received after close
+		0 packets with bad hardware assisted checksum
+		707 discarded for bad checksums
+		801 discarded for bad header offset fields
+		802 discarded because packet too short
+		5 discarded by listeners
+		0 discarded due to listener's queue full
+		600 ack packet headers correctly predicted
+		900 data packet headers correctly predicted
+	404 connection requests
+	505 connection accepts
+	600 connections established (including accepts)
+	100 connections closed (including 10 drops)
+	0 connections with ECN capability
+	0 times responded to ECN
+	606 embryonic connections dropped
+	500 segments updated rtt (of 400 attempts)
+	0 segments with congestion window reduced bit set
+	0 segments with congestion experienced bit set
+	0 resends due to path MTU discovery
+	0 path MTU discovery terminations due to retransmits
+	0 retransmit timeouts
+		0 connections dropped by rexmit timeout
+	0 fast retransmits
+		0 when congestion window less than 4 segments
+	0 newreno retransmits
+	0 times avoided false fast retransmits
+	0 persist timeouts
+		0 connections dropped due to persist timeout
+	0 keepalive timeouts
+		0 keepalive probes sent
+		0 connections dropped by keepalive
+	0 times SACK blocks array is extended
+	0 times SACK holes array is extended
+	0 packets dropped due to memory allocation failure
+	0 connections in timewait reused
+	0 delayed ACKs for SYN
+	0 delayed ACKs for FIN
+	0 send_and_disconnects
+	0 spliced connections
+	0 spliced connections closed
+	0 spliced connections reset
+	0 spliced connections timeout
+	0 spliced connections persist timeout
+	0 spliced connections keepalive timeout
+	0 TCP checksum offload disabled during retransmit
+	0 Connections dropped due to bad ACKs
+	0 Connections dropped due to duplicate SYN packets
+	0 fastpath loopback connections
+	0 fastpath loopback sent packets (0 bytes)
+	0 fastpath loopback received packets (0 bytes)
+	0 fake SYN segments dropped
+	0 fake RST segments dropped
+	0 data injection segments dropped
+	0 TCPTR max connections dropped
+	0 TCPTR connections dropped for no memory
+	0 TCPTR maximum per host connections dropped
+	0 connections dropped due to max assembly queue depth
+	0 exhausted ephemeral ports errors
+udp:
+	9999 datagrams received
+	110 incomplete headers
+	220 bad data length fields
+	5500 bad checksums
+	3300 dropped due to no socket
+	4400 broadcast/multicast datagrams dropped due to no socket
+	6600 socket buffer overflows
+	1100 delivered
+	2200 datagrams output
+	0 exhausted ephemeral ports errors
+ip:
+	50000 total packets received
+	11 bad header checksums
+	22 with size smaller than minimum
+	33 with data size < data length
+	44 with header length < data size
+	55 with data length < header length
+	66 with bad options
+	77 with incorrect version number
+	900 fragments received
+	500 fragments dropped (dup or out of space)
+	300 fragments dropped after timeout
+	200 packets reassembled ok
+	40000 packets for this host
+	9000 packets for unknown/unsupported protocol
+	100 packets forwarded
+	1234 packets not forwardable
+	0 redirects sent
+	30000 packets sent from this host
+	0 packets sent with fabricated ip header
+	800 output packets dropped due to no bufs, etc.
+	700 output packets discarded due to no route
+	0 output datagrams fragmented
+	600 fragments created
+	0 datagrams that can't be fragmented
+	0 IP Multicast packets dropped due to no receiver
+	0 ipintrq overflows
+	0 with illegal source
+	0 packets processed by threads
+	0 packets dropped by threads
+	0 packets dropped due to the full socket receive buffer
+	0 incoming packets dropped due to MLS filters
+	0 packets not sent due to MLS filters
+
+ipv6:
+	60000 total packets received
+	Input histogram:
+		UDP: 30000
+		ICMP v6: 25000
+	11 with size smaller than minimum
+	22 with data size < data length
+	33 with incorrect version number
+	44 with illegal source
+	101 input packets without enough memory
+	990 fragments received
+	550 fragments dropped (dup or out of space)
+	330 fragments dropped after timeout
+	220 packets reassembled ok
+	55000 packets for this host
+	880 packets for unknown/unsupported protocol
+	110 packets forwarded
+	0 packets not forwardable
+	0 too big packets not forwarded
+	45000 packets sent from this host
+	0 packets sent with fabricated ipv6 header
+	333 output packets dropped due to no bufs, etc.
+	444 output packets without enough memory
+	770 output packets discarded due to no route
+	0 output datagrams fragmented
+	660 fragments created
+	0 packets dropped due to the full socket receive buffer
+	0 packets not delivered due to bad raw IPv6 checksum
+	0 incoming packets dropped due to MLS filters
+	0 packets not sent due to MLS filters
