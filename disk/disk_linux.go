@@ -359,6 +359,14 @@ func parseFieldsOnMountinfo(ctx context.Context, lines []string, all bool, filen
 		}
 		fsType := fields[0]
 		mntSrc := fields[1]
+		superOpts := []string{}
+		if len(fields) >= 3 {
+			superOpts = strings.Split(fields[2], ",")
+		}
+		// Since Linux 2.6.16, read-only can be set independently on the
+		// mount point and the filesystem superblock. The mount is writable
+		// only when both option sets are read-write.
+		mountOpts = effectiveMountOpts(mountOpts, superOpts)
 		isBind := false
 		// Per fstab(5), the device can be any string for non-storage-backed filesystems.
 		if !all && !strings.HasPrefix(mntSrc, "/") {
@@ -419,6 +427,49 @@ func parseFieldsOnMountinfo(ctx context.Context, lines []string, all bool, filen
 		ret = append(ret, d)
 	}
 	return ret, nil
+}
+
+func effectiveMountOpts(mountOpts, superOpts []string) []string {
+	mode := effectiveReadWriteMode(mountOpts, superOpts)
+	if mode == "" {
+		return mountOpts
+	}
+
+	updated := make([]string, 0, len(mountOpts)+1)
+	modeSet := false
+	for _, opt := range mountOpts {
+		if opt == "ro" || opt == "rw" {
+			if !modeSet {
+				updated = append(updated, mode)
+				modeSet = true
+			}
+			continue
+		}
+		updated = append(updated, opt)
+	}
+	if !modeSet {
+		updated = append([]string{mode}, updated...)
+	}
+	return updated
+}
+
+func effectiveReadWriteMode(mountOpts, superOpts []string) string {
+	if containsMountOpt(mountOpts, "ro") || containsMountOpt(superOpts, "ro") {
+		return "ro"
+	}
+	if containsMountOpt(mountOpts, "rw") && containsMountOpt(superOpts, "rw") {
+		return "rw"
+	}
+	return ""
+}
+
+func containsMountOpt(opts []string, opt string) bool {
+	for _, o := range opts {
+		if o == opt {
+			return true
+		}
+	}
+	return false
 }
 
 // getFileSystems returns supported filesystems from /proc/filesystems
