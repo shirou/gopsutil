@@ -53,11 +53,10 @@ linters:
       enable-all: true
     gomodguard_v2:
       blocked:
-        modules:
-          - io/ioutil:
-              recommendations:
-                - io
-                - os
+        - module: io/ioutil
+          recommendations:
+            - io
+            - os
     gosec:
       excludes:
         - G115
