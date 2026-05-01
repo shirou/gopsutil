@@ -152,6 +152,18 @@ func Percent(interval time.Duration, percpu bool) ([]float64, error) {
 }
 
 func PercentWithContext(ctx context.Context, interval time.Duration, percpu bool) ([]float64, error) {
+	// AIX nocgo TimesWithContext returns instantaneous percentages (not
+	// cumulative ticks), so the two-snapshot delta math does not apply.
+	// aixPercent calls sar directly with the requested interval as the
+	// measurement window. The CGO build returns ErrNotImplementedError
+	// here and falls through to the standard delta-based calculation
+	// (since CGO TimesWithContext returns cumulative counters from perfstat).
+	if runtime.GOOS == "aix" {
+		if ret, err := aixPercent(ctx, interval, percpu); !errors.Is(err, common.ErrNotImplementedError) {
+			return ret, err
+		}
+	}
+
 	if interval <= 0 {
 		return percentUsedFromLastCallWithContext(ctx, percpu)
 	}
@@ -180,6 +192,14 @@ func percentUsedFromLastCall(percpu bool) ([]float64, error) {
 }
 
 func percentUsedFromLastCallWithContext(ctx context.Context, percpu bool) ([]float64, error) {
+	// AIX nocgo: sar returns percentages directly, no delta math needed.
+	// Use a 1-second default window when no interval is specified.
+	if runtime.GOOS == "aix" {
+		if ret, err := aixPercent(ctx, time.Second, percpu); !errors.Is(err, common.ErrNotImplementedError) {
+			return ret, err
+		}
+	}
+
 	cpuTimes, err := TimesWithContext(ctx, percpu)
 	if err != nil {
 		return nil, err
