@@ -19,7 +19,7 @@ linters:
     - errorlint
     - fatcontext
     - gocritic
-    - gomodguard
+    - gomodguard_v2
     - gosec
     - govet
     - importas
@@ -51,7 +51,7 @@ linters:
         - tooManyResultsChecker
         - unnamedResult
       enable-all: true
-    gomodguard:
+    gomodguard_v2:
       blocked:
         modules:
           - io/ioutil:
