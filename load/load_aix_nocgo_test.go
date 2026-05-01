@@ -42,13 +42,12 @@ func TestMiscWithContext_ProcessStates(t *testing.T) {
 	//   Total = 8
 	psOutput := "ST\nA\nA\nI\nW\nZ\nT\nA\nW\n"
 
-	origInvoke := invoke
-	invoke = mockInvoker{
+	testInvoker = mockInvoker{
 		output: map[string][]byte{
 			"ps -e -o state": []byte(psOutput),
 		},
 	}
-	defer func() { invoke = origInvoke }()
+	defer func() { testInvoker = nil }()
 
 	misc, err := MiscWithContext(context.Background())
 	require.NoError(t, err)
