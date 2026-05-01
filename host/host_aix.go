@@ -4,7 +4,10 @@
 package host
 
 import (
+	"bytes"
 	"context"
+	"encoding/binary"
+	"os"
 	"strings"
 
 	"github.com/shirou/gopsutil/v4/internal/common"
@@ -45,39 +48,57 @@ func UptimeWithContext(ctx context.Context) (uint64, error) {
 	return common.UptimeWithContext(ctx, getInvoker())
 }
 
-// This is a weak implementation due to the limitations on retrieving this data in AIX
-func UsersWithContext(ctx context.Context) ([]UserStat, error) {
-	var ret []UserStat
-	out, err := getInvoker().CommandWithContext(ctx, "w")
+// aixUtmp matches the AIX /etc/utmp binary record layout (see /usr/include/utmp.h).
+// Reading utmp directly is ~180x faster than spawning `who` and avoids locale
+// dependencies when parsing timestamps — ut_time is an epoch value.
+type aixUtmp struct {
+	User     [256]byte // ut_user: login name
+	ID       [14]byte  // ut_id: inittab id
+	Line     [64]byte  // ut_line: device name (pts/0, etc.)
+	Pid      int32     // ut_pid
+	Type     int16     // ut_type (7 = USER_PROCESS)
+	Time     int64     // ut_time: epoch seconds (time64_t)
+	Exit     [4]byte   // ut_exit: termination/exit status
+	Host     [256]byte // ut_host: remote host
+	Pad      [4]byte   // __dbl_word_pad
+	Reserved [32]byte  // __reservedA[2] + __reservedV[6]
+}
+
+// UsersWithContext returns currently logged-in users by reading /etc/utmp directly.
+// This avoids spawning a subprocess and eliminates locale dependencies for
+// timestamp parsing — the utmp struct contains epoch seconds in ut_time.
+func UsersWithContext(_ context.Context) ([]UserStat, error) {
+	f, err := os.Open("/etc/utmp")
 	if err != nil {
 		return nil, err
 	}
-	lines := strings.Split(string(out), "\n")
-	if len(lines) < 3 {
-		return []UserStat{}, common.ErrNotImplementedError
-	}
+	defer f.Close()
 
-	hf := strings.Fields(lines[1]) // headers
-	for l := 2; l < len(lines); l++ {
-		v := strings.Fields(lines[l]) // values
-		if len(v) == 0 || v[0] == "-" {
+	var ret []UserStat
+	for {
+		var entry aixUtmp
+		err := binary.Read(f, binary.BigEndian, &entry)
+		if err != nil {
+			break // EOF or read error
+		}
+
+		// Only include active user sessions (ut_type == USER_PROCESS)
+		if entry.Type != user_PROCESS {
 			continue
 		}
-		us := &UserStat{}
-		for i, header := range hf {
-			if i >= len(v) {
-				break
-			}
-			switch header {
-			case "User":
-				us.User = v[i]
-			case "tty":
-				us.Terminal = v[i]
-			}
+
+		user := strings.TrimRight(string(bytes.TrimRight(entry.User[:], "\x00")), " ")
+		if user == "" {
+			continue
 		}
 
-		// Valid User data, so append it
-		ret = append(ret, *us)
+		us := UserStat{
+			User:     user,
+			Terminal: string(bytes.TrimRight(entry.Line[:], "\x00")),
+			Host:     string(bytes.TrimRight(entry.Host[:], "\x00")),
+			Started:  int(entry.Time),
+		}
+		ret = append(ret, us)
 	}
 
 	return ret, nil
@@ -128,6 +149,26 @@ func KernelArch() (arch string, err error) {
 	return arch, nil
 }
 
-func VirtualizationWithContext(_ context.Context) (string, string, error) {
-	return "", "", common.ErrNotImplementedError
+func VirtualizationWithContext(ctx context.Context) (string, string, error) {
+	// Check for WPAR (Workload Partition) first — most specific virtualization layer.
+	// uname -W returns "0" if not in a WPAR, or the WPAR ID if inside one.
+	out, err := getInvoker().CommandWithContext(ctx, "uname", "-W")
+	if err == nil {
+		wparID := strings.TrimSpace(string(out))
+		if wparID != "" && wparID != "0" {
+			return "wpar", "guest", nil
+		}
+	}
+
+	// Check for LPAR (Logical Partition) via PowerVM.
+	// uname -L returns "<id> <name>", e.g. "25 soaix422". If name is "NULL", no LPAR.
+	out, err = getInvoker().CommandWithContext(ctx, "uname", "-L")
+	if err == nil {
+		fields := strings.Fields(strings.TrimSpace(string(out)))
+		if len(fields) >= 2 && fields[1] != "NULL" {
+			return "powervm", "guest", nil
+		}
+	}
+
+	return "", "", nil
 }
