@@ -79,6 +79,24 @@ func Test_parseFieldsOnMountinfo_multiMount(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
+func Test_parseFieldsOnMountinfo_effectiveReadWriteMode(t *testing.T) {
+	lines := []string{
+		"36 35 253:0 / / rw,relatime - ext4 /dev/mapper/vg1-lv_root ro,seclabel,relatime,commit=60,data=ordered",
+		"37 35 253:1 / /mnt/readonly ro,relatime - ext4 /dev/mapper/vg1-lv_ro rw,seclabel,relatime,commit=60,data=ordered",
+		"38 35 253:2 / /mnt/readwrite rw,relatime - ext4 /dev/mapper/vg1-lv_rw rw,seclabel,relatime,commit=60,data=ordered",
+	}
+
+	actual, err := parseFieldsOnMountinfo(context.Background(), lines, true, "")
+	require.NoError(t, err)
+
+	expected := []PartitionStat{
+		{Device: "/dev/mapper/vg1-lv_root", Mountpoint: "/", Fstype: "ext4", Opts: []string{"ro", "relatime"}},
+		{Device: "/dev/mapper/vg1-lv_ro", Mountpoint: "/mnt/readonly", Fstype: "ext4", Opts: []string{"ro", "relatime"}},
+		{Device: "/dev/mapper/vg1-lv_rw", Mountpoint: "/mnt/readwrite", Fstype: "ext4", Opts: []string{"rw", "relatime"}},
+	}
+	assert.Equal(t, expected, actual)
+}
+
 func Test_parseFieldsOnMounts(t *testing.T) {
 	fs := []string{"sysfs", "tmpfs"}
 
