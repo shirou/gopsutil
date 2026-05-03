@@ -11,6 +11,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -454,22 +455,13 @@ func effectiveMountOpts(mountOpts, superOpts []string) []string {
 }
 
 func effectiveReadWriteMode(mountOpts, superOpts []string) string {
-	if containsMountOpt(mountOpts, "ro") || containsMountOpt(superOpts, "ro") {
+	if slices.Contains(mountOpts, "ro") || slices.Contains(superOpts, "ro") {
 		return "ro"
 	}
-	if containsMountOpt(mountOpts, "rw") && containsMountOpt(superOpts, "rw") {
+	if slices.Contains(mountOpts, "rw") && slices.Contains(superOpts, "rw") {
 		return "rw"
 	}
 	return ""
-}
-
-func containsMountOpt(opts []string, opt string) bool {
-	for _, o := range opts {
-		if o == opt {
-			return true
-		}
-	}
-	return false
 }
 
 // getFileSystems returns supported filesystems from /proc/filesystems
