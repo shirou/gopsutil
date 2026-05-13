@@ -133,7 +133,7 @@ func UsageWithContext(_ context.Context, path string) (*UsageStat, error) {
 		Path:        path,
 		Fstype:      getFsType(stat),
 		Total:       (uint64(stat.F_blocks) * uint64(bsize)),
-		Free:        (uint64(stat.F_bavail) * uint64(bsize)),
+		Free:        (uint64(stat.F_bfree) * uint64(bsize)),
 		InodesTotal: (uint64(stat.F_files)),
 		InodesFree:  (uint64(stat.F_ffree)),
 	}
