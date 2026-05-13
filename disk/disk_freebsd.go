@@ -161,7 +161,7 @@ func parsedevstat(buf []byte) (devstat, error) {
 	return ds, nil
 }
 
-func getFsType(stat unix.Statfs_t) string {
+func getFsType(stat *unix.Statfs_t) string {
 	return common.ByteToString(stat.Fstypename[:])
 }
 
