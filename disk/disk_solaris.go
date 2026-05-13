@@ -199,7 +199,7 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 	return ret, nil
 }
 
-func UsageWithContext(_ context.Context, path string) (*UsageStat, error) {
+func getUsage(_ context.Context, path string) (*UsageStat, error) {
 	statvfs := unix.Statvfs_t{}
 	if err := unix.Statvfs(path, &statvfs); err != nil {
 		return nil, fmt.Errorf("unable to call statvfs(2) on %q: %w", path, err)
