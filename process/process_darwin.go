@@ -375,7 +375,12 @@ func (p *Process) cmdlineSlice() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return parseCmdline(pargs[unsafe.Sizeof(int(0)):], nargs), nil
+	// procArgs reads nargs as a 4-byte uint32; skip exactly those 4 bytes
+	// (matches Apple's ps using sizeof(nargs)). The previous code used
+	// unsafe.Sizeof(int(0)) which is 8 on 64-bit and would discard the
+	// first 4 bytes of exec_path — harmless only because chunks[0] is
+	// dropped, but logically wrong.
+	return parseCmdline(pargs[4:], nargs), nil
 }
 
 // parseCmdline extracts argv from the kern.procargs2 buffer with the leading
@@ -386,6 +391,12 @@ func (p *Process) cmdlineSlice() ([]string, error) {
 // Empty argv elements within the nargs count are preserved — skipping them
 // would advance past argv[nargs-1] into envp, leaking environment values
 // (potentially secrets) into Cmdline output.
+//
+// Known limitation: a process whose argv[0] is itself an empty string is
+// indistinguishable from padding by this parser, since XNU does not expose
+// the exec/argv alignment boundary. Such a process will still see one envp
+// entry leak. Fixing it requires libgetargv-style alignment math against
+// the XNU exec layout, which is out of scope for this change.
 func parseCmdline(args []byte, nargs int) []string {
 	chunks := bytes.Split(args, []byte{0})
 	if len(chunks) <= 1 {
