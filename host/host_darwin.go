@@ -26,7 +26,7 @@ func HostIDWithContext(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	for _, line := range strings.Split(string(out), "\n") {
+	for line := range strings.SplitSeq(string(out), "\n") {
 		if strings.Contains(line, "IOPlatformUUID") {
 			parts := strings.SplitAfter(line, `" = "`)
 			if len(parts) == 2 {
