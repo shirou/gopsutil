@@ -321,11 +321,11 @@ func (p *Process) PpidWithContext(_ context.Context) (int32, error) {
 }
 
 func (p *Process) NameWithContext(ctx context.Context) (string, error) {
-	if p.name != "" {
-		return p.name, nil
-	}
 	if p.Pid == 0 {
 		return "System Idle Process", nil
+	}
+	if p.name != "" {
+		return p.name, nil
 	}
 	if p.Pid == 4 {
 		return "System", nil
@@ -592,9 +592,6 @@ func (p *Process) NumFDsWithContext(_ context.Context) (int32, error) {
 }
 
 func (p *Process) NumThreadsWithContext(_ context.Context) (int32, error) {
-	if p.numThreads != 0 {
-		return p.numThreads, nil
-	}
 	ppid, ret, _, err := getFromSnapProcess(p.Pid)
 	if err != nil {
 		return 0, err
@@ -944,6 +941,8 @@ func ProcessesWithContext(ctx context.Context) ([]*Process, error) {
 		return out, fmt.Errorf("could not get Processes %w", err)
 	}
 
+	// Note: The PID enumeration and snapshot creation are separate calls
+	// and may not be perfectly consistent due to timing.
 	snapMap, err := buildSnapProcessMap()
 	if err != nil {
 		return out, fmt.Errorf("could not build process snapshot: %w", err)
