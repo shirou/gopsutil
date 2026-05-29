@@ -48,13 +48,15 @@ func VirtualMemoryWithContext(_ context.Context) (*VirtualMemoryStat, error) {
 	}
 
 	ret := &VirtualMemoryStat{
-		Total:       memInfo.ullTotalPhys,
-		Available:   memInfo.ullAvailPhys,
-		Free:        memInfo.ullAvailPhys,
-		UsedPercent: float64(memInfo.dwMemoryLoad),
+		Total:     memInfo.ullTotalPageFile,
+		Available: memInfo.ullAvailPageFile,
+		Free:      memInfo.ullAvailPageFile,
 	}
 
 	ret.Used = ret.Total - ret.Available
+	if ret.Total > 0 {
+		ret.UsedPercent = float64(ret.Used) / float64(ret.Total) * 100.0
+	}
 	return ret, nil
 }
 
