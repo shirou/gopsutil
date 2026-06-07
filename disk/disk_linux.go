@@ -293,7 +293,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 	}
 
 	// use mountinfo
-	ret, err = parseFieldsOnMountinfo(ctx, lines, all, filename)
+	ret, err = parseFieldsOnMountinfo(ctx, lines, all, fs, filename)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing mountinfo file %s: %w", filename, err)
 	}
@@ -324,7 +324,7 @@ func parseFieldsOnMounts(lines []string, all bool, fs []string) []PartitionStat 
 	return ret
 }
 
-func parseFieldsOnMountinfo(ctx context.Context, lines []string, all bool, filename string) ([]PartitionStat, error) {
+func parseFieldsOnMountinfo(ctx context.Context, lines []string, all bool, fs []string, filename string) ([]PartitionStat, error) {
 	ret := make([]PartitionStat, 0, len(lines))
 	seenDevIDs := make(map[string]string)
 
@@ -369,8 +369,9 @@ func parseFieldsOnMountinfo(ctx context.Context, lines []string, all bool, filen
 		// only when both option sets are read-write.
 		mountOpts = effectiveMountOpts(mountOpts, superOpts)
 		isBind := false
-		// Per fstab(5), the device can be any string for non-storage-backed filesystems.
-		if !all && !strings.HasPrefix(mntSrc, "/") {
+		// When !all, keep only real filesystems (non-"nodev" entries of
+		// /proc/filesystems plus zfs), as parseFieldsOnMounts() does.
+		if !all && !common.StringsHas(fs, fsType) {
 			continue
 		}
 		// Some virtual/non-storage filesystems do still have real sources (e.g. nsfs binds),
@@ -391,7 +392,16 @@ func parseFieldsOnMountinfo(ctx context.Context, lines []string, all bool, filen
 			// Same block device seen before - use the original device path.
 			device = firstDev
 		}
-		if strings.HasPrefix(mntSrc, "/") && rootDir != "/" {
+		// A btrfs subvolume mount has rootDir == its subvol= value and is not a
+		// bind; a bind of a subdirectory has a deeper rootDir than subvol=.
+		isSubvol := false
+		for _, o := range superOpts {
+			if v, ok := strings.CutPrefix(o, "subvol="); ok {
+				isSubvol = rootDir == v
+				break
+			}
+		}
+		if strings.HasPrefix(mntSrc, "/") && rootDir != "/" && !isSubvol {
 			isBind = true
 			mountOpts = append(mountOpts, "bind")
 		}
