@@ -47,9 +47,13 @@ func Test_parseFieldsOnMountinfo(t *testing.T) {
 		},
 	}
 
+	// Real (non-"nodev") filesystems as returned by getFileSystems(); virtual
+	// filesystems such as tmpfs/nsfs/sysfs are intentionally absent.
+	fs := []string{"ext4", "btrfs", "zfs"}
+
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {
-			actual, err := parseFieldsOnMountinfo(context.Background(), lines, c.all, "")
+			actual, err := parseFieldsOnMountinfo(context.Background(), lines, c.all, fs, "")
 			require.NoError(t, err)
 			assert.Equal(t, c.expect, actual)
 		})
@@ -67,7 +71,7 @@ func Test_parseFieldsOnMountinfo_multiMount(t *testing.T) {
 		"1210 1184 259:4 /                                         /host/root         ro,relatime shared:1 - ext4 /dev/nvme0n1p3 rw",
 	}
 
-	actual, err := parseFieldsOnMountinfo(context.Background(), lines, true, "")
+	actual, err := parseFieldsOnMountinfo(context.Background(), lines, true, nil, "")
 	require.NoError(t, err)
 
 	expected := []PartitionStat{
@@ -86,13 +90,48 @@ func Test_parseFieldsOnMountinfo_effectiveReadWriteMode(t *testing.T) {
 		"38 35 253:2 / /mnt/readwrite rw,relatime - ext4 /dev/mapper/vg1-lv_rw rw,seclabel,relatime,commit=60,data=ordered",
 	}
 
-	actual, err := parseFieldsOnMountinfo(context.Background(), lines, true, "")
+	actual, err := parseFieldsOnMountinfo(context.Background(), lines, true, nil, "")
 	require.NoError(t, err)
 
 	expected := []PartitionStat{
 		{Device: "/dev/mapper/vg1-lv_root", Mountpoint: "/", Fstype: "ext4", Opts: []string{"ro", "relatime"}},
 		{Device: "/dev/mapper/vg1-lv_ro", Mountpoint: "/mnt/readonly", Fstype: "ext4", Opts: []string{"ro", "relatime"}},
 		{Device: "/dev/mapper/vg1-lv_rw", Mountpoint: "/mnt/readwrite", Fstype: "ext4", Opts: []string{"rw", "relatime"}},
+	}
+	assert.Equal(t, expected, actual)
+}
+
+// Test_parseFieldsOnMountinfo_issue2100 ensures that, with all=false, zfs
+// filesystems (whose source is a dataset name, not a "/"-prefixed path) and
+// btrfs subvolumes (whose rootDir != "/" but which are not bind mounts) are
+// still reported. See https://github.com/shirou/gopsutil/issues/2100.
+func Test_parseFieldsOnMountinfo_issue2100(t *testing.T) {
+	lines := []string{
+		// btrfs top-level subvolume (rootDir "/", subvol=/)
+		"129 80 0:67 / /mnt/foo rw,noatime - btrfs /dev/sdd rw,space_cache=v2,subvolid=5,subvol=/",
+		// btrfs non-top subvolume (rootDir "/sub1", subvol=/sub1):
+		// must NOT be treated as a bind mount and must survive all=false.
+		"362 80 0:67 /sub1 /mnt/bar rw,relatime - btrfs /dev/sdd rw,space_cache=v2,subvolid=256,subvol=/sub1",
+		// zfs dataset (source "pool/dataset" is not "/"-prefixed): must survive all=false.
+		"363 80 0:70 / /data rw,noatime - zfs pool/dataset rw",
+		// a real bind mount (rootDir != "/", no subvol option): must be dropped when all=false.
+		"364 80 9:127 /bar /foo/bar rw,noatime - ext4 /dev/sda2 rw",
+		// a btrfs bind mount of a subdirectory: rootDir (/sub1/sub) is deeper
+		// than subvol= (/sub1), so it is a bind and must be dropped when all=false.
+		"366 80 0:67 /sub1/sub /mnt/baz rw,relatime - btrfs /dev/sdd rw,space_cache=v2,subvolid=256,subvol=/sub1",
+		// a virtual filesystem: must be dropped when all=false.
+		"365 80 0:22 / /sys rw,nosuid,nodev,noexec,noatime - sysfs sysfs rw",
+	}
+
+	fs := []string{"ext4", "btrfs", "zfs"}
+
+	actual, err := parseFieldsOnMountinfo(context.Background(), lines, false, fs, "")
+	require.NoError(t, err)
+
+	expected := []PartitionStat{
+		{Device: "/dev/sdd", Mountpoint: "/mnt/foo", Fstype: "btrfs", Opts: []string{"rw", "noatime"}},
+		{Device: "/dev/sdd", Mountpoint: "/mnt/bar", Fstype: "btrfs", Opts: []string{"rw", "relatime"}},
+		{Device: "pool/dataset", Mountpoint: "/data", Fstype: "zfs", Opts: []string{"rw", "noatime"}},
 	}
 	assert.Equal(t, expected, actual)
 }
