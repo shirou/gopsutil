@@ -51,7 +51,7 @@ func TestCountsAgainstLscpu(t *testing.T) {
 		}
 		t.Errorf("error executing lscpu: %v", err)
 	}
-	var threadsPerCore, coresPerSocket, sockets, books, drawers int
+	var threadsPerCore, coresPerSocket, sockets, clusters, books, drawers int
 	books = 1
 	drawers = 1
 	lines := strings.Split(string(out), "\n")
@@ -63,15 +63,20 @@ func TestCountsAgainstLscpu(t *testing.T) {
 		switch fields[0] {
 		case "Thread(s) per core":
 			threadsPerCore, _ = strconv.Atoi(strings.TrimSpace(fields[1]))
-		case "Core(s) per socket":
+		case "Core(s) per socket", "Core(s) per cluster":
 			coresPerSocket, _ = strconv.Atoi(strings.TrimSpace(fields[1]))
 		case "Socket(s)", "Socket(s) per book":
 			sockets, _ = strconv.Atoi(strings.TrimSpace(fields[1]))
+		case "Cluster(s)":
+			clusters, _ = strconv.Atoi(strings.TrimSpace(fields[1]))
 		case "Book(s) per drawer":
 			books, _ = strconv.Atoi(strings.TrimSpace(fields[1]))
 		case "Drawer(s)":
 			drawers, _ = strconv.Atoi(strings.TrimSpace(fields[1]))
 		}
+	}
+	if sockets == 0 {
+		sockets = clusters
 	}
 	if threadsPerCore == 0 || coresPerSocket == 0 || sockets == 0 {
 		t.Errorf("missing info from lscpu: threadsPerCore=%d coresPerSocket=%d sockets=%d", threadsPerCore, coresPerSocket, sockets)
