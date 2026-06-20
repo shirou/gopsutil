@@ -106,9 +106,14 @@ func getTemperature(smc *common.SMC, key string) float64 {
 	}
 
 	if result.dataSize == 2 && result.dataType == toUint32(dataTypeSp78) {
-		return 0.0
+		// sp78: signed 7.8 fixed-point — high byte is signed integer degrees,
+		// low byte is fractional part in 1/256 increments.
+		// Previously this branch incorrectly returned 0.0, causing all SMC
+		// temperature sensors on Intel Macs to report 0°C.
+		return float64(int8(result.data[0])) + float64(result.data[1])/256.0
 	}
 
+	// Non-sp78 single-byte readings (legacy/unknown formats)
 	return float64(result.data[0])
 }
 
