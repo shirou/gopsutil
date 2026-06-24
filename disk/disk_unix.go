@@ -22,7 +22,7 @@ func UsageWithContext(_ context.Context, path string) (*UsageStat, error) {
 		Path:        unescapeFstab(path),
 		Fstype:      getFsType(stat),
 		Total:       (uint64(stat.Blocks) * uint64(bsize)),
-		Free:        (uint64(stat.Bavail) * uint64(bsize)),
+		Free:        (uint64(stat.Bfree) * uint64(bsize)),
 		InodesTotal: (uint64(stat.Files)),
 		InodesFree:  (uint64(stat.Ffree)),
 	}
