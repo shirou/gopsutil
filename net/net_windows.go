@@ -395,6 +395,13 @@ func getTCPConnections(family uint32) ([]ConnectionStat, error) {
 		if !errors.Is(err, windows.ERROR_INSUFFICIENT_BUFFER) {
 			return nil, err
 		}
+
+		// Add 4KB padding to account for concurrent connection growth between calls.
+		const padding uint32 = 4 * 1024
+		if size > ^uint32(0)-padding {
+			return nil, fmt.Errorf("GetExtendedTcpTable required buffer size too large: %d", size)
+		}
+		size += padding
 		buf = make([]byte, size)
 	}
 
@@ -478,6 +485,11 @@ func getUDPConnections(family uint32) ([]ConnectionStat, error) {
 		if !errors.Is(err, windows.ERROR_INSUFFICIENT_BUFFER) {
 			return nil, err
 		}
+
+		// Add 4KB padding to account for concurrent connection growth
+		// between the failed API call and the next iteration, preventing
+		// infinite allocation spin-loops that overwhelm the GC.
+		size += 4096
 		buf = make([]byte, size)
 	}
 
