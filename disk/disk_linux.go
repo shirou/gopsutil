@@ -305,6 +305,9 @@ func parseFieldsOnMounts(lines []string, all bool, fs []string) []PartitionStat 
 	ret := make([]PartitionStat, 0, len(lines))
 	for _, line := range lines {
 		fields := strings.Fields(line)
+		if len(fields) < 4 {
+			continue
+		}
 
 		d := PartitionStat{
 			Device:     fields[0],

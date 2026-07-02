@@ -112,6 +112,26 @@ func TestSplitProcStat(t *testing.T) {
 	}
 }
 
+func TestSplitProcStat_malformed(t *testing.T) {
+	// Malformed/truncated stat contents must not panic; splitProcStat
+	// returns nil so callers' field-count checks can reject them.
+	cases := []string{
+		"",             // empty
+		"123",          // no parentheses
+		"123 name S 4", // no parentheses, plain fields
+		"123 (name",    // missing closing paren
+		"name) S 4",    // missing opening paren
+		"123 (name)",   // ')' as final byte, no trailing fields
+	}
+	for _, content := range cases {
+		t.Run(content, func(t *testing.T) {
+			assert.NotPanics(t, func() {
+				_ = splitProcStat([]byte(content))
+			})
+		})
+	}
+}
+
 func TestSplitProcStat_fromFile(t *testing.T) {
 	pids, err := os.ReadDir("testdata/linux/")
 	require.NoError(t, err)
