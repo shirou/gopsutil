@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -166,6 +167,10 @@ func getFsType(stat unix.Statfs_t) string {
 }
 
 func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
+	// Reject names that would be interpreted as command-line options by geom.
+	if strings.HasPrefix(name, "-") {
+		return "", errors.New("invalid device name")
+	}
 	geomOut, err := invoke.CommandWithContext(ctx, "geom", "disk", "list", name)
 	if err != nil {
 		return "", fmt.Errorf("exec geom: %w", err)

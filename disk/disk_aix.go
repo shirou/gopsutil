@@ -23,6 +23,10 @@ func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
 	if strings.HasPrefix(name, "/dev/") {
 		return "", errors.New("devices on /dev are not physical disks on aix")
 	}
+	// Reject names that would be interpreted as command-line options by lscfg.
+	if strings.HasPrefix(name, "-") {
+		return "", errors.New("invalid device name")
+	}
 	out, err := invoke.CommandWithContext(ctx, "lscfg", "-vl", name)
 	if err != nil {
 		return "", err

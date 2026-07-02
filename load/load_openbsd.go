@@ -4,6 +4,7 @@
 package load
 
 import (
+	"fmt"
 	"unsafe"
 
 	"golang.org/x/sys/unix"
@@ -13,6 +14,9 @@ func getForkStat() (forkstat, error) {
 	b, err := unix.SysctlRaw("kern.forkstat")
 	if err != nil {
 		return forkstat{}, err
+	}
+	if len(b) < int(unsafe.Sizeof(forkstat{})) {
+		return forkstat{}, fmt.Errorf("unexpected size: kern.forkstat, %d", len(b))
 	}
 	return *(*forkstat)(unsafe.Pointer((&b[0]))), nil
 }

@@ -218,3 +218,17 @@ func TestParseSwapsFile_EmptyFile(t *testing.T) {
 	_, err := parseSwapsFile(context.Background(), strings.NewReader(""))
 	assert.Error(t, err)
 }
+
+// A data row with too few columns must return an error, not panic.
+func TestParseSwapsFile_ShortDataRow(t *testing.T) {
+	shortRow := "Filename\tType\tSize\tUsed\tPriority\n/dev/dm-2\tpartition\t1024\n"
+	_, err := parseSwapsFile(context.Background(), strings.NewReader(shortRow))
+	assert.Error(t, err)
+}
+
+// A header row with too few columns must return an error, not panic.
+func TestParseSwapsFile_ShortHeader(t *testing.T) {
+	shortHeader := "Filename\tType\tSize\n"
+	_, err := parseSwapsFile(context.Background(), strings.NewReader(shortHeader))
+	assert.Error(t, err)
+}
