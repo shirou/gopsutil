@@ -365,7 +365,7 @@ func getTCPConnections(family uint32) ([]ConnectionStat, error) {
 		return nil, errors.New("faimly must be required")
 	}
 
-	for {
+	for retry := 0; retry < 10; retry++ {
 		switch family {
 		case kindTCP4.family:
 			if len(buf) > 0 {
@@ -395,13 +395,12 @@ func getTCPConnections(family uint32) ([]ConnectionStat, error) {
 		if !errors.Is(err, windows.ERROR_INSUFFICIENT_BUFFER) {
 			return nil, err
 		}
+		if retry == 9 {
+			return nil, errors.New("GetExtendedTcpTable: failed to allocate sufficient buffer after 10 retries")
+		}
 
 		// Add 4KB padding to account for concurrent connection growth between calls.
-		const padding uint32 = 4 * 1024
-		if size > ^uint32(0)-padding {
-			return nil, fmt.Errorf("GetExtendedTcpTable required buffer size too large: %d", size)
-		}
-		size += padding
+		size += 4096
 		buf = make([]byte, size)
 	}
 
@@ -453,7 +452,7 @@ func getUDPConnections(family uint32) ([]ConnectionStat, error) {
 		return nil, errors.New("faimly must be required")
 	}
 
-	for {
+	for retry := 0; retry < 10; retry++ {
 		switch family {
 		case kindUDP4.family:
 			if len(buf) > 0 {
@@ -485,10 +484,11 @@ func getUDPConnections(family uint32) ([]ConnectionStat, error) {
 		if !errors.Is(err, windows.ERROR_INSUFFICIENT_BUFFER) {
 			return nil, err
 		}
+		if retry == 9 {
+			return nil, errors.New("GetExtendedUdpTable: failed to allocate sufficient buffer after 10 retries")
+		}
 
-		// Add 4KB padding to account for concurrent connection growth
-		// between the failed API call and the next iteration, preventing
-		// infinite allocation spin-loops that overwhelm the GC.
+		// Add 4KB padding to account for concurrent connection growth between calls.
 		size += 4096
 		buf = make([]byte, size)
 	}
