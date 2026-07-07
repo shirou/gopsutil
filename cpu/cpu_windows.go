@@ -122,18 +122,19 @@ func TimesWithContext(_ context.Context, percpu bool) ([]TimesStat, error) {
 		return nil, err
 	}
 
-	LOT := float64(0.0000001)
-	HIT := (LOT * 4294967296.0)
-	idle := ((HIT * float64(lpIdleTime.DwHighDateTime)) + (LOT * float64(lpIdleTime.DwLowDateTime)))
-	user := ((HIT * float64(lpUserTime.DwHighDateTime)) + (LOT * float64(lpUserTime.DwLowDateTime)))
-	kernel := ((HIT * float64(lpKernelTime.DwHighDateTime)) + (LOT * float64(lpKernelTime.DwLowDateTime)))
-	system := (kernel - idle)
+	// Do all arithmetic on the integer tick counts and convert to float64
+	// only once, mirroring perCPUTimes. Converting each FILETIME half to
+	// float64 first loses precision on large counters and can make the
+	// returned values non-monotonic. See issue #2110.
+	idle := uint64(lpIdleTime.DwHighDateTime)<<32 | uint64(lpIdleTime.DwLowDateTime)
+	user := uint64(lpUserTime.DwHighDateTime)<<32 | uint64(lpUserTime.DwLowDateTime)
+	kernel := uint64(lpKernelTime.DwHighDateTime)<<32 | uint64(lpKernelTime.DwLowDateTime)
 
 	ret = append(ret, TimesStat{
 		CPU:    "cpu-total",
-		Idle:   float64(idle),
-		User:   float64(user),
-		System: float64(system),
+		Idle:   float64(idle) / ClocksPerSec,
+		User:   float64(user) / ClocksPerSec,
+		System: float64(kernel-idle) / ClocksPerSec, // kernel time includes idle time
 	})
 	return ret, nil
 }
