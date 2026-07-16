@@ -6,7 +6,9 @@ package process
 import (
 	"context"
 	"os"
+	"path/filepath"
 	"testing"
+	"unsafe"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -123,4 +125,43 @@ func BenchmarkNumFDs(b *testing.B) {
 			b.Fatal(err)
 		}
 	}
+}
+
+func TestRusageInfoV2Layout(t *testing.T) {
+	const expectedSize = 160
+	if size := unsafe.Sizeof(rusageInfoV2{}); size != expectedSize {
+		t.Fatalf("rusage_info_v2 size: got %d, want %d", size, expectedSize)
+	}
+}
+
+func TestIOCountersDarwinDiskBytes(t *testing.T) {
+	p, err := NewProcess(int32(os.Getpid()))
+	require.NoError(t, err)
+
+	before, err := p.IOCounters()
+	require.NoError(t, err)
+	assert.Equal(t, before.ReadBytes, before.DiskReadBytes)
+	assert.Equal(t, before.WriteBytes, before.DiskWriteBytes)
+
+	path := filepath.Join(t.TempDir(), "disk-io-test")
+	file, err := os.Create(path)
+	require.NoError(t, err)
+	data := make([]byte, 4*1024*1024)
+	_, err = file.Write(data)
+	require.NoError(t, err)
+	require.NoError(t, file.Sync())
+	require.NoError(t, file.Close())
+
+	after, err := p.IOCounters()
+	require.NoError(t, err)
+	assert.Greater(t, after.WriteBytes, before.WriteBytes)
+	assert.Equal(t, after.ReadBytes, after.DiskReadBytes)
+	assert.Equal(t, after.WriteBytes, after.DiskWriteBytes)
+}
+
+func TestIOCountersDarwinNonExistentProcess(t *testing.T) {
+	p := &Process{Pid: 999999}
+
+	_, err := p.IOCounters()
+	require.ErrorIs(t, err, ErrorProcessNotRunning)
 }

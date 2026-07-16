@@ -234,7 +234,7 @@ Some code is ported from Ohai. Many thanks.
 |uids                |x      |x        |x        |x      |         |
 |gids                |x      |x        |x        |x      |         |
 |terminal            |x      |x        |x        |       |         |
-|io\_counters        |x      |x        |x        |       |x        |
+|io\_counters        |x      |x        |x        |x      |x        |
 |nice                |x      |x        |x        |x      |x        |
 |num\_fds            |x      |         |         |x      |x        |
 |num\_ctx\_switches  |x      |         |         |       |         |
