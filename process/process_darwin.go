@@ -357,7 +357,7 @@ func loadProcFuncs() (*dlFuncs, error) {
 func (f *dlFuncs) getTimeScaleToNanoSeconds() float64 {
 	var timeBaseInfo common.MachTimeBaseInfo
 
-	f.lib.MachTimeBaseInfo(uintptr(unsafe.Pointer(&timeBaseInfo)))
+	f.lib.MachTimeBaseInfo(unsafe.Pointer(&timeBaseInfo))
 
 	return float64(timeBaseInfo.Numer) / float64(timeBaseInfo.Denom)
 }
@@ -374,7 +374,7 @@ func (p *Process) ExeWithContext(_ context.Context) (string, error) {
 	defer funcs.Close()
 
 	buf := common.NewCStr(common.PROC_PIDPATHINFO_MAXSIZE)
-	ret := funcs.lib.ProcPidPath(p.Pid, buf.Addr(), common.PROC_PIDPATHINFO_MAXSIZE)
+	ret := funcs.lib.ProcPidPath(p.Pid, unsafe.Pointer(buf.Ptr()), common.PROC_PIDPATHINFO_MAXSIZE)
 
 	if ret <= 0 {
 		return "", fmt.Errorf("unknown error: proc_pidpath returned %d", ret)
@@ -406,7 +406,7 @@ func (p *Process) CwdWithContext(_ context.Context) (string, error) {
 
 	var vpi vnodePathInfo
 	const vpiSize = int32(unsafe.Sizeof(vpi))
-	ret := funcs.lib.ProcPidInfo(p.Pid, common.PROC_PIDVNODEPATHINFO, 0, uintptr(unsafe.Pointer(&vpi)), vpiSize)
+	ret := funcs.lib.ProcPidInfo(p.Pid, common.PROC_PIDVNODEPATHINFO, 0, unsafe.Pointer(&vpi), vpiSize)
 	if ret <= 0 {
 		// errno is only meaningful once the call has reported failure; reading it
 		// unconditionally can surface a stale value from an earlier call.
@@ -517,7 +517,7 @@ func (p *Process) NumThreadsWithContext(_ context.Context) (int32, error) {
 	defer funcs.Close()
 
 	var ti ProcTaskInfo
-	funcs.lib.ProcPidInfo(p.Pid, common.PROC_PIDTASKINFO, 0, uintptr(unsafe.Pointer(&ti)), int32(unsafe.Sizeof(ti)))
+	funcs.lib.ProcPidInfo(p.Pid, common.PROC_PIDTASKINFO, 0, unsafe.Pointer(&ti), int32(unsafe.Sizeof(ti)))
 
 	return int32(ti.Threadnum), nil
 }
@@ -530,7 +530,7 @@ func (p *Process) TimesWithContext(_ context.Context) (*cpu.TimesStat, error) {
 	defer funcs.Close()
 
 	var ti ProcTaskInfo
-	funcs.lib.ProcPidInfo(p.Pid, common.PROC_PIDTASKINFO, 0, uintptr(unsafe.Pointer(&ti)), int32(unsafe.Sizeof(ti)))
+	funcs.lib.ProcPidInfo(p.Pid, common.PROC_PIDTASKINFO, 0, unsafe.Pointer(&ti), int32(unsafe.Sizeof(ti)))
 
 	timescaleToNanoSeconds := funcs.getTimeScaleToNanoSeconds()
 	ret := &cpu.TimesStat{
@@ -549,7 +549,7 @@ func (p *Process) MemoryInfoWithContext(_ context.Context) (*MemoryInfoStat, err
 	defer funcs.Close()
 
 	var ti ProcTaskInfo
-	funcs.lib.ProcPidInfo(p.Pid, common.PROC_PIDTASKINFO, 0, uintptr(unsafe.Pointer(&ti)), int32(unsafe.Sizeof(ti)))
+	funcs.lib.ProcPidInfo(p.Pid, common.PROC_PIDTASKINFO, 0, unsafe.Pointer(&ti), int32(unsafe.Sizeof(ti)))
 
 	ret := &MemoryInfoStat{
 		RSS: uint64(ti.Resident_size),
@@ -580,8 +580,8 @@ func (p *Process) NumFDsWithContext(_ context.Context) (int32, error) {
 		p.Pid,
 		common.PROC_PIDLISTFDS,
 		0,
-		0, // NULL buffer
-		0, // 0 size
+		nil, // NULL buffer
+		0,   // 0 size
 	)
 	if bufferSize <= 0 {
 		return 0, fmt.Errorf("unknown error: proc_pidinfo returned %d", bufferSize)
@@ -597,8 +597,8 @@ func (p *Process) NumFDsWithContext(_ context.Context) (int32, error) {
 		p.Pid,
 		common.PROC_PIDLISTFDS,
 		0,
-		uintptr(unsafe.Pointer(&buf[0])), // Real buffer
-		bufferSize,                       // Size from first call
+		unsafe.Pointer(&buf[0]), // Real buffer
+		bufferSize,              // Size from first call
 	)
 	if ret <= 0 {
 		return 0, fmt.Errorf("unknown error: proc_pidinfo returned %d", ret)

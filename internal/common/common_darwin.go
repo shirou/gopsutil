@@ -125,7 +125,7 @@ func (c *CoreFoundationLib) CFGetTypeID(cf uintptr) int64 {
 	return fn(cf)
 }
 
-func (c *CoreFoundationLib) CFNumberCreate(allocator uintptr, theType int64, valuePtr uintptr) unsafe.Pointer {
+func (c *CoreFoundationLib) CFNumberCreate(allocator uintptr, theType int64, valuePtr unsafe.Pointer) unsafe.Pointer {
 	fn := getFunc[CFNumberCreateFunc](c.library, "CFNumberCreate")
 	return fn(allocator, theType, valuePtr)
 }
@@ -316,14 +316,14 @@ func NewSystemLib() (*SystemLib, error) {
 	return &SystemLib{library}, nil
 }
 
-func (s *SystemLib) HostProcessorInfo(host uint32, flavor int32, outProcessorCount *uint32, outProcessorInfo uintptr,
+func (s *SystemLib) HostProcessorInfo(host uint32, flavor int32, outProcessorCount *uint32, outProcessorInfo unsafe.Pointer,
 	outProcessorInfoCnt *uint32,
 ) int32 {
 	fn := getFunc[HostProcessorInfoFunc](s.library, "host_processor_info")
 	return fn(host, flavor, outProcessorCount, outProcessorInfo, outProcessorInfoCnt)
 }
 
-func (s *SystemLib) HostStatistics(host uint32, flavor int32, hostInfoOut uintptr, hostInfoOutCnt *uint32) int32 {
+func (s *SystemLib) HostStatistics(host uint32, flavor int32, hostInfoOut unsafe.Pointer, hostInfoOutCnt *uint32) int32 {
 	fn := getFunc[HostStatisticsFunc](s.library, "host_statistics")
 	return fn(host, flavor, hostInfoOut, hostInfoOutCnt)
 }
@@ -338,7 +338,7 @@ func (s *SystemLib) MachTaskSelf() uint32 {
 	return fn()
 }
 
-func (s *SystemLib) MachTimeBaseInfo(info uintptr) int32 {
+func (s *SystemLib) MachTimeBaseInfo(info unsafe.Pointer) int32 {
 	fn := getFunc[MachTimeBaseInfoFunc](s.library, "mach_timebase_info")
 	return fn(info)
 }
@@ -348,12 +348,12 @@ func (s *SystemLib) VMDeallocate(targetTask uint32, vmAddress, vmSize uintptr) i
 	return fn(targetTask, vmAddress, vmSize)
 }
 
-func (s *SystemLib) ProcPidPath(pid int32, buffer uintptr, bufferSize uint32) int32 {
+func (s *SystemLib) ProcPidPath(pid int32, buffer unsafe.Pointer, bufferSize uint32) int32 {
 	fn := getFunc[ProcPidPathFunc](s.library, "proc_pidpath")
 	return fn(pid, buffer, bufferSize)
 }
 
-func (s *SystemLib) ProcPidInfo(pid, flavor int32, arg uint64, buffer uintptr, bufferSize int32) int32 {
+func (s *SystemLib) ProcPidInfo(pid, flavor int32, arg uint64, buffer unsafe.Pointer, bufferSize int32) int32 {
 	fn := getFunc[ProcPidInfoFunc](s.library, "proc_pidinfo")
 	return fn(pid, flavor, arg, buffer, bufferSize)
 }
@@ -422,7 +422,7 @@ const (
 // CoreFoundation types and constants.
 type (
 	CFGetTypeIDFunc        func(cf uintptr) int64
-	CFNumberCreateFunc     func(allocator uintptr, theType int64, valuePtr uintptr) unsafe.Pointer
+	CFNumberCreateFunc     func(allocator uintptr, theType int64, valuePtr unsafe.Pointer) unsafe.Pointer
 	CFNumberGetValueFunc   func(num uintptr, theType int64, valuePtr uintptr) bool
 	CFDictionaryCreateFunc func(allocator uintptr, keys, values *unsafe.Pointer, numValues int64,
 		keyCallBacks, valueCallBacks uintptr) unsafe.Pointer
@@ -453,13 +453,18 @@ type MachTimeBaseInfo struct {
 	Denom uint32
 }
 
+// Buffers that the kernel writes into are declared as unsafe.Pointer, never as
+// uintptr. purego maps uintptr to uintptr_t, i.e. a plain integer: it neither
+// keeps the pointee alive nor makes it escape, so a Go local stays on the
+// goroutine stack and the address goes stale the moment the stack grows. Every
+// such call then writes into the old stack and silently returns zeroes.
 type (
-	HostProcessorInfoFunc func(host uint32, flavor int32, outProcessorCount *uint32, outProcessorInfo uintptr,
+	HostProcessorInfoFunc func(host uint32, flavor int32, outProcessorCount *uint32, outProcessorInfo unsafe.Pointer,
 		outProcessorInfoCnt *uint32) int32
-	HostStatisticsFunc   func(host uint32, flavor int32, hostInfoOut uintptr, hostInfoOutCnt *uint32) int32
+	HostStatisticsFunc   func(host uint32, flavor int32, hostInfoOut unsafe.Pointer, hostInfoOutCnt *uint32) int32
 	MachHostSelfFunc     func() uint32
 	MachTaskSelfFunc     func() uint32
-	MachTimeBaseInfoFunc func(info uintptr) int32
+	MachTimeBaseInfoFunc func(info unsafe.Pointer) int32
 	VMDeallocateFunc     func(targetTask uint32, vmAddress, vmSize uintptr) int32
 )
 
@@ -480,8 +485,8 @@ const (
 )
 
 type (
-	ProcPidPathFunc   func(pid int32, buffer uintptr, bufferSize uint32) int32
-	ProcPidInfoFunc   func(pid, flavor int32, arg uint64, buffer uintptr, bufferSize int32) int32
+	ProcPidPathFunc   func(pid int32, buffer unsafe.Pointer, bufferSize uint32) int32
+	ProcPidInfoFunc   func(pid, flavor int32, arg uint64, buffer unsafe.Pointer, bufferSize int32) int32
 	ProcPidRusageFunc func(pid, flavor int32, buffer unsafe.Pointer) int32
 	ErrnoFunc         func() *int32
 )
@@ -586,6 +591,11 @@ func (s CStr) Ptr() *byte {
 	return &s[0]
 }
 
+// Addr returns the buffer address as an integer.
+//
+// Do not pass the result to a purego-registered function: purego treats uintptr
+// as a plain integer, so the buffer neither escapes nor is kept alive and the
+// address goes stale when the goroutine stack grows. Pass Ptr instead.
 func (s CStr) Addr() uintptr {
 	return uintptr(unsafe.Pointer(s.Ptr()))
 }
