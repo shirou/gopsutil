@@ -109,11 +109,11 @@ type IOCountersStat struct {
 	ReadCount uint64 `json:"readCount"`
 	// WriteCount is a number of read I/O operations such as syscalls.
 	WriteCount uint64 `json:"writeCount"`
-	// ReadBytes is a number of all I/O read in bytes.
-	// On Darwin, only disk I/O bytes are available.
+	// ReadBytes is a number of all I/O read in bytes. This includes disk I/O on Linux and Windows.
+	// Darwin does not expose this and reports 0; use DiskReadBytes there.
 	ReadBytes uint64 `json:"readBytes"`
-	// WriteBytes is a number of all I/O written in bytes.
-	// On Darwin, only disk I/O bytes are available.
+	// WriteBytes is a number of all I/O written in bytes. This includes disk I/O on Linux and Windows.
+	// Darwin does not expose this and reports 0; use DiskWriteBytes there.
 	WriteBytes uint64 `json:"writeBytes"`
 	// DiskReadBytes is a number of disk I/O read in bytes. Currently, Linux and Darwin have this value.
 	DiskReadBytes uint64 `json:"diskReadBytes"`

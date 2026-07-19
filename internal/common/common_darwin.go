@@ -27,16 +27,37 @@ const (
 	SystemLibPath         = "/usr/lib/libSystem.B.dylib"
 )
 
+// Library handles are opened once and shared for the process lifetime.
+// Opening and closing them on every call causes SIGBUS/SIGSEGV crashes because
+// the Go runtime (GC, timers) can interact with invalidated library handles
+// after Dlclose. Sharing also keeps the resolved-symbol cache in fnMap warm,
+// so a symbol lookup is not repeated on every call.
+// See: https://github.com/shirou/gopsutil/issues/1832
+var (
+	libCacheMu sync.Mutex
+	libCache   = make(map[string]*library)
+)
+
 func newLibrary(path string) (*library, error) {
-	lib, err := purego.Dlopen(path, purego.RTLD_LAZY|purego.RTLD_GLOBAL)
+	libCacheMu.Lock()
+	defer libCacheMu.Unlock()
+
+	if lib, ok := libCache[path]; ok {
+		return lib, nil
+	}
+
+	handle, err := purego.Dlopen(path, purego.RTLD_LAZY|purego.RTLD_GLOBAL)
 	if err != nil {
 		return nil, err
 	}
 
-	return &library{
-		handle: lib,
+	lib := &library{
+		handle: handle,
 		fnMap:  make(map[string]any),
-	}, nil
+	}
+	libCache[path] = lib
+
+	return lib, nil
 }
 
 func (lib *library) Dlsym(symbol string) (uintptr, error) {
@@ -69,9 +90,10 @@ func getFunc[T any](lib *library, symbol string) T {
 	return dlfun.fn
 }
 
-func (lib *library) Close() {
-	purego.Dlclose(lib.handle)
-}
+// Close is a no-op, kept so that existing defer-Close call sites keep working.
+// Library handles are shared process-wide and are deliberately never unloaded;
+// see newLibrary for why.
+func (*library) Close() {}
 
 type dlFunc[T any] struct {
 	sym string
@@ -341,9 +363,17 @@ func (s *SystemLib) ProcPidRusage(pid, flavor int32, buffer unsafe.Pointer) int3
 	return fn(pid, flavor, buffer)
 }
 
-func (s *SystemLib) Errno() int32 {
+// ErrnoLocation returns a pointer to the calling OS thread's errno, as given by
+// libc's __error(). The pointer is thread-local, so callers must hold
+// runtime.LockOSThread() across this call, the libc call being checked, and the
+// dereference of the returned pointer.
+//
+// Resolve the pointer *before* the libc call whose errno is to be inspected.
+// Resolving a symbol performs a dlsym and allocates, and either may overwrite
+// errno; doing it afterwards would race with the value being read.
+func (s *SystemLib) ErrnoLocation() *int32 {
 	fn := getFunc[ErrnoFunc](s.library, "__error")
-	return *fn()
+	return fn()
 }
 
 // status codes
@@ -529,11 +559,12 @@ func (s *SMC) CallStruct(selector uint32, inputStruct, inputStructCnt, outputStr
 	return s.lib.IOConnectCallStructMethod(s.conn, selector, inputStruct, inputStructCnt, outputStruct, outputStructCnt)
 }
 
+// Close releases the SMC connection. The IOKit handle itself is shared
+// process-wide and is deliberately left open; see newLibrary.
 func (s *SMC) Close() error {
 	if result := s.lib.IOServiceClose(s.conn); result != 0 {
 		return errors.New("ERROR: IOServiceClose failed")
 	}
-	s.lib.Close()
 	return nil
 }
 
