@@ -179,8 +179,63 @@ func (p *Process) NiceWithContext(_ context.Context) (int32, error) {
 	return int32(k.Proc.P_nice), nil
 }
 
-func (*Process) IOCountersWithContext(_ context.Context) (*IOCountersStat, error) {
-	return nil, common.ErrNotImplementedError
+// rusageInfoV2 mirrors Darwin's struct rusage_info_v2 from sys/resource.h.
+// Only DiskIOBytesRead / DiskIOBytesWritten are used for IOCounters.
+type rusageInfoV2 struct {
+	UUID                [16]byte
+	UserTime            uint64
+	SystemTime          uint64
+	PkgIdleWkups        uint64
+	InterruptWkups      uint64
+	Pageins             uint64
+	WiredSize           uint64
+	ResidentSize        uint64
+	PhysFootprint       uint64
+	ProcStartAbstime    uint64
+	ProcExitAbstime     uint64
+	ChildUserTime       uint64
+	ChildSystemTime     uint64
+	ChildPkgIdleWkups   uint64
+	ChildInterruptWkups uint64
+	ChildPageins        uint64
+	ChildElapsedAbstime uint64
+	DiskIOBytesRead     uint64
+	DiskIOBytesWritten  uint64
+}
+
+// IOCountersWithContext returns cumulative disk I/O bytes for the process via
+// proc_pid_rusage(RUSAGE_INFO_V2). ReadCount/WriteCount are unavailable on
+// Darwin. Access may fail with ErrorNotPermitted for protected processes.
+func (p *Process) IOCountersWithContext(_ context.Context) (*IOCountersStat, error) {
+	funcs, err := loadProcFuncs()
+	if err != nil {
+		return nil, err
+	}
+	defer funcs.Close()
+
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
+	var usage rusageInfoV2
+	ret := funcs.lib.ProcPidRusage(p.Pid, common.RUSAGE_INFO_V2, unsafe.Pointer(&usage))
+	if ret != 0 {
+		errno := unix.Errno(funcs.lib.Errno())
+		switch errno {
+		case unix.EPERM:
+			return nil, ErrorNotPermitted
+		case unix.ESRCH:
+			return nil, ErrorProcessNotRunning
+		default:
+			return nil, fmt.Errorf("proc_pid_rusage failed for pid %d: %w", p.Pid, errno)
+		}
+	}
+
+	return &IOCountersStat{
+		ReadBytes:      usage.DiskIOBytesRead,
+		WriteBytes:     usage.DiskIOBytesWritten,
+		DiskReadBytes:  usage.DiskIOBytesRead,
+		DiskWriteBytes: usage.DiskIOBytesWritten,
+	}, nil
 }
 
 func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {

@@ -336,6 +336,16 @@ func (s *SystemLib) ProcPidInfo(pid, flavor int32, arg uint64, buffer uintptr, b
 	return fn(pid, flavor, arg, buffer, bufferSize)
 }
 
+func (s *SystemLib) ProcPidRusage(pid, flavor int32, buffer unsafe.Pointer) int32 {
+	fn := getFunc[ProcPidRusageFunc](s.library, "proc_pid_rusage")
+	return fn(pid, flavor, buffer)
+}
+
+func (s *SystemLib) Errno() int32 {
+	fn := getFunc[ErrnoFunc](s.library, "__error")
+	return *fn()
+}
+
 // status codes
 const (
 	KERN_SUCCESS = 0
@@ -440,14 +450,18 @@ const (
 )
 
 type (
-	ProcPidPathFunc func(pid int32, buffer uintptr, bufferSize uint32) int32
-	ProcPidInfoFunc func(pid, flavor int32, arg uint64, buffer uintptr, bufferSize int32) int32
+	ProcPidPathFunc   func(pid int32, buffer uintptr, bufferSize uint32) int32
+	ProcPidInfoFunc   func(pid, flavor int32, arg uint64, buffer uintptr, bufferSize int32) int32
+	ProcPidRusageFunc func(pid, flavor int32, buffer unsafe.Pointer) int32
+	ErrnoFunc         func() *int32
 )
 
 const (
-	SysctlSym      = "sysctl"
-	ProcPidPathSym = "proc_pidpath"
-	ProcPidInfoSym = "proc_pidinfo"
+	SysctlSym        = "sysctl"
+	ProcPidPathSym   = "proc_pidpath"
+	ProcPidInfoSym   = "proc_pidinfo"
+	ProcPidRusageSym = "proc_pid_rusage"
+	ErrnoSym         = "__error"
 )
 
 const (
@@ -456,6 +470,10 @@ const (
 	PROC_PIDPATHINFO_MAXSIZE = 4 * MAXPATHLEN
 	PROC_PIDTASKINFO         = 4
 	PROC_PIDVNODEPATHINFO    = 9
+
+	// RUSAGE_INFO_V2 is the proc_pid_rusage flavor that includes disk I/O bytes.
+	// See sys/resource.h rusage_info_v2.
+	RUSAGE_INFO_V2 = 2
 )
 
 // SMC represents a SMC instance.
