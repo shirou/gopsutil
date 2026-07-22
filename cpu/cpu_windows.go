@@ -104,39 +104,51 @@ func Times(percpu bool) ([]TimesStat, error) {
 }
 
 func TimesWithContext(_ context.Context, percpu bool) ([]TimesStat, error) {
-	if percpu {
-		return perCPUTimes()
-	}
-
-	var ret []TimesStat
-	var lpIdleTime common.FILETIME
-	var lpKernelTime common.FILETIME
-	var lpUserTime common.FILETIME
-	// GetSystemTimes returns 0 for error, in which case we check err,
-	// see https://pkg.go.dev/golang.org/x/sys/windows#LazyProc.Call
-	r, _, err := common.ProcGetSystemTimes.Call(
-		uintptr(unsafe.Pointer(&lpIdleTime)),
-		uintptr(unsafe.Pointer(&lpKernelTime)),
-		uintptr(unsafe.Pointer(&lpUserTime)))
-	if r == 0 {
+	// Get the CPU performance counters per processor via Windows API
+	stats, err := perfInfo()
+	if err != nil {
 		return nil, err
 	}
 
-	// Do all arithmetic on the integer tick counts and convert to float64
-	// only once, mirroring perCPUTimes. Converting each FILETIME half to
-	// float64 first loses precision on large counters and can make the
-	// returned values non-monotonic. See issue #2110.
-	idle := uint64(lpIdleTime.DwHighDateTime)<<32 | uint64(lpIdleTime.DwLowDateTime)
-	user := uint64(lpUserTime.DwHighDateTime)<<32 | uint64(lpUserTime.DwLowDateTime)
-	kernel := uint64(lpKernelTime.DwHighDateTime)<<32 | uint64(lpKernelTime.DwLowDateTime)
+	if percpu {
+		ret := make([]TimesStat, 0, len(stats))
+		for core, v := range stats {
+			c := TimesStat{
+				CPU:    fmt.Sprintf("cpu%d", core),
+				User:   float64(v.UserTime) / ClocksPerSec,
+				System: float64(v.KernelTime-v.IdleTime) / ClocksPerSec,
+				Idle:   float64(v.IdleTime) / ClocksPerSec,
+				Irq:    float64(v.InterruptTime) / ClocksPerSec,
+			}
+			ret = append(ret, c)
+		}
+		return ret, nil
+	}
 
-	ret = append(ret, TimesStat{
-		CPU:    "cpu-total",
-		Idle:   float64(idle) / ClocksPerSec,
-		User:   float64(user) / ClocksPerSec,
-		System: float64(kernel-idle) / ClocksPerSec, // kernel time includes idle time
-	})
-	return ret, nil
+	// Accumulate the times over all CPUs as GetSystemTimes() will only return
+	// the counters for the current processor group. This causes issues for
+	// machines with more than 64 logical processors when the current thread is
+	// switched to another processor group as then the counters are not
+	// monotonic anymore.
+	var total win32_SystemProcessorPerformanceInformation
+	for _, v := range stats {
+		total.IdleTime += v.IdleTime
+		total.KernelTime += v.KernelTime
+		total.UserTime += v.UserTime
+		total.DpcTime += v.DpcTime
+		total.InterruptTime += v.InterruptTime
+		total.InterruptCount += v.InterruptCount
+	}
+
+	return []TimesStat{
+		{
+			CPU:    "cpu-total",
+			User:   float64(total.UserTime) / ClocksPerSec,
+			System: float64(total.KernelTime-total.IdleTime) / ClocksPerSec,
+			Idle:   float64(total.IdleTime) / ClocksPerSec,
+			Irq:    float64(total.InterruptTime) / ClocksPerSec,
+		},
+	}, nil
 }
 
 func Info() ([]InfoStat, error) {
@@ -240,26 +252,6 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 		})
 	}
 
-	return ret, nil
-}
-
-// perCPUTimes returns times stat per cpu, per core and overall for all CPUs
-func perCPUTimes() ([]TimesStat, error) {
-	var ret []TimesStat
-	stats, err := perfInfo()
-	if err != nil {
-		return nil, err
-	}
-	for core, v := range stats {
-		c := TimesStat{
-			CPU:    fmt.Sprintf("cpu%d", core),
-			User:   float64(v.UserTime) / ClocksPerSec,
-			System: float64(v.KernelTime-v.IdleTime) / ClocksPerSec,
-			Idle:   float64(v.IdleTime) / ClocksPerSec,
-			Irq:    float64(v.InterruptTime) / ClocksPerSec,
-		}
-		ret = append(ret, c)
-	}
 	return ret, nil
 }
 
