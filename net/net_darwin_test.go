@@ -39,6 +39,17 @@ func TestParseNetstatLineHeader(t *testing.T) {
 	assert.Equal(t, errNetstatHeader, err)
 }
 
+func TestParseNetstatLineTooShort(t *testing.T) {
+	for _, line := range []string{"", "lo0", "lo0 16384"} {
+		t.Run(line, func(t *testing.T) {
+			stat, linkID, err := parseNetstatLine(line)
+			assert.Nil(t, stat)
+			assert.Nil(t, linkID)
+			assert.Error(t, err)
+		})
+	}
+}
+
 func assertLoopbackStat(t *testing.T, err error, stat *IOCountersStat) {
 	t.Helper()
 	assert.NoError(t, err)
@@ -113,6 +124,14 @@ func TestParseNetstatOutput(t *testing.T) {
 	mapUsage := newMapInterfaceNameUsage(nsInterfaces)
 	assert.False(t, mapUsage.isTruncated())
 	assert.Len(t, mapUsage.notTruncated(), 4)
+}
+
+func TestParseNetstatOutputWithDiagnostic(t *testing.T) {
+	output := "netstat: sysctl IFDATA_SUPPLEMENTAL: Operation not permitted\nnetstat:\n" + netstatNotTruncated
+
+	nsInterfaces, err := parseNetstatOutput(output)
+	assert.NoError(t, err)
+	assert.Len(t, nsInterfaces, 8)
 }
 
 func TestParseNetstatTruncated(t *testing.T) {

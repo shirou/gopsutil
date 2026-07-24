@@ -28,6 +28,10 @@ func parseNetstatLine(line string) (stat *IOCountersStat, linkID *uint, err erro
 		columns      = strings.Fields(line)
 	)
 
+	if len(columns) < 3 {
+		return nil, nil, fmt.Errorf("line %q has too few columns: got %d, want at least 3", line, len(columns))
+	}
+
 	if columns[0] == "Name" {
 		return nil, nil, errNetstatHeader
 	}
@@ -99,8 +103,25 @@ func parseNetstatOutput(output string) ([]netstatInterface, error) {
 		lines = strings.Split(strings.Trim(output, endOfLine), endOfLine)
 	)
 
-	// number of interfaces is number of lines less one for the header
-	numberInterfaces := len(lines) - 1
+	// Invoke combines stdout and stderr. A sandboxed netstat can therefore
+	// prefix the table with diagnostic lines such as "netstat:". Find the
+	// actual table header instead of assuming it is the first line.
+	headerIndex := -1
+	for index, line := range lines {
+		columns := strings.Fields(line)
+		if len(columns) > 0 && columns[0] == "Name" {
+			headerIndex = index
+			break
+		}
+	}
+	if headerIndex == -1 {
+		if strings.TrimSpace(output) == "" {
+			return []netstatInterface{}, nil
+		}
+		return nil, errNetstatHeader
+	}
+
+	numberInterfaces := len(lines) - headerIndex - 1
 
 	interfaces := make([]netstatInterface, numberInterfaces)
 	// no output beside header
@@ -110,7 +131,7 @@ func parseNetstatOutput(output string) ([]netstatInterface, error) {
 
 	for index := 0; index < numberInterfaces; index++ {
 		nsIface := netstatInterface{}
-		if nsIface.stat, nsIface.linkID, err = parseNetstatLine(lines[index+1]); err != nil {
+		if nsIface.stat, nsIface.linkID, err = parseNetstatLine(lines[headerIndex+index+1]); err != nil {
 			return nil, err
 		}
 		interfaces[index] = nsIface
