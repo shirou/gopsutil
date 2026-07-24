@@ -117,10 +117,10 @@ func (ta *temperatureArm) getSensors(system, sensors unsafe.Pointer) []Temperatu
 }
 
 func (ta *temperatureArm) matching(page, usage int32) unsafe.Pointer {
-	pageNum := ta.cf.CFNumberCreate(common.KCFAllocatorDefault, common.KCFNumberIntType, uintptr(unsafe.Pointer(&page)))
+	pageNum := ta.cf.CFNumberCreate(common.KCFAllocatorDefault, common.KCFNumberIntType, unsafe.Pointer(&page))
 	defer ta.cf.CFRelease(uintptr(pageNum))
 
-	usageNum := ta.cf.CFNumberCreate(common.KCFAllocatorDefault, common.KCFNumberIntType, uintptr(unsafe.Pointer(&usage)))
+	usageNum := ta.cf.CFNumberCreate(common.KCFAllocatorDefault, common.KCFNumberIntType, unsafe.Pointer(&usage))
 	defer ta.cf.CFRelease(uintptr(usageNum))
 
 	k1 := ta.cf.CFStringCreateWithCString(common.KCFAllocatorDefault, "PrimaryUsagePage", common.KCFStringEncodingUTF8)
