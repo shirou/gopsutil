@@ -123,7 +123,7 @@ func PartitionsWithContext(ctx context.Context, _ bool) ([]PartitionStat, error)
 	return ret, nil
 }
 
-func getFsType(stat unix.Statfs_t) string {
+func getFsType(stat *unix.Statfs_t) string {
 	return FSType[int(stat.Vfstype)]
 }
 
