@@ -39,8 +39,10 @@ func TestNumFDs(t *testing.T) {
 	assert.GreaterOrEqual(t, after, before+2)
 }
 
+// 999999 is above Darwin's PID_MAX (99999, bsd/sys/proc_internal.h), so it can
+// never name a live process and the lookup deterministically fails with ESRCH.
 func TestNumFDs_NonExistent(t *testing.T) {
-	p := &Process{Pid: 99999}
+	p := &Process{Pid: 999999}
 	_, err := p.NumFDsWithContext(context.Background())
 	assert.Error(t, err)
 }
@@ -180,7 +182,7 @@ func TestIOCounters_DiskBytes(t *testing.T) {
 }
 
 func TestIOCounters_NonExistent(t *testing.T) {
-	p := &Process{Pid: 99999}
+	p := &Process{Pid: 999999} // above PID_MAX; see TestNumFDs_NonExistent
 
 	_, err := p.IOCounters()
 	require.ErrorIs(t, err, ErrorProcessNotRunning)
