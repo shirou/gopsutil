@@ -327,7 +327,7 @@ func (i *ioCounters) fillStat(d uint32) (*IOCountersStat, error) {
 	for key, off := range statstab {
 		s := i.cfStr(key)
 		if num := i.corefoundation.CFDictionaryGetValue(uintptr(v), uintptr(s)); num != nil {
-			i.corefoundation.CFNumberGetValue(uintptr(num), common.KCFNumberSInt64Type, uintptr(unsafe.Add(unsafe.Pointer(&stat), off)))
+			i.corefoundation.CFNumberGetValue(uintptr(num), common.KCFNumberSInt64Type, unsafe.Add(unsafe.Pointer(&stat), off))
 		}
 		i.corefoundation.CFRelease(uintptr(s))
 	}

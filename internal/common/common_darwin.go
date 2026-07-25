@@ -130,7 +130,7 @@ func (c *CoreFoundationLib) CFNumberCreate(allocator uintptr, theType int64, val
 	return fn(allocator, theType, valuePtr)
 }
 
-func (c *CoreFoundationLib) CFNumberGetValue(num uintptr, theType int64, valuePtr uintptr) bool {
+func (c *CoreFoundationLib) CFNumberGetValue(num uintptr, theType int64, valuePtr unsafe.Pointer) bool {
 	fn := getFunc[CFNumberGetValueFunc](c.library, "CFNumberGetValue")
 	return fn(num, theType, valuePtr)
 }
@@ -269,7 +269,9 @@ func (l *IOKitLib) IOObjectRelease(object uint32) int32 {
 	return fn(object)
 }
 
-func (l *IOKitLib) IOConnectCallStructMethod(connection, selector uint32, inputStruct, inputStructCnt, outputStruct uintptr, outputStructCnt *uintptr) int32 {
+func (l *IOKitLib) IOConnectCallStructMethod(connection, selector uint32, inputStruct unsafe.Pointer, inputStructCnt uintptr,
+	outputStruct unsafe.Pointer, outputStructCnt *uintptr,
+) int32 {
 	fn := getFunc[IOConnectCallStructMethodFunc](l.library, "IOConnectCallStructMethod")
 	return fn(connection, selector, inputStruct, inputStructCnt, outputStruct, outputStructCnt)
 }
@@ -381,6 +383,18 @@ const (
 	KERN_SUCCESS = 0
 )
 
+// Arguments that point at Go memory are declared as unsafe.Pointer, a Go
+// pointer type, or a slice -- never as uintptr. purego maps uintptr to
+// uintptr_t, i.e. a plain integer: it neither keeps the pointee alive nor makes
+// it escape, so a Go local stays on the goroutine stack and the address goes
+// stale the moment the stack grows. Every such call then reads or writes the old
+// stack and silently sees or produces zeroes. The other kinds are passed through
+// reflect.Value.Pointer() and stay reachable for the duration of the call.
+//
+// uintptr remains correct for handles that are not Go memory: CoreFoundation and
+// IOKit object references, mach ports, addresses of dylib data symbols obtained
+// through Dlsym, and kernel-allocated vm addresses.
+
 // IOKit types and constants.
 type (
 	IOServiceGetMatchingServiceFunc       func(mainPort uint32, matching uintptr) uint32
@@ -395,7 +409,8 @@ type (
 	IORegistryEntryCreateCFPropertiesFunc func(entry uint32, properties unsafe.Pointer, allocator uintptr, options uint32) int32
 	IOObjectConformsToFunc                func(object uint32, className string) bool
 	IOObjectReleaseFunc                   func(object uint32) int32
-	IOConnectCallStructMethodFunc         func(connection, selector uint32, inputStruct, inputStructCnt, outputStruct uintptr, outputStructCnt *uintptr) int32
+	IOConnectCallStructMethodFunc         func(connection, selector uint32, inputStruct unsafe.Pointer, inputStructCnt uintptr,
+		outputStruct unsafe.Pointer, outputStructCnt *uintptr) int32
 
 	IOHIDEventSystemClientCreateFunc      func(allocator uintptr) unsafe.Pointer
 	IOHIDEventSystemClientSetMatchingFunc func(client, match uintptr) int32
@@ -420,10 +435,14 @@ const (
 )
 
 // CoreFoundation types and constants.
+//
+// valuePtr on CFNumberCreate and CFNumberGetValue points at a caller-owned Go
+// value that CoreFoundation reads from or writes into, hence unsafe.Pointer; see
+// the note above the IOKit function types.
 type (
 	CFGetTypeIDFunc        func(cf uintptr) int64
 	CFNumberCreateFunc     func(allocator uintptr, theType int64, valuePtr unsafe.Pointer) unsafe.Pointer
-	CFNumberGetValueFunc   func(num uintptr, theType int64, valuePtr uintptr) bool
+	CFNumberGetValueFunc   func(num uintptr, theType int64, valuePtr unsafe.Pointer) bool
 	CFDictionaryCreateFunc func(allocator uintptr, keys, values *unsafe.Pointer, numValues int64,
 		keyCallBacks, valueCallBacks uintptr) unsafe.Pointer
 	CFDictionaryAddValueFunc      func(theDict, key, value uintptr)
@@ -453,11 +472,9 @@ type MachTimeBaseInfo struct {
 	Denom uint32
 }
 
-// Buffers that the kernel writes into are declared as unsafe.Pointer, never as
-// uintptr. purego maps uintptr to uintptr_t, i.e. a plain integer: it neither
-// keeps the pointee alive nor makes it escape, so a Go local stays on the
-// goroutine stack and the address goes stale the moment the stack grows. Every
-// such call then writes into the old stack and silently returns zeroes.
+// Buffers the kernel writes into are declared as unsafe.Pointer; see the note
+// above the IOKit function types. vmAddress on VMDeallocateFunc stays a uintptr
+// because it names kernel-allocated memory rather than Go memory.
 type (
 	HostProcessorInfoFunc func(host uint32, flavor int32, outProcessorCount *uint32, outProcessorInfo unsafe.Pointer,
 		outProcessorInfoCnt *uint32) int32
@@ -560,7 +577,9 @@ func NewSMC() (*SMC, error) {
 	}, nil
 }
 
-func (s *SMC) CallStruct(selector uint32, inputStruct, inputStructCnt, outputStruct uintptr, outputStructCnt *uintptr) int32 {
+func (s *SMC) CallStruct(selector uint32, inputStruct unsafe.Pointer, inputStructCnt uintptr,
+	outputStruct unsafe.Pointer, outputStructCnt *uintptr,
+) int32 {
 	return s.lib.IOConnectCallStructMethod(s.conn, selector, inputStruct, inputStructCnt, outputStruct, outputStructCnt)
 }
 
@@ -589,15 +608,6 @@ func (s CStr) Ptr() *byte {
 	}
 
 	return &s[0]
-}
-
-// Addr returns the buffer address as an integer.
-//
-// Do not pass the result to a purego-registered function: purego treats uintptr
-// as a plain integer, so the buffer neither escapes nor is kept alive and the
-// address goes stale when the goroutine stack grows. Pass Ptr instead.
-func (s CStr) Addr() uintptr {
-	return uintptr(unsafe.Pointer(s.Ptr()))
 }
 
 func (s CStr) GoString() string {
