@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"path/filepath"
 	"runtime"
@@ -204,8 +203,14 @@ type rusageInfoV2 struct {
 }
 
 // IOCountersWithContext returns cumulative disk I/O bytes for the process via
-// proc_pid_rusage(RUSAGE_INFO_V2). ReadCount/WriteCount are unavailable on
-// Darwin. Access may fail with ErrorNotPermitted for protected processes.
+// proc_pid_rusage(RUSAGE_INFO_V2).
+//
+// Darwin only reports disk I/O, so only DiskReadBytes and DiskWriteBytes are
+// populated. ReadBytes/WriteBytes count all I/O including that served from
+// cache on other platforms, which has no Darwin equivalent, and ReadCount /
+// WriteCount are not exposed at all; all four stay zero.
+//
+// Access may fail with ErrorNotPermitted for protected processes.
 func (p *Process) IOCountersWithContext(_ context.Context) (*IOCountersStat, error) {
 	funcs, err := loadProcFuncs()
 	if err != nil {
@@ -213,14 +218,19 @@ func (p *Process) IOCountersWithContext(_ context.Context) (*IOCountersStat, err
 	}
 	defer funcs.Close()
 
+	// Lock the OS thread so that errno, which is thread-local, still belongs to
+	// the thread that made the call below by the time it is read.
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
+
+	// Resolve the errno location up front: doing it after the call would run a
+	// dlsym and allocate in between, either of which can overwrite errno.
+	errnoPtr := funcs.lib.ErrnoLocation()
 
 	var usage rusageInfoV2
 	ret := funcs.lib.ProcPidRusage(p.Pid, common.RUSAGE_INFO_V2, unsafe.Pointer(&usage))
 	if ret != 0 {
-		errno := unix.Errno(funcs.lib.Errno())
-		switch errno {
+		switch errno := unix.Errno(*errnoPtr); errno {
 		case unix.EPERM:
 			return nil, ErrorNotPermitted
 		case unix.ESRCH:
@@ -231,8 +241,6 @@ func (p *Process) IOCountersWithContext(_ context.Context) (*IOCountersStat, err
 	}
 
 	return &IOCountersStat{
-		ReadBytes:      usage.DiskIOBytesRead,
-		WriteBytes:     usage.DiskIOBytesWritten,
 		DiskReadBytes:  usage.DiskIOBytesRead,
 		DiskWriteBytes: usage.DiskIOBytesWritten,
 	}, nil
@@ -349,7 +357,7 @@ func loadProcFuncs() (*dlFuncs, error) {
 func (f *dlFuncs) getTimeScaleToNanoSeconds() float64 {
 	var timeBaseInfo common.MachTimeBaseInfo
 
-	f.lib.MachTimeBaseInfo(uintptr(unsafe.Pointer(&timeBaseInfo)))
+	f.lib.MachTimeBaseInfo(unsafe.Pointer(&timeBaseInfo))
 
 	return float64(timeBaseInfo.Numer) / float64(timeBaseInfo.Denom)
 }
@@ -366,7 +374,7 @@ func (p *Process) ExeWithContext(_ context.Context) (string, error) {
 	defer funcs.Close()
 
 	buf := common.NewCStr(common.PROC_PIDPATHINFO_MAXSIZE)
-	ret := funcs.lib.ProcPidPath(p.Pid, buf.Addr(), common.PROC_PIDPATHINFO_MAXSIZE)
+	ret := funcs.lib.ProcPidPath(p.Pid, unsafe.Pointer(buf.Ptr()), common.PROC_PIDPATHINFO_MAXSIZE)
 
 	if ret <= 0 {
 		return "", fmt.Errorf("unknown error: proc_pidpath returned %d", ret)
@@ -387,20 +395,24 @@ func (p *Process) CwdWithContext(_ context.Context) (string, error) {
 	}
 	defer funcs.Close()
 
-	// Lock OS thread to ensure the errno does not change
+	// Lock the OS thread so that errno, which is thread-local, still belongs to
+	// the thread that made the call below by the time it is read.
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
+	// Resolve the errno location up front: doing it after the call would run a
+	// dlsym and allocate in between, either of which can overwrite errno.
+	errnoPtr := funcs.lib.ErrnoLocation()
+
 	var vpi vnodePathInfo
 	const vpiSize = int32(unsafe.Sizeof(vpi))
-	ret := funcs.lib.ProcPidInfo(p.Pid, common.PROC_PIDVNODEPATHINFO, 0, uintptr(unsafe.Pointer(&vpi)), vpiSize)
-	errno, _ := funcs.lib.Dlsym("errno")
-	err = *(**unix.Errno)(unsafe.Pointer(&errno))
-	if errors.Is(err, unix.EPERM) {
-		return "", ErrorNotPermitted
-	}
-
+	ret := funcs.lib.ProcPidInfo(p.Pid, common.PROC_PIDVNODEPATHINFO, 0, unsafe.Pointer(&vpi), vpiSize)
 	if ret <= 0 {
+		// errno is only meaningful once the call has reported failure; reading it
+		// unconditionally can surface a stale value from an earlier call.
+		if errno := unix.Errno(*errnoPtr); errno == unix.EPERM {
+			return "", ErrorNotPermitted
+		}
 		return "", fmt.Errorf("unknown error: proc_pidinfo returned %d", ret)
 	}
 
@@ -505,7 +517,7 @@ func (p *Process) NumThreadsWithContext(_ context.Context) (int32, error) {
 	defer funcs.Close()
 
 	var ti ProcTaskInfo
-	funcs.lib.ProcPidInfo(p.Pid, common.PROC_PIDTASKINFO, 0, uintptr(unsafe.Pointer(&ti)), int32(unsafe.Sizeof(ti)))
+	funcs.lib.ProcPidInfo(p.Pid, common.PROC_PIDTASKINFO, 0, unsafe.Pointer(&ti), int32(unsafe.Sizeof(ti)))
 
 	return int32(ti.Threadnum), nil
 }
@@ -518,7 +530,7 @@ func (p *Process) TimesWithContext(_ context.Context) (*cpu.TimesStat, error) {
 	defer funcs.Close()
 
 	var ti ProcTaskInfo
-	funcs.lib.ProcPidInfo(p.Pid, common.PROC_PIDTASKINFO, 0, uintptr(unsafe.Pointer(&ti)), int32(unsafe.Sizeof(ti)))
+	funcs.lib.ProcPidInfo(p.Pid, common.PROC_PIDTASKINFO, 0, unsafe.Pointer(&ti), int32(unsafe.Sizeof(ti)))
 
 	timescaleToNanoSeconds := funcs.getTimeScaleToNanoSeconds()
 	ret := &cpu.TimesStat{
@@ -537,7 +549,7 @@ func (p *Process) MemoryInfoWithContext(_ context.Context) (*MemoryInfoStat, err
 	defer funcs.Close()
 
 	var ti ProcTaskInfo
-	funcs.lib.ProcPidInfo(p.Pid, common.PROC_PIDTASKINFO, 0, uintptr(unsafe.Pointer(&ti)), int32(unsafe.Sizeof(ti)))
+	funcs.lib.ProcPidInfo(p.Pid, common.PROC_PIDTASKINFO, 0, unsafe.Pointer(&ti), int32(unsafe.Sizeof(ti)))
 
 	ret := &MemoryInfoStat{
 		RSS: uint64(ti.Resident_size),
@@ -568,8 +580,8 @@ func (p *Process) NumFDsWithContext(_ context.Context) (int32, error) {
 		p.Pid,
 		common.PROC_PIDLISTFDS,
 		0,
-		0, // NULL buffer
-		0, // 0 size
+		nil, // NULL buffer
+		0,   // 0 size
 	)
 	if bufferSize <= 0 {
 		return 0, fmt.Errorf("unknown error: proc_pidinfo returned %d", bufferSize)
@@ -585,8 +597,8 @@ func (p *Process) NumFDsWithContext(_ context.Context) (int32, error) {
 		p.Pid,
 		common.PROC_PIDLISTFDS,
 		0,
-		uintptr(unsafe.Pointer(&buf[0])), // Real buffer
-		bufferSize,                       // Size from first call
+		unsafe.Pointer(&buf[0]), // Real buffer
+		bufferSize,              // Size from first call
 	)
 	if ret <= 0 {
 		return 0, fmt.Errorf("unknown error: proc_pidinfo returned %d", ret)

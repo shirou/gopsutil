@@ -154,7 +154,7 @@ func callSMC(smc *common.SMC, input *smcParamStruct) (*smcParamStruct, error) {
 	outputCnt := unsafe.Sizeof(*output)
 
 	result := smc.CallStruct(common.KSMCHandleYPCEvent,
-		uintptr(unsafe.Pointer(input)), inputCnt, uintptr(unsafe.Pointer(output)), &outputCnt)
+		unsafe.Pointer(input), inputCnt, unsafe.Pointer(output), &outputCnt)
 
 	if result != 0 {
 		return output, errors.New("ERROR: IOConnectCallStructMethod failed")
