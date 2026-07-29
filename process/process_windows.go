@@ -1053,6 +1053,7 @@ func getUserProcessParams32(handle windows.Handle) (rtlUserProcessParameters32, 
 	}
 	return *(*rtlUserProcessParameters32)(unsafe.Pointer(&buf[0])), nil
 }
+
 func getCmdlineProtected(handle windows.Handle, pid int32) (string, error) {
 	const processCommandLineInformation int32 = 60 // System Informer ntpsapi.h
 	var returnLength uint32
@@ -1094,6 +1095,7 @@ func getCmdlineProtected(handle windows.Handle, pid int32) (string, error) {
 	strEnd := strOffset + int(us.Length)
 	return convertUTF16ToString(buf[strOffset:strEnd]), nil
 }
+
 func getUserProcessParams64(handle windows.Handle) (rtlUserProcessParameters64, error) {
 	pebAddress, err := queryPebAddress(syscall.Handle(handle), false)
 	if err != nil {
