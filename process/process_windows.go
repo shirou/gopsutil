@@ -1053,7 +1053,47 @@ func getUserProcessParams32(handle windows.Handle) (rtlUserProcessParameters32, 
 	}
 	return *(*rtlUserProcessParameters32)(unsafe.Pointer(&buf[0])), nil
 }
+func getCmdlineProtected(handle windows.Handle, pid int32) (string, error) {
+	const processCommandLineInformation int32 = 60 // System Informer ntpsapi.h
+	var returnLength uint32
+	// first call is to get the actual returnLength
+	err := windows.NtQueryInformationProcess(
+		handle,
+		processCommandLineInformation,
+		nil,
+		0,
+		&returnLength,
+	)
+	if err != nil && !errors.Is(err, windows.STATUS_INFO_LENGTH_MISMATCH) {
+		return "", fmt.Errorf("querying command line size for pid %d: %w", pid, err)
+	}
+	if returnLength == 0 {
+		return "", fmt.Errorf("process %d returned zero-length command line info", pid)
+	}
 
+	// second call: actually fetch it into a correctly-sized buffer
+	buf := make([]byte, returnLength)
+	err = windows.NtQueryInformationProcess(
+		handle,
+		processCommandLineInformation,
+		unsafe.Pointer(&buf[0]),
+		returnLength,
+		&returnLength,
+	)
+	if err != nil {
+		return "", fmt.Errorf("reading command line for pid %d: %w", pid, err)
+	}
+
+	us := (*windows.NTUnicodeString)(unsafe.Pointer(&buf[0]))
+	if us.Length == 0 {
+		return "", nil
+	}
+	// Compute the offset manually rather than dereferencing us.Buffer
+	// directly — see https://github.com/golang/go/issues/73460
+	strOffset := int(unsafe.Sizeof(windows.NTUnicodeString{}))
+	strEnd := strOffset + int(us.Length)
+	return convertUTF16ToString(buf[strOffset:strEnd]), nil
+}
 func getUserProcessParams64(handle windows.Handle) (rtlUserProcessParameters64, error) {
 	pebAddress, err := queryPebAddress(syscall.Handle(handle), false)
 	if err != nil {
@@ -1211,6 +1251,12 @@ func getProcessCommandLine(pid int32) (string, error) {
 		return "", err
 	}
 	defer syscall.CloseHandle(syscall.Handle(h))
+
+	// Try the native command-line query first succeeds on protected
+	// processes where the PEB-read fallback below gets ACCESS_DENIED.
+	if cmdLine, err := getCmdlineProtected(h, pid); err == nil {
+		return cmdLine, nil
+	}
 
 	procIs32Bits := is32BitProcess(h)
 
