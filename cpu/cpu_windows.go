@@ -106,8 +106,17 @@ func Times(percpu bool) ([]TimesStat, error) {
 func TimesWithContext(_ context.Context, percpu bool) ([]TimesStat, error) {
 	// Get the CPU performance counters per processor via Windows API
 	stats, err := perfInfo()
+	if err == nil && len(stats) == 0 {
+		err = errors.New("no processor performance information returned")
+	}
 	if err != nil {
-		return nil, err
+		if percpu {
+			return nil, err
+		}
+		// perfInfo relies on the undocumented NtQuerySystemInformation, which
+		// may be unavailable in restricted environments. Fall back to the
+		// public GetSystemTimes for the total rather than failing outright.
+		return systemTimes()
 	}
 
 	if percpu {
@@ -130,23 +139,64 @@ func TimesWithContext(_ context.Context, percpu bool) ([]TimesStat, error) {
 	// machines with more than 64 logical processors when the current thread is
 	// switched to another processor group as then the counters are not
 	// monotonic anymore.
-	var total win32_SystemProcessorPerformanceInformation
+	//
+	// Do all arithmetic on the integer tick counts and convert to float64 only
+	// once. Converting each counter first loses precision on large counters and
+	// can make the returned values non-monotonic. See issue #2110.
+	var idle, kernel, user, interrupt int64
 	for _, v := range stats {
-		total.IdleTime += v.IdleTime
-		total.KernelTime += v.KernelTime
-		total.UserTime += v.UserTime
-		total.DpcTime += v.DpcTime
-		total.InterruptTime += v.InterruptTime
-		total.InterruptCount += v.InterruptCount
+		idle += v.IdleTime
+		kernel += v.KernelTime
+		user += v.UserTime
+		interrupt += v.InterruptTime
 	}
 
 	return []TimesStat{
 		{
 			CPU:    "cpu-total",
-			User:   float64(total.UserTime) / ClocksPerSec,
-			System: float64(total.KernelTime-total.IdleTime) / ClocksPerSec,
-			Idle:   float64(total.IdleTime) / ClocksPerSec,
-			Irq:    float64(total.InterruptTime) / ClocksPerSec,
+			User:   float64(user) / ClocksPerSec,
+			System: float64(kernel-idle) / ClocksPerSec, // kernel time includes idle time
+			Idle:   float64(idle) / ClocksPerSec,
+			Irq:    float64(interrupt) / ClocksPerSec,
+		},
+	}, nil
+}
+
+// systemTimes returns the combined CPU times reported by GetSystemTimes.
+//
+// This is only a fallback for TimesWithContext(ctx, false): GetSystemTimes is a
+// documented public API but returns the counters of the calling thread's
+// processor group only, so on hosts with more than 64 logical processors the
+// values are not monotonic once the thread is migrated to another group. It
+// also cannot report Irq, which is left at zero here.
+//
+// Whether perfInfo works is a property of the environment, so in practice a
+// process stays on one path for its whole lifetime. Should perfInfo fail only
+// intermittently on a multi-group host, the two paths cover a different number
+// of processors, and Percent may report one bogus sample before recovering.
+func systemTimes() ([]TimesStat, error) {
+	var lpIdleTime, lpKernelTime, lpUserTime common.FILETIME
+	// GetSystemTimes returns 0 for error, in which case we check err,
+	// see https://pkg.go.dev/golang.org/x/sys/windows#LazyProc.Call
+	r, _, err := common.ProcGetSystemTimes.Call(
+		uintptr(unsafe.Pointer(&lpIdleTime)),
+		uintptr(unsafe.Pointer(&lpKernelTime)),
+		uintptr(unsafe.Pointer(&lpUserTime)))
+	if r == 0 {
+		return nil, err
+	}
+
+	// See the note on integer arithmetic in TimesWithContext and issue #2110.
+	idle := uint64(lpIdleTime.DwHighDateTime)<<32 | uint64(lpIdleTime.DwLowDateTime)
+	user := uint64(lpUserTime.DwHighDateTime)<<32 | uint64(lpUserTime.DwLowDateTime)
+	kernel := uint64(lpKernelTime.DwHighDateTime)<<32 | uint64(lpKernelTime.DwLowDateTime)
+
+	return []TimesStat{
+		{
+			CPU:    "cpu-total",
+			User:   float64(user) / ClocksPerSec,
+			System: float64(kernel-idle) / ClocksPerSec, // kernel time includes idle time
+			Idle:   float64(idle) / ClocksPerSec,
 		},
 	}, nil
 }
@@ -261,8 +311,15 @@ func perfInfo() ([]win32_SystemProcessorPerformanceInformation, error) {
 	// (up to 64 logical CPUs per group). The non-Ex NtQuerySystemInformation only returns
 	// data for the calling thread's group, so whenever the Ex variant is available we
 	// iterate every active group and concatenate the results. See issue #887.
-	if common.ProcNtQuerySystemInformationEx.Find() == nil {
+	//
+	// Every proc is resolved with Find before it is used: LazyProc.Call panics when it
+	// cannot resolve, and a panic would take the caller's process down instead of
+	// letting TimesWithContext fall back to GetSystemTimes.
+	if common.ProcNtQuerySystemInformationEx.Find() == nil && procGetActiveProcessorGroupCount.Find() == nil {
 		return perfInfoAllGroups()
+	}
+	if err := common.ProcNtQuerySystemInformation.Find(); err != nil {
+		return nil, err
 	}
 	return perfInfoSingleGroup()
 }
