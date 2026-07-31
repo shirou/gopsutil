@@ -82,8 +82,10 @@ func TestTimes_Against_Psutil(t *testing.T) {
 	require.NoError(t, err)
 
 	// user/system/idle exist on all supported platforms and both sides
-	// derive them identically (linux: /proc/stat; windows: GetSystemTimes
-	// with system = kernel - idle; darwin: mach host statistics).
+	// derive them from the same counters (linux: /proc/stat; darwin: mach host
+	// statistics; windows: system = kernel - idle, which psutil reads via
+	// GetSystemTimes while gopsutil sums the per-CPU counters — equivalent as
+	// long as the host has a single processor group, see #2125).
 	pt.AssertBracketedDelta(t, "User", before.User, got.User, after.User, cpuTimesSlack)
 	pt.AssertBracketedDelta(t, "System", before.System, got.System, after.System, cpuTimesSlack)
 	pt.AssertBracketedDelta(t, "Idle", before.Idle, got.Idle, after.Idle, cpuTimesSlack)
