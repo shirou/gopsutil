@@ -1,0 +1,44 @@
+name: Test FreeBSD
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  freebsd:
+    name: FreeBSD
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Test
+        uses: vmactions/freebsd-vm@77ed28d336d03fe19a3f4f7266c1d2c4714dd79d # v1.5.2
+        with:
+          usesh: true
+          cache-after-prepare: true
+          # lsof: process.TestConnections shells out to it.
+          prepare: |
+            pkg install -y go lsof
+          run: |
+            set -e
+            go version
+            # The image does not run /etc/rc.d/dmesg, so cpu.TestInfo finds no
+            # /var/run/dmesg.boot. A booted FreeBSD system always has one.
+            dmesg > /var/run/dmesg.boot
+            # devfs materialises /dev/pts only while a pty is open, and this
+            # runs over a non-interactive ssh session. process.TestTerminal
+            # reads that directory, so keep one pty allocated for the run.
+            script -q /dev/null sleep 900 &
+            sleep 1
+            go test ./...
