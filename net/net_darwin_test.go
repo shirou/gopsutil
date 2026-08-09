@@ -39,6 +39,23 @@ func TestParseNetstatLineHeader(t *testing.T) {
 	assert.Equal(t, errNetstatHeader, err)
 }
 
+func TestParseNetstatLineInvalidColumnCount(t *testing.T) {
+	for _, line := range []string{
+		"",
+		"lo0",
+		"lo0 16384",
+		"lo0 16384 <Link#1> 0 0 0 0 0 0 0",
+		"lo0 16384 <Link#1> address 0 0 0 0 0 0 0 0 0 0",
+	} {
+		t.Run(line, func(t *testing.T) {
+			stat, linkID, err := parseNetstatLine(line)
+			assert.Nil(t, stat)
+			assert.Nil(t, linkID)
+			assert.Error(t, err)
+		})
+	}
+}
+
 func assertLoopbackStat(t *testing.T, err error, stat *IOCountersStat) {
 	t.Helper()
 	assert.NoError(t, err)
@@ -85,8 +102,7 @@ func TestParseNetstatLineIPv4(t *testing.T) {
 }
 
 func TestParseNetstatOutput(t *testing.T) {
-	nsInterfaces, err := parseNetstatOutput(netstatNotTruncated)
-	assert.NoError(t, err)
+	nsInterfaces := parseNetstatOutput(netstatNotTruncated)
 	assert.Len(t, nsInterfaces, 8)
 	for index := range nsInterfaces {
 		assert.NotNilf(t, nsInterfaces[index].stat, "Index %d", index)
@@ -115,9 +131,27 @@ func TestParseNetstatOutput(t *testing.T) {
 	assert.Len(t, mapUsage.notTruncated(), 4)
 }
 
+func TestParseNetstatOutputSkipsMalformedLines(t *testing.T) {
+	diagnosticOutput := "netstat: sysctl IFDATA_SUPPLEMENTAL: Operation not permitted\nnetstat:"
+
+	for _, test := range []struct {
+		name      string
+		output    string
+		wantCount int
+	}{
+		{name: "diagnostics only", output: diagnosticOutput},
+		{name: "diagnostics before table", output: diagnosticOutput + "\n" + netstatNotTruncated, wantCount: 8},
+		{name: "diagnostics after table", output: netstatNotTruncated + "\n" + diagnosticOutput, wantCount: 8},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			nsInterfaces := parseNetstatOutput(test.output)
+			assert.Len(t, nsInterfaces, test.wantCount)
+		})
+	}
+}
+
 func TestParseNetstatTruncated(t *testing.T) {
-	nsInterfaces, err := parseNetstatOutput(netstatTruncated)
-	assert.NoError(t, err)
+	nsInterfaces := parseNetstatOutput(netstatTruncated)
 	assert.Len(t, nsInterfaces, 11)
 	for index := range nsInterfaces {
 		assert.NotNilf(t, nsInterfaces[index].stat, "Index %d", index)
