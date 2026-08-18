@@ -608,3 +608,55 @@ func (p *Process) NumFDsWithContext(_ context.Context) (int32, error) {
 	numFDs := ret / sizeofProcFDInfo
 	return numFDs, nil
 }
+
+func (p *Process) EnvironWithContext(_ context.Context) ([]string, error) {
+	pargs, nargs, err := procArgs(p.Pid)
+	if err != nil {
+		return nil, err
+	}
+	// 跳过前 4 字节的 nargs，传入解析函数
+	return parseEnviron(pargs[4:], nargs), nil
+}
+
+// parseEnviron 从 kern.procargs2 缓冲区中提取环境变量 (envp)
+func parseEnviron(args []byte, nargs int) []string {
+	chunks := bytes.Split(args, []byte{0})
+	if len(chunks) <= 1 {
+		return nil
+	}
+
+	// 1. 跳过 exec_path (chunks[0]) 以及前置填充的 NULL 字节
+	i := 1
+	for ; i < len(chunks) && len(chunks[i]) == 0; i++ {
+	}
+
+	// 2. 边界检查，防止 nargs 超出 chunks 长度
+	maxArgs := len(chunks) - i
+	if nargs > maxArgs {
+		nargs = maxArgs
+	}
+	if nargs < 0 {
+		nargs = 0
+	}
+
+	// 3. 跳过 nargs 个命令行参数 (argv)，此时 i 指向 envp[0]
+	i += nargs
+
+	if i >= len(chunks) {
+		return nil
+	}
+
+	// 4. 收集剩余的环境变量字符串
+	var envSlice []string
+	for ; i < len(chunks); i++ {
+		if len(chunks[i]) == 0 {
+			continue
+		}
+		// 环境变量合法格式必须包含 '=' (例如 FOO=BAR)
+		if bytes.IndexByte(chunks[i], '=') > 0 {
+			envSlice = append(envSlice, string(chunks[i]))
+		}
+	}
+
+	return envSlice
+}
