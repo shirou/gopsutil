@@ -6,6 +6,7 @@ package process
 import (
 	"bufio"
 	"context"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
@@ -48,7 +49,10 @@ var (
 	processorArchitecture uint
 )
 
-const processQueryInformation = windows.PROCESS_QUERY_LIMITED_INFORMATION
+const (
+	processQueryInformation             = windows.PROCESS_QUERY_LIMITED_INFORMATION
+	processCommandLineInformation int32 = 60 // Windows 8.1+ ProcessCommandLineInformation  ntpsapi.h
+)
 
 type systemProcessorInformation struct {
 	ProcessorArchitecture uint16
@@ -1054,48 +1058,6 @@ func getUserProcessParams32(handle windows.Handle) (rtlUserProcessParameters32, 
 	return *(*rtlUserProcessParameters32)(unsafe.Pointer(&buf[0])), nil
 }
 
-func getCmdlineProtected(handle windows.Handle, pid int32) (string, error) {
-	const processCommandLineInformation int32 = 60 // System Informer ntpsapi.h
-	var returnLength uint32
-	// first call is to get the actual returnLength
-	err := windows.NtQueryInformationProcess(
-		handle,
-		processCommandLineInformation,
-		nil,
-		0,
-		&returnLength,
-	)
-	if err != nil && !errors.Is(err, windows.STATUS_INFO_LENGTH_MISMATCH) {
-		return "", fmt.Errorf("querying command line size for pid %d: %w", pid, err)
-	}
-	if returnLength == 0 {
-		return "", fmt.Errorf("process %d returned zero-length command line info", pid)
-	}
-
-	// second call: actually fetch it into a correctly-sized buffer
-	buf := make([]byte, returnLength)
-	err = windows.NtQueryInformationProcess(
-		handle,
-		processCommandLineInformation,
-		unsafe.Pointer(&buf[0]),
-		returnLength,
-		&returnLength,
-	)
-	if err != nil {
-		return "", fmt.Errorf("reading command line for pid %d: %w", pid, err)
-	}
-
-	us := (*windows.NTUnicodeString)(unsafe.Pointer(&buf[0]))
-	if us.Length == 0 {
-		return "", nil
-	}
-	// Compute the offset manually rather than dereferencing us.Buffer
-	// directly — see https://github.com/golang/go/issues/73460
-	strOffset := int(unsafe.Sizeof(windows.NTUnicodeString{}))
-	strEnd := strOffset + int(us.Length)
-	return convertUTF16ToString(buf[strOffset:strEnd]), nil
-}
-
 func getUserProcessParams64(handle windows.Handle) (rtlUserProcessParameters64, error) {
 	pebAddress, err := queryPebAddress(syscall.Handle(handle), false)
 	if err != nil {
@@ -1246,20 +1208,82 @@ func (p *processReader) Read(buf []byte) (int, error) {
 
 func getProcessCommandLine(pid int32) (string, error) {
 	h, err := windows.OpenProcess(processQueryInformation|windows.PROCESS_VM_READ, false, uint32(pid))
-	if errors.Is(err, windows.ERROR_ACCESS_DENIED) || errors.Is(err, windows.ERROR_INVALID_PARAMETER) {
+	if err == nil {
+		defer syscall.CloseHandle(syscall.Handle(h))
+
+		if cmdLine, err := getProcessCommandLinePEB(h); err == nil {
+			return cmdLine, nil
+		}
+
+		// PEB read failed even though the handle opened. VM_READ may
+		// have been granted but ineffective against this process's
+		// protection driver. Fall back to the native query on the same handle.
+		if cmdLine, err := getProcessCommandLineNative(h, pid); err == nil {
+			return cmdLine, nil
+		}
+
 		return "", nil
 	}
-	if err != nil {
+
+	if errors.Is(err, windows.ERROR_INVALID_PARAMETER) {
+		return "", nil
+	}
+	if !errors.Is(err, windows.ERROR_ACCESS_DENIED) {
 		return "", err
 	}
-	defer syscall.CloseHandle(syscall.Handle(h))
 
-	// Try the native command-line query first succeeds on protected
-	// processes where the PEB-read fallback below gets ACCESS_DENIED.
-	if cmdLine, err := getCmdlineProtected(h, pid); err == nil {
-		return cmdLine, nil
+	// fallback in case it's a genuine PPL process, where
+	// PROCESS_VM_READ itself is denied at OpenProcess time. Retry with
+	// just PROCESS_QUERY_LIMITED_INFORMATION, which PPL still grants.
+	lh, lerr := windows.OpenProcess(processQueryInformation, false, uint32(pid))
+	if lerr != nil {
+		return "", nil
+	}
+	defer syscall.CloseHandle(syscall.Handle(lh))
+
+	return getProcessCommandLineNative(lh, pid)
+}
+
+func getProcessCommandLineNative(handle windows.Handle, pid int32) (string, error) {
+	var returnLength uint32
+	// first call is to get the actual returnLength
+	err := windows.NtQueryInformationProcess(
+		handle,
+		processCommandLineInformation,
+		nil,
+		0,
+		&returnLength,
+	)
+	if err != nil &&
+		!errors.Is(err, windows.STATUS_INFO_LENGTH_MISMATCH) &&
+		!errors.Is(err, windows.STATUS_BUFFER_OVERFLOW) &&
+		!errors.Is(err, windows.STATUS_BUFFER_TOO_SMALL) {
+		return "", fmt.Errorf("querying command line size for pid %d: %w", pid, err)
+	}
+	if returnLength == 0 {
+		return "", fmt.Errorf("process %d returned zero-length command line info", pid)
 	}
 
+	// second call: actually fetch it into a correctly-sized buffer
+	buf := make([]byte, returnLength)
+	err = windows.NtQueryInformationProcess(
+		handle,
+		processCommandLineInformation,
+		unsafe.Pointer(&buf[0]),
+		returnLength,
+		&returnLength,
+	)
+	if err != nil {
+		return "", fmt.Errorf("reading command line for pid %d: %w", pid, err)
+	}
+	cmdLine, err := parseCommandLineInformation(buf)
+	if err != nil {
+		return "", fmt.Errorf("parsing command line for pid %d: %w", pid, err)
+	}
+	return cmdLine, nil
+}
+
+func getProcessCommandLinePEB(h windows.Handle) (string, error) {
 	procIs32Bits := is32BitProcess(h)
 
 	if procIs32Bits {
@@ -1305,4 +1329,20 @@ func convertUTF16ToString(src []byte) string {
 		srcIdx += 2
 	}
 	return syscall.UTF16ToString(codePoints)
+}
+
+func parseCommandLineInformation(buf []byte) (string, error) {
+	if len(buf) < 2 {
+		return "", errors.New("command line buffer too small to read length")
+	}
+	length := binary.LittleEndian.Uint16(buf[0:2])
+	if length == 0 {
+		return "", nil
+	}
+	strOffset := int(unsafe.Sizeof(windows.NTUnicodeString{}))
+	strEnd := strOffset + int(length)
+	if strEnd > len(buf) {
+		return "", errors.New("command line length exceeds buffer size")
+	}
+	return convertUTF16ToString(buf[strOffset:strEnd]), nil
 }
