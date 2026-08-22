@@ -1,0 +1,53 @@
+name: Test FreeBSD
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  freebsd:
+    name: FreeBSD
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Test
+        uses: vmactions/freebsd-vm@77ed28d336d03fe19a3f4f7266c1d2c4714dd79d # v1.5.2
+        with:
+          release: "15.1"
+          usesh: true
+          copyback: false
+          # lsof: process.TestConnections shells out to it.
+          prepare: |
+            pkg install -y go lsof
+          run: |
+            set -e
+            go version
+            # Everything below runs as root, so paths that depend on being
+            # unprivileged are not covered by this job.
+            #
+            # The image does not run /etc/rc.d/dmesg, so cpu.TestInfo finds no
+            # /var/run/dmesg.boot. A booted FreeBSD system always has one.
+            dmesg > /var/run/dmesg.boot
+            # devfs materialises /dev/pts only while a pty is open, and this
+            # runs over a non-interactive ssh session. process.TestTerminal
+            # reads that directory, so keep one pty allocated for the run.
+            # Its descriptors are detached: holding the ssh session's stdout
+            # keeps the step open until the sleep expires, whatever go test
+            # does. The trap bounds the holder's lifetime instead.
+            script -q /dev/null sleep 3600 </dev/null >/dev/null 2>&1 &
+            pty_pid=$!
+            trap 'kill "$pty_pid" 2>/dev/null' EXIT
+            sleep 1
+            go test ./...
