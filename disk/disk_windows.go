@@ -159,7 +159,7 @@ func processVolumeLoop(ctx context.Context, nextVolHandle uintptr, volNameBuf []
 		if volRet, _, err := procFindNextVolumeW.Call(
 			nextVolHandle,
 			uintptr(unsafe.Pointer(&volNameBuf[0])),
-			uintptr(maxVolumeNameLength)); err != nil && volRet == 0 {
+			uintptr(maxVolumeNameLength)); volRet == 0 {
 			var errno syscall.Errno
 			if errors.As(err, &errno) && errno == windows.ERROR_NO_MORE_FILES {
 				break
