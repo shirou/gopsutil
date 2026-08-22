@@ -133,22 +133,22 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 		// fields[3] is the statistic label, fields[4] is the value
 		switch fields[3] {
 		case "nread":
-			nreadarr[moduleName+instance], err = strconv.ParseUint((fields[4]), 10, 64)
+			nreadarr[moduleName+instance], err = strconv.ParseUint(fields[4], 10, 64)
 			if err != nil {
 				return nil, err
 			}
 		case "nwritten":
-			nwrittenarr[moduleName+instance], err = strconv.ParseUint((fields[4]), 10, 64)
+			nwrittenarr[moduleName+instance], err = strconv.ParseUint(fields[4], 10, 64)
 			if err != nil {
 				return nil, err
 			}
 		case "reads":
-			readsarr[moduleName+instance], err = strconv.ParseUint((fields[4]), 10, 64)
+			readsarr[moduleName+instance], err = strconv.ParseUint(fields[4], 10, 64)
 			if err != nil {
 				return nil, err
 			}
 		case "writes":
-			writesarr[moduleName+instance], err = strconv.ParseUint((fields[4]), 10, 64)
+			writesarr[moduleName+instance], err = strconv.ParseUint(fields[4], 10, 64)
 			if err != nil {
 				return nil, err
 			}
@@ -156,11 +156,11 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 			if issolaris {
 				// from sec to milli secs
 				var frtime float64
-				frtime, err = strconv.ParseFloat((fields[4]), 64)
+				frtime, err = strconv.ParseFloat(fields[4], 64)
 				rtimearr[moduleName+instance] = uint64(frtime * 1000)
 			} else {
 				// from nano to milli secs
-				rtimearr[moduleName+instance], err = strconv.ParseUint((fields[4]), 10, 64)
+				rtimearr[moduleName+instance], err = strconv.ParseUint(fields[4], 10, 64)
 				rtimearr[moduleName+instance] = rtimearr[moduleName+instance] / 1000 / 1000
 			}
 			if err != nil {
@@ -170,11 +170,11 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 			if issolaris {
 				// from sec to milli secs
 				var fwtime float64
-				fwtime, err = strconv.ParseFloat((fields[4]), 64)
+				fwtime, err = strconv.ParseFloat(fields[4], 64)
 				wtimearr[moduleName+instance] = uint64(fwtime * 1000)
 			} else {
 				// from nano to milli secs
-				wtimearr[moduleName+instance], err = strconv.ParseUint((fields[4]), 10, 64)
+				wtimearr[moduleName+instance], err = strconv.ParseUint(fields[4], 10, 64)
 				wtimearr[moduleName+instance] = wtimearr[moduleName+instance] / 1000 / 1000
 			}
 			if err != nil {
