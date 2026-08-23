@@ -49,10 +49,7 @@ var (
 	processorArchitecture uint
 )
 
-const (
-	processQueryInformation             = windows.PROCESS_QUERY_LIMITED_INFORMATION
-	processCommandLineInformation int32 = 60 // Windows 8.1+ ProcessCommandLineInformation  ntpsapi.h
-)
+const processQueryInformation = windows.PROCESS_QUERY_LIMITED_INFORMATION
 
 type systemProcessorInformation struct {
 	ProcessorArchitecture uint16
@@ -1211,7 +1208,8 @@ func getProcessCommandLine(pid int32) (string, error) {
 	if err == nil {
 		defer syscall.CloseHandle(syscall.Handle(h))
 
-		if cmdLine, err := getProcessCommandLinePEB(h); err == nil {
+		cmdLine, pebErr := getProcessCommandLinePEB(h)
+		if pebErr == nil {
 			return cmdLine, nil
 		}
 
@@ -1221,8 +1219,7 @@ func getProcessCommandLine(pid int32) (string, error) {
 		if cmdLine, err := getProcessCommandLineNative(h, pid); err == nil {
 			return cmdLine, nil
 		}
-
-		return "", nil
+		return "", pebErr
 	}
 
 	if errors.Is(err, windows.ERROR_INVALID_PARAMETER) {
@@ -1240,8 +1237,8 @@ func getProcessCommandLine(pid int32) (string, error) {
 		return "", nil
 	}
 	defer syscall.CloseHandle(syscall.Handle(lh))
-
-	return getProcessCommandLineNative(lh, pid)
+	cmdLine, _ := getProcessCommandLineNative(lh, pid)
+	return cmdLine, nil
 }
 
 func getProcessCommandLineNative(handle windows.Handle, pid int32) (string, error) {
@@ -1249,7 +1246,7 @@ func getProcessCommandLineNative(handle windows.Handle, pid int32) (string, erro
 	// first call is to get the actual returnLength
 	err := windows.NtQueryInformationProcess(
 		handle,
-		processCommandLineInformation,
+		windows.ProcessCommandLineInformation,
 		nil,
 		0,
 		&returnLength,
@@ -1268,7 +1265,7 @@ func getProcessCommandLineNative(handle windows.Handle, pid int32) (string, erro
 	buf := make([]byte, returnLength)
 	err = windows.NtQueryInformationProcess(
 		handle,
-		processCommandLineInformation,
+		windows.ProcessCommandLineInformation,
 		unsafe.Pointer(&buf[0]),
 		returnLength,
 		&returnLength,
