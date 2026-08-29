@@ -392,6 +392,9 @@ func callKernProcSyscall(op, arg int32) ([]byte, uint64, error) {
 	if err != 0 {
 		return nil, length, err
 	}
+	if length == 0 {
+		return nil, 0, errors.New("empty KinfoProc")
+	}
 
 	count := int32(length / uint64(sizeOfKinfoProc))
 	mib = []int32{CTLKern, KernProc, op, arg, sizeOfKinfoProc, count}
