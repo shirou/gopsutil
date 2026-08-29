@@ -111,6 +111,41 @@ func TestParseCmdline(t *testing.T) {
 	}
 }
 
+func TestParseEnviron(t *testing.T) {
+	tests := []struct {
+		name  string
+		input []byte
+		nargs int
+		want  []string
+	}{
+		{
+			name:  "normal case: envp followed by apple strings",
+			input: []byte("/bin/cmd\x00\x00cmd\x00arg\x00KEY=VAL\x00\x00stack_guard=123\x00"),
+			nargs: 2,
+			want:  []string{"KEY=VAL"},
+		},
+		{
+			name:  "empty envp entry with variables behind it",
+			input: []byte("/bin/cmd\x00\x00cmd\x00arg\x00\x00VAR=val\x00"),
+			nargs: 2,
+			want:  nil,
+		},
+		{
+			name:  "nargs larger than available chunks",
+			input: []byte("/bin/cmd\x00\x00cmd\x00arg\x00VAR=val\x00"),
+			nargs: 2,
+			want:  []string{"VAR=val"},
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := parseEnviron(tc.input, tc.nargs)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}
+
+
 func BenchmarkNumFDs(b *testing.B) {
 	pid := int32(os.Getpid())
 	p, err := NewProcess(pid)

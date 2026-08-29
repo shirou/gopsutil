@@ -609,28 +609,34 @@ func (p *Process) NumFDsWithContext(_ context.Context) (int32, error) {
 	return numFDs, nil
 }
 
+// EnvironWithContext returns the environment variables for the process.
+//
+// For a cs_restricted process, the kernel truncates the buffer at the end of
+// argv, so this will return an empty slice with a nil error, indistinguishable
+// from a process with no environment. (Reading another user's process needs
+// root, but that already applies to Cmdline().)
 func (p *Process) EnvironWithContext(_ context.Context) ([]string, error) {
 	pargs, nargs, err := procArgs(p.Pid)
 	if err != nil {
 		return nil, err
 	}
-	// 跳过前 4 字节的 nargs，传入解析函数
+	// Skip the first 4 bytes of nargs and pass to the parser.
 	return parseEnviron(pargs[4:], nargs), nil
 }
 
-// parseEnviron 从 kern.procargs2 缓冲区中提取环境变量 (envp)
+// parseEnviron extracts environment variables (envp) from the kern.procargs2 buffer.
 func parseEnviron(args []byte, nargs int) []string {
 	chunks := bytes.Split(args, []byte{0})
 	if len(chunks) <= 1 {
 		return nil
 	}
 
-	// 1. 跳过 exec_path (chunks[0]) 以及前置填充的 NULL 字节
+	// 1. Skip exec_path (chunks[0]) and any leading NUL padding.
 	i := 1
 	for ; i < len(chunks) && len(chunks[i]) == 0; i++ {
 	}
 
-	// 2. 边界检查，防止 nargs 超出 chunks 长度
+	// 2. Boundary check to prevent nargs from exceeding chunks length.
 	maxArgs := len(chunks) - i
 	if nargs > maxArgs {
 		nargs = maxArgs
@@ -639,20 +645,24 @@ func parseEnviron(args []byte, nargs int) []string {
 		nargs = 0
 	}
 
-	// 3. 跳过 nargs 个命令行参数 (argv)，此时 i 指向 envp[0]
+	// 3. Skip nargs command line arguments (argv), then i points to envp[0].
 	i += nargs
 
 	if i >= len(chunks) {
 		return nil
 	}
 
-	// 4. 收集剩余的环境变量字符串
+	// 4. Collect remaining environment variables.
 	var envSlice []string
 	for ; i < len(chunks); i++ {
 		if len(chunks[i]) == 0 {
-			continue
+			// The kernel terminates envp with an empty string; break here to
+			// avoid reading subsequent kernel-injected "apple" strings.
+			// This is a trade-off: an empty envp entry is extremely rare,
+			// but if it exists, any subsequent legitimate env vars are lost.
+			break
 		}
-		// 环境变量合法格式必须包含 '=' (例如 FOO=BAR)
+		// Environment variable format must contain '=' (e.g., FOO=BAR).
 		if bytes.IndexByte(chunks[i], '=') > 0 {
 			envSlice = append(envSlice, string(chunks[i]))
 		}
