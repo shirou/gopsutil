@@ -608,3 +608,65 @@ func (p *Process) NumFDsWithContext(_ context.Context) (int32, error) {
 	numFDs := ret / sizeofProcFDInfo
 	return numFDs, nil
 }
+
+// EnvironWithContext returns the environment variables for the process.
+//
+// For a cs_restricted process, the kernel truncates the buffer at the end of
+// argv, so this will return an empty slice with a nil error, indistinguishable
+// from a process with no environment. (Reading another user's process needs
+// root, but that already applies to Cmdline().)
+func (p *Process) EnvironWithContext(_ context.Context) ([]string, error) {
+	pargs, nargs, err := procArgs(p.Pid)
+	if err != nil {
+		return nil, err
+	}
+	// Skip the first 4 bytes of nargs and pass to the parser.
+	return parseEnviron(pargs[4:], nargs), nil
+}
+
+// parseEnviron extracts environment variables (envp) from the kern.procargs2 buffer.
+func parseEnviron(args []byte, nargs int) []string {
+	chunks := bytes.Split(args, []byte{0})
+	if len(chunks) <= 1 {
+		return nil
+	}
+
+	// 1. Skip exec_path (chunks[0]) and any leading NUL padding.
+	i := 1
+	for ; i < len(chunks) && len(chunks[i]) == 0; i++ {
+	}
+
+	// 2. Boundary check to prevent nargs from exceeding chunks length.
+	maxArgs := len(chunks) - i
+	if nargs > maxArgs {
+		nargs = maxArgs
+	}
+	if nargs < 0 {
+		nargs = 0
+	}
+
+	// 3. Skip nargs command line arguments (argv), then i points to envp[0].
+	i += nargs
+
+	if i >= len(chunks) {
+		return nil
+	}
+
+	// 4. Collect remaining environment variables.
+	var envSlice []string
+	for ; i < len(chunks); i++ {
+		if len(chunks[i]) == 0 {
+			// The kernel terminates envp with an empty string; break here to
+			// avoid reading subsequent kernel-injected "apple" strings.
+			// This is a trade-off: an empty envp entry is extremely rare,
+			// but if it exists, any subsequent legitimate env vars are lost.
+			break
+		}
+		// Environment variable format must contain '=' (e.g., FOO=BAR).
+		if bytes.IndexByte(chunks[i], '=') > 0 {
+			envSlice = append(envSlice, string(chunks[i]))
+		}
+	}
+
+	return envSlice
+}
