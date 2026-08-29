@@ -90,7 +90,6 @@ type guid struct {
 const (
 	maxStringSize        = 256
 	maxPhysAddressLength = 32
-	pad0for64_4for32     = 0
 )
 
 type mibIfRow2 struct {
