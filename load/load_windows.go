@@ -5,6 +5,7 @@ package load
 
 import (
 	"context"
+    "log"
 	"math"
 	"sync"
 	"time"
@@ -34,15 +35,17 @@ func loadAvgGoroutine(ctx context.Context) {
 		currentLoad       float64
 	)
 
-	counter, err := common.ProcessorQueueLengthCounter()
-	if err != nil || counter == nil {
-		return
-	}
-
 	tick := time.NewTicker(samplingFrequency).C
 
 	f := func() {
-		currentLoad, err = counter.GetValue()
+		// calling this because common.ProcessorQueueLengthCounter() returns zero values all time
+		w, err := common.GetSystemProcessInformation()
+		if err != nil {
+			log.Printf("gopsutil: unexpected GetSystemProcessInformation error, please file an issue on github: %v", err)
+		} else {
+			currentLoad = float64(w.Stats().Load)
+		}
+
 		loadAvgMutex.Lock()
 		loadErr = err
 		loadAvg1M = loadAvg1M*loadAvgFactor1M + currentLoad*(1-loadAvgFactor1M)
