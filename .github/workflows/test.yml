@@ -38,6 +38,27 @@ jobs:
           - macos-14
           - windows-2025
           - windows-2022
+        # Empty is the runner's native arch. 386 is windows-only here:
+        # process_windows.go reads an NT UNICODE_STRING whose header width
+        # follows the calling process, and process_windows_32bit.go is built
+        # only for 386/arm. lint.yml builds windows/386 but never runs a
+        # test, so neither has ever been executed anywhere. A 64-bit runner
+        # runs 386 test binaries directly under WOW64, so this needs no
+        # separate machine. darwin has no 386 port; any non-windows os added
+        # above needs a matching exclude below.
+        GOARCH:
+          - ""
+          - "386"
+        exclude:
+          - {os: ubuntu-24.04, GOARCH: "386"}
+          - {os: ubuntu-22.04, GOARCH: "386"}
+          - {os: macos-26, GOARCH: "386"}
+          - {os: macos-15, GOARCH: "386"}
+          - {os: macos-15-intel, GOARCH: "386"}
+          - {os: macos-14, GOARCH: "386"}
+    # Spelled out so the native jobs keep the names they had before GOARCH
+    # was added to the matrix, instead of gaining an empty trailing field.
+    name: test (${{ matrix.go-version }}, ${{ matrix.os }}${{ matrix.GOARCH && format(', {0}', matrix.GOARCH) || '' }})
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
@@ -60,5 +81,7 @@ jobs:
         run: python -m pip install psutil==7.2.2
         continue-on-error: true
       - name: Test
+        env:
+          GOARCH: ${{ matrix.GOARCH }}
         run: |
           go test -coverprofile='coverage.out' -covermode=atomic ./...
