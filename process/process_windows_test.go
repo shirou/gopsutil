@@ -46,6 +46,18 @@ func TestParseCommandLineInformation(t *testing.T) {
 			expect: "",
 		},
 		{
+			// The kernel sizes the buffer by returnLength, which is not
+			// necessarily header + Length, so anything past Length has to be
+			// ignored. The filler is non-zero on purpose: a slice that ran to
+			// the end of the buffer would otherwise decode to the same string.
+			name: "buffer padded past the declared length",
+			buf: func() []byte {
+				b := buildCommandLineInfoBuf("notepad.exe file.txt")
+				return append(b, 0xAA, 0xBB, 0xCC, 0xDD)
+			}(),
+			expect: "notepad.exe file.txt",
+		},
+		{
 			name:      "buffer too small for length field",
 			buf:       []byte{0x01},
 			expectErr: true,
@@ -88,6 +100,10 @@ func TestGetProcessCommandLineNativeMatchesPEB(t *testing.T) {
 
 	pebCmdline, err := getProcessCommandLinePEB(h)
 	require.NoError(t, err)
+	// A test binary always has a command line. Without this, a regression that
+	// made both paths return "" (a Length read at the wrong offset, say) would
+	// still satisfy the comparison below.
+	require.NotEmpty(t, pebCmdline)
 
 	nativeCmdline, err := getProcessCommandLineNative(h, pid)
 	require.NoError(t, err)
