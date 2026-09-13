@@ -360,6 +360,10 @@ func (*Process) NumFDsWithContext(_ context.Context) (int32, error) {
 	return 0, common.ErrNotImplementedError
 }
 
+func (*Process) EnvironWithContext(_ context.Context) ([]string, error) {
+	return nil, common.ErrNotImplementedError
+}
+
 func (p *Process) getKProc() (*KinfoProc, error) {
 	buf, length, err := callKernProcSyscall(KernProcPID, p.Pid)
 	if err != nil {
