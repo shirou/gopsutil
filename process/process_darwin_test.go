@@ -119,22 +119,46 @@ func TestParseEnviron(t *testing.T) {
 		want  []string
 	}{
 		{
-			name:  "normal case: envp followed by apple strings",
-			input: []byte("/bin/cmd\x00\x00cmd\x00arg\x00KEY=VAL\x00\x00stack_guard=123\x00"),
+			name:  "envp collected after argv",
+			input: []byte("/bin/sh\x00\x00sh\x00-c\x00echo hi\x00HOME=/root\x00PATH=/bin\x00"),
+			nargs: 3,
+			want:  []string{"HOME=/root", "PATH=/bin"},
+		},
+		{
+			name:  "stops at the padding before the apple strings",
+			input: []byte("/bin/cmd\x00\x00cmd\x00arg\x00KEY=VAL\x00\x00pfz=0x7fff\x00stack_guard=0x1,0x2\x00"),
 			nargs: 2,
 			want:  []string{"KEY=VAL"},
 		},
 		{
-			name:  "empty envp entry with variables behind it",
+			name:  "empty envp element hides everything behind it",
 			input: []byte("/bin/cmd\x00\x00cmd\x00arg\x00\x00VAR=val\x00"),
 			nargs: 2,
 			want:  nil,
 		},
 		{
-			name:  "nargs larger than available chunks",
-			input: []byte("/bin/cmd\x00\x00cmd\x00arg\x00VAR=val\x00"),
+			name:  "entries without a key are skipped",
+			input: []byte("/bin/cmd\x00\x00cmd\x00arg\x00notanenv\x00=noKey\x00A=1\x00"),
 			nargs: 2,
-			want:  []string{"VAR=val"},
+			want:  []string{"A=1"},
+		},
+		{
+			name:  "no env present",
+			input: []byte("/bin/cmd\x00\x00cmd\x00only\x00"),
+			nargs: 2,
+			want:  nil,
+		},
+		{
+			name:  "nargs larger than available chunks does not panic",
+			input: []byte("/bin/cmd\x00\x00cmd\x00arg\x00VAR=val\x00"),
+			nargs: 99,
+			want:  nil,
+		},
+		{
+			name:  "empty buffer returns nil",
+			input: []byte{},
+			nargs: 0,
+			want:  nil,
 		},
 	}
 	for _, tc := range tests {
@@ -144,7 +168,6 @@ func TestParseEnviron(t *testing.T) {
 		})
 	}
 }
-
 
 func BenchmarkNumFDs(b *testing.B) {
 	pid := int32(os.Getpid())
