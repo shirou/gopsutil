@@ -74,6 +74,13 @@ func TestIOCountersByFileParsing(t *testing.T) {
 		assert.Equal(t, uint64(1100), counters[1].Errout)
 		assert.Equal(t, uint64(1200), counters[1].Dropout)
 		assert.Equal(t, uint64(1300), counters[1].Fifoout)
+
+		total, err := IOCountersByFile(false, tmpfile.Name())
+		require.NoError(t, err)
+		require.Len(t, total, 1)
+		assert.Equal(t, "all", total[0].Name)
+		assert.Equal(t, uint64(505), total[0].Fifoin)
+		assert.Equal(t, uint64(1313), total[0].Fifoout)
 	}
 
 	assert.NoErrorf(t, tmpfile.Close(), "Temporary file closing failed")
