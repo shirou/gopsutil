@@ -412,3 +412,59 @@ func TestCgroupInvalidContainerID(t *testing.T) {
 		}
 	}
 }
+
+// TestCgroupDockerAll checks the "all cgroup" case, an empty containerID.
+// It used to work only on cgroup v2: the v1 readers replaced containerID
+// with "all" and then looked for a directory of that name.
+func TestCgroupDockerAll(t *testing.T) {
+	tests := []struct {
+		name      string
+		hierarchy string
+		user      float64
+		system    float64
+		usage     float64
+		memUsage  uint64
+		memLimit  uint64
+	}{
+		{
+			name:      "cgroup v2",
+			hierarchy: "cgroup2",
+			user:      2500.0,
+			system:    1061.151072,
+			usage:     3561.151072,
+			memUsage:  150047021,
+			memLimit:  math.MaxUint64, // memory.max is "max"
+		},
+		{
+			name:      "cgroup v1",
+			hierarchy: "cgroup1",
+			user:      20000 / cpu.ClocksPerSec,
+			system:    10000 / cpu.ClocksPerSec,
+			usage:     3561.151072,
+			memUsage:  150047021,
+			memLimit:  9223372036854771712,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setTestdataHostSys(t, tt.hierarchy)
+
+			stat, err := CgroupCPUDockerWithContext(t.Context(), "")
+			require.NoError(t, err)
+			assert.Equal(t, "all", stat.CPU)
+			assert.InDelta(t, tt.user, stat.User, 1e-9)
+			assert.InDelta(t, tt.system, stat.System, 1e-9)
+			assert.InDelta(t, tt.usage, stat.Usage, 1e-9)
+
+			usage, err := CgroupCPUDockerUsageWithContext(t.Context(), "")
+			require.NoError(t, err)
+			assert.InDelta(t, tt.usage, usage, 1e-9)
+
+			mem, err := CgroupMemDockerWithContext(t.Context(), "")
+			require.NoError(t, err)
+			assert.Equal(t, "all", mem.ContainerID)
+			assert.Equal(t, tt.memUsage, mem.MemUsageInBytes)
+			assert.Equal(t, tt.memLimit, mem.MemLimitInBytes)
+		})
+	}
+}

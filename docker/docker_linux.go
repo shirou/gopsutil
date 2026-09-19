@@ -121,13 +121,13 @@ func CgroupCPUWithContext(ctx context.Context, containerID, base string) (*Cgrou
 	if err != nil {
 		return nil, err
 	}
-	// empty containerID means all cgroup
-	if containerID == "" {
-		containerID = "all"
-	}
 
 	ret := &CgroupCPUStat{}
 	ret.CPU = containerID
+	// empty containerID means all cgroup
+	if containerID == "" {
+		ret.CPU = "all"
+	}
 	for _, line := range lines {
 		fields := strings.Split(line, " ")
 		if fields[0] == "user" {
@@ -214,15 +214,15 @@ func CgroupMemWithContext(ctx context.Context, containerID, base string) (*Cgrou
 		return nil, err
 	}
 
-	// empty containerID means all cgroup
-	if containerID == "" {
-		containerID = "all"
-	}
 	lines, err := common.ReadLines(statfile)
 	if err != nil {
 		return nil, err
 	}
 	ret := &CgroupMemStat{ContainerID: containerID}
+	// empty containerID means all cgroup
+	if containerID == "" {
+		ret.ContainerID = "all"
+	}
 	for _, line := range lines {
 		fields := strings.Split(line, " ")
 		v, err := strconv.ParseUint(fields[1], 10, 64)
