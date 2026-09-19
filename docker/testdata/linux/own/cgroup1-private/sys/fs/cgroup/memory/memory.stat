@@ -1,0 +1,14 @@
+cache 8388608
+rss 4194304
+rss_huge 0
+mapped_file 1048576
+pgpgin 300
+pgpgout 200
+pgfault 1000
+pgmajfault 10
+inactive_anon 1048576
+active_anon 3145728
+inactive_file 2097152
+active_file 6291456
+unevictable 0
+hierarchical_memory_limit 268435456

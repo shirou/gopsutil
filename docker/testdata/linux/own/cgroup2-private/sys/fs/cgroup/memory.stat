@@ -1,0 +1,12 @@
+anon 4194304
+file 8388608
+kernel 65536
+file_mapped 1048576
+anon_thp 0
+inactive_anon 1048576
+active_anon 3145728
+inactive_file 2097152
+active_file 6291456
+unevictable 0
+pgfault 1000
+pgmajfault 10

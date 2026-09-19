@@ -181,6 +181,8 @@ will provide useful information.
   - system
 - docker/CgroupMem() (linux only)
   - various status
+- docker/CgroupCPUOwn(), docker/CgroupMemOwn() (linux only)
+  - the same values for the cgroup of the calling process, with no container id
 - net_protocols (linux only)
   - system wide stats on network protocols (i.e IP, TCP, UDP, etc.)
   - sourced from /proc/net/snmp
