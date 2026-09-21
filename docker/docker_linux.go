@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -121,13 +122,13 @@ func CgroupCPUWithContext(ctx context.Context, containerID, base string) (*Cgrou
 	if err != nil {
 		return nil, err
 	}
-	// empty containerID means all cgroup
-	if containerID == "" {
-		containerID = "all"
-	}
 
 	ret := &CgroupCPUStat{}
 	ret.CPU = containerID
+	// empty containerID means all cgroup
+	if containerID == "" {
+		ret.CPU = "all"
+	}
 	for _, line := range lines {
 		fields := strings.Split(line, " ")
 		if fields[0] == "user" {
@@ -194,6 +195,27 @@ func CgroupCPUDockerUsageWithContext(ctx context.Context, containerID string) (f
 	return CgroupCPUUsageWithContext(ctx, containerID, "")
 }
 
+// CgroupCPUOwn returns the CPU status of the cgroup the calling process
+// belongs to. Unlike CgroupCPUDocker it needs no container ID, so it works
+// from inside a container that cannot see its own cgroup name, which is the
+// default for docker on cgroup v2. The CPU field of the result is "own".
+func CgroupCPUOwn() (*CgroupCPUStat, error) {
+	return CgroupCPUOwnWithContext(context.Background())
+}
+
+func CgroupCPUOwnWithContext(ctx context.Context) (*CgroupCPUStat, error) {
+	base, err := cgroupOwnDir(ctx, "cpuacct")
+	if err != nil {
+		return nil, err
+	}
+	ret, err := CgroupCPUWithContext(ctx, "", base)
+	if err != nil {
+		return nil, err
+	}
+	ret.CPU = "own"
+	return ret, nil
+}
+
 // CgroupMem returns specified cgroup id memory status.
 // containerID is same as docker id if you use docker.
 // If you use container via systemd.slice, you could use
@@ -214,15 +236,15 @@ func CgroupMemWithContext(ctx context.Context, containerID, base string) (*Cgrou
 		return nil, err
 	}
 
-	// empty containerID means all cgroup
-	if containerID == "" {
-		containerID = "all"
-	}
 	lines, err := common.ReadLines(statfile)
 	if err != nil {
 		return nil, err
 	}
 	ret := &CgroupMemStat{ContainerID: containerID}
+	// empty containerID means all cgroup
+	if containerID == "" {
+		ret.ContainerID = "all"
+	}
 	for _, line := range lines {
 		fields := strings.Split(line, " ")
 		v, err := strconv.ParseUint(fields[1], 10, 64)
@@ -315,6 +337,27 @@ func CgroupMemDockerWithContext(ctx context.Context, containerID string) (*Cgrou
 	// An empty base lets getCgroupFilePath pick the docker directory of the
 	// detected cgroup hierarchy (/sys/fs/cgroup/memory/docker on v1).
 	return CgroupMemWithContext(ctx, containerID, "")
+}
+
+// CgroupMemOwn returns the memory status of the cgroup the calling process
+// belongs to. Unlike CgroupMemDocker it needs no container ID, so it works
+// from inside a container that cannot see its own cgroup name, which is the
+// default for docker on cgroup v2. The ContainerID of the result is "own".
+func CgroupMemOwn() (*CgroupMemStat, error) {
+	return CgroupMemOwnWithContext(context.Background())
+}
+
+func CgroupMemOwnWithContext(ctx context.Context) (*CgroupMemStat, error) {
+	base, err := cgroupOwnDir(ctx, "memory")
+	if err != nil {
+		return nil, err
+	}
+	ret, err := CgroupMemWithContext(ctx, "", base)
+	if err != nil {
+		return nil, err
+	}
+	ret.ContainerID = "own"
+	return ret, nil
 }
 
 // cgroupMemV2WithContext reads the memory statistics of a cgroup on the
@@ -464,6 +507,61 @@ func cgroupDir(ctx context.Context, v2 bool, target, dir string) string {
 		return common.HostSysWithContext(ctx, "fs/cgroup", dir)
 	}
 	return common.HostSysWithContext(ctx, "fs/cgroup", target, dir)
+}
+
+// cgroupOwnDir returns the cgroup directory of the calling process. target
+// selects the cgroup v1 controller and is ignored on cgroup v2, which has a
+// single unified hierarchy.
+//
+// The path in /proc/self/cgroup is relative to the cgroup root of the host.
+// Joining it onto the local cgroup root resolves the directory on a host, and
+// inside a container that shares the host cgroup namespace. A container with
+// its own cgroup namespace sees its cgroup as the root, so the joined path
+// does not exist and the root itself is the answer. The same fallback covers
+// docker on cgroup v1, which mounts the container directory at
+// /sys/fs/cgroup/<controller> inside the container.
+func cgroupOwnDir(ctx context.Context, target string) (string, error) {
+	v2 := isCgroupV2(ctx)
+	root := common.HostSysWithContext(ctx, "fs/cgroup")
+	if !v2 {
+		root = path.Join(root, target)
+	}
+	procfile := common.HostProcWithContext(ctx, "self/cgroup")
+	lines, err := common.ReadLines(procfile)
+	if err != nil {
+		return "", err
+	}
+	rel, err := ownCgroupPath(lines, v2, target)
+	if err != nil {
+		return "", fmt.Errorf("%w in %s", err, procfile)
+	}
+	if dir := path.Join(root, rel); common.PathExists(dir) {
+		return dir, nil
+	}
+	return root, nil
+}
+
+// ownCgroupPath picks the cgroup path of the calling process out of the
+// lines of /proc/self/cgroup. Every line is "hierarchyID:controllers:path".
+// The cgroup v2 entry has hierarchy ID 0 and an empty controller list, a
+// cgroup v1 entry lists its controllers separated by commas.
+func ownCgroupPath(lines []string, v2 bool, target string) (string, error) {
+	for _, line := range lines {
+		fields := strings.SplitN(line, ":", 3)
+		if len(fields) != 3 {
+			continue
+		}
+		if v2 {
+			if fields[0] == "0" {
+				return fields[2], nil
+			}
+			continue
+		}
+		if slices.Contains(strings.Split(fields[1], ","), target) {
+			return fields[2], nil
+		}
+	}
+	return "", fmt.Errorf("no cgroup entry for %q", target)
 }
 
 // getCgroupFilePath constructs file path to get targeted stats file.

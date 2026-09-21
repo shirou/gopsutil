@@ -412,3 +412,188 @@ func TestCgroupInvalidContainerID(t *testing.T) {
 		}
 	}
 }
+
+// setTestdataHostProc points HOST_PROC at the proc tree of the given
+// own-cgroup scenario under testdata/linux/own.
+func setTestdataHostProc(t *testing.T, scenario string) {
+	t.Helper()
+	t.Setenv("HOST_PROC", filepath.Join("testdata", "linux", "own", scenario, "proc"))
+}
+
+// TestCgroupDockerAll checks the "all cgroup" case, an empty containerID.
+// It used to work only on cgroup v2: the v1 readers replaced containerID
+// with "all" and then looked for a directory of that name.
+func TestCgroupDockerAll(t *testing.T) {
+	tests := []struct {
+		name      string
+		hierarchy string
+		user      float64
+		system    float64
+		usage     float64
+		memUsage  uint64
+		memLimit  uint64
+	}{
+		{
+			name:      "cgroup v2",
+			hierarchy: "cgroup2",
+			user:      2500.0,
+			system:    1061.151072,
+			usage:     3561.151072,
+			memUsage:  150047021,
+			memLimit:  math.MaxUint64, // memory.max is "max"
+		},
+		{
+			name:      "cgroup v1",
+			hierarchy: "cgroup1",
+			user:      20000 / cpu.ClocksPerSec,
+			system:    10000 / cpu.ClocksPerSec,
+			usage:     3561.151072,
+			memUsage:  150047021,
+			memLimit:  9223372036854771712,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setTestdataHostSys(t, tt.hierarchy)
+
+			stat, err := CgroupCPUDockerWithContext(t.Context(), "")
+			require.NoError(t, err)
+			assert.Equal(t, "all", stat.CPU)
+			assert.InDelta(t, tt.user, stat.User, 1e-9)
+			assert.InDelta(t, tt.system, stat.System, 1e-9)
+			assert.InDelta(t, tt.usage, stat.Usage, 1e-9)
+
+			usage, err := CgroupCPUDockerUsageWithContext(t.Context(), "")
+			require.NoError(t, err)
+			assert.InDelta(t, tt.usage, usage, 1e-9)
+
+			mem, err := CgroupMemDockerWithContext(t.Context(), "")
+			require.NoError(t, err)
+			assert.Equal(t, "all", mem.ContainerID)
+			assert.Equal(t, tt.memUsage, mem.MemUsageInBytes)
+			assert.Equal(t, tt.memLimit, mem.MemLimitInBytes)
+		})
+	}
+}
+
+// TestCgroupOwn covers the four layouts a process can meet: cgroup v1 and
+// v2, each with its own cgroup namespace (the path in /proc/self/cgroup does
+// not exist locally, so the cgroup root is the answer) and with the host
+// cgroup namespace (the path resolves).
+func TestCgroupOwn(t *testing.T) {
+	tests := []struct {
+		name     string
+		procTree string
+		sysTree  string
+		user     float64
+		system   float64
+		usage    float64
+		memUsage uint64
+		memLimit uint64
+	}{
+		{
+			name:     "cgroup v2 own namespace",
+			procTree: "cgroup2-private",
+			sysTree:  "own/cgroup2-private",
+			user:     1.5,
+			system:   1.0,
+			usage:    2.5,
+			memUsage: 33554432,
+			memLimit: 268435456,
+		},
+		{
+			name:     "cgroup v2 host namespace",
+			procTree: "cgroup2-host",
+			sysTree:  "cgroup2",
+			user:     1.5,
+			system:   1.0,
+			usage:    2.5,
+			memUsage: 123456789,
+			memLimit: 268435456,
+		},
+		{
+			name:     "cgroup v1 own namespace",
+			procTree: "cgroup1-private",
+			sysTree:  "own/cgroup1-private",
+			user:     150000 / cpu.ClocksPerSec,
+			system:   100000 / cpu.ClocksPerSec,
+			usage:    2.5,
+			memUsage: 33554432,
+			memLimit: 268435456,
+		},
+		{
+			name:     "cgroup v1 host namespace",
+			procTree: "cgroup1-host",
+			sysTree:  "cgroup1",
+			user:     12345 / cpu.ClocksPerSec,
+			system:   6789 / cpu.ClocksPerSec,
+			usage:    1061.151072,
+			memUsage: 26591232,
+			memLimit: 9223372036854771712,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setTestdataHostSys(t, tt.sysTree)
+			setTestdataHostProc(t, tt.procTree)
+
+			stat, err := CgroupCPUOwnWithContext(t.Context())
+			require.NoError(t, err)
+			assert.Equal(t, "own", stat.CPU)
+			assert.InDelta(t, tt.user, stat.User, 1e-9)
+			assert.InDelta(t, tt.system, stat.System, 1e-9)
+			assert.InDelta(t, tt.usage, stat.Usage, 1e-9)
+
+			mem, err := CgroupMemOwnWithContext(t.Context())
+			require.NoError(t, err)
+			assert.Equal(t, "own", mem.ContainerID)
+			assert.Equal(t, tt.memUsage, mem.MemUsageInBytes)
+			assert.Equal(t, tt.memLimit, mem.MemLimitInBytes)
+		})
+	}
+}
+
+func TestCgroupOwnNoProcFile(t *testing.T) {
+	setTestdataHostSys(t, "cgroup2")
+	t.Setenv("HOST_PROC", filepath.Join("testdata", "linux", "own", "missing", "proc"))
+
+	_, err := CgroupCPUOwnWithContext(t.Context())
+	require.Error(t, err)
+	_, err = CgroupMemOwnWithContext(t.Context())
+	require.Error(t, err)
+}
+
+func TestOwnCgroupPath(t *testing.T) {
+	v1Lines := []string{
+		"6:memory:/docker/abc",
+		"4:cpu,cpuacct:/docker/abc",
+		"1:name=systemd:/docker/abc",
+		"0::/docker/abc",
+		"broken line",
+	}
+	tests := []struct {
+		name    string
+		lines   []string
+		v2      bool
+		target  string
+		want    string
+		wantErr bool
+	}{
+		{name: "v2 unified entry", lines: []string{"0::/system.slice/x.scope"}, v2: true, want: "/system.slice/x.scope"},
+		{name: "v2 entry missing", lines: v1Lines[:3], v2: true, wantErr: true},
+		{name: "v1 single controller", lines: v1Lines, target: "memory", want: "/docker/abc"},
+		{name: "v1 controller in a list", lines: v1Lines, target: "cpuacct", want: "/docker/abc"},
+		{name: "v1 controller missing", lines: v1Lines, target: "blkio", wantErr: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ownCgroupPath(tt.lines, tt.v2, tt.target)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
