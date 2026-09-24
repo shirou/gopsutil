@@ -35,13 +35,13 @@ func TestExLinuxTimes(t *testing.T) {
 	ex := NewExLinux()
 	total, err := ex.TimesWithContext(ctx, false)
 	require.NoError(t, err)
-	require.Equal(t, []TimesStatEx{{
+	require.Equal(t, []ExTimesStat{{
 		CPU: "cpu-total", User: 101, Nice: 102, System: 103, Idle: 104,
 		Iowait: 105, Irq: 106, Softirq: 107, Steal: 108, Guest: 109, GuestNice: 110,
 	}}, total)
 	cpus, err := ex.TimesWithContext(ctx, true)
 	require.NoError(t, err)
-	require.Equal(t, []TimesStatEx{
+	require.Equal(t, []ExTimesStat{
 		{CPU: "cpu0", User: 1, Nice: 2, System: 3, Idle: 4, Iowait: 5, Irq: 6, Softirq: 7, Steal: 8, Guest: 9, GuestNice: 10},
 		{CPU: "cpu7", User: 11, Nice: 12, System: 13, Idle: 14, Iowait: 15, Irq: 16, Softirq: 17, Steal: 18, Guest: 19, GuestNice: 20},
 	}, cpus)
@@ -75,19 +75,18 @@ func TestExLinuxTimesColumns(t *testing.T) {
 	for _, tc := range []struct {
 		name     string
 		counters string
-		want     TimesStatEx
+		want     ExTimesStat
 	}{
-		{"four", "1 2 3 4", TimesStatEx{CPU: "cpu-total", User: 1, Nice: 2, System: 3, Idle: 4}},
-		{"seven", "1 2 3 4 5 6 7", TimesStatEx{CPU: "cpu-total", User: 1, Nice: 2, System: 3, Idle: 4, Iowait: 5, Irq: 6, Softirq: 7}},
-		{"steal", "1 2 3 4 5 6 7 8", TimesStatEx{CPU: "cpu-total", User: 1, Nice: 2, System: 3, Idle: 4, Iowait: 5, Irq: 6, Softirq: 7, Steal: 8}},
-		{"guest", "1 2 3 4 5 6 7 8 9", TimesStatEx{CPU: "cpu-total", User: 1, Nice: 2, System: 3, Idle: 4, Iowait: 5, Irq: 6, Softirq: 7, Steal: 8, Guest: 9}},
-		{"extra", "1 2 3 4 5 6 7 8 9 10 11 12", TimesStatEx{CPU: "cpu-total", User: 1, Nice: 2, System: 3, Idle: 4, Iowait: 5, Irq: 6, Softirq: 7, Steal: 8, Guest: 9, GuestNice: 10}},
+		{"seven", "1 2 3 4 5 6 7", ExTimesStat{CPU: "cpu-total", User: 1, Nice: 2, System: 3, Idle: 4, Iowait: 5, Irq: 6, Softirq: 7}},
+		{"steal", "1 2 3 4 5 6 7 8", ExTimesStat{CPU: "cpu-total", User: 1, Nice: 2, System: 3, Idle: 4, Iowait: 5, Irq: 6, Softirq: 7, Steal: 8}},
+		{"guest", "1 2 3 4 5 6 7 8 9", ExTimesStat{CPU: "cpu-total", User: 1, Nice: 2, System: 3, Idle: 4, Iowait: 5, Irq: 6, Softirq: 7, Steal: 8, Guest: 9}},
+		{"extra", "1 2 3 4 5 6 7 8 9 10 11 12", ExTimesStat{CPU: "cpu-total", User: 1, Nice: 2, System: 3, Idle: 4, Iowait: 5, Irq: 6, Softirq: 7, Steal: 8, Guest: 9, GuestNice: 10}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := exTimesContext(t, "cpu\t"+tc.counters+"\n")
 			stats, err := NewExLinux().TimesWithContext(ctx, false)
 			require.NoError(t, err)
-			assert.Equal(t, []TimesStatEx{tc.want}, stats)
+			assert.Equal(t, []ExTimesStat{tc.want}, stats)
 		})
 	}
 }
@@ -97,23 +96,27 @@ func TestExLinuxTimesErrors(t *testing.T) {
 		name, line string
 		cause      error
 	}{
-		{"short", "cpu 1 2 3", nil},
-		{"not_cpu", "btime 1 2 3 4", nil},
-		{"negative", "cpu -1 2 3 4", strconv.ErrSyntax},
-		{"fraction", "cpu 1.5 2 3 4", strconv.ErrSyntax},
-		{"overflow", "cpu 18446744073709551616 2 3 4", strconv.ErrRange},
+		{"short", "cpu 1 2 3 4 5 6", nil},
+		{"not_cpu", "btime 1 2 3 4 5 6 7", nil},
+		{"negative", "cpu -1 2 3 4 5 6 7", strconv.ErrSyntax},
+		{"fraction", "cpu 1.5 2 3 4 5 6 7", strconv.ErrSyntax},
+		{"overflow", "cpu 18446744073709551616 2 3 4 5 6 7", strconv.ErrRange},
 		{"optional", "cpu 1 2 3 4 5 6 7 8 9 invalid", strconv.ErrSyntax},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			stats, err := NewExLinux().TimesWithContext(exTimesContext(t, tc.line+"\n"), false)
+			ctx := exTimesContext(t, tc.line+"\n")
+			stats, err := NewExLinux().TimesWithContext(ctx, false)
 			require.Error(t, err)
 			assert.Nil(t, stats)
 			if tc.cause != nil {
 				require.ErrorIs(t, err, tc.cause)
 			}
+			legacy, err := TimesWithContext(ctx, false)
+			require.NoError(t, err)
+			assert.Equal(t, []TimesStat{}, legacy)
 		})
 	}
-	ctx := exTimesContext(t, "cpu 1 2 3 4 5 6 7\ncpu0 1 2 3 4\ncpu1 invalid 2 3 4\n")
+	ctx := exTimesContext(t, "cpu 1 2 3 4 5 6 7\ncpu0 1 2 3 4 5 6 7\ncpu1 invalid 2 3 4 5 6 7\n")
 	stats, err := NewExLinux().TimesWithContext(ctx, true)
 	require.ErrorIs(t, err, strconv.ErrSyntax)
 	assert.Nil(t, stats)
@@ -138,31 +141,58 @@ func TestExLinuxTimesMissingAndEmpty(t *testing.T) {
 
 		stats, err = NewExLinux().TimesWithContext(empty, percpu)
 		require.NoError(t, err)
-		assert.Equal(t, []TimesStatEx{}, stats)
+		assert.Equal(t, []ExTimesStat{}, stats)
 	}
 }
 
-func TestTimesStatExString(t *testing.T) {
-	want := TimesStatEx{CPU: `cpu"0`, User: math.MaxUint64, GuestNice: 1<<53 + 1}
+func TestExTimesStatString(t *testing.T) {
+	want := ExTimesStat{CPU: `cpu"0`, User: math.MaxUint64, GuestNice: 1<<53 + 1}
 	data := want.String()
-	var got TimesStatEx
+	var got ExTimesStat
 	require.NoError(t, json.Unmarshal([]byte(data), &got))
 	assert.Equal(t, want, got)
 	assert.Contains(t, data, `"user":18446744073709551615`)
 }
 
+func TestExTimesStatToTimesStat(t *testing.T) {
+	clocks := ClocksPerSec
+	ClocksPerSec = 37
+	t.Cleanup(func() { ClocksPerSec = clocks })
+	seconds := func(ticks uint64) float64 {
+		// The float64 parsing used by Times before it shared parseStatLine.
+		value, err := strconv.ParseFloat(strconv.FormatUint(ticks, 10), 64)
+		require.NoError(t, err)
+		return value / ClocksPerSec
+	}
+	for _, value := range []uint64{1, 123456789, 1<<53 + 1, math.MaxUint64} {
+		ctx := exTimesContext(t, fmt.Sprintf("cpu %d 2 3 4 5 6 7 8 9 %d\n", value, value-1))
+		want := TimesStat{
+			CPU: "cpu-total", User: seconds(value), Nice: seconds(2), System: seconds(3), Idle: seconds(4),
+			Iowait: seconds(5), Irq: seconds(6), Softirq: seconds(7), Steal: seconds(8), Guest: seconds(9),
+			GuestNice: seconds(value - 1),
+		}
+		stats, err := NewExLinux().TimesWithContext(ctx, false)
+		require.NoError(t, err)
+		require.Len(t, stats, 1)
+		assert.Equal(t, want, stats[0].ToTimesStat())
+		legacy, err := TimesWithContext(ctx, false)
+		require.NoError(t, err)
+		assert.Equal(t, []TimesStat{want}, legacy)
+	}
+}
+
 func TestExLinuxTimesLineBoundaries(t *testing.T) {
 	for _, suffix := range []string{"", "\n", "\nintr " + strings.Repeat("0 ", 65536) + "\n"} {
-		ctx := exTimesContext(t, "cpu 1 2 3 4\ncpu0 11 12 13 14"+suffix)
+		ctx := exTimesContext(t, "cpu 1 2 3 4 5 6 7\ncpu0 11 12 13 14 15 16 17"+suffix)
 		times, err := NewExLinux().TimesWithContext(ctx, true)
 		require.NoError(t, err)
-		assert.Equal(t, []TimesStatEx{{CPU: "cpu0", User: 11, Nice: 12, System: 13, Idle: 14}}, times)
+		assert.Equal(t, []ExTimesStat{{CPU: "cpu0", User: 11, Nice: 12, System: 13, Idle: 14, Iowait: 15, Irq: 16, Softirq: 17}}, times)
 	}
-	ctx := exTimesContext(t, "cpu 1 2 3 4")
+	ctx := exTimesContext(t, "cpu 1 2 3 4 5 6 7")
 	stats, err := NewExLinux().TimesWithContext(ctx, false)
 	require.NoError(t, err)
-	assert.Equal(t, []TimesStatEx{{CPU: "cpu-total", User: 1, Nice: 2, System: 3, Idle: 4}}, stats)
+	assert.Equal(t, []ExTimesStat{{CPU: "cpu-total", User: 1, Nice: 2, System: 3, Idle: 4, Iowait: 5, Irq: 6, Softirq: 7}}, stats)
 	stats, err = NewExLinux().TimesWithContext(ctx, true)
 	require.NoError(t, err)
-	assert.Equal(t, []TimesStatEx{}, stats)
+	assert.Equal(t, []ExTimesStat{}, stats)
 }

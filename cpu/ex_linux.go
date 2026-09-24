@@ -8,19 +8,23 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"os"
-	"strconv"
-	"strings"
 
 	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
-// TimesStatEx contains the unscaled Linux CPU time counters from /proc/stat.
+// ExTimesStat contains the unscaled Linux CPU time counters from /proc/stat.
 // Counters are in USER_HZ ticks, rather than the seconds used by TimesStat.
-// They are reported as read: in particular, Iowait can decrease on Linux.
-type TimesStatEx struct {
+// Divide a counter by ClocksPerSec to get seconds, or use ToTimesStat.
+//
+// User includes Guest, and Nice includes GuestNice, because the kernel
+// accounts guest time into both. Subtract Guest and GuestNice when summing
+// all fields.
+//
+// Counters are reported as read. A counter can decrease, in particular Iowait.
+// Check that the new value is not smaller than the old one before you subtract.
+type ExTimesStat struct {
 	CPU       string `json:"cpu"`
 	User      uint64 `json:"user"`
 	System    uint64 `json:"system"`
@@ -34,9 +38,27 @@ type TimesStatEx struct {
 	GuestNice uint64 `json:"guestNice"`
 }
 
-func (c TimesStatEx) String() string {
+func (c ExTimesStat) String() string {
 	data, _ := json.Marshal(c)
 	return string(data)
+}
+
+// ToTimesStat converts the counters to the seconds returned by the
+// package-level Times function.
+func (c ExTimesStat) ToTimesStat() TimesStat {
+	return TimesStat{
+		CPU:       c.CPU,
+		User:      float64(c.User) / ClocksPerSec,
+		System:    float64(c.System) / ClocksPerSec,
+		Idle:      float64(c.Idle) / ClocksPerSec,
+		Nice:      float64(c.Nice) / ClocksPerSec,
+		Iowait:    float64(c.Iowait) / ClocksPerSec,
+		Irq:       float64(c.Irq) / ClocksPerSec,
+		Softirq:   float64(c.Softirq) / ClocksPerSec,
+		Steal:     float64(c.Steal) / ClocksPerSec,
+		Guest:     float64(c.Guest) / ClocksPerSec,
+		GuestNice: float64(c.GuestNice) / ClocksPerSec,
+	}
 }
 
 type ExLinux struct{}
@@ -45,21 +67,21 @@ func NewExLinux() *ExLinux {
 	return &ExLinux{}
 }
 
-func (ex *ExLinux) Times(percpu bool) ([]TimesStatEx, error) {
+func (ex *ExLinux) Times(percpu bool) ([]ExTimesStat, error) {
 	return ex.TimesWithContext(context.Background(), percpu)
 }
 
 // TimesWithContext returns raw CPU tick counters without floating-point conversion.
-// CPU names and selection match the package-level Times function; absent optional counters are zero.
-// Unlike the legacy API, read errors and invalid selected CPU rows are returned.
-func (*ExLinux) TimesWithContext(ctx context.Context, percpu bool) ([]TimesStatEx, error) {
+// CPU rows are selected and parsed like the package-level Times function; absent optional counters are zero.
+// Unlike the legacy API, read errors and invalid selected CPU rows are returned instead of skipped.
+func (*ExLinux) TimesWithContext(ctx context.Context, percpu bool) ([]ExTimesStat, error) {
 	file, err := os.Open(common.HostProcWithContext(ctx, "stat"))
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 	reader := bufio.NewReader(file)
-	ret := []TimesStatEx{}
+	ret := []ExTimesStat{}
 	if percpu {
 		if _, err := reader.ReadString('\n'); err != nil {
 			if errors.Is(err, io.EOF) {
@@ -85,7 +107,7 @@ func (*ExLinux) TimesWithContext(ctx context.Context, percpu bool) ([]TimesStatE
 		if line == "" {
 			return ret, nil
 		}
-		stat, parseErr := parseStatLineEx(line)
+		stat, parseErr := parseStatLine(line)
 		if parseErr != nil {
 			return nil, parseErr
 		}
@@ -94,33 +116,4 @@ func (*ExLinux) TimesWithContext(ctx context.Context, percpu bool) ([]TimesStatE
 			return ret, nil
 		}
 	}
-}
-
-func parseStatLineEx(line string) (TimesStatEx, error) {
-	fields := strings.Fields(line)
-	if len(fields) < 5 {
-		return TimesStatEx{}, errors.New("stat does not contain cpu info")
-	}
-	if !strings.HasPrefix(fields[0], "cpu") {
-		return TimesStatEx{}, errors.New("not contain cpu")
-	}
-	stat := TimesStatEx{CPU: fields[0]}
-	if stat.CPU == "cpu" {
-		stat.CPU = "cpu-total"
-	}
-	counters := []*uint64{
-		&stat.User, &stat.Nice, &stat.System, &stat.Idle, &stat.Iowait,
-		&stat.Irq, &stat.Softirq, &stat.Steal, &stat.Guest, &stat.GuestNice,
-	}
-	for i, counter := range counters {
-		if i+1 >= len(fields) {
-			break
-		}
-		value, err := strconv.ParseUint(fields[i+1], 10, 64)
-		if err != nil {
-			return TimesStatEx{}, fmt.Errorf("parse CPU time field %d for %s: %w", i+1, stat.CPU, err)
-		}
-		*counter = value
-	}
-	return stat, nil
 }

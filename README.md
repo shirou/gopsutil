@@ -130,15 +130,7 @@ fmt.Println(v.VirtualTotal)
 
 gopsutil aims to minimize platform differences by offering common functions. However, there are many requests to obtain unique information for each platform. The Ex structs are designed to meet those requests. Additional functionalities might be added in the future. The use of these structures makes it clear that the information they provide is specific to each platform, which is why they have been designed in this way.
 
-On Linux, `cpu.NewExLinux().TimesWithContext(ctx, percpu)` (or
-`cpu.NewExLinux().Times(percpu)`)
-returns `[]cpu.TimesStatEx` with the raw `uint64` CPU time counters from
-`/proc/stat`, in USER_HZ ticks. This allows integer deltas to be computed before
-unit conversion. No normalization is performed, so Linux counter semantics still
-apply, including possible decreases in `iowait`. The existing `cpu.Times` API
-continues to return `float64` seconds. See the [kernel's `/proc/stat`
-documentation](https://docs.kernel.org/filesystems/proc.html#miscellaneous-kernel-statistics-in-proc-stat)
-for the meaning of each counter.
+On Linux, `cpu.NewExLinux().Times(percpu)` returns `[]cpu.ExTimesStat` with the raw `uint64` counters from `/proc/stat`, in USER_HZ ticks instead of the `float64` seconds of `cpu.Times`. This allows integer deltas to be computed before unit conversion. A counter can decrease, in particular `iowait`, so check that the new value is not smaller than the old one before you subtract. See the [kernel's `/proc/stat` documentation](https://docs.kernel.org/filesystems/proc.html#miscellaneous-kernel-statistics-in-proc-stat) for the meaning of each counter.
 
 ## Documentation
 
