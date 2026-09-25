@@ -3,7 +3,9 @@ package net
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"strings"
@@ -440,5 +442,37 @@ entries  searched found new invalid ignore delete deleteList insert insertFailed
 		assert.Equal(t, summary.SearchRestart, st.SearchRestart)
 
 		assert.Equal(t, 0, i) // Should only have one element
+	}
+}
+
+func TestIsProcessGone(t *testing.T) {
+	// getProcInodes returns errors from os.Open and (*os.File).ReadDir on
+	// /proc/<pid>/fd, which wrap the errno in *os.PathError. For a reaped
+	// process, open can fail with ESRCH or ENOENT, and ReadDir with ENOENT.
+	pathErr := func(op string, errno error) error {
+		return &os.PathError{Op: op, Path: "/proc/12345/fd", Err: errno}
+	}
+
+	cases := []struct {
+		name string
+		err  error
+		want bool
+	}{
+		{"open ESRCH", pathErr("open", syscall.ESRCH), true},
+		{"open ENOENT", pathErr("open", syscall.ENOENT), true},
+		{"readdirent ENOENT", pathErr("readdirent", syscall.ENOENT), true},
+		{"open EACCES", pathErr("open", syscall.EACCES), true},
+		{"open EPERM", pathErr("open", syscall.EPERM), true},
+		{"io.EOF", io.EOF, true},
+		{"wrapped io.EOF", fmt.Errorf("readdir: %w", io.EOF), true},
+		{"open EIO", pathErr("open", syscall.EIO), false},
+		{"readdirent EIO", pathErr("readdirent", syscall.EIO), false},
+		{"unrelated error", errors.New("boom"), false},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			assert.Equal(t, c.want, isProcessGone(c.err))
+		})
 	}
 }
