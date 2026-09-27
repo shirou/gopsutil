@@ -294,6 +294,16 @@ func buildPartitionStat(path string) (PartitionStat, error) {
 	return PartitionStat{}, nil
 }
 
+
+// diskPerfTimeToMs converts a DISK_PERFORMANCE time counter from 100 ns
+// units to milliseconds.
+func diskPerfTimeToMs(v int64) uint64 {
+	if v < 0 {
+		return 0
+	}
+	return uint64(v / 10_000)
+}
+
 func IOCountersWithContext(_ context.Context, names ...string) (map[string]IOCountersStat, error) {
 	// https://github.com/giampaolo/psutil/blob/544e9daa4f66a9f80d7bf6c7886d693ee42f0a13/psutil/arch/windows/disk.c#L83
 	drivemap := make(map[string]IOCountersStat, 0)
@@ -346,9 +356,11 @@ func IOCountersWithContext(_ context.Context, names ...string) (map[string]IOCou
 				WriteBytes: uint64(dPerformance.BytesWritten),
 				ReadCount:  uint64(dPerformance.ReadCount),
 				WriteCount: uint64(dPerformance.WriteCount),
-				ReadTime:   uint64(dPerformance.ReadTime / 10000 / 1000), // convert to ms: https://github.com/giampaolo/psutil/issues/1012
-				WriteTime:  uint64(dPerformance.WriteTime / 10000 / 1000),
-				Name:       path,
+				// DISK_PERFORMANCE Read/WriteTime are in 100 ns units; divide by
+				// 10_000 for milliseconds (same unit as Linux/Darwin/FreeBSD).
+				ReadTime:  diskPerfTimeToMs(dPerformance.ReadTime),
+				WriteTime: diskPerfTimeToMs(dPerformance.WriteTime),
+				Name:      path,
 			}
 		}
 	}
