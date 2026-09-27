@@ -106,12 +106,16 @@ func TestGetNetIOCountersAll(t *testing.T) {
 			Name:        "a",
 			BytesRecv:   10,
 			PacketsRecv: 10,
+			Fifoin:      3,
+			Fifoout:     7,
 		},
 		{
 			Name:        "b",
 			BytesRecv:   10,
 			PacketsRecv: 10,
 			Errin:       10,
+			Fifoin:      5,
+			Fifoout:     11,
 		},
 	}
 	ret := getIOCountersAll(n)
@@ -119,6 +123,8 @@ func TestGetNetIOCountersAll(t *testing.T) {
 	assert.Equalf(t, "all", ret[0].Name, "invalid return name")
 	assert.Equalf(t, uint64(20), ret[0].BytesRecv, "invalid count bytesrecv")
 	assert.Equalf(t, uint64(10), ret[0].Errin, "invalid count errin")
+	assert.Equal(t, uint64(8), ret[0].Fifoin)
+	assert.Equal(t, uint64(18), ret[0].Fifoout)
 }
 
 func TestInterfaces(t *testing.T) {
