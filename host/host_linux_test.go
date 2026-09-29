@@ -5,13 +5,78 @@ package host
 
 import (
 	"context"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/shirou/gopsutil/v4/common"
 )
+
+type fakeLoginctlInvoke struct {
+	sessions       string
+	sessionOutputs map[string]string
+}
+
+func (f fakeLoginctlInvoke) Command(name string, arg ...string) ([]byte, error) {
+	return f.CommandWithContext(context.Background(), name, arg...)
+}
+
+func (f fakeLoginctlInvoke) CommandWithContext(_ context.Context, name string, arg ...string) ([]byte, error) {
+	if name != "loginctl" || len(arg) == 0 {
+		return nil, fmt.Errorf("unexpected command: %s %v", name, arg)
+	}
+	switch arg[0] {
+	case "list-sessions":
+		return []byte(f.sessions), nil
+	case "show-session":
+		out, ok := f.sessionOutputs[arg[1]]
+		if !ok {
+			return nil, fmt.Errorf("unexpected session id: %s", arg[1])
+		}
+		return []byte(out), nil
+	default:
+		return nil, fmt.Errorf("unexpected subcommand: %s", arg[0])
+	}
+}
+
+func TestUsersFromLoginctl(t *testing.T) {
+	fake := fakeLoginctlInvoke{
+		sessions: `[{"session":"2771","uid":0,"user":"root","seat":null,"tty":null,"state":"closing","idle":false,"since":null}]`,
+		sessionOutputs: map[string]string{
+			"2771": "Name=root\nTTY=pts/1\nRemoteHost=10.5.22.31\nTimestamp=Thu 2026-01-22 14:51:57 CET\n",
+		},
+	}
+
+	old := invoke
+	invoke = fake
+	defer func() { invoke = old }()
+
+	got, err := usersFromLoginctlWithContext(context.Background())
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+	assert.Equal(t, "root", got[0].User)
+	assert.Equal(t, "pts/1", got[0].Terminal)
+	assert.Equal(t, "10.5.22.31", got[0].Host)
+
+	wantTime, err := time.Parse("Mon 2006-01-02 15:04:05 MST", "Thu 2026-01-22 14:51:57 CET")
+	require.NoError(t, err)
+	assert.Equal(t, int(wantTime.Unix()), got[0].Started)
+}
+
+func TestUsersFromLoginctlNoSessions(t *testing.T) {
+	fake := fakeLoginctlInvoke{sessions: `[]`}
+
+	old := invoke
+	invoke = fake
+	defer func() { invoke = old }()
+
+	got, err := usersFromLoginctlWithContext(context.Background())
+	require.NoError(t, err)
+	assert.Empty(t, got)
+}
 
 func TestGetRedhatishVersion(t *testing.T) {
 	var ret string

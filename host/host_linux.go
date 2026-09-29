@@ -7,11 +7,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"regexp"
 	"strings"
+	"sync"
+	"time"
 
 	"golang.org/x/sys/unix"
 
@@ -83,6 +86,12 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 
 	file, err := os.Open(utmpfile)
 	if err != nil {
+		if os.IsNotExist(err) {
+			// utmp is no longer populated on some newer distributions
+			// (e.g. Debian 13), which track sessions via systemd-logind
+			// instead. Fall back to loginctl in that case.
+			return usersFromLoginctlWithContext(ctx)
+		}
 		return nil, err
 	}
 	defer file.Close()
@@ -118,6 +127,79 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 	}
 
 	return ret, nil
+}
+
+type loginctlSession struct {
+	Session string `json:"session"`
+}
+
+func usersFromLoginctlWithContext(ctx context.Context) ([]UserStat, error) {
+	out, err := invoke.CommandWithContext(ctx, "loginctl", "list-sessions", "-o", "json")
+	if err != nil {
+		return nil, err
+	}
+
+	var sessions []loginctlSession
+	if err := json.Unmarshal(out, &sessions); err != nil {
+		return nil, err
+	}
+
+	type sessionResult struct {
+		stat UserStat
+		err  error
+	}
+
+	results := make([]sessionResult, len(sessions))
+	var wg sync.WaitGroup
+	for i, s := range sessions {
+		wg.Add(1)
+		go func(i int, id string) {
+			defer wg.Done()
+			stat, err := loginctlShowSessionWithContext(ctx, id)
+			results[i] = sessionResult{stat: stat, err: err}
+		}(i, s.Session)
+	}
+	wg.Wait()
+
+	ret := make([]UserStat, 0, len(sessions))
+	for _, r := range results {
+		if r.err != nil {
+			continue
+		}
+		ret = append(ret, r.stat)
+	}
+
+	return ret, nil
+}
+
+func loginctlShowSessionWithContext(ctx context.Context, id string) (UserStat, error) {
+	out, err := invoke.CommandWithContext(ctx, "loginctl", "show-session", id,
+		"-p", "Name", "-p", "TTY", "-p", "RemoteHost", "-p", "Timestamp")
+	if err != nil {
+		return UserStat{}, err
+	}
+
+	var stat UserStat
+	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+		key, value, found := strings.Cut(line, "=")
+		if !found {
+			continue
+		}
+		switch key {
+		case "Name":
+			stat.User = value
+		case "TTY":
+			stat.Terminal = value
+		case "RemoteHost":
+			stat.Host = value
+		case "Timestamp":
+			if t, err := time.Parse("Mon 2006-01-02 15:04:05 MST", value); err == nil {
+				stat.Started = int(t.Unix())
+			}
+		}
+	}
+
+	return stat, nil
 }
 
 func getlsbStruct(ctx context.Context) (*lsbStruct, error) {
