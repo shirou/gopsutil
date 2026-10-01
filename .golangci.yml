@@ -46,7 +46,6 @@ linters:
         - captLocal
         - commentedOutCode
         - deferInLoop
-        - hexLiteral
         - hugeParam
         - tooManyResultsChecker
         - unnamedResult
