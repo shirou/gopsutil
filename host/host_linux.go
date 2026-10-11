@@ -87,8 +87,12 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 		if os.IsNotExist(err) {
 			// utmp is no longer populated on some newer distributions
 			// (e.g. Debian 13), which track sessions via systemd-logind
-			// instead. Fall back to loginctl in that case.
-			return usersFromLoginctlWithContext(ctx)
+			// instead. Fall back to loginctl in that case. If it fails too,
+			// return the original utmp error so callers can still rely on
+			// os.IsNotExist.
+			if users, lerr := usersFromLoginctlWithContext(ctx); lerr == nil {
+				return users, nil
+			}
 		}
 		return nil, err
 	}
@@ -131,7 +135,8 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 // It is used when utmp is not available. The plain column output of
 // list-sessions is parsed on purpose: -o json is ignored since systemd 256 and
 // --json only exists from 256 on, while the first column has been the session
-// id in every version.
+// id in every version. loginctl always queries the local systemd-logind, so
+// HOST_VAR / HOST_ROOT are ignored here.
 func usersFromLoginctlWithContext(ctx context.Context) ([]UserStat, error) {
 	ctx, cancel := context.WithTimeout(ctx, common.Timeout)
 	defer cancel()
@@ -216,6 +221,11 @@ func loginctlShowSessionWithContext(ctx context.Context, id string) (UserStat, b
 
 	if !strings.HasPrefix(class, "user") || (seat == "" && stat.Terminal == "") {
 		return UserStat{}, false, nil
+	}
+
+	if stat.Terminal == "" {
+		// Graphical logins have no tty; utmp-based tools such as who show the seat.
+		stat.Terminal = seat
 	}
 
 	return stat, true, nil

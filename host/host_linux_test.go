@@ -6,6 +6,7 @@ package host
 import (
 	"context"
 	"fmt"
+	"os"
 	"slices"
 	"testing"
 	"time"
@@ -108,8 +109,9 @@ func TestUsersFromLoginctlFiltersSessions(t *testing.T) {
 	assert.Equal(t, "shirou", got[0].User)
 	assert.Equal(t, "pts/0", got[0].Terminal)
 	assert.Equal(t, 1791187200, got[0].Started)
-	// Graphical login: only a seat, no tty.
+	// Graphical login: only a seat, no tty; the seat is reported as terminal.
 	assert.Equal(t, "alice", got[1].User)
+	assert.Equal(t, "seat0", got[1].Terminal)
 }
 
 func TestUsersFromLoginctlTimestampOffsetZone(t *testing.T) {
@@ -162,6 +164,20 @@ func TestUsersFallsBackToLoginctlWithoutUtmp(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, got, 1)
 	assert.Equal(t, "root", got[0].User)
+}
+
+// When utmp is missing and loginctl fails too, the original utmp error is
+// returned so that os.IsNotExist keeps working.
+func TestUsersWithoutUtmpAndLoginctlKeepsNotExist(t *testing.T) {
+	useFakeLoginctl(t, fakeLoginctlInvoke{sessions: "1 0 root - 1 user pts/0 no -\n"})
+	ctx := context.WithValue(context.Background(),
+		common.EnvKey,
+		common.EnvMap{common.HostVarEnvKey: t.TempDir()},
+	)
+
+	_, err := UsersWithContext(ctx)
+	require.Error(t, err)
+	assert.True(t, os.IsNotExist(err), "got %v", err)
 }
 
 func TestGetRedhatishVersion(t *testing.T) {
