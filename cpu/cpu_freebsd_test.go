@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sys/unix"
 
 	"github.com/shirou/gopsutil/v4/internal/common"
 )
@@ -33,4 +34,15 @@ func TestParseDmesgBoot(t *testing.T) {
 		assert.Equalf(t, v.Cores, tt.cores, "parseDmesgBoot wrong core(%s), %v", tt.file, err)
 		assert.Truef(t, common.StringsContains(v.Flags, "fpu"), "parseDmesgBoot fail to parse features(%s), %v", tt.file, err)
 	}
+}
+
+func TestCountsPhysical(t *testing.T) {
+	cores, err := unix.SysctlUint32("kern.smp.cores")
+	if err != nil {
+		t.Skip("kern.smp.cores is not available")
+	}
+
+	physical, err := Counts(false)
+	require.NoError(t, err)
+	assert.Equal(t, int(cores), physical)
 }
