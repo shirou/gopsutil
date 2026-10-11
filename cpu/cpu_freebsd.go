@@ -172,6 +172,12 @@ func parseDmesgBoot(fileName string) (InfoStat, int, error) {
 	return c, cpuNum, nil
 }
 
-func CountsWithContext(_ context.Context, _ bool) (int, error) {
+func CountsWithContext(_ context.Context, logical bool) (int, error) {
+	if !logical {
+		// kern.smp.cores is the number of physical cores, without SMT threads.
+		if cores, err := unix.SysctlUint32("kern.smp.cores"); err == nil && cores > 0 {
+			return int(cores), nil
+		}
+	}
 	return runtime.NumCPU(), nil
 }
