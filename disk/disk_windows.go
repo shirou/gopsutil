@@ -294,7 +294,6 @@ func buildPartitionStat(path string) (PartitionStat, error) {
 	return PartitionStat{}, nil
 }
 
-
 // diskPerfTimeToMs converts a DISK_PERFORMANCE time counter from 100 ns
 // units to milliseconds.
 func diskPerfTimeToMs(v int64) uint64 {
