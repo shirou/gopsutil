@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 //go:build linux
 
-// TODO: ALLOW FOR USER TO CHOOSE THEIR OWN BATTERY
 // TODO: CHECK IMPLEMENTATION OF chooseMainBattery, I only have one battery so I cannot test. It worked with only one battery.
 // TODO: HAVE A LOT OF DIFFERENT DATA. TO GET ALL FILES AND THEIR VALUES ```grep . /sys/class/power_supply/BAT1/*```
 

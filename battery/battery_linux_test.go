@@ -21,6 +21,3 @@ func TestBatteryWithContext(t *testing.T) {
 		}
 	}
 }
-
-// I cannot test several things:
-// Computers with multiple batteries
