@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 //go:build linux
 
-// TODO: CHECK IMPLEMENTATION OF chooseMainBattery, I only have one battery so I cannot test. It worked with only one battery.
-// TODO: HAVE A LOT OF DIFFERENT DATA. TO GET ALL FILES AND THEIR VALUES ```grep . /sys/class/power_supply/BAT1/*```
+// TODO: CHECK IMPLEMENTATION OF chooseMainBattery, I only have one battery so I cannot test. It works with only one battery
 
 package battery
 
@@ -34,7 +33,7 @@ func BatteryWithContext(ctx context.Context, batteryName ...string) (BatteryStru
 	var batteryAbsolutePath string
 	var err error
 
-	// If there's an input, then process it
+	// If there's an input file name, then process it
 	if len(batteryName) > 0 {
 		batteryNameStr := batteryName[0]
 
@@ -46,38 +45,45 @@ func BatteryWithContext(ctx context.Context, batteryName ...string) (BatteryStru
 		}
 
 		if checkIfDirIsBattery(batteryAbsolutePath) {
-			BatteryData.BatteryKey = filepath.Base(batteryAbsolutePath)
-			batteryAbsolutePathDir := batteryAbsolutePath + "/*"
-
-			batteryFiles, err = filepath.Glob(batteryAbsolutePathDir)
-			if err != nil {
-				return BatteryData, warns.Reference()
-			}
+			//	Done, continue on to the processing
 		} else {
 			return BatteryStruct{}, fmt.Errorf("not a recognised battery: %s", batteryAbsolutePath)
 		}
 	} else {
-		// Get all the (possible) batteries
+
+		// if no battery name supplied, we'll have to find it ourselves:
+		// STEPS TO FIND BATTERY:
+		//
+		// 1. Get all possible batteries in /sys/class/power_supply/* (BAT* files), then if the possible gathered battery has a `type` file, and then check if the content is "Battery" as defined by the Linux Kernel https://kernel.googlesource.com/pub/scm/linux/kernel/git/torvalds/linux/+/refs/tags/v7.3-rc7/Documentation/ABI/testing/sysfs-class-power
+		// 1.1. If only 1 found battery, finish, else:
+		// 1.2. Calculate the max capacity of each battery, and then consider the "largest" one as the best
+
+		// 1. Get all the (possible) batteries
 		allBatteries, err := getBatteries(ctx)
 		if err != nil {
 			warns.Add(err)
 			return BatteryData, warns.Reference()
 		}
+
 		if len(allBatteries) == 1 {
+			// 1.1. Only one battery
 			batteryAbsolutePath = allBatteries[0]
 		} else {
+			// 1.2 Largest battery as the main battery
+			// TODO: TEST, I ONLY HAVE ONE BAT* BATTERY
 			batteryAbsolutePath, err = chooseMainBattery(allBatteries, ctx)
 			if err != nil {
 				warns.Add(err)
 			}
 		}
-		BatteryData.BatteryKey = filepath.Base(batteryAbsolutePath)
-		batteryAbsolutePathDir := batteryAbsolutePath + "/*"
+	}
 
-		batteryFiles, err = filepath.Glob(batteryAbsolutePathDir)
-		if err != nil {
-			return BatteryData, warns.Reference()
-		}
+	BatteryData.BatteryKey = filepath.Base(batteryAbsolutePath)
+	batteryAbsolutePathDir := batteryAbsolutePath + "/*"
+
+	batteryFiles, err = filepath.Glob(batteryAbsolutePathDir)
+	if err != nil {
+		return BatteryData, warns.Reference()
 	}
 
 	processFileDataInt := func(path string) (*int, error) {
@@ -101,15 +107,14 @@ func BatteryWithContext(ctx context.Context, batteryName ...string) (BatteryStru
 		return &fileDataStr, nil
 	}
 
+	//Loop though all the information files in /sys/class/power_supply/<power_supply_name>/* to match with pre-defined categories
 	for _, file := range batteryFiles {
 		fileName := filepath.Base(file)
-		//var intData int
 
-		// Match pre-declared files that we know what they do
+		// Match pre-declared files that we know what they do, then map that to it's BatteryData struct var
 		switch fileName {
 		case "status":
 			data, err := processFileDataString(batteryAbsolutePath + "/" + fileName)
-			fmt.Println("Battery status:", data)
 			BatteryData.Status = data
 			if err != nil {
 				warns.Add(err)
@@ -136,7 +141,6 @@ func BatteryWithContext(ctx context.Context, batteryName ...string) (BatteryStru
 			}
 		case "technology":
 			data, err := processFileDataString(batteryAbsolutePath + "/" + fileName)
-			fmt.Println("Technology:", data)
 			BatteryData.Technology = data
 			if err != nil {
 				warns.Add(err)
@@ -144,7 +148,6 @@ func BatteryWithContext(ctx context.Context, batteryName ...string) (BatteryStru
 			}
 		case "manufacturer":
 			data, err := processFileDataString(batteryAbsolutePath + "/" + fileName)
-			fmt.Println("Manufacturer:", data)
 			BatteryData.Manufacturer = data
 			if err != nil {
 				warns.Add(err)
@@ -152,7 +155,6 @@ func BatteryWithContext(ctx context.Context, batteryName ...string) (BatteryStru
 			}
 		case "capacity_level":
 			data, err := processFileDataString(batteryAbsolutePath + "/" + fileName)
-			fmt.Println("BatteryLevelLang:", data)
 			BatteryData.BatteryLevelLang = data
 			if err != nil {
 				warns.Add(err)
@@ -160,7 +162,6 @@ func BatteryWithContext(ctx context.Context, batteryName ...string) (BatteryStru
 			}
 		case "capacity":
 			data, err := processFileDataInt(batteryAbsolutePath + "/" + fileName)
-			fmt.Println("BatteryLevelInt:", data)
 			BatteryData.BatteryLevelInt = data
 			if err != nil {
 				warns.Add(err)
@@ -169,7 +170,6 @@ func BatteryWithContext(ctx context.Context, batteryName ...string) (BatteryStru
 
 		case "current_now":
 			data, err := processFileDataInt(batteryAbsolutePath + "/" + fileName)
-			fmt.Println("current_now:", data)
 			BatteryData.CurrentCharge = data
 			if err != nil {
 				warns.Add(err)
@@ -177,7 +177,6 @@ func BatteryWithContext(ctx context.Context, batteryName ...string) (BatteryStru
 			}
 		case "charge_control_start_threshold":
 			data, err := processFileDataInt(batteryAbsolutePath + "/" + fileName)
-			fmt.Println("BatteryMinimumPercentageLevelToStartCharging:", data)
 			BatteryData.BatteryMinimumPercentageLevelToStartCharging = data
 			if err != nil {
 				warns.Add(err)
@@ -185,7 +184,6 @@ func BatteryWithContext(ctx context.Context, batteryName ...string) (BatteryStru
 			}
 		case "temp":
 			strData, err := processFileDataString(batteryAbsolutePath + "/" + fileName)
-			fmt.Println("temp:", strData)
 			BatteryData.Temperature = strData
 			if err != nil {
 				warns.Add(err)
@@ -199,7 +197,6 @@ func BatteryWithContext(ctx context.Context, batteryName ...string) (BatteryStru
 }
 
 // Returns time in MS
-// Returns 0 if fully charged
 // Returns int (nullable) in milliseconds of time left, and possible error
 //
 // absolutePath = absolute path to battery, typeOfCalc is either "discharge" or "charge" depending on what you want to calculate. Discharge to time left till battery drain, charge to get time left till fully charged.
@@ -274,12 +271,11 @@ func calculateRemainingTime(absolutePath string, typeOfCalc string) (*float64, e
 
 // getBatteries
 //
-// []string: list of all BAT* dirs found in /sys/class/power_supply/*
+// []string: list of all BAT* dirs found in /sys/class/power_supply/* with "Battery" attribute inside of it's `type` file
 //
 // error: typically if error getting batteries dir or if there's nothing inside.
 func getBatteries(ctx context.Context) ([]string, error) {
 	var warn Warnings
-	fmt.Println("Getting all batteries")
 
 	var filepathContent []string
 
@@ -299,6 +295,7 @@ func getBatteries(ctx context.Context) ([]string, error) {
 	var possibleBatteries []string
 	for index := range filepathContent {
 		item := filepathContent[index]
+		// If it's a valid battery (has battery attribute), add to list
 		if checkIfDirIsBattery(filepathContent[index]) {
 			possibleBatteries = append(possibleBatteries, item)
 		} else {
@@ -310,22 +307,13 @@ func getBatteries(ctx context.Context) ([]string, error) {
 	if possibleBatteries == nil || len(possibleBatteries) == 0 {
 		return nil, fmt.Errorf("no batteries were found in %s", common.HostSysWithContext(ctx, "/class/power_supply/*"))
 	}
-	//If there's only one battery, perfect
-	if len(possibleBatteries) == 1 {
-		return possibleBatteries, nil
-	}
-
 	// Return a list of all Battery dirs
 	return possibleBatteries, nil
 }
 
-// checkIfDirIsBattery reports whether absolutePath is a power supply
-// directory for a battery, i.e. it contains a readable "type" file whose
-// trimmed contents equal "Battery".
+// checkIfDirIsBattery reports whether absolutePath is a power supply directory for a battery, meaning it contains a readable "type" file whose trimmed contents equal "Battery".
 //
-// The kernel exposes other power supply types ("UPS", "Mains", "USB") in the
-// same location, so those return false. It also returns false if the file is
-// missing or cannot be read.
+// The kernel exposes other power supply types ("UPS", "Mains", "USB") in the same location, so those return false. It also returns false if the file is missing or cannot be read.
 //
 // Example input: /sys/class/power_supply/BAT0
 func checkIfDirIsBattery(absolutePath string) bool {
@@ -341,12 +329,11 @@ func checkIfDirIsBattery(absolutePath string) bool {
 	return false
 }
 
+// TODO: TEST WITH DEVICE THAT HAD MULTIPLE BAT* FILES
 // Some laptops have BAT1 as their primary internal battery, some have BAT0, just BAT, etc.
 // In some laptops, multiple BAT batteries can appear, and this function chooses the battery with the higher amperage as the "main" battery and returns it.
 // Return error if no batteries, or battery files cannot be read.
 func chooseMainBattery(batteries []string, ctx context.Context) (string, error) {
-	fmt.Println("Choosing Main Battery")
-
 	var warn Warnings
 	var largestBatteryMAHNumber int
 	//0 default value
@@ -382,7 +369,6 @@ func chooseMainBattery(batteries []string, ctx context.Context) (string, error) 
 		if err == nil {
 			ampHours, err2 := bytesToInt(chargeFullDesignData)
 			if err2 != nil {
-				fmt.Println(err2)
 			} else {
 				//If largestBatteryMAHNumber is not initialised
 				checkIfNewLargestBattery(ampHours)
@@ -413,13 +399,11 @@ func chooseMainBattery(batteries []string, ctx context.Context) (string, error) 
 
 			energyInt, err := bytesToInt(energyFullDesignData)
 			if err != nil {
-				fmt.Println(err)
 				warn.Add(err)
 				continue
 			}
 			voltageInt, err := bytesToInt(voltageNow)
 			if err != nil {
-				fmt.Println(err)
 				warn.Add(err)
 				continue
 			}
