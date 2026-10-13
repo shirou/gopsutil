@@ -11,6 +11,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"math"
 	"os"
 	"path/filepath"
@@ -24,32 +25,60 @@ import (
 // BatteryStruct Ref: https://github.com/torvalds/linux/blob/24a19b953e2a3d0ea5a8c4951a0ab8f32720c907/include/linux/apm-emulation.h#L28
 // Another Helpful resource: https://www.thelinuxvault.net/blog/how-to-obtain-a-laptop-battery-information-and-charging-state-on-linux/#3-sysclasspower_supply-kernel-level-battery-interface
 
-func BatteryWithContext(ctx context.Context) (BatteryStruct, error) {
+// BatteryWithContext
+//
+// batteryName is an optional parameter where you can input a specific name (i.e, BAT1) that is found in /sys/class/power_supply/
+func BatteryWithContext(ctx context.Context, batteryName ...string) (BatteryStruct, error) {
 	var warns Warnings
 	var BatteryData BatteryStruct
-
+	var batteryFiles []string
 	var batteryAbsolutePath string
+	var err error
 
-	// Get all the batteries
-	allBatteries, err := getBatteries(ctx)
-	if err != nil {
-		warns.Add(err)
-		return BatteryData, warns.Reference()
-	}
-	if len(allBatteries) == 1 {
-		batteryAbsolutePath = allBatteries[0]
+	// If there's an input, then process it
+	if len(batteryName) > 0 {
+		batteryNameStr := batteryName[0]
+
+		batteryAbsolutePath = common.HostSysWithContext(ctx, "/class/power_supply/"+batteryNameStr)
+
+		_, err = os.Stat(batteryAbsolutePath)
+		if errors.Is(err, fs.ErrNotExist) {
+			return BatteryStruct{}, fmt.Errorf("battery path does not exist: %s", batteryAbsolutePath)
+		}
+
+		if checkIfDirIsBattery(batteryAbsolutePath) {
+			BatteryData.BatteryKey = filepath.Base(batteryAbsolutePath)
+			batteryAbsolutePathDir := batteryAbsolutePath + "/*"
+
+			batteryFiles, err = filepath.Glob(batteryAbsolutePathDir)
+			if err != nil {
+				return BatteryData, warns.Reference()
+			}
+		} else {
+			return BatteryStruct{}, fmt.Errorf("not a recognised battery: %s", batteryAbsolutePath)
+		}
 	} else {
-		batteryAbsolutePath, err = chooseMainBattery(allBatteries, ctx)
+		// Get all the (possible) batteries
+		allBatteries, err := getBatteries(ctx)
 		if err != nil {
 			warns.Add(err)
+			return BatteryData, warns.Reference()
 		}
-	}
-	BatteryData.BatteryKey = filepath.Base(batteryAbsolutePath)
-	batteryAbsolutePathDir := batteryAbsolutePath + "/*"
+		if len(allBatteries) == 1 {
+			batteryAbsolutePath = allBatteries[0]
+		} else {
+			batteryAbsolutePath, err = chooseMainBattery(allBatteries, ctx)
+			if err != nil {
+				warns.Add(err)
+			}
+		}
+		BatteryData.BatteryKey = filepath.Base(batteryAbsolutePath)
+		batteryAbsolutePathDir := batteryAbsolutePath + "/*"
 
-	batteryFiles, err := filepath.Glob(batteryAbsolutePathDir)
-	if err != nil {
-		return BatteryData, warns.Reference()
+		batteryFiles, err = filepath.Glob(batteryAbsolutePathDir)
+		if err != nil {
+			return BatteryData, warns.Reference()
+		}
 	}
 
 	processFileDataInt := func(path string) (*int, error) {
@@ -164,12 +193,6 @@ func BatteryWithContext(ctx context.Context) (BatteryStruct, error) {
 				continue
 			}
 
-			//case "energy_full_design":
-			//	intData, err = processFileDataInt(batteryAbsolutePath + "/" + fileName)
-			//	if err != nil {
-			//		warns.Add(err)
-			//		continue
-			//	}
 		}
 	}
 
@@ -221,7 +244,7 @@ func calculateRemainingTime(absolutePath string, typeOfCalc string) (*float64, e
 		millisecondsLeft := hoursLeft * 3600000
 		return &millisecondsLeft, nil
 
-	//	Not accurate enough...
+	//	Not accurate enough... REWORK/REFRAC NEEDED
 	case "discharge":
 		voltageNow, err := processFileDataInt(absolutePath + "/voltage_now")
 		if err != nil {
