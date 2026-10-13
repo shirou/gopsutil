@@ -3,7 +3,6 @@ package battery
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/shirou/gopsutil/v4/internal/common"
@@ -11,17 +10,17 @@ import (
 
 func TestBatteryWithContext(t *testing.T) {
 	var w *common.Warnings
-	results, err := BatteryWithContext(context.Background())
-	fmt.Printf("Battery: %+v\n", results)
-	if errors.As(err, &w) {
-		w.Verbose = true
-		t.Logf("%v", w)
+	_, err := BatteryWithContext(context.Background())
+	if err != nil {
+		//If its just warnings, all good, otherwise, doesn't pass test.
+		if errors.As(err, &w) {
+			w.Verbose = true
+			t.Logf("%v", w)
+		} else {
+			t.Fatalf("BatteryWithContext failed: %v", err)
+		}
 	}
-
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
-	//for _, item := range list {
-	//	fmt.Println(item)
-	//}
 }
+
+// I cannot test several things:
+// Computers with multiple batteries
