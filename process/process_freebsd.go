@@ -20,6 +20,8 @@ import (
 	"github.com/shirou/gopsutil/v4/net"
 )
 
+type MemoryInfoExStat struct{}
+
 func pidsWithContext(ctx context.Context) ([]int32, error) {
 	var ret []int32
 	procs, err := ProcessesWithContext(ctx)
@@ -342,6 +344,10 @@ func ProcessesWithContext(ctx context.Context) ([]*Process, error) {
 	}
 
 	return results, nil
+}
+
+func (*Process) MemoryInfoExWithContext(_ context.Context) (*MemoryInfoExStat, error) {
+	return nil, common.ErrNotImplementedError
 }
 
 func (*Process) NumFDsWithContext(_ context.Context) (int32, error) {
