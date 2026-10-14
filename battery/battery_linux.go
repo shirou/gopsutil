@@ -92,6 +92,10 @@ func BatteryWithContext(ctx context.Context, batteryName ...string) (BatteryStru
 			return nil, err
 		}
 		fileDataStr := strings.TrimSuffix(string(fileData), "\n")
+		// If it has nothing, return nothing rather than trying to parse it which gives a strconv.Atoi warning
+		if fileDataStr == "" {
+			return nil, nil
+		}
 		fileDataInt, err := strconv.Atoi(fileDataStr)
 		if err != nil {
 			return nil, err
