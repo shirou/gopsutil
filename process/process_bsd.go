@@ -12,8 +12,6 @@ import (
 	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
-type MemoryInfoExStat struct{}
-
 type MemoryMapsStat struct{}
 
 func (*Process) TgidWithContext(_ context.Context) (int32, error) {
@@ -37,10 +35,6 @@ func (*Process) NumCtxSwitchesWithContext(_ context.Context) (*NumCtxSwitchesSta
 }
 
 func (*Process) CPUAffinityWithContext(_ context.Context) ([]int32, error) {
-	return nil, common.ErrNotImplementedError
-}
-
-func (*Process) MemoryInfoExWithContext(_ context.Context) (*MemoryInfoExStat, error) {
 	return nil, common.ErrNotImplementedError
 }
 

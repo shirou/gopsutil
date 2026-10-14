@@ -190,13 +190,15 @@ func BenchmarkNumFDs(b *testing.B) {
 // rusageInfoV2 must match struct rusage_info_v2 from sys/resource.h: a 16-byte
 // uuid followed by 18 uint64 fields.
 //
-// The size alone is not enough: the two fields actually read sit at the end, so
-// a reordering earlier in the struct would keep the size at 160 while silently
-// shifting them. Pin their offsets too.
+// The size alone is not enough: a reordering earlier in the struct would keep
+// the size at 160 while silently shifting the fields actually read. Pin their
+// offsets too.
 func TestRusageInfoV2Layout(t *testing.T) {
 	var usage rusageInfoV2
 
 	assert.Equal(t, uintptr(16+18*8), unsafe.Sizeof(usage))
+	assert.Equal(t, uintptr(16+6*8), unsafe.Offsetof(usage.ResidentSize))
+	assert.Equal(t, uintptr(16+7*8), unsafe.Offsetof(usage.PhysFootprint))
 	assert.Equal(t, uintptr(16+16*8), unsafe.Offsetof(usage.DiskIOBytesRead))
 	assert.Equal(t, uintptr(16+17*8), unsafe.Offsetof(usage.DiskIOBytesWritten))
 }
@@ -243,5 +245,24 @@ func TestIOCounters_NonExistent(t *testing.T) {
 	p := &Process{Pid: 999999} // above PID_MAX; see TestNumFDs_NonExistent
 
 	_, err := p.IOCounters()
+	require.ErrorIs(t, err, ErrorProcessNotRunning)
+}
+
+func TestMemoryInfoEx(t *testing.T) {
+	p, err := NewProcess(int32(os.Getpid()))
+	require.NoError(t, err)
+
+	m, err := p.MemoryInfoEx()
+	require.NoError(t, err)
+
+	// A running Go test binary has resident, dirty memory of its own.
+	assert.Positive(t, m.RSS)
+	assert.Positive(t, m.PhysFootprint)
+}
+
+func TestMemoryInfoEx_NonExistent(t *testing.T) {
+	p := &Process{Pid: 999999} // above PID_MAX; see TestNumFDs_NonExistent
+
+	_, err := p.MemoryInfoEx()
 	require.ErrorIs(t, err, ErrorProcessNotRunning)
 }
