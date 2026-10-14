@@ -205,17 +205,30 @@ func BatteryWithContext(ctx context.Context, batteryName ...string) (BatteryStru
 //
 // absolutePath = absolute path to battery, typeOfCalc is either "discharge" or "charge" depending on what you want to calculate. Discharge to time left till battery drain, charge to get time left till fully charged.
 func calculateRemainingTime(absolutePath string, typeOfCalc string) (*float64, error) {
-	processFileDataInt := func(path string) (int, error) {
+	processFileDataInt := func(path string) (*int, error) {
 		fileData, err := os.ReadFile(path)
 		if err != nil {
-			return 0, err
+			return nil, err
 		}
-		return strconv.Atoi(strings.TrimSpace(string(fileData)))
+		fileDataStr := strings.TrimSuffix(string(fileData), "\n")
+		// If it has nothing, return nothing rather than trying to parse it which gives a strconv.Atoi warning
+		if fileDataStr == "" {
+			return nil, nil
+		}
+		fileDataInt, err := strconv.Atoi(fileDataStr)
+		if err != nil {
+			return nil, err
+		}
+		return &fileDataInt, nil
 	}
 
 	chargeFull, err := processFileDataInt(absolutePath + "/charge_full")
 	if err != nil {
 		return nil, err
+	}
+	// Should automatically fail because to calculate charge, we need uniquely need charge_full
+	if chargeFull == nil && typeOfCalc == "charge" {
+		return nil, errors.New("/charge_full content is null and is required to calculate battery life")
 	}
 
 	chargeNow, err := processFileDataInt(absolutePath + "/charge_now")
@@ -228,19 +241,22 @@ func calculateRemainingTime(absolutePath string, typeOfCalc string) (*float64, e
 		return nil, err
 	}
 
-	if currentNow == 0 {
-		return nil, errors.New("current_now is zero: unable to estimate charging time")
+	if *chargeNow == 0 {
+		return nil, errors.New("/charge_now is zero: unable to estimate charging time")
+	}
+	if *currentNow == 0 {
+		return nil, errors.New("/current_now is zero: unable to estimate charging time")
 	}
 
 	switch typeOfCalc {
 	//Working
 	case "charge":
-		remaining := float64(chargeFull - chargeNow)
+		remaining := float64(*chargeFull - *chargeNow)
 		if remaining <= 0 {
 			zero := float64(0)
 			return &zero, nil
 		}
-		hoursLeft := remaining / math.Abs(float64(currentNow))
+		hoursLeft := remaining / math.Abs(float64(*currentNow))
 		millisecondsLeft := hoursLeft * 3600000
 		return &millisecondsLeft, nil
 
@@ -252,16 +268,16 @@ func calculateRemainingTime(absolutePath string, typeOfCalc string) (*float64, e
 		}
 
 		// Convert to watts to be able to do math with remaining energy
-		powerWatts := math.Abs(float64(voltageNow)) *
-			math.Abs(float64(currentNow)) / 1e12
+		powerWatts := math.Abs(float64(*voltageNow)) *
+			math.Abs(float64(*currentNow)) / 1e12
 
 		if powerWatts == 0 {
 			return nil, errors.New("power is zero: unable to estimate discharge time")
 		}
 
 		// calculate how much is left
-		remainingEnergyWh := float64(chargeNow) *
-			float64(voltageNow) / 1e12
+		remainingEnergyWh := float64(*chargeNow) *
+			float64(*voltageNow) / 1e12
 
 		//how much is left compared to the draw
 		hoursLeft := remainingEnergyWh / powerWatts
@@ -351,7 +367,14 @@ func chooseMainBattery(batteries []string, ctx context.Context) (string, error) 
 		bytesToInt := func(bytes []byte) (int, error) {
 			chargeFullDesignDataStr := string(bytes)
 			chargeFullDesignDataStr = strings.TrimSuffix(string(bytes), "\n")
-			return strconv.Atoi(chargeFullDesignDataStr)
+			if chargeFullDesignDataStr == "" {
+				return 0, errors.New("charge full design data is empty")
+			}
+			result, err := strconv.Atoi(chargeFullDesignDataStr)
+			if err != nil {
+				return 0, err
+			}
+			return result, nil
 		}
 
 		checkIfNewLargestBattery := func(ampHours int) {
