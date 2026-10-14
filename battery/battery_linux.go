@@ -364,11 +364,12 @@ func chooseMainBattery(batteries []string) (string, error) {
 	// Loop through all the batteries, and the one with the largest wattage is considered the "main" battery. Found in "energy_full_design" file
 	//var largestBattery string
 	for batteryIndex := range batteries {
-		bytesToInt := func(bytes []byte) (int, error) {
+		// filename is for error purposes
+		bytesToInt := func(bytes []byte, fileName string) (int, error) {
 			chargeFullDesignDataStr := string(bytes)
 			chargeFullDesignDataStr = strings.TrimSuffix(string(bytes), "\n")
 			if chargeFullDesignDataStr == "" {
-				return 0, errors.New("charge full design data is empty")
+				return 0, fmt.Errorf("no data was found for/in /%s", fileName)
 			}
 			result, err := strconv.Atoi(chargeFullDesignDataStr)
 			if err != nil {
@@ -394,7 +395,7 @@ func chooseMainBattery(batteries []string) (string, error) {
 		chargeFullDesignData, err := os.ReadFile(batteries[batteryIndex] + "/charge_full_design")
 		// If there's no error (meaning file is found)
 		if err == nil {
-			ampHours, err2 := bytesToInt(chargeFullDesignData)
+			ampHours, err2 := bytesToInt(chargeFullDesignData, "charge_full_design")
 			if err2 != nil {
 			} else {
 				//If largestBatteryMAHNumber is not initialised
@@ -424,12 +425,12 @@ func chooseMainBattery(batteries []string) (string, error) {
 				continue
 			}
 
-			energyInt, err := bytesToInt(energyFullDesignData)
+			energyInt, err := bytesToInt(energyFullDesignData, "energy_full_design")
 			if err != nil {
 				warn.Add(err)
 				continue
 			}
-			voltageInt, err := bytesToInt(voltageNow)
+			voltageInt, err := bytesToInt(voltageNow, "voltage_now")
 			if err != nil {
 				warn.Add(err)
 				continue
