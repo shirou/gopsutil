@@ -71,7 +71,7 @@ func BatteryWithContext(ctx context.Context, batteryName ...string) (BatteryStru
 		} else {
 			// 1.2 Largest battery as the main battery
 			// TODO: TEST, I ONLY HAVE ONE BAT* BATTERY
-			batteryAbsolutePath, err = chooseMainBattery(allBatteries, ctx)
+			batteryAbsolutePath, err = chooseMainBattery(allBatteries)
 			if err != nil {
 				warns.Add(err)
 			}
@@ -353,7 +353,7 @@ func checkIfDirIsBattery(absolutePath string) bool {
 // Some laptops have BAT1 as their primary internal battery, some have BAT0, just BAT, etc.
 // In some laptops, multiple BAT batteries can appear, and this function chooses the battery with the higher amperage as the "main" battery and returns it.
 // Return error if no batteries, or battery files cannot be read.
-func chooseMainBattery(batteries []string, ctx context.Context) (string, error) {
+func chooseMainBattery(batteries []string) (string, error) {
 	var warn Warnings
 	var largestBatteryMAHNumber int
 	//0 default value
