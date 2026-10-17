@@ -19,43 +19,65 @@ func TestDeciKelvinToCelsius(t *testing.T) {
 		name     string
 		dK       uint32
 		expected float64
+		ok       bool
 	}{
+		{
+			name:     "kernel invalid value -1 (0xffffffff)",
+			dK:       0xffffffff,
+			expected: 0,
+			ok:       false,
+		},
+		{
+			name:     "negative int32 value",
+			dK:       0x80000000,
+			expected: 0,
+			ok:       false,
+		},
 		{
 			name:     "negative celsius (-10.0 C)",
 			dK:       2631,
 			expected: -10.0,
+			ok:       true,
 		},
 		{
 			name:     "freezing point 0.0 C",
 			dK:       2731,
 			expected: 0.0,
+			ok:       true,
 		},
 		{
 			name:     "acpi thermal zone 27.9 C",
 			dK:       3010,
 			expected: 27.9,
+			ok:       true,
 		},
 		{
 			name:     "typical core temp 47.0 C",
 			dK:       3201,
 			expected: 47.0,
+			ok:       true,
 		},
 		{
 			name:     "intel coretemp tjmax 105.0 C",
 			dK:       3781,
 			expected: 105.0,
+			ok:       true,
 		},
 		{
 			name:     "acpi critical trip point 110.1 C",
 			dK:       3832,
 			expected: 110.1,
+			ok:       true,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			actual := DeciKelvinToCelsius(tc.dK)
-			assert.InDelta(t, tc.expected, actual, 0.0001)
+			actual, ok := deciKelvinToCelsius(tc.dK)
+			assert.Equal(t, tc.ok, ok)
+			if tc.ok {
+				assert.InDelta(t, tc.expected, actual, 0.0001)
+			}
 		})
 	}
 }
@@ -78,6 +100,6 @@ func TestTemperaturesWithContext_Live(t *testing.T) {
 
 	for _, stat := range stats {
 		assert.NotEmpty(t, stat.SensorKey)
-		t.Logf("SensorKey: %s, Temperature: %.1f C, Critical: %.1f C", stat.SensorKey, stat.Temperature, stat.Critical)
+		t.Logf("SensorKey: %s, Temperature: %.1f C, High: %.1f C, Critical: %.1f C", stat.SensorKey, stat.Temperature, stat.High, stat.Critical)
 	}
 }

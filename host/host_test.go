@@ -123,10 +123,6 @@ func TestGuid(t *testing.T) {
 }
 
 func TestVirtualization(t *testing.T) {
-	if _, _, err := Virtualization(); errors.Is(err, common.ErrNotImplementedError) {
-		t.Skip("not implemented")
-	}
-
 	wg := sync.WaitGroup{}
 	testCount := 10
 	wg.Add(testCount)
@@ -134,6 +130,9 @@ func TestVirtualization(t *testing.T) {
 		go func(j int) {
 			system, role, err := Virtualization()
 			defer wg.Done()
+			if errors.Is(err, common.ErrNotImplementedError) {
+				t.Skip("not implemented")
+			}
 			assert.NoErrorf(t, err, "Virtualization() failed, %v", err)
 
 			if j == 9 {
