@@ -71,3 +71,11 @@ func TestProcessLogicalDrives(t *testing.T) {
 	assert.Equal(t, "NTFS", parts[0].Fstype)
 	assert.Contains(t, parts[0].Opts, rw)
 }
+
+func TestDiskPerfTimeToMs(t *testing.T) {
+	// 100 ns units → ms: 10_000 ticks = 1 ms
+	assert.Equal(t, uint64(0), diskPerfTimeToMs(0))
+	assert.Equal(t, uint64(1), diskPerfTimeToMs(10_000))
+	assert.Equal(t, uint64(19_879_355), diskPerfTimeToMs(198_793_556_400))
+	assert.Equal(t, uint64(0), diskPerfTimeToMs(-1))
+}
