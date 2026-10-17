@@ -12,6 +12,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
 	"golang.org/x/sys/unix"
 
@@ -83,6 +84,16 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 
 	file, err := os.Open(utmpfile)
 	if err != nil {
+		if os.IsNotExist(err) {
+			// utmp is no longer populated on some newer distributions
+			// (e.g. Debian 13), which track sessions via systemd-logind
+			// instead. Fall back to loginctl in that case. If it fails too,
+			// return the original utmp error so callers can still rely on
+			// os.IsNotExist.
+			if users, lerr := usersFromLoginctlWithContext(ctx); lerr == nil {
+				return users, nil
+			}
+		}
 		return nil, err
 	}
 	defer file.Close()
@@ -118,6 +129,106 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 	}
 
 	return ret, nil
+}
+
+// usersFromLoginctlWithContext lists logged-in users through systemd-logind.
+// It is used when utmp is not available. The plain column output of
+// list-sessions is parsed on purpose: -o json is ignored since systemd 256 and
+// --json only exists from 256 on, while the first column has been the session
+// id in every version. loginctl always queries the local systemd-logind, so
+// HOST_VAR / HOST_ROOT are ignored here.
+func usersFromLoginctlWithContext(ctx context.Context) ([]UserStat, error) {
+	ctx, cancel := context.WithTimeout(ctx, common.Timeout)
+	defer cancel()
+
+	out, err := invoke.CommandWithContext(ctx, "loginctl", "list-sessions", "--no-legend", "--no-pager")
+	if err != nil {
+		return nil, err
+	}
+
+	var ids []string
+	for _, line := range strings.Split(string(out), "\n") {
+		// The session column is right-aligned, so use Fields to drop padding.
+		fields := strings.Fields(line)
+		if len(fields) == 0 {
+			continue
+		}
+		ids = append(ids, fields[0])
+	}
+
+	ret := make([]UserStat, 0, len(ids))
+	var lastErr error
+	failed := 0
+	for _, id := range ids {
+		stat, ok, err := loginctlShowSessionWithContext(ctx, id)
+		if err != nil {
+			// Sessions can close between list-sessions and show-session.
+			lastErr = err
+			failed++
+			continue
+		}
+		if ok {
+			ret = append(ret, stat)
+		}
+	}
+	if len(ids) > 0 && failed == len(ids) {
+		return nil, lastErr
+	}
+
+	return ret, nil
+}
+
+// loginctlShowSessionWithContext returns the session as a UserStat. The bool is
+// false for sessions that utmp would not have listed as USER_PROCESS: those whose
+// class does not start with "user" (e.g. "manager", "greeter") or that have
+// neither a seat nor a tty.
+func loginctlShowSessionWithContext(ctx context.Context, id string) (UserStat, bool, error) {
+	out, err := invoke.CommandWithContext(ctx, "loginctl", "show-session", id,
+		"-p", "Name", "-p", "TTY", "-p", "RemoteHost", "-p", "Timestamp", "-p", "Class", "-p", "Seat")
+	if err != nil {
+		return UserStat{}, false, err
+	}
+
+	var stat UserStat
+	var class, seat string
+	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+		key, value, found := strings.Cut(line, "=")
+		if !found {
+			continue
+		}
+		switch key {
+		case "Name":
+			stat.User = value
+		case "TTY":
+			stat.Terminal = value
+		case "RemoteHost":
+			stat.Host = value
+		case "Class":
+			class = value
+		case "Seat":
+			seat = value
+		case "Timestamp":
+			// Format: "Mon 2026-01-22 14:51:57 CET". The zone abbreviation can be
+			// numeric (e.g. +0330), which time.Parse rejects, so only read the wall
+			// clock and interpret it in the local zone.
+			if f := strings.Fields(value); len(f) >= 3 {
+				if t, err := time.ParseInLocation("2006-01-02 15:04:05", f[1]+" "+f[2], time.Local); err == nil {
+					stat.Started = int(t.Unix())
+				}
+			}
+		}
+	}
+
+	if !strings.HasPrefix(class, "user") || (seat == "" && stat.Terminal == "") {
+		return UserStat{}, false, nil
+	}
+
+	if stat.Terminal == "" {
+		// Graphical logins have no tty; utmp-based tools such as who show the seat.
+		stat.Terminal = seat
+	}
+
+	return stat, true, nil
 }
 
 func getlsbStruct(ctx context.Context) (*lsbStruct, error) {
