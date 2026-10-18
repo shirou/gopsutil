@@ -294,8 +294,18 @@ func buildPartitionStat(path string) (PartitionStat, error) {
 	return PartitionStat{}, nil
 }
 
+// diskPerfTimeToSec converts a DISK_PERFORMANCE time counter from 100 ns
+// units to seconds. This is the historical Windows behaviour (and matches
+// current psutil); prefer diskPerfTimeToMs via WillBeDeletedOptInWindowsIOTimeMs.
+func diskPerfTimeToSec(v int64) uint64 {
+	if v < 0 {
+		return 0
+	}
+	return uint64(v / 10_000_000)
+}
+
 // diskPerfTimeToMs converts a DISK_PERFORMANCE time counter from 100 ns
-// units to milliseconds.
+// units to milliseconds (same unit as Linux/Darwin/FreeBSD).
 func diskPerfTimeToMs(v int64) uint64 {
 	if v < 0 {
 		return 0
@@ -303,7 +313,7 @@ func diskPerfTimeToMs(v int64) uint64 {
 	return uint64(v / 10_000)
 }
 
-func IOCountersWithContext(_ context.Context, names ...string) (map[string]IOCountersStat, error) {
+func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOCountersStat, error) {
 	// https://github.com/giampaolo/psutil/blob/544e9daa4f66a9f80d7bf6c7886d693ee42f0a13/psutil/arch/windows/disk.c#L83
 	drivemap := make(map[string]IOCountersStat, 0)
 	var dPerformance diskPerformance
@@ -350,15 +360,18 @@ func IOCountersWithContext(_ context.Context, names ...string) (map[string]IOCou
 		}
 
 		if len(names) == 0 || common.StringsHas(names, path) {
+			toTime := diskPerfTimeToSec // historical Windows unit (seconds)
+			if v, ok := ctx.Value(WillBeDeletedOptInWindowsIOTimeMs).(bool); ok && v {
+				toTime = diskPerfTimeToMs
+			}
 			drivemap[path] = IOCountersStat{
 				ReadBytes:  uint64(dPerformance.BytesRead),
 				WriteBytes: uint64(dPerformance.BytesWritten),
 				ReadCount:  uint64(dPerformance.ReadCount),
 				WriteCount: uint64(dPerformance.WriteCount),
-				// DISK_PERFORMANCE Read/WriteTime are in 100 ns units; divide by
-				// 10_000 for milliseconds (same unit as Linux/Darwin/FreeBSD).
-				ReadTime:  diskPerfTimeToMs(dPerformance.ReadTime),
-				WriteTime: diskPerfTimeToMs(dPerformance.WriteTime),
+				// DISK_PERFORMANCE Read/WriteTime are in 100 ns units.
+				ReadTime:  toTime(dPerformance.ReadTime),
+				WriteTime: toTime(dPerformance.WriteTime),
 				Name:      path,
 			}
 		}

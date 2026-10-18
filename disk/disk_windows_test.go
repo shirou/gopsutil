@@ -79,3 +79,24 @@ func TestDiskPerfTimeToMs(t *testing.T) {
 	assert.Equal(t, uint64(19_879_355), diskPerfTimeToMs(198_793_556_400))
 	assert.Equal(t, uint64(0), diskPerfTimeToMs(-1))
 }
+
+func TestDiskPerfTimeToSec(t *testing.T) {
+	// 100 ns units → seconds: 10_000_000 ticks = 1 s (historical Windows default)
+	assert.Equal(t, uint64(0), diskPerfTimeToSec(0))
+	assert.Equal(t, uint64(1), diskPerfTimeToSec(10_000_000))
+	assert.Equal(t, uint64(19), diskPerfTimeToSec(198_793_556_400))
+	assert.Equal(t, uint64(0), diskPerfTimeToSec(-1))
+}
+
+func TestWillBeDeletedOptInWindowsIOTimeMs(t *testing.T) {
+	// Context key is a string; bool true opts into ms conversion.
+	ctx := context.WithValue(context.Background(), WillBeDeletedOptInWindowsIOTimeMs, true)
+	v, ok := ctx.Value(WillBeDeletedOptInWindowsIOTimeMs).(bool)
+	assert.True(t, ok)
+	assert.True(t, v)
+
+	ctxFalse := context.WithValue(context.Background(), WillBeDeletedOptInWindowsIOTimeMs, false)
+	v, ok = ctxFalse.Value(WillBeDeletedOptInWindowsIOTimeMs).(bool)
+	assert.True(t, ok)
+	assert.False(t, v)
+}
