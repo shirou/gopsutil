@@ -84,7 +84,7 @@ func TestDiskPerfTimeToSec(t *testing.T) {
 	// 100 ns units → seconds: 10_000_000 ticks = 1 s (historical Windows default)
 	assert.Equal(t, uint64(0), diskPerfTimeToSec(0))
 	assert.Equal(t, uint64(1), diskPerfTimeToSec(10_000_000))
-	assert.Equal(t, uint64(19), diskPerfTimeToSec(198_793_556_400))
+	assert.Equal(t, uint64(19_879), diskPerfTimeToSec(198_793_556_400))
 	assert.Equal(t, uint64(0), diskPerfTimeToSec(-1))
 }
 
