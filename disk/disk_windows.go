@@ -313,6 +313,15 @@ func diskPerfTimeToMs(v int64) uint64 {
 	return uint64(v / 10_000)
 }
 
+// diskPerfTimeConverter returns diskPerfTimeToMs when the caller opted in
+// with WillBeDeletedOptInWindowsIOTimeMs, and diskPerfTimeToSec otherwise.
+func diskPerfTimeConverter(ctx context.Context) func(int64) uint64 {
+	if v, ok := ctx.Value(WillBeDeletedOptInWindowsIOTimeMs).(bool); ok && v {
+		return diskPerfTimeToMs
+	}
+	return diskPerfTimeToSec // historical Windows unit (seconds)
+}
+
 func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOCountersStat, error) {
 	// https://github.com/giampaolo/psutil/blob/544e9daa4f66a9f80d7bf6c7886d693ee42f0a13/psutil/arch/windows/disk.c#L83
 	drivemap := make(map[string]IOCountersStat, 0)
@@ -360,10 +369,7 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 		}
 
 		if len(names) == 0 || common.StringsHas(names, path) {
-			toTime := diskPerfTimeToSec // historical Windows unit (seconds)
-			if v, ok := ctx.Value(WillBeDeletedOptInWindowsIOTimeMs).(bool); ok && v {
-				toTime = diskPerfTimeToMs
-			}
+			toTime := diskPerfTimeConverter(ctx)
 			drivemap[path] = IOCountersStat{
 				ReadBytes:  uint64(dPerformance.BytesRead),
 				WriteBytes: uint64(dPerformance.BytesWritten),

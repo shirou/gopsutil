@@ -88,15 +88,17 @@ func TestDiskPerfTimeToSec(t *testing.T) {
 	assert.Equal(t, uint64(0), diskPerfTimeToSec(-1))
 }
 
-func TestWillBeDeletedOptInWindowsIOTimeMs(t *testing.T) {
-	// Context key is a string; bool true opts into ms conversion.
-	ctx := context.WithValue(context.Background(), WillBeDeletedOptInWindowsIOTimeMs, true)
-	v, ok := ctx.Value(WillBeDeletedOptInWindowsIOTimeMs).(bool)
-	assert.True(t, ok)
-	assert.True(t, v)
+func TestDiskPerfTimeConverter(t *testing.T) {
+	const raw = 198_793_556_400 // 100 ns units
 
-	ctxFalse := context.WithValue(context.Background(), WillBeDeletedOptInWindowsIOTimeMs, false)
-	v, ok = ctxFalse.Value(WillBeDeletedOptInWindowsIOTimeMs).(bool)
-	assert.True(t, ok)
-	assert.False(t, v)
+	withOptIn := func(v any) context.Context {
+		return context.WithValue(context.Background(), WillBeDeletedOptInWindowsIOTimeMs, v) //nolint:revive,staticcheck // the key is an untyped string by design
+	}
+
+	// Default: seconds (historical behaviour).
+	assert.Equal(t, uint64(19_879), diskPerfTimeConverter(context.Background())(raw))
+	// Only a bool true opts in to milliseconds.
+	assert.Equal(t, uint64(19_879_355), diskPerfTimeConverter(withOptIn(true))(raw))
+	assert.Equal(t, uint64(19_879), diskPerfTimeConverter(withOptIn(false))(raw))
+	assert.Equal(t, uint64(19_879), diskPerfTimeConverter(withOptIn("true"))(raw))
 }
