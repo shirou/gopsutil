@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"testing"
@@ -117,6 +118,23 @@ func TestGetProcInodesAll(t *testing.T) {
 	v, err := getProcInodesAllWithContext(ctx, root, 0)
 	require.NoError(t, err)
 	assert.NotEmpty(t, v)
+}
+
+func TestProcessUnixNewlineInPath(t *testing.T) {
+	// The kernel prints socket paths verbatim, so a socket bound to an
+	// abstract name containing a newline adds an unparsable line.
+	contents := "Num       RefCount Protocol Flags    Type St Inode Path\n" +
+		"0000000000000000: 00000002 00000000 00010000 0001 01 12345 /run/a.sock\n" +
+		"0000000000000000: 00000002 00000000 00010000 0001 01 12346 @x\n" +
+		"0: 0 0 0 zz 01 1\n"
+	path := filepath.Join(t.TempDir(), "unix")
+	require.NoError(t, os.WriteFile(path, []byte(contents), 0o600))
+
+	ret, err := processUnix(path, kindUNIX, map[string][]inodeMap{}, 0)
+	require.NoError(t, err)
+	require.Len(t, ret, 2)
+	assert.Equal(t, "/run/a.sock", ret[0].path)
+	assert.Equal(t, "12346", ret[1].inode)
 }
 
 func TestConnectionsMax(t *testing.T) {
