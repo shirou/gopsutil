@@ -71,3 +71,34 @@ func TestProcessLogicalDrives(t *testing.T) {
 	assert.Equal(t, "NTFS", parts[0].Fstype)
 	assert.Contains(t, parts[0].Opts, rw)
 }
+
+func TestDiskPerfTimeToMs(t *testing.T) {
+	// 100 ns units → ms: 10_000 ticks = 1 ms
+	assert.Equal(t, uint64(0), diskPerfTimeToMs(0))
+	assert.Equal(t, uint64(1), diskPerfTimeToMs(10_000))
+	assert.Equal(t, uint64(19_879_355), diskPerfTimeToMs(198_793_556_400))
+	assert.Equal(t, uint64(0), diskPerfTimeToMs(-1))
+}
+
+func TestDiskPerfTimeToSec(t *testing.T) {
+	// 100 ns units → seconds: 10_000_000 ticks = 1 s (historical Windows default)
+	assert.Equal(t, uint64(0), diskPerfTimeToSec(0))
+	assert.Equal(t, uint64(1), diskPerfTimeToSec(10_000_000))
+	assert.Equal(t, uint64(19_879), diskPerfTimeToSec(198_793_556_400))
+	assert.Equal(t, uint64(0), diskPerfTimeToSec(-1))
+}
+
+func TestDiskPerfTimeConverter(t *testing.T) {
+	const raw = 198_793_556_400 // 100 ns units
+
+	withOptIn := func(v any) context.Context {
+		return context.WithValue(context.Background(), WillBeDeletedOptInWindowsIOTimeMs, v) //nolint:revive,staticcheck // the key is an untyped string by design
+	}
+
+	// Default: seconds (historical behaviour).
+	assert.Equal(t, uint64(19_879), diskPerfTimeConverter(context.Background())(raw))
+	// Only a bool true opts in to milliseconds.
+	assert.Equal(t, uint64(19_879_355), diskPerfTimeConverter(withOptIn(true))(raw))
+	assert.Equal(t, uint64(19_879), diskPerfTimeConverter(withOptIn(false))(raw))
+	assert.Equal(t, uint64(19_879), diskPerfTimeConverter(withOptIn("true"))(raw))
+}

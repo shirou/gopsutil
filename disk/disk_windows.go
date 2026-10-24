@@ -294,7 +294,35 @@ func buildPartitionStat(path string) (PartitionStat, error) {
 	return PartitionStat{}, nil
 }
 
-func IOCountersWithContext(_ context.Context, names ...string) (map[string]IOCountersStat, error) {
+// diskPerfTimeToSec converts a DISK_PERFORMANCE time counter from 100 ns
+// units to seconds. This is the historical Windows behaviour (and matches
+// current psutil); prefer diskPerfTimeToMs via WillBeDeletedOptInWindowsIOTimeMs.
+func diskPerfTimeToSec(v int64) uint64 {
+	if v < 0 {
+		return 0
+	}
+	return uint64(v / 10_000_000)
+}
+
+// diskPerfTimeToMs converts a DISK_PERFORMANCE time counter from 100 ns
+// units to milliseconds (same unit as Linux/Darwin/FreeBSD).
+func diskPerfTimeToMs(v int64) uint64 {
+	if v < 0 {
+		return 0
+	}
+	return uint64(v / 10_000)
+}
+
+// diskPerfTimeConverter returns diskPerfTimeToMs when the caller opted in
+// with WillBeDeletedOptInWindowsIOTimeMs, and diskPerfTimeToSec otherwise.
+func diskPerfTimeConverter(ctx context.Context) func(int64) uint64 {
+	if v, ok := ctx.Value(WillBeDeletedOptInWindowsIOTimeMs).(bool); ok && v {
+		return diskPerfTimeToMs
+	}
+	return diskPerfTimeToSec // historical Windows unit (seconds)
+}
+
+func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOCountersStat, error) {
 	// https://github.com/giampaolo/psutil/blob/544e9daa4f66a9f80d7bf6c7886d693ee42f0a13/psutil/arch/windows/disk.c#L83
 	drivemap := make(map[string]IOCountersStat, 0)
 	var dPerformance diskPerformance
@@ -341,14 +369,16 @@ func IOCountersWithContext(_ context.Context, names ...string) (map[string]IOCou
 		}
 
 		if len(names) == 0 || common.StringsHas(names, path) {
+			toTime := diskPerfTimeConverter(ctx)
 			drivemap[path] = IOCountersStat{
 				ReadBytes:  uint64(dPerformance.BytesRead),
 				WriteBytes: uint64(dPerformance.BytesWritten),
 				ReadCount:  uint64(dPerformance.ReadCount),
 				WriteCount: uint64(dPerformance.WriteCount),
-				ReadTime:   uint64(dPerformance.ReadTime / 10000 / 1000), // convert to ms: https://github.com/giampaolo/psutil/issues/1012
-				WriteTime:  uint64(dPerformance.WriteTime / 10000 / 1000),
-				Name:       path,
+				// DISK_PERFORMANCE Read/WriteTime are in 100 ns units.
+				ReadTime:  toTime(dPerformance.ReadTime),
+				WriteTime: toTime(dPerformance.WriteTime),
+				Name:      path,
 			}
 		}
 	}

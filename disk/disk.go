@@ -10,6 +10,14 @@ import (
 
 var invoke common.Invoker = common.Invoke{}
 
+// WillBeDeletedOptInWindowsIOTimeMs is a context key to get ReadTime and
+// WriteTime of IOCounters in milliseconds on Windows. It has no effect on
+// other platforms. Milliseconds will be the default when psutil fixes the
+// same bug, or in Feb. 2027 at the latest. This constant will be removed then.
+// See https://github.com/giampaolo/psutil/issues/3002
+// See https://github.com/shirou/gopsutil/issues/2160
+const WillBeDeletedOptInWindowsIOTimeMs = "optInWindowsIOTimeMs"
+
 type Warnings = common.Warnings
 
 type UsageStat struct {
