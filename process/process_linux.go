@@ -140,12 +140,12 @@ func (p *Process) ForegroundWithContext(ctx context.Context) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	fields := strings.Fields(string(contents))
-	if len(fields) < 8 {
+	fields := splitProcStat(contents)
+	if len(fields) < 9 {
 		return false, fmt.Errorf("insufficient data in %s", statPath)
 	}
-	pgid := fields[4]
-	tpgid := fields[7]
+	pgid := fields[5]
+	tpgid := fields[8]
 	return pgid == tpgid, nil
 }
 

@@ -166,6 +166,21 @@ func TestSplitProcStat_fromFile(t *testing.T) {
 	}
 }
 
+func TestForegroundWithContext_commWithSpaces(t *testing.T) {
+	// comm is controlled by the process (prctl PR_SET_NAME) and may contain
+	// spaces, which must not shift the pgrp/tpgid fields.
+	procDir := t.TempDir()
+	require.NoError(t, os.Mkdir(procDir+"/4242", 0o700))
+	stat := "4242 (x 1 1 1 1) S 1 4242 4242 0 -1 4194304 0 0 0 0 0 0 0 0 20 0 1 0 100 0 0\n"
+	require.NoError(t, os.WriteFile(procDir+"/4242/stat", []byte(stat), 0o600))
+	t.Setenv("HOST_PROC", procDir)
+
+	p := &Process{Pid: 4242}
+	fg, err := p.ForegroundWithContext(context.Background())
+	require.NoError(t, err)
+	assert.False(t, fg)
+}
+
 func TestFillFromCommWithContext(t *testing.T) {
 	pids, err := os.ReadDir("testdata/linux/")
 	require.NoError(t, err)
