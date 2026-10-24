@@ -173,11 +173,14 @@ func parseDmesgBoot(fileName string) (InfoStat, int, error) {
 }
 
 func CountsWithContext(_ context.Context, logical bool) (int, error) {
+	// Use system-wide counts for both, so that the logical count is not
+	// smaller than the physical one inside a jail or cpuset.
+	name := "hw.ncpu"
 	if !logical {
-		// kern.smp.cores is the number of physical cores, without SMT threads.
-		if cores, err := unix.SysctlUint32("kern.smp.cores"); err == nil && cores > 0 {
-			return int(cores), nil
-		}
+		name = "kern.smp.cores"
+	}
+	if n, err := unix.SysctlUint32(name); err == nil && n > 0 {
+		return int(n), nil
 	}
 	return runtime.NumCPU(), nil
 }
