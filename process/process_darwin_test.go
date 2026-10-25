@@ -47,6 +47,18 @@ func TestNumFDs_NonExistent(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestUids(t *testing.T) {
+	p, err := NewProcess(int32(os.Getpid()))
+	require.NoError(t, err)
+
+	uids, err := p.Uids()
+	require.NoError(t, err)
+
+	// real, effective, saved; the saved id of a plain test process is its effective id
+	euid := uint32(os.Geteuid())
+	assert.Equal(t, []uint32{uint32(os.Getuid()), euid, euid}, uids)
+}
+
 func TestParseCmdline(t *testing.T) {
 	tests := []struct {
 		name  string
