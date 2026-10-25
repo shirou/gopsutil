@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"runtime"
@@ -34,6 +35,21 @@ const (
 
 type _Ctype_struct___0 struct { //nolint:revive //FIXME
 	Pad uint64
+}
+
+// MemoryInfoExStat is different between OSes
+type MemoryInfoExStat struct {
+	RSS uint64 `json:"rss"` // bytes
+	// PhysFootprint is the memory charged to the process by the kernel
+	// (ri_phys_footprint), which is what Activity Monitor shows as "Memory"
+	// and top as "MEM". It includes compressed and swapped-out dirty pages and
+	// excludes shared clean pages, so it can be larger or smaller than RSS.
+	PhysFootprint uint64 `json:"physFootprint"` // bytes
+}
+
+func (m MemoryInfoExStat) String() string {
+	s, _ := json.Marshal(m)
+	return string(s)
 }
 
 func pidsWithContext(_ context.Context) ([]int32, error) {
@@ -179,7 +195,8 @@ func (p *Process) NiceWithContext(_ context.Context) (int32, error) {
 }
 
 // rusageInfoV2 mirrors Darwin's struct rusage_info_v2 from sys/resource.h.
-// Only DiskIOBytesRead / DiskIOBytesWritten are used for IOCounters.
+// IOCounters uses DiskIOBytesRead / DiskIOBytesWritten; MemoryInfoEx uses
+// ResidentSize / PhysFootprint.
 type rusageInfoV2 struct {
 	UUID                [16]byte
 	UserTime            uint64
@@ -212,6 +229,36 @@ type rusageInfoV2 struct {
 //
 // Access may fail with ErrorNotPermitted for protected processes.
 func (p *Process) IOCountersWithContext(_ context.Context) (*IOCountersStat, error) {
+	usage, err := p.rusageV2()
+	if err != nil {
+		return nil, err
+	}
+
+	return &IOCountersStat{
+		DiskReadBytes:  usage.DiskIOBytesRead,
+		DiskWriteBytes: usage.DiskIOBytesWritten,
+	}, nil
+}
+
+// MemoryInfoExWithContext returns the resident size and the physical footprint
+// of the process via proc_pid_rusage(RUSAGE_INFO_V2).
+//
+// Access may fail with ErrorNotPermitted for protected processes.
+func (p *Process) MemoryInfoExWithContext(_ context.Context) (*MemoryInfoExStat, error) {
+	usage, err := p.rusageV2()
+	if err != nil {
+		return nil, err
+	}
+
+	return &MemoryInfoExStat{
+		RSS:           usage.ResidentSize,
+		PhysFootprint: usage.PhysFootprint,
+	}, nil
+}
+
+// rusageV2 calls proc_pid_rusage(RUSAGE_INFO_V2) for the process, mapping EPERM
+// to ErrorNotPermitted and ESRCH to ErrorProcessNotRunning.
+func (p *Process) rusageV2() (*rusageInfoV2, error) {
 	funcs, err := loadProcFuncs()
 	if err != nil {
 		return nil, err
@@ -240,10 +287,7 @@ func (p *Process) IOCountersWithContext(_ context.Context) (*IOCountersStat, err
 		}
 	}
 
-	return &IOCountersStat{
-		DiskReadBytes:  usage.DiskIOBytesRead,
-		DiskWriteBytes: usage.DiskIOBytesWritten,
-	}, nil
+	return &usage, nil
 }
 
 func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
