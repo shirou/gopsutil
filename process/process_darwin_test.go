@@ -187,18 +187,20 @@ func BenchmarkNumFDs(b *testing.B) {
 	}
 }
 
-// rusageInfoV2 must match struct rusage_info_v2 from sys/resource.h: a 16-byte
-// uuid followed by 18 uint64 fields.
+// rusageInfoV4 must match struct rusage_info_v4 from sys/resource.h: a 16-byte
+// uuid followed by 35 uint64 fields (18 from v2, 9 added in v3, 8 in v4).
 //
-// The size alone is not enough: the two fields actually read sit at the end, so
-// a reordering earlier in the struct would keep the size at 160 while silently
-// shifting them. Pin their offsets too.
-func TestRusageInfoV2Layout(t *testing.T) {
-	var usage rusageInfoV2
+// The size alone is not enough: a reordering earlier in the struct would keep
+// the size at 296 while silently shifting the fields actually read. Pin their
+// offsets too.
+func TestRusageInfoV4Layout(t *testing.T) {
+	var usage rusageInfoV4
 
-	assert.Equal(t, uintptr(16+18*8), unsafe.Sizeof(usage))
+	assert.Equal(t, uintptr(16+35*8), unsafe.Sizeof(usage))
+	assert.Equal(t, uintptr(16+7*8), unsafe.Offsetof(usage.PhysFootprint))
 	assert.Equal(t, uintptr(16+16*8), unsafe.Offsetof(usage.DiskIOBytesRead))
 	assert.Equal(t, uintptr(16+17*8), unsafe.Offsetof(usage.DiskIOBytesWritten))
+	assert.Equal(t, uintptr(16+28*8), unsafe.Offsetof(usage.LifetimeMaxPhysFootprint))
 }
 
 func TestIOCounters_DiskBytes(t *testing.T) {
@@ -243,5 +245,25 @@ func TestIOCounters_NonExistent(t *testing.T) {
 	p := &Process{Pid: 999999} // above PID_MAX; see TestNumFDs_NonExistent
 
 	_, err := p.IOCounters()
+	require.ErrorIs(t, err, ErrorProcessNotRunning)
+}
+
+func TestMemoryInfoEx(t *testing.T) {
+	p, err := NewProcess(int32(os.Getpid()))
+	require.NoError(t, err)
+
+	m, err := p.MemoryInfoEx()
+	require.NoError(t, err)
+
+	// A running Go test binary has dirty memory of its own, and the lifetime
+	// peak can never be below the current footprint.
+	assert.Positive(t, m.PhysFootprint)
+	assert.GreaterOrEqual(t, m.PeakFootprint, m.PhysFootprint)
+}
+
+func TestMemoryInfoEx_NonExistent(t *testing.T) {
+	p := &Process{Pid: 999999} // above PID_MAX; see TestNumFDs_NonExistent
+
+	_, err := p.MemoryInfoEx()
 	require.ErrorIs(t, err, ErrorProcessNotRunning)
 }

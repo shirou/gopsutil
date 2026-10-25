@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"runtime"
@@ -34,6 +35,26 @@ const (
 
 type _Ctype_struct___0 struct { //nolint:revive //FIXME
 	Pad uint64
+}
+
+// MemoryInfoExStat is different between OSes
+//
+// On Darwin the fields match psutil's Process.memory_extras().
+type MemoryInfoExStat struct {
+	// PhysFootprint is the memory charged to the process by the kernel
+	// (ri_phys_footprint), which is what Activity Monitor shows as "Memory"
+	// and top as "MEM". It includes compressed and swapped-out dirty pages and
+	// excludes shared clean pages, so it can be larger or smaller than
+	// MemoryInfo().RSS.
+	PhysFootprint uint64 `json:"physFootprint"` // bytes
+	// PeakFootprint is the highest PhysFootprint over the life of the process
+	// (ri_lifetime_max_phys_footprint).
+	PeakFootprint uint64 `json:"peakFootprint"` // bytes
+}
+
+func (m MemoryInfoExStat) String() string {
+	s, _ := json.Marshal(m)
+	return string(s)
 }
 
 func pidsWithContext(_ context.Context) ([]int32, error) {
@@ -178,9 +199,11 @@ func (p *Process) NiceWithContext(_ context.Context) (int32, error) {
 	return int32(k.Proc.P_nice), nil
 }
 
-// rusageInfoV2 mirrors Darwin's struct rusage_info_v2 from sys/resource.h.
-// Only DiskIOBytesRead / DiskIOBytesWritten are used for IOCounters.
-type rusageInfoV2 struct {
+// rusageInfoV4 mirrors Darwin's struct rusage_info_v4 from sys/resource.h,
+// which extends rusage_info_v2 and rusage_info_v3 by appending fields.
+// IOCounters uses DiskIOBytesRead / DiskIOBytesWritten; MemoryInfoEx uses
+// PhysFootprint / LifetimeMaxPhysFootprint.
+type rusageInfoV4 struct {
 	UUID                [16]byte
 	UserTime            uint64
 	SystemTime          uint64
@@ -200,10 +223,29 @@ type rusageInfoV2 struct {
 	ChildElapsedAbstime uint64
 	DiskIOBytesRead     uint64
 	DiskIOBytesWritten  uint64
+	// rusage_info_v3
+	CPUTimeQosDefault         uint64
+	CPUTimeQosMaintenance     uint64
+	CPUTimeQosBackground      uint64
+	CPUTimeQosUtility         uint64
+	CPUTimeQosLegacy          uint64
+	CPUTimeQosUserInitiated   uint64
+	CPUTimeQosUserInteractive uint64
+	BilledSystemTime          uint64
+	ServicedSystemTime        uint64
+	// rusage_info_v4
+	LogicalWrites            uint64
+	LifetimeMaxPhysFootprint uint64
+	Instructions             uint64
+	Cycles                   uint64
+	BilledEnergy             uint64
+	ServicedEnergy           uint64
+	IntervalMaxPhysFootprint uint64
+	RunnableTime             uint64
 }
 
 // IOCountersWithContext returns cumulative disk I/O bytes for the process via
-// proc_pid_rusage(RUSAGE_INFO_V2).
+// proc_pid_rusage(RUSAGE_INFO_V4).
 //
 // Darwin only reports disk I/O, so only DiskReadBytes and DiskWriteBytes are
 // populated. ReadBytes/WriteBytes count all I/O including that served from
@@ -212,6 +254,39 @@ type rusageInfoV2 struct {
 //
 // Access may fail with ErrorNotPermitted for protected processes.
 func (p *Process) IOCountersWithContext(_ context.Context) (*IOCountersStat, error) {
+	usage, err := p.rusageV4()
+	if err != nil {
+		return nil, err
+	}
+
+	return &IOCountersStat{
+		DiskReadBytes:  usage.DiskIOBytesRead,
+		DiskWriteBytes: usage.DiskIOBytesWritten,
+	}, nil
+}
+
+// MemoryInfoExWithContext returns the current and the lifetime peak physical
+// footprint of the process via proc_pid_rusage(RUSAGE_INFO_V4).
+//
+// Access may fail with ErrorNotPermitted for protected processes.
+func (p *Process) MemoryInfoExWithContext(_ context.Context) (*MemoryInfoExStat, error) {
+	usage, err := p.rusageV4()
+	if err != nil {
+		return nil, err
+	}
+
+	return &MemoryInfoExStat{
+		PhysFootprint: usage.PhysFootprint,
+		PeakFootprint: usage.LifetimeMaxPhysFootprint,
+	}, nil
+}
+
+// rusageV4 calls proc_pid_rusage(RUSAGE_INFO_V4) for the process, mapping EPERM
+// to ErrorNotPermitted and ESRCH to ErrorProcessNotRunning.
+//
+// RUSAGE_INFO_V4 exists since macOS 10.13, and Go requires macOS 12 or later,
+// so no older flavor is needed as a fallback.
+func (p *Process) rusageV4() (*rusageInfoV4, error) {
 	funcs, err := loadProcFuncs()
 	if err != nil {
 		return nil, err
@@ -227,8 +302,8 @@ func (p *Process) IOCountersWithContext(_ context.Context) (*IOCountersStat, err
 	// dlsym and allocate in between, either of which can overwrite errno.
 	errnoPtr := funcs.lib.ErrnoLocation()
 
-	var usage rusageInfoV2
-	ret := funcs.lib.ProcPidRusage(p.Pid, common.RUSAGE_INFO_V2, unsafe.Pointer(&usage))
+	var usage rusageInfoV4
+	ret := funcs.lib.ProcPidRusage(p.Pid, common.RUSAGE_INFO_V4, unsafe.Pointer(&usage))
 	if ret != 0 {
 		switch errno := unix.Errno(*errnoPtr); errno {
 		case unix.EPERM:
@@ -240,10 +315,7 @@ func (p *Process) IOCountersWithContext(_ context.Context) (*IOCountersStat, err
 		}
 	}
 
-	return &IOCountersStat{
-		DiskReadBytes:  usage.DiskIOBytesRead,
-		DiskWriteBytes: usage.DiskIOBytesWritten,
-	}, nil
+	return &usage, nil
 }
 
 func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
