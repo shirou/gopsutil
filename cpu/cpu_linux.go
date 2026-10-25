@@ -313,7 +313,7 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 				return ret, err
 			}
 			c.Stepping = int32(t)
-		case "cpu MHz", "clock", "cpu MHz dynamic":
+		case "cpu MHz", "CPU MHz", "clock", "cpu MHz dynamic":
 			// treat this as the fallback value, thus we ignore error
 			if t, err := strconv.ParseFloat(strings.Replace(value, "MHz", "", 1), 64); err == nil {
 				c.Mhz = t
