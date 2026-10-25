@@ -120,9 +120,10 @@ func (p *Process) UidsWithContext(_ context.Context) ([]uint32, error) {
 	}
 
 	// See: http://unix.superglobalmegacorp.com/Net2/newsrc/sys/ucred.h.html
-	userEffectiveUID := uint32(k.Eproc.Ucred.Uid)
+	uids := make([]uint32, 0, 3)
+	uids = append(uids, uint32(k.Eproc.Pcred.P_ruid), uint32(k.Eproc.Ucred.Uid), uint32(k.Eproc.Pcred.P_svuid))
 
-	return []uint32{userEffectiveUID}, nil
+	return uids, nil
 }
 
 func (p *Process) GidsWithContext(_ context.Context) ([]uint32, error) {
