@@ -4,7 +4,9 @@ package cpu
 import (
 	"context"
 	"errors"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -14,6 +16,31 @@ import (
 
 	"github.com/shirou/gopsutil/v4/internal/common"
 )
+
+func TestCPUInfoFrequencyFallback_1776(t *testing.T) {
+	for _, key := range []string{"cpu MHz", "CPU MHz", "clock", "cpu MHz dynamic"} {
+		t.Run(key, func(t *testing.T) {
+			root := t.TempDir()
+			t.Setenv("HOST_PROC", root)
+			t.Setenv("HOST_SYS", root)
+			data := "processor : 0\n" + key + " : 2600.500\n"
+			require.NoError(t, os.WriteFile(filepath.Join(root, "cpuinfo"), []byte(data), 0o600))
+			info, err := Info()
+			require.NoError(t, err)
+			require.Len(t, info, 1)
+			assert.InDelta(t, 2600.5, info[0].Mhz, 0.001)
+
+			// The sysfs maximum still takes precedence over any cpuinfo spelling.
+			cpufreq := filepath.Join(root, "devices", "system", "cpu", "cpu0", "cpufreq")
+			require.NoError(t, os.MkdirAll(cpufreq, 0o700))
+			require.NoError(t, os.WriteFile(filepath.Join(cpufreq, "cpuinfo_max_freq"), []byte("3500000\n"), 0o600))
+			info, err = Info()
+			require.NoError(t, err)
+			require.Len(t, info, 1)
+			assert.InDelta(t, 3500.0, info[0].Mhz, 0.001)
+		})
+	}
+}
 
 func TestTimesEmpty(t *testing.T) {
 	t.Setenv("HOST_PROC", "testdata/linux/times_empty")
