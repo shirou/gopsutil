@@ -509,6 +509,32 @@ func (p *Process) CmdlineWithContext(ctx context.Context) (string, error) {
 	return strings.Join(r, " "), err
 }
 
+// taskInfo checks the result before callers consume the task statistics.
+func (p *Process) taskInfo(funcs *dlFuncs) (*ProcTaskInfo, error) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	errnoPtr := funcs.lib.ErrnoLocation()
+	var ti ProcTaskInfo
+	const size = int32(unsafe.Sizeof(ti))
+	ret := funcs.lib.ProcPidInfo(p.Pid, common.PROC_PIDTASKINFO, 0, unsafe.Pointer(&ti), size)
+	if ret <= 0 {
+		switch errno := unix.Errno(*errnoPtr); errno {
+		case unix.ESRCH:
+			return nil, ErrorProcessNotRunning
+		case unix.EPERM:
+			return nil, ErrorNotPermitted
+		case 0:
+			return nil, fmt.Errorf("proc_pidinfo returned %d", ret)
+		default:
+			return nil, errno
+		}
+	}
+	if ret != size {
+		return nil, fmt.Errorf("too few bytes; expected %d, got %d", size, ret)
+	}
+	return &ti, nil
+}
+
 func (p *Process) NumThreadsWithContext(_ context.Context) (int32, error) {
 	funcs, err := loadProcFuncs()
 	if err != nil {
@@ -516,8 +542,10 @@ func (p *Process) NumThreadsWithContext(_ context.Context) (int32, error) {
 	}
 	defer funcs.Close()
 
-	var ti ProcTaskInfo
-	funcs.lib.ProcPidInfo(p.Pid, common.PROC_PIDTASKINFO, 0, unsafe.Pointer(&ti), int32(unsafe.Sizeof(ti)))
+	ti, err := p.taskInfo(funcs)
+	if err != nil {
+		return 0, err
+	}
 
 	return int32(ti.Threadnum), nil
 }
@@ -529,8 +557,10 @@ func (p *Process) TimesWithContext(_ context.Context) (*cpu.TimesStat, error) {
 	}
 	defer funcs.Close()
 
-	var ti ProcTaskInfo
-	funcs.lib.ProcPidInfo(p.Pid, common.PROC_PIDTASKINFO, 0, unsafe.Pointer(&ti), int32(unsafe.Sizeof(ti)))
+	ti, err := p.taskInfo(funcs)
+	if err != nil {
+		return nil, err
+	}
 
 	timescaleToNanoSeconds := funcs.getTimeScaleToNanoSeconds()
 	ret := &cpu.TimesStat{
@@ -548,8 +578,10 @@ func (p *Process) MemoryInfoWithContext(_ context.Context) (*MemoryInfoStat, err
 	}
 	defer funcs.Close()
 
-	var ti ProcTaskInfo
-	funcs.lib.ProcPidInfo(p.Pid, common.PROC_PIDTASKINFO, 0, unsafe.Pointer(&ti), int32(unsafe.Sizeof(ti)))
+	ti, err := p.taskInfo(funcs)
+	if err != nil {
+		return nil, err
+	}
 
 	ret := &MemoryInfoStat{
 		RSS: uint64(ti.Resident_size),
