@@ -1,0 +1,9 @@
+nr_free_pages 1215473
+pgpgin 40092731521
+pgpgout 601586884
+pswpin 136604654
+pswpout 128783910
+pgalloc_dma 0
+pgfault 1086111781
+pgmajfault 166633543
+pgrefill 3519
