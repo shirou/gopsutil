@@ -70,13 +70,15 @@ func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 	name := common.ByteToString(k.Proc.P_comm[:])
 
 	if len(name) >= 15 {
-		cmdName, err := p.cmdNameWithContext(ctx)
+		// Reading another user's command line may be denied even when
+		// proc_pidpath can return its executable path.
+		exe, err := p.ExeWithContext(ctx)
 		if err != nil {
 			return "", err
 		}
-		if cmdName != "" {
-			extendedName := filepath.Base(cmdName)
-			if strings.HasPrefix(extendedName, p.name) {
+		if exe != "" {
+			extendedName := filepath.Base(exe)
+			if strings.HasPrefix(extendedName, name) {
 				name = extendedName
 			}
 		}
@@ -485,20 +487,6 @@ func parseCmdline(args []byte, nargs int) []string {
 		i++
 	}
 	return argSlice
-}
-
-// cmdNameWithContext returns the command name (including spaces) without any arguments
-func (p *Process) cmdNameWithContext(_ context.Context) (string, error) {
-	r, err := p.cmdlineSlice()
-	if err != nil {
-		return "", err
-	}
-
-	if len(r) == 0 {
-		return "", nil
-	}
-
-	return r[0], err
 }
 
 func (p *Process) CmdlineWithContext(ctx context.Context) (string, error) {

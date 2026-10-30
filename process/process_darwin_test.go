@@ -4,10 +4,15 @@
 package process
 
 import (
+	"bufio"
 	"context"
+	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 	"unsafe"
 
 	"github.com/stretchr/testify/assert"
@@ -244,4 +249,77 @@ func TestIOCounters_NonExistent(t *testing.T) {
 
 	_, err := p.IOCounters()
 	require.ErrorIs(t, err, ErrorProcessNotRunning)
+}
+
+func TestNameWithCustomArgv0(t *testing.T) {
+	if os.Getenv("GOPSUTIL_TEST_CUSTOM_ARGV0") == "1" {
+		fmt.Println("ready")
+		_, _ = os.Stdin.Read(make([]byte, 1))
+		os.Exit(0)
+	}
+	executable, err := os.Executable()
+	require.NoError(t, err)
+	data, err := os.ReadFile(executable)
+	require.NoError(t, err)
+	path := filepath.Join(t.TempDir(), "long process name with spaces")
+	// #nosec G306 G703 -- fixed filename under t.TempDir; the test binary must be owner-executable.
+	require.NoError(t, os.WriteFile(path, data, 0o700))
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, path, "-test.run=^TestNameWithCustomArgv0$")
+	cmd.Args[0] = "custom-argv-zero"
+	cmd.Env = append(os.Environ(), "GOPSUTIL_TEST_CUSTOM_ARGV0=1")
+	stdin, err := cmd.StdinPipe()
+	require.NoError(t, err)
+	stdout, err := cmd.StdoutPipe()
+	require.NoError(t, err)
+	require.NoError(t, cmd.Start())
+	defer func() {
+		_ = stdin.Close()
+		_ = cmd.Wait()
+	}()
+	ready, err := bufio.NewReader(stdout).ReadString('\n')
+	require.NoError(t, err)
+	require.Equal(t, "ready\n", ready)
+	p, err := NewProcess(int32(cmd.Process.Pid))
+	require.NoError(t, err)
+	name, err := p.NameWithContext(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, filepath.Base(path), name)
+}
+
+func TestNameWithoutCmdlineAccess(t *testing.T) {
+	ctx := context.Background()
+	pids, err := PidsWithContext(ctx)
+	require.NoError(t, err)
+	for _, pid := range pids {
+		p := &Process{Pid: pid}
+		k, err := p.getKProc()
+		if err != nil {
+			continue
+		}
+		name := string(k.Proc.P_comm[:])
+		name = strings.TrimRight(name, "\x00")
+		if len(name) < 15 {
+			continue
+		}
+		if _, err := p.cmdlineSlice(); err == nil {
+			continue
+		}
+		exe, err := p.ExeWithContext(ctx)
+		if err != nil || !strings.HasPrefix(filepath.Base(exe), name) {
+			continue
+		}
+		got, err := p.NameWithContext(ctx)
+		if err != nil {
+			// The process may have exited since it was enumerated.
+			if currentExe, exeErr := p.ExeWithContext(ctx); exeErr != nil || currentExe != exe {
+				continue
+			}
+		}
+		require.NoError(t, err, "pid %d (%s)", pid, exe)
+		assert.Equal(t, filepath.Base(exe), got)
+		return
+	}
+	t.Skip("no process with readable executable path and inaccessible command line")
 }
