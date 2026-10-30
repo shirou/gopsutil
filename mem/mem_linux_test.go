@@ -182,6 +182,20 @@ func TestExVirtualMemoryLinux(t *testing.T) {
 	}
 }
 
+func TestSwapMemoryVmstatLinux(t *testing.T) {
+	t.Setenv("HOST_PROC", filepath.Join("testdata", "linux", "swapmemory", "proc"))
+
+	stat, err := SwapMemory()
+	require.NoError(t, err)
+
+	assert.Equal(t, uint64(136604654*4*1024), stat.Sin)
+	assert.Equal(t, uint64(128783910*4*1024), stat.Sout)
+	assert.Equal(t, uint64(40092731521*1024), stat.PgIn)
+	assert.Equal(t, uint64(601586884*1024), stat.PgOut)
+	assert.Equal(t, uint64(1086111781), stat.PgFault)
+	assert.Equal(t, uint64(166633543), stat.PgMajFault)
+}
+
 const validFile = `Filename				Type		Size		Used		Priority
 /dev/dm-2                               partition	67022844	490788		-2
 /swapfile                               file		2		1		-3
