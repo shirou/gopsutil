@@ -154,10 +154,6 @@ func TestDecodeAddress(t *testing.T) {
 		"0100007F:BLAH": {
 			Error: true,
 		},
-		"0085002452100113070057A13F025401:0035": {
-			IP:   "2400:8500:1301:1052:a157:7:154:23f",
-			Port: 53,
-		},
 		"00855210011307F025401:0035": {
 			Error: true,
 		},
@@ -171,6 +167,10 @@ func TestDecodeAddress(t *testing.T) {
 			IP:   "127.0.0.1",
 			Port: 53698,
 		}
+		addr["0085002452100113070057A13F025401:0035"] = AddrTest{
+			IP:   "2400:8500:1301:1052:a157:7:154:23f",
+			Port: 53,
+		}
 	} else {
 		addr["0A000005:0016"] = AddrTest{
 			IP:   "10.0.0.5",
@@ -179,6 +179,10 @@ func TestDecodeAddress(t *testing.T) {
 		addr["7F000001:D1C2"] = AddrTest{
 			IP:   "127.0.0.1",
 			Port: 53698,
+		}
+		addr["2400850013011052A15700070154023F:0035"] = AddrTest{
+			IP:   "2400:8500:1301:1052:a157:7:154:23f",
+			Port: 53,
 		}
 	}
 
