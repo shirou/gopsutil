@@ -136,6 +136,43 @@ func Test_parseFieldsOnMountinfo_issue2100(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
+// Test_parseFieldsOnMountinfo_escapedMountpoint checks that the octal escapes
+// the kernel writes for space, tab, newline and backslash (see mangle() in
+// fs/proc_namespace.c and getmntent(3)) are decoded, and that any other byte,
+// including '"' and non-UTF-8 bytes, is kept as is.
+func Test_parseFieldsOnMountinfo_escapedMountpoint(t *testing.T) {
+	lines := []string{
+		`36 35 8:1 / /mnt/my\040disk rw - ext4 /dev/sda1 rw`,
+		`37 35 8:2 / /mnt/tab\011and\134backslash rw - ext4 /dev/sda2 rw`,
+		`38 35 8:3 / /mnt/"quoted"\040dir rw - ext4 /dev/sda3 rw`,
+		"39 35 8:4 / /mnt/caf\xe9 rw - ext4 /dev/sda4 rw",
+	}
+
+	actual, err := parseFieldsOnMountinfo(context.Background(), lines, true, nil, "")
+	require.NoError(t, err)
+
+	expected := []string{
+		"/mnt/my disk",
+		"/mnt/tab\tand\\backslash",
+		`/mnt/"quoted" dir`,
+		"/mnt/caf\xe9",
+	}
+	require.Len(t, actual, len(expected))
+	for i, want := range expected {
+		assert.Equalf(t, want, actual[i].Mountpoint, "line %q", lines[i])
+	}
+}
+
+func Test_parseFieldsOnMounts_escapedMountpoint(t *testing.T) {
+	lines := []string{
+		`/dev/sda1 /mnt/"quoted"\040dir ext4 rw 0 0`,
+	}
+
+	actual := parseFieldsOnMounts(lines, true, nil)
+	require.Len(t, actual, 1)
+	assert.Equal(t, `/mnt/"quoted" dir`, actual[0].Mountpoint)
+}
+
 func Test_parseFieldsOnMounts(t *testing.T) {
 	fs := []string{"sysfs", "tmpfs"}
 
