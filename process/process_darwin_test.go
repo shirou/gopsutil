@@ -5,8 +5,10 @@ package process
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
+	"syscall"
 	"testing"
 	"unsafe"
 
@@ -184,6 +186,40 @@ func BenchmarkNumFDs(b *testing.B) {
 		if err != nil {
 			b.Fatal(err)
 		}
+	}
+}
+
+func TestNameWithContext(t *testing.T) {
+	p := &Process{Pid: 1}
+	name, err := p.NameWithContext(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, "launchd", name)
+
+	own, err := NewProcess(int32(os.Getpid()))
+	require.NoError(t, err)
+	name, err = own.NameWithContext(context.Background())
+	require.NoError(t, err)
+	assert.NotEmpty(t, name)
+}
+
+// Processes owned by another user cannot be asked for their full command line,
+// so their name has to come from P_comm. That used to fail with EINVAL for
+// every process whose P_comm fills all 15 visible bytes, which on macOS means
+// most of the system daemons.
+func TestNameWithContext_OtherUsers(t *testing.T) {
+	pids, err := Pids()
+	require.NoError(t, err)
+
+	for _, pid := range pids {
+		p, err := NewProcess(pid)
+		if err != nil {
+			continue // exited between the listing and now
+		}
+		_, err = p.NameWithContext(context.Background())
+		if errors.Is(err, syscall.ESRCH) {
+			continue
+		}
+		assert.NoErrorf(t, err, "pid %d", pid)
 	}
 }
 
