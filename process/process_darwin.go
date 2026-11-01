@@ -69,14 +69,15 @@ func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 
 	name := common.ByteToString(k.Proc.P_comm[:])
 
+	// P_comm holds at most 16 bytes, so a name that long is truncated there.
+	// The untruncated one is only available through kern.procargs2, which the
+	// kernel refuses for processes owned by another user (EINVAL unless running
+	// as root). Keep the truncated P_comm in that case instead of failing.
 	if len(name) >= 15 {
 		cmdName, err := p.cmdNameWithContext(ctx)
-		if err != nil {
-			return "", err
-		}
-		if cmdName != "" {
+		if err == nil && cmdName != "" {
 			extendedName := filepath.Base(cmdName)
-			if strings.HasPrefix(extendedName, p.name) {
+			if strings.HasPrefix(extendedName, name) {
 				name = extendedName
 			}
 		}
