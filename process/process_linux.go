@@ -17,7 +17,6 @@ import (
 	"strings"
 
 	"github.com/tklauser/go-sysconf"
-	"golang.org/x/sys/unix"
 
 	"github.com/shirou/gopsutil/v4/cpu"
 	"github.com/shirou/gopsutil/v4/internal/common"
@@ -25,8 +24,6 @@ import (
 )
 
 var pageSize = uint64(os.Getpagesize())
-
-const prioProcess = 0 // linux/resource.h
 
 var clockTicks = 100 // default value
 
@@ -246,9 +243,12 @@ func (p *Process) RlimitUsageWithContext(ctx context.Context, gatherUsed bool) (
 		case RLIMIT_SIGPENDING:
 			rs.Used = p.sigInfo.PendingProcess
 		case RLIMIT_NICE:
-			// The rlimit for nice is a little unusual, in that 0 means the niceness cannot be decreased beyond the current value, but it can be increased.
-			// So effectively: if rs.Soft == 0 { rs.Soft = rs.Used }
-			rs.Used = uint64(nice)
+			// RLIMIT_NICE encodes the niceness the same way as the soft and hard
+			// limits do: the ceiling for the nice value is 20-rlim_cur (see man
+			// 2 getrlimit), so report the current niceness in that encoding to
+			// keep Used comparable with Soft and Hard. Use Nice() for the
+			// niceness itself.
+			rs.Used = uint64(20 - nice)
 		case RLIMIT_RTPRIO:
 			rs.Used = uint64(rtprio)
 		}
@@ -1107,6 +1107,9 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 	}
 	createTime := int64((t * 1000 / uint64(clockTicks)) + uint64(bootTime*1000))
 
+	// Field 18 is the scheduling priority. It carries the real-time priority
+	// only for real-time tasks, where the kernel reports it as -1-<rtprio>;
+	// for normal tasks it is 20+nice, which means "no real-time priority".
 	rtpriority, err := strconv.ParseInt(fields[18], 10, 32)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
@@ -1117,10 +1120,13 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 		rtpriority = 0
 	}
 
-	//	p.Nice = mustParseInt32(fields[18])
-	// use syscall instead of parse Stat file
-	snice, _ := unix.Getpriority(prioProcess, int(pid))
-	nice := int32(snice) // FIXME: is this true?
+	// Field 19 is the niceness, in the range -20..19. Parse it instead of
+	// calling unix.Getpriority: that syscall returns the niceness encoded as
+	// 20-nice (see man 2 getpriority) and only resolves the whole thread group.
+	nice, err := strconv.ParseInt(fields[19], 10, 32)
+	if err != nil {
+		return 0, 0, nil, 0, 0, 0, nil, err
+	}
 
 	minFault, err := strconv.ParseUint(fields[10], 10, 64)
 	if err != nil {
@@ -1146,7 +1152,7 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 		ChildMajorFaults: cMajFault,
 	}
 
-	return terminal, int32(ppid), cpuTimes, createTime, uint32(rtpriority), nice, faults, nil
+	return terminal, int32(ppid), cpuTimes, createTime, uint32(rtpriority), int32(nice), faults, nil
 }
 
 func (p *Process) fillFromStatWithContext(ctx context.Context) (uint64, int32, *cpu.TimesStat, int64, uint32, int32, *PageFaultsStat, error) {
