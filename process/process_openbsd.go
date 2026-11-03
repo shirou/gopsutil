@@ -24,6 +24,8 @@ import (
 	"github.com/shirou/gopsutil/v4/net"
 )
 
+type MemoryInfoExStat struct{}
+
 func pidsWithContext(ctx context.Context) ([]int32, error) {
 	var ret []int32
 	procs, err := ProcessesWithContext(ctx)
@@ -317,6 +319,10 @@ func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
 	}
 	sort.Slice(ret, func(i, j int) bool { return ret[i].Pid < ret[j].Pid })
 	return ret, nil
+}
+
+func (*Process) MemoryInfoExWithContext(_ context.Context) (*MemoryInfoExStat, error) {
+	return nil, common.ErrNotImplementedError
 }
 
 func (*Process) ConnectionsWithContext(_ context.Context) ([]net.ConnectionStat, error) {

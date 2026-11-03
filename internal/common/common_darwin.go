@@ -523,9 +523,10 @@ const (
 	PROC_PIDTASKINFO         = 4
 	PROC_PIDVNODEPATHINFO    = 9
 
-	// RUSAGE_INFO_V2 is the proc_pid_rusage flavor that includes disk I/O bytes.
-	// See sys/resource.h rusage_info_v2.
-	RUSAGE_INFO_V2 = 2
+	// RUSAGE_INFO_V4 is the proc_pid_rusage flavor that includes disk I/O bytes
+	// and the lifetime peak physical footprint. Available since macOS 10.13.
+	// See sys/resource.h rusage_info_v4.
+	RUSAGE_INFO_V4 = 4
 )
 
 // SMC represents a SMC instance.
