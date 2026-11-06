@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BSD-3-Clause
-//go:build !darwin && !linux && !freebsd && !openbsd && !netbsd && !windows && !solaris && !aix
+//go:build !darwin && !linux && !freebsd && !openbsd && !netbsd && !windows && !solaris && !aix && !dragonfly
 
 package disk
 
