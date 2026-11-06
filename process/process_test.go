@@ -126,6 +126,9 @@ func TestCmdLine(t *testing.T) {
 }
 
 func TestCmdLineSlice(t *testing.T) {
+	if runtime.GOOS == "aix" {
+		t.Skip("AIX: psinfo.Psargs is limited to 79 characters, so long command lines are truncated and cannot match os.Args exactly")
+	}
 	p := testGetProcess()
 
 	v, err := p.CmdlineSlice()
@@ -196,6 +199,9 @@ func TestNumCtx(t *testing.T) {
 }
 
 func TestNice(t *testing.T) {
+	if runtime.GOOS == "aix" {
+		t.Skip("AIX: psinfo returns a raw kernel nice value (pr_nice) that does not map to the POSIX [-20, 19] range")
+	}
 	p := testGetProcess()
 
 	// https://github.com/shirou/gopsutil/issues/1532
@@ -268,6 +274,9 @@ func TestName(t *testing.T) {
 
 // #nosec G204
 func TestLong_Name_With_Spaces(t *testing.T) {
+	if runtime.GOOS == "aix" {
+		t.Skip("AIX: psinfo.Fname is limited to 15 characters, so process names longer than 15 chars are truncated")
+	}
 	tmpdir, err := os.MkdirTemp("", "")
 	require.NoErrorf(t, err, "unable to create temp dir %v", err)
 	defer os.RemoveAll(tmpdir) // clean up
@@ -307,6 +316,9 @@ func TestLong_Name_With_Spaces(t *testing.T) {
 
 // #nosec G204
 func TestLong_Name(t *testing.T) {
+	if runtime.GOOS == "aix" {
+		t.Skip("AIX: psinfo.Fname is limited to 15 characters, so process names longer than 15 chars are truncated")
+	}
 	tmpdir, err := os.MkdirTemp("", "")
 	require.NoErrorf(t, err, "unable to create temp dir %v", err)
 	defer os.RemoveAll(tmpdir) // clean up
@@ -579,6 +591,9 @@ func TestUsername(t *testing.T) {
 }
 
 func TestCPUTimes(t *testing.T) {
+	if runtime.GOOS == "aix" {
+		t.Skip("AIX: psinfo.pr_time is only updated on context switch, not continuously; short-duration CPU measurements are unreliable")
+	}
 	pid := os.Getpid()
 	process, err := NewProcess(int32(pid))
 	if errors.Is(err, common.ErrNotImplementedError) {
