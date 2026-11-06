@@ -3,47 +3,34 @@ package cpu
 
 import (
 	"context"
+	"encoding/binary"
+	"errors"
 	"fmt"
-	"reflect"
-	"regexp"
 	"runtime"
-	"strconv"
 	"strings"
-	"unsafe"
 
-	"github.com/tklauser/go-sysconf"
 	"golang.org/x/sys/unix"
-
-	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
-var (
-	ClocksPerSec   = float64(128)
-	cpuMatch       = regexp.MustCompile(`^CPU:`)
-	originMatch    = regexp.MustCompile(`Origin\s*=\s*"(.+)"\s+Id\s*=\s*(.+)\s+Stepping\s*=\s*(.+)`)
-	featuresMatch  = regexp.MustCompile(`Features=.+<(.+)>`)
-	featuresMatch2 = regexp.MustCompile(`Features2=[a-f\dx]+<(.+)>`)
-	cpuEnd         = regexp.MustCompile(`^Trying to mount root`)
-	cpuTimesSize   int
-	emptyTimes     cpuTimes
-)
+// cpuTimesFields is the number of counters at the start of struct kinfo_cputime.
+// The struct has more fields, so its size must not be derived from these.
+const cpuTimesFields = 5
 
-func init() {
-	clkTck, err := sysconf.Sysconf(sysconf.SC_CLK_TCK)
-	// ignore errors
-	if err == nil {
-		ClocksPerSec = float64(clkTck)
+// ClocksPerSec converts kern.cp_time, which DragonFly counts in microseconds.
+// sysconf(_SC_CLK_TCK) does not apply to these counters.
+var ClocksPerSec = float64(1000000)
+
+func timeStat(name string, record []byte) TimesStat {
+	field := func(i int) float64 {
+		return float64(binary.LittleEndian.Uint64(record[i*8:])) / ClocksPerSec
 	}
-}
-
-func timeStat(name string, t *cpuTimes) *TimesStat {
-	return &TimesStat{
-		User:   float64(t.User) / ClocksPerSec,
-		Nice:   float64(t.Nice) / ClocksPerSec,
-		System: float64(t.Sys) / ClocksPerSec,
-		Idle:   float64(t.Idle) / ClocksPerSec,
-		Irq:    float64(t.Intr) / ClocksPerSec,
+	return TimesStat{
 		CPU:    name,
+		User:   field(0),
+		Nice:   field(1),
+		System: field(2),
+		Irq:    field(3),
+		Idle:   field(4),
 	}
 }
 
@@ -52,109 +39,55 @@ func Times(percpu bool) ([]TimesStat, error) {
 }
 
 func TimesWithContext(_ context.Context, percpu bool) ([]TimesStat, error) {
-	if percpu {
-		buf, err := unix.SysctlRaw("kern.cp_times")
+	if !percpu {
+		buf, err := unix.SysctlRaw("kern.cp_time")
 		if err != nil {
 			return nil, err
 		}
-
-		// We can't do this in init due to the conflict with cpu.init()
-		if cpuTimesSize == 0 {
-			cpuTimesSize = int(reflect.TypeOf(cpuTimes{}).Size())
+		if len(buf) < cpuTimesFields*8 {
+			return nil, errors.New("kern.cp_time is too short")
 		}
-
-		ncpus := len(buf) / cpuTimesSize
-		ret := make([]TimesStat, 0, ncpus)
-		for i := 0; i < ncpus; i++ {
-			times := (*cpuTimes)(unsafe.Pointer(&buf[i*cpuTimesSize]))
-			if *times == emptyTimes {
-				// CPU not present
-				continue
-			}
-			ret = append(ret, *timeStat(fmt.Sprintf("cpu%d", len(ret)), times))
-		}
-		return ret, nil
+		return []TimesStat{timeStat("cpu-total", buf)}, nil
 	}
 
-	buf, err := unix.SysctlRaw("kern.cp_time")
+	buf, err := unix.SysctlRaw("kern.cp_times")
 	if err != nil {
 		return nil, err
 	}
-
-	times := (*cpuTimes)(unsafe.Pointer(&buf[0]))
-	return []TimesStat{*timeStat("cpu-total", times)}, nil
+	ncpu, err := unix.SysctlUint32("hw.ncpu")
+	if err != nil {
+		return nil, err
+	}
+	stride := len(buf) / int(ncpu)
+	if stride < cpuTimesFields*8 {
+		return nil, errors.New("kern.cp_times is too short")
+	}
+	ret := make([]TimesStat, 0, ncpu)
+	for i := 0; i < int(ncpu); i++ {
+		ret = append(ret, timeStat(fmt.Sprintf("cpu%d", i), buf[i*stride:]))
+	}
+	return ret, nil
 }
 
-// Returns only one InfoStat on DragonflyBSD.  The information regarding core
-// count, however is accurate and it is assumed that all InfoStat attributes
-// are the same across CPUs.
+// Info returns a single InfoStat: hw.cpu_topology.tree has no CHIP entries on
+// virtual machines, so the number of packages cannot be derived reliably.
 func Info() ([]InfoStat, error) {
 	return InfoWithContext(context.Background())
 }
 
 func InfoWithContext(_ context.Context) ([]InfoStat, error) {
-	const dmesgBoot = "/var/run/dmesg.boot"
-
-	c, err := parseDmesgBoot(dmesgBoot)
+	model, err := unix.Sysctl("hw.model")
 	if err != nil {
 		return nil, err
 	}
-
-	var u32 uint32
-	if u32, err = unix.SysctlUint32("hw.clockrate"); err != nil {
-		return nil, err
+	info := InfoStat{
+		ModelName: strings.TrimSpace(model),
+		Cores:     int32(runtime.NumCPU()),
 	}
-	c.Mhz = float64(u32)
-
-	var num int
-	var buf string
-	if buf, err = unix.Sysctl("hw.cpu_topology.tree"); err != nil {
-		return nil, err
+	if mhz, err := unix.SysctlUint32("hw.clockrate"); err == nil {
+		info.Mhz = float64(mhz)
 	}
-	num = strings.Count(buf, "CHIP")
-	c.Cores = int32(strings.Count(string(buf), "CORE") / num)
-
-	if c.ModelName, err = unix.Sysctl("hw.model"); err != nil {
-		return nil, err
-	}
-
-	ret := make([]InfoStat, num)
-	for i := 0; i < num; i++ {
-		ret[i] = c
-	}
-
-	return ret, nil
-}
-
-func parseDmesgBoot(fileName string) (InfoStat, error) {
-	c := InfoStat{}
-	lines, err := common.ReadLines(fileName)
-	if err != nil {
-		return c, fmt.Errorf("could not read %s: %w", fileName, err)
-	}
-
-	for _, line := range lines {
-		if matches := cpuEnd.FindStringSubmatch(line); matches != nil {
-			break
-		} else if matches := originMatch.FindStringSubmatch(line); matches != nil {
-			c.VendorID = matches[1]
-			t, err := strconv.ParseInt(matches[2], 10, 32)
-			if err != nil {
-				return c, fmt.Errorf("unable to parse DragonflyBSD CPU stepping information from %q: %w", line, err)
-			}
-			c.Stepping = int32(t)
-		} else if matches := featuresMatch.FindStringSubmatch(line); matches != nil {
-			for _, v := range strings.Split(matches[1], ",") {
-				c.Flags = append(c.Flags, strings.ToLower(v))
-			}
-		} else if matches := featuresMatch2.FindStringSubmatch(line); matches != nil {
-			for _, v := range strings.Split(matches[1], ",") {
-				c.Flags = append(c.Flags, strings.ToLower(v))
-			}
-		}
-	}
-
-	return c, nil
+	return []InfoStat{info}, nil
 }
 
 func CountsWithContext(_ context.Context, _ bool) (int, error) {
