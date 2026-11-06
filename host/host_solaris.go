@@ -7,12 +7,13 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"golang.org/x/sys/unix"
 
 	"github.com/shirou/gopsutil/v4/internal/common"
 )
@@ -131,32 +132,31 @@ func parseReleaseFile() (string, error) {
 }
 
 // parseUnameOutput returns platformFamily, kernelVersion and platformVersion
-func parseUnameOutput(ctx context.Context) (string, string, string, error) {
-	out, err := invoke.CommandWithContext(ctx, "uname", "-srv")
-	if err != nil {
+// using the uname(2) syscall instead of spawning the uname(1) command.
+func parseUnameOutput() (string, string, string, error) {
+	var utsname unix.Utsname
+	if err := unix.Uname(&utsname); err != nil {
 		return "", "", "", err
 	}
 
-	fields := strings.Fields(string(out))
-	if len(fields) < 3 {
-		return "", "", "", errors.New("malformed `uname` output")
-	}
-
-	return fields[0], fields[1], fields[2], nil
+	return unix.ByteSliceToString(utsname.Sysname[:]),
+		unix.ByteSliceToString(utsname.Release[:]),
+		unix.ByteSliceToString(utsname.Version[:]),
+		nil
 }
 
-func KernelVersionWithContext(ctx context.Context) (string, error) {
-	_, kernelVersion, _, err := parseUnameOutput(ctx)
+func KernelVersionWithContext(_ context.Context) (string, error) {
+	_, kernelVersion, _, err := parseUnameOutput()
 	return kernelVersion, err
 }
 
-func PlatformInformationWithContext(ctx context.Context) (string, string, string, error) {
+func PlatformInformationWithContext(_ context.Context) (string, string, string, error) {
 	platform, err := parseReleaseFile()
 	if err != nil {
 		return "", "", "", err
 	}
 
-	platformFamily, _, platformVersion, err := parseUnameOutput(ctx)
+	platformFamily, _, platformVersion, err := parseUnameOutput()
 	if err != nil {
 		return "", "", "", err
 	}
