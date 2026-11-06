@@ -132,7 +132,6 @@ func parseReleaseFile() (string, error) {
 }
 
 // parseUnameOutput returns platformFamily, kernelVersion and platformVersion
-// using the uname(2) syscall instead of spawning the uname(1) command.
 func parseUnameOutput() (string, string, string, error) {
 	var utsname unix.Utsname
 	if err := unix.Uname(&utsname); err != nil {
