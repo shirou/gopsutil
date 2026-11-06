@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BSD-3-Clause
-//go:build !darwin && !linux && !freebsd && !openbsd && !solaris && !windows && !plan9 && !aix && !netbsd
+//go:build !darwin && !linux && !freebsd && !openbsd && !solaris && !windows && !plan9 && !aix && !netbsd && !dragonfly
 
 package mem
 
