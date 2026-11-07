@@ -681,10 +681,15 @@ func Reverse(s []byte) []byte {
 	return s
 }
 
-// parseIPv6HexString parse array of bytes to IPv6 string
+// parseIPv6HexString parse array of bytes to IPv6 string.
+// The kernel prints the address as four 32-bit words in host byte order,
+// so the bytes of each word only need reversing on little-endian hosts.
 func parseIPv6HexString(src []byte) (net.IP, error) {
 	if len(src) != 16 {
 		return nil, errors.New("invalid IPv6 string")
+	}
+	if !common.IsLittleEndian() {
+		return net.IP(src), nil
 	}
 
 	buf := make([]byte, 0, 16)
