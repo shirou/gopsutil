@@ -29,7 +29,7 @@ func TestUsersWithContextUtmp(t *testing.T) {
 
 	root := t.TempDir()
 	require.NoError(t, os.Mkdir(filepath.Join(root, "run"), 0o700))
-	require.NoError(t, os.WriteFile(filepath.Join(root, "run", "utmp"), data, 0o600))
+	require.NoError(t, os.WriteFile(filepath.Join(root, "run", "utmp"), data, 0o600)) // #nosec G703 -- Only t.TempDir and fixed path components.
 	ctx := context.WithValue(context.Background(), common.EnvKey, common.EnvMap{
 		common.HostVarEnvKey: root,
 	})
