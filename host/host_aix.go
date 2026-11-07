@@ -5,6 +5,8 @@ package host
 
 import (
 	"context"
+	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/shirou/gopsutil/v4/internal/common"
@@ -83,6 +85,45 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 	return ret, nil
 }
 
+// bosRteLevelWithContext returns the VRMF level (version, release, modification
+// and fix) of the bos.rte fileset along with its build date
+func bosRteLevelWithContext(ctx context.Context) (version, release, mod, fix int, build string, err error) {
+	// Use lslpp rather than oslevel which can fail for non-root users
+	out, err := getInvoker().CommandWithContext(ctx, "lslpp", "-Lqc", "bos.rte")
+	if err != nil {
+		return 0, 0, 0, 0, "", err
+	}
+
+	// Colon-separated output without the header, e.g.:
+	// bos:bos.rte:7.3.2.2: : :C:F:Base Operating System Runtime: : : : : : :0:0:/:2419
+	// Package Name:Fileset:Level:State:PTF Id:Fix State:Type:Description:...:Install Path:Build Date
+	line, _, _ := strings.Cut(strings.TrimSpace(string(out)), "\n")
+	fields := strings.Split(line, ":")
+	if len(fields) < 18 {
+		return 0, 0, 0, 0, "", fmt.Errorf("unexpected lslpp output: %q", line)
+	}
+
+	vrmf := strings.Split(fields[2], ".")
+	for len(vrmf) < 4 {
+		vrmf = append(vrmf, "0")
+	}
+
+	nums := make([]int, 4)
+	for i := range 4 {
+		nums[i], err = strconv.Atoi(vrmf[i])
+		if err != nil {
+			return 0, 0, 0, 0, "", fmt.Errorf("unexpected bos.rte level %q: %w", fields[2], err)
+		}
+	}
+
+	build = fields[len(fields)-1]
+	if build == "" {
+		return 0, 0, 0, 0, "", fmt.Errorf("no build date in lslpp output: %q", line)
+	}
+
+	return nums[0], nums[1], nums[2], nums[3], build, nil
+}
+
 // Much of this function could be static. However, to be future proofed, I've made it call the OS for the information in all instances.
 func PlatformInformationWithContext(ctx context.Context) (platform, family, version string, err error) {
 	// Set the platform (which should always, and only be, "AIX") from `uname -s`
@@ -95,22 +136,25 @@ func PlatformInformationWithContext(ctx context.Context) (platform, family, vers
 	// Set the family
 	family = strings.TrimRight(string(out), "\n")
 
-	// Set the version
-	out, err = getInvoker().CommandWithContext(ctx, "oslevel")
+	// Same as oslevel, e.g. "7.3.0.0".
+	ver, rel, _, _, _, err := bosRteLevelWithContext(ctx)
 	if err != nil {
 		return "", "", "", err
 	}
-	version = strings.TrimRight(string(out), "\n")
+	version = fmt.Sprintf("%d.%d.0.0", ver, rel)
 
 	return platform, family, version, nil
 }
 
 func KernelVersionWithContext(ctx context.Context) (version string, err error) {
-	out, err := getInvoker().CommandWithContext(ctx, "oslevel", "-s")
+	// Same as oslevel -s, e.g. "7300-02-02-2419": base level, technology
+	// level, service pack and build date of bos.rte.
+	ver, rel, mod, fix, build, err := bosRteLevelWithContext(ctx)
 	if err != nil {
 		return "", err
 	}
-	version = strings.TrimRight(string(out), "\n")
+
+	version = fmt.Sprintf("%d%d00-%02d-%02d-%s", ver, rel, mod, fix, build)
 
 	return version, nil
 }
