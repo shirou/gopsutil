@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -14,6 +15,37 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestCmdlineSliceEmptyArguments(t *testing.T) {
+	root := t.TempDir()
+	require.NoError(t, os.Mkdir(filepath.Join(root, "42"), 0o700))
+	t.Setenv("HOST_PROC", root)
+	p := &Process{Pid: 42}
+
+	cases := []struct {
+		name    string
+		cmdline string
+		want    []string
+	}{
+		{"empty file", "", nil},
+		{"normal", "program\x00arg\x00", []string{"program", "arg"}},
+		{"trailing empty", "program\x00\x00", []string{"program", ""}},
+		{"multiple trailing empty", "program\x00arg\x00\x00\x00", []string{"program", "arg", "", ""}},
+		{"interior empty", "program\x00\x00arg\x00", []string{"program", "", "arg"}},
+		{"empty argv0", "\x00arg\x00", []string{"", "arg"}},
+		{"one empty argument", "\x00", []string{""}},
+		{"all empty", "\x00\x00", []string{"", ""}},
+		{"no final NUL", "program\x00arg", []string{"program", "arg"}},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			require.NoError(t, os.WriteFile(filepath.Join(root, "42", "cmdline"), []byte(tt.cmdline), 0o600))
+			args, err := p.CmdlineSliceWithContext(t.Context())
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, args)
+		})
+	}
+}
 
 func TestFillFromfdWithContext(t *testing.T) {
 	type expect struct {
