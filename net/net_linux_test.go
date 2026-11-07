@@ -120,6 +120,39 @@ func TestGetProcInodesAll(t *testing.T) {
 	assert.NotEmpty(t, v)
 }
 
+func TestProcessUnixPathsWithWhitespace(t *testing.T) {
+	paths := []string{
+		"",
+		"/run/socket.sock",
+		"/run/socket with spaces.sock",
+		"/run/socket  with  repeated spaces.sock",
+		"/run/socket\twith\ttabs.sock",
+		" leading and trailing spaces ",
+		"   ",
+		"@abstract socket with spaces",
+	}
+	var contents strings.Builder
+	contents.WriteString("Num       RefCount Protocol Flags    Type St Inode Path\n")
+	for i, path := range paths {
+		fmt.Fprintf(&contents, "0000000000000000: 00000002 00000000 00010000 0001 01 %5d", i+1)
+		if path != "" {
+			contents.WriteByte(' ')
+			contents.WriteString(path)
+		}
+		contents.WriteByte('\n')
+	}
+	file := filepath.Join(t.TempDir(), "unix")
+	require.NoError(t, os.WriteFile(file, []byte(contents.String()), 0o600))
+
+	connections, err := processUnix(file, kindUNIX, map[string][]inodeMap{}, 0)
+	require.NoError(t, err)
+	require.Len(t, connections, len(paths))
+	for i, path := range paths {
+		assert.Equal(t, path, connections[i].path)
+		assert.Equal(t, path, connections[i].laddr.IP)
+	}
+}
+
 func TestProcessUnixNewlineInPath(t *testing.T) {
 	// The kernel prints socket paths verbatim, so a socket bound to an
 	// abstract name containing a newline adds an unparsable line.

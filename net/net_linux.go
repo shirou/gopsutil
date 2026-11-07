@@ -782,7 +782,8 @@ func processUnix(file string, kind netConnectionKindType, inodes map[string][]in
 	var ret []connTmp
 	// skip first line
 	for _, line := range lines[1:] {
-		tokens := strings.Fields(string(line))
+		lineStr := string(line)
+		tokens := strings.Fields(lineStr)
 		if len(tokens) < 7 {
 			continue
 		}
@@ -795,6 +796,14 @@ func processUnix(file string, kind netConnectionKindType, inodes map[string][]in
 
 		inode := tokens[6]
 
+		// Skip the seven metadata fields without splitting the socket path.
+		path := lineStr
+		for _, token := range tokens[:7] {
+			_, path, _ = strings.Cut(path, token)
+		}
+		// The kernel adds one separator space; any further spaces belong to the path.
+		path = strings.TrimPrefix(path, " ")
+
 		var pairs []inodeMap
 		pairs, exists := inodes[inode]
 		if !exists {
@@ -805,10 +814,6 @@ func processUnix(file string, kind netConnectionKindType, inodes map[string][]in
 		for _, pair := range pairs {
 			if filterPid > 0 && filterPid != pair.pid {
 				continue
-			}
-			var path string
-			if len(tokens) == 8 {
-				path = tokens[len(tokens)-1]
 			}
 			ret = append(ret, connTmp{
 				fd:       pair.fd,
