@@ -758,9 +758,9 @@ func (p *Process) fillFromStatmWithContext(ctx context.Context) (*MemoryInfoStat
 	if err != nil {
 		return nil, nil, err
 	}
-	fields := strings.Split(string(contents), " ")
-	if len(fields) < 6 {
-		return nil, nil, fmt.Errorf("malformed statm file: expected at least 6 fields, got %d", len(fields))
+	fields := strings.Fields(string(contents))
+	if len(fields) < 7 {
+		return nil, nil, fmt.Errorf("malformed statm file: expected at least 7 fields, got %d", len(fields))
 	}
 
 	vms, err := strconv.ParseUint(fields[0], 10, 64)
@@ -788,7 +788,11 @@ func (p *Process) fillFromStatmWithContext(ctx context.Context) (*MemoryInfoStat
 	if err != nil {
 		return nil, nil, err
 	}
-	dirty, err := strconv.ParseUint(fields[5], 10, 64)
+	data, err := strconv.ParseUint(fields[5], 10, 64)
+	if err != nil {
+		return nil, nil, err
+	}
+	dirty, err := strconv.ParseUint(fields[6], 10, 64)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -799,6 +803,7 @@ func (p *Process) fillFromStatmWithContext(ctx context.Context) (*MemoryInfoStat
 		Shared: shared * pageSize,
 		Text:   text * pageSize,
 		Lib:    lib * pageSize,
+		Data:   data * pageSize,
 		Dirty:  dirty * pageSize,
 	}
 
