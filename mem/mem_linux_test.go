@@ -6,6 +6,7 @@ package mem
 import (
 	"context"
 	"errors"
+	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -16,6 +17,24 @@ import (
 
 	"github.com/shirou/gopsutil/v4/internal/common"
 )
+
+func TestSwapMemoryPageSize(t *testing.T) {
+	root := t.TempDir()
+	vmstat := "pswpin 2\npswpout 3\npgpgin 4\npgpgout 5\npgfault 6\npgmajfault 7\n"
+	require.NoError(t, os.WriteFile(filepath.Join(root, "vmstat"), []byte(vmstat), 0o600))
+	t.Setenv("HOST_PROC", root)
+
+	stat, err := SwapMemoryWithContext(t.Context())
+	require.NoError(t, err)
+	pageSize := uint64(os.Getpagesize())
+	assert.Equal(t, 2*pageSize, stat.Sin)
+	assert.Equal(t, 3*pageSize, stat.Sout)
+	// Preserve the existing units of the other counters for compatibility.
+	assert.Equal(t, uint64(4*4096), stat.PgIn)
+	assert.Equal(t, uint64(5*4096), stat.PgOut)
+	assert.Equal(t, uint64(6*4096), stat.PgFault)
+	assert.Equal(t, uint64(7*4096), stat.PgMajFault)
+}
 
 func TestExVirtualMemory(t *testing.T) {
 	ex := NewExLinux()
