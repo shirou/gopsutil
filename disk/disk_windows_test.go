@@ -58,6 +58,27 @@ func TestBuildPartitionStat(t *testing.T) {
 	assert.Contains(t, part.Opts, rw)    // C: must have atleast rw option
 }
 
+func TestBuildPartitionStatNoRootDir(t *testing.T) {
+	// Find an unused drive letter (Y: to G:, reverse order)
+	var driveLetter string
+	for c := 'Y'; c >= 'G'; c-- {
+		testDrive := string(c) + ":"
+		_, err := os.Stat(testDrive + "\\")
+		if os.IsNotExist(err) {
+			driveLetter = testDrive
+			break
+		}
+	}
+	if driveLetter == "" {
+		t.Skip("No unused drive letter available")
+	}
+
+	part, err := buildPartitionStat(driveLetter)
+	require.Error(t, err)
+	assert.Nil(t, part)
+	assert.Contains(t, err.Error(), "not a valid root directory")
+}
+
 func TestProcessLogicalDrives(t *testing.T) {
 	drives := []string{`C:\`}
 	partitionStats := []PartitionStat{}

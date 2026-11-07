@@ -183,10 +183,11 @@ func processMountsForVolume(ctx context.Context, mounts []string, processedPaths
 			if _, ok := processedPaths[mount]; ok {
 				continue
 			}
-			if partitionStat, warning := buildPartitionStat(mount); warning == nil {
-				partitionStats = append(partitionStats, partitionStat)
-			} else {
+			partitionStat, warning := buildPartitionStat(mount)
+			if warning != nil {
 				warnings.Add(warning)
+			} else if partitionStat != nil {
+				partitionStats = append(partitionStats, *partitionStat)
 			}
 		}
 	}
@@ -203,11 +204,12 @@ func processLogicalDrives(ctx context.Context, drives []string, processedPaths m
 			if drive != "" && drive[0] >= firstPossibleDriveLetter && drive[0] <= lastPossibleDriveLetter {
 				v := drive[0]
 				path := string(v) + ":"
-				if partitionStat, warning := buildPartitionStat(path); warning == nil {
-					processedPaths[partitionStat.Mountpoint+"\\"] = struct{}{}
-					partitionStats = append(partitionStats, partitionStat)
-				} else {
+				partitionStat, warning := buildPartitionStat(path)
+				if warning != nil {
 					warnings.Add(warning)
+				} else if partitionStat != nil {
+					processedPaths[partitionStat.Mountpoint+"\\"] = struct{}{}
+					partitionStats = append(partitionStats, *partitionStat)
 				}
 			}
 		}
@@ -241,57 +243,71 @@ func getLogicalDrives(ctx context.Context) ([]string, error) {
 	return drives, nil
 }
 
-func buildPartitionStat(path string) (PartitionStat, error) {
+// buildPartitionStat returns the PartitionStat for path, or nil if there is
+// nothing to report for it. A nil result with a nil error means the drive
+// should be silently skipped (e.g. removable/remote/CD-ROM media that isn't
+// ready); a nil result with a non-nil error means a real failure occurred.
+func buildPartitionStat(path string) (*PartitionStat, error) {
 	typePath, _ := windows.UTF16PtrFromString(path)
 	driveType := windows.GetDriveType(typePath)
 
-	if driveType == windows.DRIVE_UNKNOWN {
-		return PartitionStat{}, windows.GetLastError()
+	switch driveType {
+	case windows.DRIVE_UNKNOWN:
+		// GetDriveType does not set the last error on failure (unlike many other
+		// Win32 APIs), so windows.GetLastError() here would be stale/unrelated.
+		return nil, fmt.Errorf("could not determine Windows drive type for %q", path)
+	case windows.DRIVE_NO_ROOT_DIR:
+		// path came from an enumerated drive/volume, so Windows disagreeing with
+		// itself here is unexpected and worth a warning rather than a silent skip.
+		return nil, fmt.Errorf("%q is not a valid root directory", path)
+	case windows.DRIVE_REMOVABLE, windows.DRIVE_FIXED, windows.DRIVE_REMOTE, windows.DRIVE_CDROM, windows.DRIVE_RAMDISK:
+		// handled below. DRIVE_RAMDISK is always backed by memory once mounted,
+		// so it behaves like DRIVE_FIXED rather than the "media not ready" types.
+	default:
+		// GetDriveTypeW's documented return values (0-6) are all handled above;
+		// this is a safety net for any undocumented/future value, not an error,
+		// so nothing to report.
+		return nil, nil
 	}
 
-	if driveType == windows.DRIVE_REMOVABLE || driveType == windows.DRIVE_FIXED ||
-		driveType == windows.DRIVE_REMOTE || driveType == windows.DRIVE_CDROM {
-		volPath, _ := windows.UTF16PtrFromString(path + "/")
-		volumeName := make([]byte, maxVolumeNameLength)
-		fsName := make([]byte, maxFileSystemNameLength)
-		var fsFlags int64
+	volPath, _ := windows.UTF16PtrFromString(path + "/")
+	volumeName := make([]byte, maxVolumeNameLength)
+	fsName := make([]byte, maxFileSystemNameLength)
+	var fsFlags int64
 
-		// https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getvolumeinformationw
-		ret, _, err := procGetVolumeInformation.Call(
-			uintptr(unsafe.Pointer(volPath)),
-			uintptr(unsafe.Pointer(&volumeName[0])),
-			uintptr(len(volumeName)),
-			uintptr(0), // serial number
-			uintptr(0), // max component length
-			uintptr(unsafe.Pointer(&fsFlags)),
-			uintptr(unsafe.Pointer(&fsName[0])),
-			uintptr(len(fsName)),
-		)
+	// https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getvolumeinformationw
+	ret, _, err := procGetVolumeInformation.Call(
+		uintptr(unsafe.Pointer(volPath)),
+		uintptr(unsafe.Pointer(&volumeName[0])),
+		uintptr(len(volumeName)),
+		uintptr(0), // serial number
+		uintptr(0), // max component length
+		uintptr(unsafe.Pointer(&fsFlags)),
+		uintptr(unsafe.Pointer(&fsName[0])),
+		uintptr(len(fsName)),
+	)
 
-		if ret == 0 {
-			if driveType == windows.DRIVE_REMOVABLE || driveType == windows.DRIVE_REMOTE || driveType == windows.DRIVE_CDROM {
-				return PartitionStat{}, nil // Device not ready
-			}
-			return PartitionStat{}, err
+	if ret == 0 {
+		if driveType == windows.DRIVE_REMOVABLE || driveType == windows.DRIVE_REMOTE || driveType == windows.DRIVE_CDROM {
+			return nil, nil // Device not ready
 		}
-
-		opts := []string{rw}
-		if fsFlags&fileReadOnlyVolume != 0 {
-			opts = []string{ro}
-		}
-		if fsFlags&fileFileCompression != 0 {
-			opts = append(opts, compress)
-		}
-
-		return PartitionStat{
-			Mountpoint: path,
-			Device:     path,
-			Fstype:     string(bytes.ReplaceAll(fsName, []byte("\x00"), []byte(""))),
-			Opts:       opts,
-		}, nil
+		return nil, err
 	}
 
-	return PartitionStat{}, nil
+	opts := []string{rw}
+	if fsFlags&fileReadOnlyVolume != 0 {
+		opts = []string{ro}
+	}
+	if fsFlags&fileFileCompression != 0 {
+		opts = append(opts, compress)
+	}
+
+	return &PartitionStat{
+		Mountpoint: path,
+		Device:     path,
+		Fstype:     string(bytes.ReplaceAll(fsName, []byte("\x00"), []byte(""))),
+		Opts:       opts,
+	}, nil
 }
 
 // diskPerfTimeToSec converts a DISK_PERFORMANCE time counter from 100 ns
