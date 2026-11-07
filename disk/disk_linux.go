@@ -588,13 +588,25 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 		}
 		d.Name = name
 
-		// Names passed in can be full paths (/dev/sda) or just device names (sda).
-		// Since `name` here is already a basename, re-add the /dev path.
-		// This is not ideal, but we may break the API by changing how SerialNumberWithContext
-		// works.
+		// The major and minor numbers are the first two fields, so the udev
+		// lookups do not need to stat the device node, which a confined
+		// container may not be allowed to do (#2182). When getDeviceName
+		// renames an NVMe controller path (nvmeXcYnZ, #1878), the numbers
+		// belong to the hidden path, so look up the renamed device instead.
 		deviceName := getDeviceName(name)
-		d.SerialNumber, _ = SerialNumberWithContext(ctx, common.HostDevWithContext(ctx, deviceName))
-		d.Label, _ = LabelWithContext(ctx, deviceName)
+		major, majorErr := strconv.ParseUint(fields[0], 10, 32)
+		minor, minorErr := strconv.ParseUint(fields[1], 10, 32)
+		if majorErr == nil && minorErr == nil && deviceName == name {
+			d.SerialNumber, _ = serialNumberFromDevNum(ctx, uint32(major), uint32(minor))
+			d.Label, _ = labelFromDevNum(ctx, deviceName, uint32(major), uint32(minor))
+		} else {
+			// Names passed in can be full paths (/dev/sda) or just device names (sda).
+			// Since `name` here is already a basename, re-add the /dev path.
+			// This is not ideal, but we may break the API by changing how SerialNumberWithContext
+			// works.
+			d.SerialNumber, _ = SerialNumberWithContext(ctx, common.HostDevWithContext(ctx, deviceName))
+			d.Label, _ = LabelWithContext(ctx, deviceName)
+		}
 
 		ret[name] = d
 	}
@@ -624,9 +636,12 @@ func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
 	if err := unix.Stat(name, &stat); err != nil {
 		return "", err
 	}
-	major := unix.Major(uint64(stat.Rdev))
-	minor := unix.Minor(uint64(stat.Rdev))
+	return serialNumberFromDevNum(ctx, unix.Major(uint64(stat.Rdev)), unix.Minor(uint64(stat.Rdev)))
+}
 
+// serialNumberFromDevNum is SerialNumberWithContext for a device whose major
+// and minor numbers are already known, so the device node is not stat'ed.
+func serialNumberFromDevNum(ctx context.Context, major, minor uint32) (string, error) {
 	sserial, _ := udevData(ctx, major, minor, "E:ID_SERIAL")
 	if sserial != "" {
 		return sserial, nil
@@ -644,28 +659,37 @@ func SerialNumberWithContext(ctx context.Context, name string) (string, error) {
 }
 
 func LabelWithContext(ctx context.Context, name string) (string, error) {
-	// Try label based on devicemapper name
-	dmnameFilename := common.HostSysWithContext(ctx, fmt.Sprintf("block/%s/dm/name", name))
-	// Could errors.Join errs with Go >= 1.20
-	if common.PathExists(dmnameFilename) {
-		dmname, err := os.ReadFile(dmnameFilename)
-		if err == nil {
-			return strings.TrimSpace(string(dmname)), nil
-		}
+	if label, ok := dmLabel(ctx, name); ok {
+		return label, nil
 	}
 	// Try udev data
 	var stat unix.Stat_t
 	if err := unix.Stat(common.HostDevWithContext(ctx, name), &stat); err != nil {
 		return "", err
 	}
-	major := unix.Major(uint64(stat.Rdev))
-	minor := unix.Minor(uint64(stat.Rdev))
+	return udevData(ctx, unix.Major(uint64(stat.Rdev)), unix.Minor(uint64(stat.Rdev)), "E:ID_FS_LABEL")
+}
 
-	label, err := udevData(ctx, major, minor, "E:ID_FS_LABEL")
-	if err != nil {
-		return "", err
+// labelFromDevNum is LabelWithContext for a device whose major and minor
+// numbers are already known, so the device node is not stat'ed.
+func labelFromDevNum(ctx context.Context, name string, major, minor uint32) (string, error) {
+	if label, ok := dmLabel(ctx, name); ok {
+		return label, nil
 	}
-	return label, nil
+	return udevData(ctx, major, minor, "E:ID_FS_LABEL")
+}
+
+// dmLabel returns the device-mapper name of name, if it has one.
+func dmLabel(ctx context.Context, name string) (string, bool) {
+	dmnameFilename := common.HostSysWithContext(ctx, fmt.Sprintf("block/%s/dm/name", name))
+	// Could errors.Join errs with Go >= 1.20
+	if common.PathExists(dmnameFilename) {
+		dmname, err := os.ReadFile(dmnameFilename)
+		if err == nil {
+			return strings.TrimSpace(string(dmname)), true
+		}
+	}
+	return "", false
 }
 
 func getFsType(stat unix.Statfs_t) string {

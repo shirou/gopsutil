@@ -5,10 +5,14 @@ package disk
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/shirou/gopsutil/v4/common"
 )
 
 func Test_parseFieldsOnMountinfo(t *testing.T) {
@@ -200,4 +204,38 @@ func TestGetDeviceName(t *testing.T) {
 			assert.Equal(t, tc.expected, actual)
 		})
 	}
+}
+
+// TestIOCountersSerialLabelWithoutDevNode checks that serial and label are read from
+// udev using the major/minor already present in /proc/diskstats, without
+// statting the device node. SELinux-confined containers deny that stat.
+func TestIOCountersSerialLabelWithoutDevNode(t *testing.T) {
+	root := t.TempDir()
+	procDir := filepath.Join(root, "proc")
+	sysDir := filepath.Join(root, "sys")
+	devDir := filepath.Join(root, "dev")
+	runDir := filepath.Join(root, "run")
+	require.NoError(t, os.MkdirAll(procDir, 0o755))
+	require.NoError(t, os.MkdirAll(sysDir, 0o755))
+	require.NoError(t, os.MkdirAll(devDir, 0o755))
+	require.NoError(t, os.MkdirAll(filepath.Join(runDir, "udev", "data"), 0o755))
+
+	// major 8, minor 0, nonzero counters, 14+ fields. dev/sda is not created.
+	diskstats := "   8       0 sda 1 0 2 0 3 0 4 0 0 5 6 0 0 0 0\n"
+	require.NoError(t, os.WriteFile(filepath.Join(procDir, "diskstats"), []byte(diskstats), 0o600))
+	udev := "E:ID_SERIAL=TEST_SERIAL\nE:ID_FS_LABEL=TEST_LABEL\n"
+	require.NoError(t, os.WriteFile(filepath.Join(runDir, "udev", "data", "b8:0"), []byte(udev), 0o600))
+
+	ctx := context.WithValue(context.Background(), common.EnvKey, common.EnvMap{
+		common.HostProcEnvKey: procDir,
+		common.HostSysEnvKey:  sysDir,
+		common.HostDevEnvKey:  devDir,
+		common.HostRunEnvKey:  runDir,
+	})
+
+	counters, err := IOCountersWithContext(ctx)
+	require.NoError(t, err)
+	require.Contains(t, counters, "sda")
+	assert.Equal(t, "TEST_SERIAL", counters["sda"].SerialNumber)
+	assert.Equal(t, "TEST_LABEL", counters["sda"].Label)
 }
