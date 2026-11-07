@@ -783,7 +783,9 @@ func processUnix(file string, kind netConnectionKindType, inodes map[string][]in
 		}
 		st, err := strconv.ParseInt(tokens[4], 10, 32)
 		if err != nil {
-			return nil, err
+			// The kernel prints socket paths verbatim, so a path containing a
+			// newline shows up as an extra line. Skip it instead of failing.
+			continue
 		}
 
 		inode := tokens[6]
