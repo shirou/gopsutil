@@ -353,6 +353,11 @@ func SwapMemoryWithContext(ctx context.Context) (*SwapMemoryStat, error) {
 	if err != nil {
 		return nil, fmt.Errorf("couldn't read %s: %w", filename, err)
 	}
+	// Old behaviour: every vmstat value was multiplied by the page size.
+	pgScale, faultScale := uint64(4*1024), uint64(4*1024)
+	if v, ok := ctx.Value(WillBeDeletedOptInLinuxSwapVmstatUnits).(bool); ok && v {
+		pgScale, faultScale = 1024, 1 // pgpgin/pgpgout are KiB, faults are counts
+	}
 	for _, l := range lines {
 		fields := strings.Fields(l)
 		if len(fields) < 2 {
@@ -376,25 +381,25 @@ func SwapMemoryWithContext(ctx context.Context) (*SwapMemoryStat, error) {
 			if err != nil {
 				continue
 			}
-			ret.PgIn = value * 1024
+			ret.PgIn = value * pgScale
 		case "pgpgout":
 			value, err := strconv.ParseUint(fields[1], 10, 64)
 			if err != nil {
 				continue
 			}
-			ret.PgOut = value * 1024
+			ret.PgOut = value * pgScale
 		case "pgfault":
 			value, err := strconv.ParseUint(fields[1], 10, 64)
 			if err != nil {
 				continue
 			}
-			ret.PgFault = value
+			ret.PgFault = value * faultScale
 		case "pgmajfault":
 			value, err := strconv.ParseUint(fields[1], 10, 64)
 			if err != nil {
 				continue
 			}
-			ret.PgMajFault = value
+			ret.PgMajFault = value * faultScale
 		}
 	}
 	return ret, nil
