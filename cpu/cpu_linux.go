@@ -275,7 +275,7 @@ func InfoWithContext(ctx context.Context) ([]InfoStat, error) {
 					c.VendorID = "Ampere"
 				}
 			}
-		case "cpu family", "marchid":
+		case "cpu family", "CPU Family", "marchid":
 			c.Family = value
 		case "model", "CPU part", "mimpid":
 			c.Model = value
