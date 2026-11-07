@@ -32,7 +32,7 @@ type utmp struct {
 	Host              [256]int8
 	Exit              exit_status
 	Session           int32
-	Tv                timeval
+	Tv                _Ctype_struct___0
 	Addr_v6           [4]int32
 	X__glibc_reserved [20]int8
 }
@@ -45,4 +45,9 @@ type exit_status struct {
 type timeval struct {
 	Sec  int64
 	Usec int64
+}
+
+type _Ctype_struct___0 struct {
+	Sec  int32
+	Usec int32
 }

@@ -22,6 +22,7 @@ type (
 
 type utmp struct {
 	Type              int16
+	Pad_cgo_0         [2]byte
 	Pid               int32
 	Line              [32]int8
 	Id                [4]int8
