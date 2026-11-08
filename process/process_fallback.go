@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BSD-3-Clause
-//go:build !darwin && !linux && !freebsd && !openbsd && !windows && !solaris && !plan9
+//go:build !darwin && !linux && !freebsd && !openbsd && !windows && !solaris && !plan9 && !aix
 
 package process
 
