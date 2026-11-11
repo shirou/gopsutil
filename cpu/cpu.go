@@ -48,6 +48,26 @@ type InfoStat struct {
 	Microcode  string   `json:"microcode"`
 }
 
+// sumTimesStats returns a cpu-total TimesStat whose counters are the sum of
+// the per-CPU entries. Used on platforms where the kernel's "total" sysctl is
+// an average rather than a sum (OpenBSD KERN_CPTIME).
+func sumTimesStats(per []TimesStat) TimesStat {
+	total := TimesStat{CPU: "cpu-total"}
+	for _, s := range per {
+		total.User += s.User
+		total.System += s.System
+		total.Idle += s.Idle
+		total.Nice += s.Nice
+		total.Iowait += s.Iowait
+		total.Irq += s.Irq
+		total.Softirq += s.Softirq
+		total.Steal += s.Steal
+		total.Guest += s.Guest
+		total.GuestNice += s.GuestNice
+	}
+	return total
+}
+
 type lastPercent struct {
 	sync.Mutex
 	lastCPUTimes    []TimesStat
