@@ -35,7 +35,6 @@ jobs:
           - macos-26
           - macos-15
           - macos-15-intel
-          - macos-14
           - windows-2025
           - windows-2022
         # Empty is the runner's native arch. 386 is windows-only here:
@@ -55,7 +54,6 @@ jobs:
           - {os: macos-26, GOARCH: "386"}
           - {os: macos-15, GOARCH: "386"}
           - {os: macos-15-intel, GOARCH: "386"}
-          - {os: macos-14, GOARCH: "386"}
     # Spelled out so the native jobs keep the names they had before GOARCH
     # was added to the matrix, instead of gaining an empty trailing field.
     name: test (${{ matrix.go-version }}, ${{ matrix.os }}${{ matrix.GOARCH && format(', {0}', matrix.GOARCH) || '' }})
