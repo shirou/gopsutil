@@ -23,7 +23,6 @@ const (
 	ctlKern      = 1  // "high kernel": proc, limits
 	ctlHw        = 6  // CTL_HW
 	smt          = 24 // HW_SMT
-	kernCpTime   = 40 // KERN_CPTIME
 	kernCPUStats = 85 // KERN_CPUSTATS
 )
 
@@ -56,27 +55,11 @@ func Times(percpu bool) ([]TimesStat, error) {
 
 func TimesWithContext(_ context.Context, percpu bool) ([]TimesStat, error) {
 	ret := make([]TimesStat, 0)
-	if !percpu {
-		mib := []int32{ctlKern, kernCpTime}
-		buf, _, err := common.CallSyscall(mib)
-		if err != nil {
-			return ret, err
-		}
-		if len(buf) < int(unsafe.Sizeof(cpuTimes{})) {
-			return ret, fmt.Errorf("unexpected size: kern.cp_time, %d", len(buf))
-		}
-		times := (*cpuTimes)(unsafe.Pointer(&buf[0]))
-		ret = append(ret, TimesStat{
-			CPU:    "cpu-total",
-			User:   float64(times.User) / ClocksPerSec,
-			Nice:   float64(times.Nice) / ClocksPerSec,
-			System: float64(times.Sys) / ClocksPerSec,
-			Idle:   float64(times.Idle) / ClocksPerSec,
-			Irq:    float64(times.Intr) / ClocksPerSec,
-		})
-		return ret, nil
-	}
 
+	// KERN_CPTIME is the per-CPU average (the kernel divides the sum by
+	// hw.ncpuonline), so cpu-total would not match the sum of per-CPU
+	// counters on multi-CPU hosts. Build the total from KERN_CPUSTATS
+	// instead, which reports un-averaged per-CPU times.
 	ncpu, err := unix.SysctlUint32("hw.ncpu")
 	if err != nil {
 		return ret, err
@@ -107,6 +90,9 @@ func TimesWithContext(_ context.Context, percpu bool) ([]TimesStat, error) {
 		})
 	}
 
+	if !percpu {
+		return []TimesStat{sumTimesStats(ret)}, nil
+	}
 	return ret, nil
 }
 
