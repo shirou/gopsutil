@@ -6,7 +6,7 @@ require (
 	github.com/ebitengine/purego v0.11.3
 	github.com/google/go-cmp v0.7.0
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0
-	github.com/power-devops/perfstat v0.0.0-20260805114148-88456608a4f6
+	github.com/power-devops/perfstat v0.0.0-20260916203055-22a1a467d9f0
 	github.com/stretchr/testify v1.12.1
 	github.com/tklauser/go-sysconf v0.4.0
 	github.com/yusufpapurcu/wmi v1.2.4
