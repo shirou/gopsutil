@@ -14,7 +14,54 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/shirou/gopsutil/v4/common"
 )
+
+func TestMemoryInfoExWithContext(t *testing.T) {
+	cases := []struct {
+		name      string
+		statm     string
+		dirty     uint64
+		wantError bool
+	}{
+		{"normal", "100 20 3 4 0 6 0\n", 0, false},
+		{"whitespace", " 100\t20  3 4 0 6 0 \n", 0, false},
+		{"legacy dirty field", "100 20 3 4 0 6 7\n", 7, false},
+		{"empty", "", 0, true},
+		{"truncated", "100 20 3 4 0 6", 0, true},
+		{"invalid data", "100 20 3 4 0 invalid 0\n", 0, true},
+		{"invalid dirty", "100 20 3 4 0 6 invalid\n", 0, true},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			root := t.TempDir()
+			require.NoError(t, os.Mkdir(filepath.Join(root, "42"), 0o700))
+			require.NoError(t, os.WriteFile(filepath.Join(root, "42", "statm"), []byte(tt.statm), 0o600))
+			ctx := context.WithValue(t.Context(), common.EnvKey, common.EnvMap{
+				common.HostProcEnvKey: root,
+			})
+
+			p := &Process{Pid: 42}
+			info, err := p.MemoryInfoExWithContext(ctx)
+			if tt.wantError {
+				require.Error(t, err)
+				assert.Nil(t, info)
+				return
+			}
+			require.NoError(t, err)
+			pageSize := uint64(os.Getpagesize())
+			assert.Equal(t, &MemoryInfoExStat{
+				RSS:    20 * pageSize,
+				VMS:    100 * pageSize,
+				Shared: 3 * pageSize,
+				Text:   4 * pageSize,
+				Data:   6 * pageSize,
+				Dirty:  tt.dirty * pageSize,
+			}, info)
+		})
+	}
+}
 
 func TestFillFromfdWithContext(t *testing.T) {
 	type expect struct {
