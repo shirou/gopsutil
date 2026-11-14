@@ -177,6 +177,27 @@ func Test_parseFieldsOnMounts_escapedMountpoint(t *testing.T) {
 	assert.Equal(t, `/mnt/"quoted" dir`, actual[0].Mountpoint)
 }
 
+// Test_parseFields_unicodeSpaceMountpoint checks that a mount point holding a
+// non-ASCII space, which the kernel does not escape, is not split into fields.
+func Test_parseFields_unicodeSpaceMountpoint(t *testing.T) {
+	mountinfo := []string{
+		"40 35 7:0 / /media/user/a\u00a0noexec,nosuid rw,nosuid,nodev,relatime - ext4 /dev/loop0 rw",
+	}
+	actual, err := parseFieldsOnMountinfo(context.Background(), mountinfo, true, nil, "")
+	require.NoError(t, err)
+	require.Len(t, actual, 1)
+	assert.Equal(t, "/media/user/a\u00a0noexec,nosuid", actual[0].Mountpoint)
+	assert.Equal(t, []string{"rw", "nosuid", "nodev", "relatime"}, actual[0].Opts)
+
+	mounts := []string{
+		"/dev/loop0 /media/user/a\u00a0noexec,nosuid ext4 rw,nosuid,nodev,relatime 0 0",
+	}
+	actualMounts := parseFieldsOnMounts(mounts, true, nil)
+	require.Len(t, actualMounts, 1)
+	assert.Equal(t, "/media/user/a\u00a0noexec,nosuid", actualMounts[0].Mountpoint)
+	assert.Equal(t, []string{"rw", "nosuid", "nodev", "relatime"}, actualMounts[0].Opts)
+}
+
 func Test_parseFieldsOnMounts(t *testing.T) {
 	fs := []string{"sysfs", "tmpfs"}
 
