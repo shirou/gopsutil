@@ -7,6 +7,8 @@ import (
 	"context"
 	"strings"
 
+	"golang.org/x/sys/unix"
+
 	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
@@ -85,18 +87,18 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 
 // Much of this function could be static. However, to be future proofed, I've made it call the OS for the information in all instances.
 func PlatformInformationWithContext(ctx context.Context) (platform, family, version string, err error) {
-	// Set the platform (which should always, and only be, "AIX") from `uname -s`
-	out, err := getInvoker().CommandWithContext(ctx, "uname", "-s")
-	if err != nil {
+	// Set the platform (which should always, and only be, "AIX") from uname(2)
+	var utsname unix.Utsname
+	if err := unix.Uname(&utsname); err != nil {
 		return "", "", "", err
 	}
-	platform = strings.TrimRight(string(out), "\n")
+	platform = unix.ByteSliceToString(utsname.Sysname[:])
 
 	// Set the family
-	family = strings.TrimRight(string(out), "\n")
+	family = platform
 
 	// Set the version
-	out, err = getInvoker().CommandWithContext(ctx, "oslevel")
+	out, err := getInvoker().CommandWithContext(ctx, "oslevel")
 	if err != nil {
 		return "", "", "", err
 	}
