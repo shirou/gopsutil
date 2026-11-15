@@ -14,6 +14,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/shirou/gopsutil/v4/common"
 )
 
 func TestCmdlineSliceEmptyArguments(t *testing.T) {
@@ -43,6 +45,51 @@ func TestCmdlineSliceEmptyArguments(t *testing.T) {
 			args, err := p.CmdlineSliceWithContext(t.Context())
 			require.NoError(t, err)
 			assert.Equal(t, tt.want, args)
+		})
+	}
+}
+
+func TestMemoryInfoExWithContext(t *testing.T) {
+	cases := []struct {
+		name      string
+		statm     string
+		dirty     uint64
+		wantError bool
+	}{
+		{"normal", "100 20 3 4 0 6 0\n", 0, false},
+		{"whitespace", " 100\t20  3 4 0 6 0 \n", 0, false},
+		{"legacy dirty field", "100 20 3 4 0 6 7\n", 7, false},
+		{"empty", "", 0, true},
+		{"truncated", "100 20 3 4 0 6", 0, true},
+		{"invalid data", "100 20 3 4 0 invalid 0\n", 0, true},
+		{"invalid dirty", "100 20 3 4 0 6 invalid\n", 0, true},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			root := t.TempDir()
+			require.NoError(t, os.Mkdir(filepath.Join(root, "42"), 0o700))
+			require.NoError(t, os.WriteFile(filepath.Join(root, "42", "statm"), []byte(tt.statm), 0o600))
+			ctx := context.WithValue(t.Context(), common.EnvKey, common.EnvMap{
+				common.HostProcEnvKey: root,
+			})
+
+			p := &Process{Pid: 42}
+			info, err := p.MemoryInfoExWithContext(ctx)
+			if tt.wantError {
+				require.Error(t, err)
+				assert.Nil(t, info)
+				return
+			}
+			require.NoError(t, err)
+			pageSize := uint64(os.Getpagesize())
+			assert.Equal(t, &MemoryInfoExStat{
+				RSS:    20 * pageSize,
+				VMS:    100 * pageSize,
+				Shared: 3 * pageSize,
+				Text:   4 * pageSize,
+				Data:   6 * pageSize,
+				Dirty:  tt.dirty * pageSize,
+			}, info)
 		})
 	}
 }
@@ -282,6 +329,55 @@ func TestFillFromTIDStatWithContext_lx_brandz(t *testing.T) {
 		require.NoError(t, err)
 		assert.Zero(t, cpuTimes.Iowait)
 	}
+}
+
+func TestNiceFromStat(t *testing.T) {
+	const (
+		pid  = 4242
+		nice = 7
+	)
+
+	// /proc/[pid]/stat: a normal, non real-time process reports 20+nice as its
+	// scheduling priority and the niceness itself in the next field.
+	fields := []string{
+		"S", "1", strconv.Itoa(pid), strconv.Itoa(pid), "0", "-1", "4194560", // 3..9
+		"100", "0", "0", "0", // 10..13
+		"1", "2", "0", "0", // 14..17
+		strconv.Itoa(20 + nice), strconv.Itoa(nice), "1", "0", "12345", // 18..22
+	}
+	for len(fields) < 50 { // pad up to and including field 52
+		fields = append(fields, "0")
+	}
+
+	dir := t.TempDir()
+	pidDir := filepath.Join(dir, strconv.Itoa(pid))
+	require.NoError(t, os.MkdirAll(pidDir, 0o750))
+	stat := strconv.Itoa(pid) + " (test) " + strings.Join(fields, " ") + "\n"
+	require.NoError(t, os.WriteFile(filepath.Join(pidDir, "stat"), []byte(stat), 0o600))
+	require.NoError(t, os.WriteFile(filepath.Join(pidDir, "status"), []byte("Name:\ttest\n"), 0o600))
+	require.NoError(t, os.WriteFile(filepath.Join(pidDir, "limits"), []byte(
+		"Limit                     Soft Limit           Hard Limit           Units     \n"+
+			"Max nice priority         0                    0                              \n"+
+			"Max realtime priority     0                    0                              \n"), 0o600))
+	t.Setenv("HOST_PROC", dir)
+
+	p := &Process{Pid: pid}
+
+	gotNice, err := p.NiceWithContext(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, int32(nice), gotNice)
+
+	rlimits, err := p.RlimitUsageWithContext(context.Background(), true)
+	require.NoError(t, err)
+
+	found := map[int32]uint64{}
+	for _, rl := range rlimits {
+		found[rl.Resource] = rl.Used
+	}
+	// RLIMIT_NICE reports the niceness in the encoding used by the limits
+	// themselves, where the nice ceiling is 20-rlim_cur.
+	assert.Equal(t, uint64(20-nice), found[RLIMIT_NICE])
+	assert.Equal(t, uint64(0), found[RLIMIT_RTPRIO])
 }
 
 func TestProcessMemoryMaps(t *testing.T) {

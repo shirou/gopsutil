@@ -17,6 +17,42 @@ import (
 	"github.com/shirou/gopsutil/v4/internal/common"
 )
 
+// LoongArch emits the capitalized key in arch/loongarch/kernel/proc.c.
+func TestCPUInfoFamily(t *testing.T) {
+	for _, tc := range []struct {
+		name, key, value, want string
+	}{
+		{"loongarch", "CPU Family", "Loongson-64bit", "Loongson-64bit"},
+		{"x86", "cpu family", "6", "6"},
+		{"riscv", "marchid", "0x8000000000000007", "0x8000000000000007"},
+		{"unrecognized", "CPU family", "ignored", ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			t.Setenv("HOST_PROC", root)
+			t.Setenv("HOST_SYS", root)
+			// Include multiple processors and neighboring LoongArch fields to exercise
+			// record finalization and preserve model, frequency and feature parsing.
+			var data strings.Builder
+			data.WriteString("system type : Generic Loongson64\n\n")
+			for cpu := 0; cpu < 2; cpu++ {
+				data.WriteString("processor : " + strconv.Itoa(cpu) + "\n" + tc.key + " : " + tc.value + "\nModel Name : Loongson-3A6000\nCPU MHz : 2500.00\nFeatures : cpucfg lam fpu\n\n")
+			}
+			require.NoError(t, os.WriteFile(filepath.Join(root, "cpuinfo"), []byte(data.String()), 0o600))
+			info, err := InfoWithContext(t.Context())
+			require.NoError(t, err)
+			require.Len(t, info, 2)
+			for cpu, stat := range info {
+				assert.Equal(t, int32(cpu), stat.CPU)
+				assert.Equal(t, tc.want, stat.Family)
+				assert.Equal(t, "Loongson-3A6000", stat.ModelName)
+				assert.InDelta(t, 2500.0, stat.Mhz, 0.001)
+				assert.Equal(t, []string{"cpucfg", "lam", "fpu"}, stat.Flags)
+			}
+		})
+	}
+}
+
 func TestCPUInfoFrequencyFallback_1776(t *testing.T) {
 	for _, key := range []string{"cpu MHz", "CPU MHz", "clock", "cpu MHz dynamic"} {
 		t.Run(key, func(t *testing.T) {

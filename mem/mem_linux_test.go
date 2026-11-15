@@ -182,6 +182,55 @@ func TestExVirtualMemoryLinux(t *testing.T) {
 	}
 }
 
+func TestSwapMemoryVmstatLinux(t *testing.T) {
+	t.Setenv("HOST_PROC", filepath.Join("testdata", "linux", "swapmemory", "proc"))
+
+	withOptIn := func(v any) context.Context {
+		return context.WithValue(context.Background(), WillBeDeletedOptInLinuxSwapVmstatUnits, v) //nolint:revive,staticcheck // the key is an untyped string by design
+	}
+
+	oldUnits := &SwapMemoryStat{
+		Sin:        136604654 * 4 * 1024,
+		Sout:       128783910 * 4 * 1024,
+		PgIn:       40092731521 * 4 * 1024,
+		PgOut:      601586884 * 4 * 1024,
+		PgFault:    1086111781 * 4 * 1024,
+		PgMajFault: 166633543 * 4 * 1024,
+	}
+	newUnits := &SwapMemoryStat{
+		Sin:        136604654 * 4 * 1024,
+		Sout:       128783910 * 4 * 1024,
+		PgIn:       40092731521 * 1024,
+		PgOut:      601586884 * 1024,
+		PgFault:    1086111781,
+		PgMajFault: 166633543,
+	}
+
+	cases := []struct {
+		name string
+		ctx  context.Context
+		want *SwapMemoryStat
+	}{
+		{"default", context.Background(), oldUnits},
+		{"opt-in", withOptIn(true), newUnits},
+		{"opt-in false", withOptIn(false), oldUnits},
+		{"opt-in non-bool", withOptIn("true"), oldUnits},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			stat, err := SwapMemoryWithContext(tc.ctx)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.want.Sin, stat.Sin)
+			assert.Equal(t, tc.want.Sout, stat.Sout)
+			assert.Equal(t, tc.want.PgIn, stat.PgIn)
+			assert.Equal(t, tc.want.PgOut, stat.PgOut)
+			assert.Equal(t, tc.want.PgFault, stat.PgFault)
+			assert.Equal(t, tc.want.PgMajFault, stat.PgMajFault)
+		})
+	}
+}
+
 const validFile = `Filename				Type		Size		Used		Priority
 /dev/dm-2                               partition	67022844	490788		-2
 /swapfile                               file		2		1		-3

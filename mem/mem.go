@@ -9,6 +9,14 @@ import (
 
 var invoke common.Invoker = common.Invoke{}
 
+// WillBeDeletedOptInLinuxSwapVmstatUnits is a context key to get the fixed
+// units of SwapMemory on Linux: PgIn and PgOut in bytes, PgFault and
+// PgMajFault as counts. Without it, all four are the old values multiplied by
+// 4096. It has no effect on other platforms. The fixed units will be the
+// default in Feb. 2027, and this constant will be removed then.
+// See https://github.com/shirou/gopsutil/pull/2188
+const WillBeDeletedOptInLinuxSwapVmstatUnits = "optInLinuxSwapVmstatUnits"
+
 // Memory usage statistics. Total, Available and Used contain numbers of bytes
 // for human consumption.
 //
