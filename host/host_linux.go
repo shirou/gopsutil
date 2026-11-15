@@ -4,15 +4,14 @@
 package host
 
 import (
-	"bytes"
 	"context"
-	"encoding/binary"
 	"fmt"
 	"io"
 	"os"
 	"regexp"
 	"strings"
 	"time"
+	"unsafe"
 
 	"golang.org/x/sys/unix"
 
@@ -111,11 +110,7 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 		b := buf[i*sizeOfUtmp : (i+1)*sizeOfUtmp]
 
 		var u utmp
-		br := bytes.NewReader(b)
-		err := binary.Read(br, binary.LittleEndian, &u)
-		if err != nil {
-			continue
-		}
+		copy(unsafe.Slice((*byte)(unsafe.Pointer(&u)), sizeOfUtmp), b)
 		if u.Type != user_PROCESS {
 			continue
 		}

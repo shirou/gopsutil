@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"unsafe"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,6 +19,8 @@ import (
 )
 
 func TestUsersWithContextUtmp(t *testing.T) {
+	require.Equal(t, uintptr(sizeOfUtmp), unsafe.Sizeof(utmp{}))
+
 	endian := "le"
 	if binary.NativeEndian.Uint16([]byte{0, 1}) == 1 {
 		endian = "be"
