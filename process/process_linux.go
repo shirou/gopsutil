@@ -699,7 +699,8 @@ func (p *Process) fillSliceFromCmdlineWithContext(ctx context.Context) ([]string
 		return nil, nil
 	}
 
-	cmdline = bytes.TrimRight(cmdline, "\x00")
+	// Remove only the final terminator, preserving empty arguments.
+	cmdline = bytes.TrimSuffix(cmdline, []byte{0})
 
 	parts := bytes.Split(cmdline, []byte{0})
 	var strParts []string
