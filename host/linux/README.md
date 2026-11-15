@@ -12,8 +12,9 @@ This regenerates all Linux `host_linux_<arch>.go` files from
 `host/types_linux.go`. Append architecture names to regenerate only those files,
 for example `gopsutil-host-godefs ppc64 ppc64le s390x`.
 
-The image uses Debian trixie's available Go, GCC, and glibc packages. Their versions
-are recorded in each generated file; rebuilding the image may change the output.
+The image digest and Go, GCC, and glibc package versions are pinned in the
+Dockerfile. The script detects their actual versions for each generated header;
+version pins do not need to be repeated in the script.
 QEMU is not needed for cross-generation, but non-amd64 hosts need amd64 image emulation.
 
 The script marks two postprocessing adjustments with `// changed by hand`:
