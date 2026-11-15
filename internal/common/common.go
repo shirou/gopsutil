@@ -280,6 +280,16 @@ func mustParseFloat64(val string) float64 {
 	return vv
 }
 
+// FieldsASCII splits s around runs of ASCII spaces and tabs. Use it instead of
+// strings.Fields for lines whose fields may hold a process name or a path:
+// lsof and the kernel escape ASCII whitespace there but print other bytes as
+// is, and strings.Fields would also split on Unicode spaces such as U+00A0.
+func FieldsASCII(s string) []string {
+	return strings.FieldsFunc(s, func(r rune) bool {
+		return r == ' ' || r == '\t'
+	})
+}
+
 // StringsHas checks the target string slice contains src or not
 func StringsHas(target []string, src string) bool {
 	for _, t := range target {
