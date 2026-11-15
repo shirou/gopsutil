@@ -6,6 +6,7 @@ package mem
 import (
 	"context"
 	"errors"
+	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -189,17 +190,19 @@ func TestSwapMemoryVmstatLinux(t *testing.T) {
 		return context.WithValue(context.Background(), WillBeDeletedOptInLinuxSwapVmstatUnits, v) //nolint:revive,staticcheck // the key is an untyped string by design
 	}
 
+	pageSize := uint64(os.Getpagesize())
+
 	oldUnits := &SwapMemoryStat{
-		Sin:        136604654 * 4 * 1024,
-		Sout:       128783910 * 4 * 1024,
+		Sin:        136604654 * pageSize,
+		Sout:       128783910 * pageSize,
 		PgIn:       40092731521 * 4 * 1024,
 		PgOut:      601586884 * 4 * 1024,
 		PgFault:    1086111781 * 4 * 1024,
 		PgMajFault: 166633543 * 4 * 1024,
 	}
 	newUnits := &SwapMemoryStat{
-		Sin:        136604654 * 4 * 1024,
-		Sout:       128783910 * 4 * 1024,
+		Sin:        136604654 * pageSize,
+		Sout:       128783910 * pageSize,
 		PgIn:       40092731521 * 1024,
 		PgOut:      601586884 * 1024,
 		PgFault:    1086111781,

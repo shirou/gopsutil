@@ -3,6 +3,7 @@ package mem
 
 import (
 	"errors"
+	"os"
 	"runtime"
 	"testing"
 
@@ -109,13 +110,13 @@ func TestSwapMemory_Against_Psutil(t *testing.T) {
 		t.Skip("no swap configured")
 	}
 
-	// Sin/Sout: both sides multiply pswpin/pswpout from /proc/vmstat by a
-	// hardcoded 4096 (gopsutil mem_linux.go, psutil _pslinux.py), so the
-	// values are directly comparable regardless of the actual page size.
-	after, err := pt.Eval[pySwapMemory](t, "psutil.swap_memory()")
-	require.NoError(t, err)
-	pt.AssertBracketed(t, "Sin", before.Sin, v.Sin, after.Sin)
-	pt.AssertBracketed(t, "Sout", before.Sout, v.Sout, after.Sout)
+	// psutil hardcodes 4096 for swap I/O, so only compare on 4-KiB systems.
+	if os.Getpagesize() == 4096 {
+		after, err := pt.Eval[pySwapMemory](t, "psutil.swap_memory()")
+		require.NoError(t, err)
+		pt.AssertBracketed(t, "Sin", before.Sin, v.Sin, after.Sin)
+		pt.AssertBracketed(t, "Sout", before.Sout, v.Sout, after.Sout)
+	}
 
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		v, err := SwapMemory()
