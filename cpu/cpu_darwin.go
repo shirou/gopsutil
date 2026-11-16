@@ -114,7 +114,7 @@ func InfoWithContext(_ context.Context) ([]InfoStat, error) {
 	c.CacheSize = int32(cacheSize)
 	c.VendorID, _ = unix.Sysctl("machdep.cpu.vendor")
 
-	v, err := getFrequency()
+	v, err := getFrequency(c.ModelName)
 	if err == nil {
 		c.Mhz = v
 	}
