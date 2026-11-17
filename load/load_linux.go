@@ -5,6 +5,7 @@ package load
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -124,5 +125,8 @@ func readLoadAvgFromFile(ctx context.Context) ([]string, error) {
 	}
 
 	values := strings.Fields(string(line))
+	if len(values) < 3 {
+		return nil, fmt.Errorf("malformed %s: expected at least 3 fields, got %d", loadavgFilename, len(values))
+	}
 	return values, nil
 }
