@@ -37,7 +37,7 @@ func (f fakeLoginctlInvoke) CommandWithContext(_ context.Context, name string, a
 		}
 		return []byte(f.sessions), nil
 	case "show-session":
-		want := []string{"-p", "Name", "-p", "TTY", "-p", "RemoteHost", "-p", "Timestamp", "-p", "Class", "-p", "Seat"}
+		want := []string{"-p", "Name", "-p", "TTY", "-p", "RemoteHost", "-p", "Timestamp", "-p", "Class", "-p", "Seat", "-p", "Remote", "-p", "Service"}
 		if len(arg) != 2+len(want) || !slices.Equal(arg[2:], want) {
 			return nil, fmt.Errorf("unexpected show-session args: %v", arg)
 		}
@@ -112,6 +112,32 @@ func TestUsersFromLoginctlFiltersSessions(t *testing.T) {
 	// Graphical login: only a seat, no tty; the seat is reported as terminal.
 	assert.Equal(t, "alice", got[1].User)
 	assert.Equal(t, "seat0", got[1].Terminal)
+}
+
+// Sessions as listed on Debian 13 (systemd 257, OpenSSH 10): sshd registers the
+// session before allocating the pty, so logind knows neither a tty nor a seat
+// for an interactive SSH login. A local session without tty and seat is still
+// filtered.
+func TestUsersFromLoginctlRemoteSessionsWithoutTTY(t *testing.T) {
+	useUTC(t)
+	useFakeLoginctl(t, fakeLoginctlInvoke{
+		sessions: "    16 0 root -    8496 user          - no -\n" +
+			"    17 0 root -    8507 manager-early - no -\n" +
+			"    18 1000 alice - 8600 user          - no -\n",
+		sessionOutputs: map[string]string{
+			"16": "Name=root\nTTY=\nRemoteHost=192.0.2.10\nTimestamp=Tue 2026-11-17 09:47:53 UTC\nClass=user\nSeat=\nRemote=yes\nService=sshd\n",
+			"17": "Name=root\nTTY=\nRemoteHost=\nTimestamp=Tue 2026-11-17 09:47:53 UTC\nClass=manager-early\nSeat=\nRemote=no\nService=systemd-user\n",
+			"18": "Name=alice\nTTY=\nRemoteHost=\nTimestamp=Tue 2026-11-17 09:50:00 UTC\nClass=user\nSeat=\nRemote=no\nService=\n",
+		},
+	})
+
+	got, err := usersFromLoginctlWithContext(context.Background())
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+	assert.Equal(t, "root", got[0].User)
+	assert.Equal(t, "sshd", got[0].Terminal)
+	assert.Equal(t, "192.0.2.10", got[0].Host)
+	assert.Equal(t, 1794908873, got[0].Started)
 }
 
 func TestUsersFromLoginctlTimestampOffsetZone(t *testing.T) {
