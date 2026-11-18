@@ -5,6 +5,7 @@ package load
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -46,6 +47,14 @@ func fileAvgWithContext(ctx context.Context) (*AvgStat, error) {
 		return nil, err
 	}
 
+	return parseLoadAvg(values)
+}
+
+func parseLoadAvg(values []string) (*AvgStat, error) {
+	if len(values) < 3 {
+		return nil, fmt.Errorf("loadavg: expected at least 3 fields, got %d", len(values))
+	}
+
 	load1, err := strconv.ParseFloat(values[0], 64)
 	if err != nil {
 		return nil, err
@@ -59,13 +68,11 @@ func fileAvgWithContext(ctx context.Context) (*AvgStat, error) {
 		return nil, err
 	}
 
-	ret := &AvgStat{
+	return &AvgStat{
 		Load1:  load1,
 		Load5:  load5,
 		Load15: load15,
-	}
-
-	return ret, nil
+	}, nil
 }
 
 // Misc returns miscellaneous host-wide statistics.
