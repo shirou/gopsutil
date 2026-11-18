@@ -2,10 +2,13 @@
 package process
 
 import (
+	"context"
 	"encoding/binary"
 	"os"
+	"os/exec"
 	"syscall"
 	"testing"
+	"time"
 	"unicode/utf16"
 	"unsafe"
 
@@ -108,4 +111,42 @@ func TestGetProcessCommandLineNativeMatchesPEB(t *testing.T) {
 	nativeCmdline, err := getProcessCommandLineNative(h, pid)
 	require.NoError(t, err)
 	assert.Equal(t, pebCmdline, nativeCmdline)
+}
+
+// TestKillReusedPid checks that a Process whose PID now belongs to another
+// process (simulated with a create time that does not match) is not killed.
+func TestKillReusedPid(t *testing.T) {
+	cmd := exec.CommandContext(context.Background(), "ping", "localhost", "-n", "30")
+	require.NoError(t, cmd.Start())
+	t.Cleanup(func() {
+		_ = cmd.Process.Kill()
+	})
+	done := make(chan struct{})
+	go func() {
+		_ = cmd.Wait()
+		close(done)
+	}()
+
+	p, err := NewProcess(int32(cmd.Process.Pid))
+	require.NoError(t, err)
+	createTime, err := p.CreateTime()
+	require.NoError(t, err)
+
+	stale := &Process{Pid: p.Pid, createTime: createTime - 1000}
+	require.ErrorIs(t, stale.Kill(), ErrorProcessNotRunning)
+	require.ErrorIs(t, stale.Terminate(), ErrorProcessNotRunning)
+	require.ErrorIs(t, stale.Suspend(), ErrorProcessNotRunning)
+	require.ErrorIs(t, stale.Resume(), ErrorProcessNotRunning)
+	select {
+	case <-done:
+		t.Fatal("process was killed through a stale Process")
+	case <-time.After(500 * time.Millisecond):
+	}
+
+	require.NoError(t, p.Kill())
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("process was not killed")
+	}
 }
