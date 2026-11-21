@@ -310,7 +310,7 @@ func parseFieldsOnMounts(lines []string, all bool, fs []string) []PartitionStat 
 		}
 
 		d := PartitionStat{
-			Device:     fields[0],
+			Device:     unescapeFstab(fields[0]),
 			Mountpoint: unescapeFstab(fields[1]),
 			Fstype:     fields[2],
 			Opts:       strings.Split(fields[3], ","),
@@ -351,7 +351,10 @@ func parseFieldsOnMountinfo(ctx context.Context, lines []string, all bool, fs []
 			return nil, fmt.Errorf("found invalid mountinfo line in file %s (bad fields(1) len): %s ", filename, line)
 		}
 		blockDeviceID := fields[2]
-		rootDir := fields[3]
+		// The kernel mangles the root and source fields with the same
+		// \ooo escapes as the mount point, so decode them the same way:
+		// Device below is taken from one of these two fields.
+		rootDir := unescapeFstab(fields[3])
 		mountPoint := fields[4]
 		mountOpts := []string{}
 		if len(fields) >= 6 {
@@ -362,7 +365,7 @@ func parseFieldsOnMountinfo(ctx context.Context, lines []string, all bool, fs []
 			return nil, fmt.Errorf("found invalid mountinfo line in file %s (bad fields(2) len): %s ", filename, line)
 		}
 		fsType := fields[0]
-		mntSrc := fields[1]
+		mntSrc := unescapeFstab(fields[1])
 		superOpts := []string{}
 		if len(fields) >= 3 {
 			superOpts = strings.Split(fields[2], ",")
