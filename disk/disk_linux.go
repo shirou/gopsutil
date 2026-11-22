@@ -647,9 +647,17 @@ func serialNumberFromDevNum(ctx context.Context, major, minor uint32) (string, e
 		return sserial, nil
 	}
 
-	// Try to get the serial from sysfs, look at the disk device (minor 0) directly
-	// because if it is a partition it is not going to contain any device information
-	devicePath := common.HostSysWithContext(ctx, fmt.Sprintf("dev/block/%d:0/device", major))
+	// Resolve the requested device, not minor 0: different disks can share
+	// the same major number. A partition's model and serial belong to its
+	// containing disk, found through the resolved sysfs hierarchy.
+	devicePath, err := filepath.EvalSymlinks(common.HostSysWithContext(ctx, fmt.Sprintf("dev/block/%d:%d", major, minor)))
+	if err != nil {
+		return "", nil
+	}
+	if common.PathExists(filepath.Join(devicePath, "partition")) {
+		devicePath = filepath.Dir(devicePath)
+	}
+	devicePath = filepath.Join(devicePath, "device")
 	model, _ := os.ReadFile(filepath.Join(devicePath, "model"))
 	serial, _ := os.ReadFile(filepath.Join(devicePath, "serial"))
 	if len(model) > 0 && len(serial) > 0 {
