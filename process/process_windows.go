@@ -810,8 +810,35 @@ func (*Process) SendSignalWithContext(_ context.Context, _ syscall.Signal) error
 	return common.ErrNotImplementedError
 }
 
+// openProcess opens the process with the given access rights. When the create
+// time of p is known, it also checks that the handle refers to the process p
+// was created for: Windows reuses PIDs quickly, so a Process kept after its
+// process exited can otherwise act on an unrelated process. The handle keeps
+// the PID from being reused until it is closed.
+func (p *Process) openProcess(access uint32) (windows.Handle, error) {
+	if p.createTime != 0 {
+		access |= processQueryInformation
+	}
+	h, err := windows.OpenProcess(access, false, uint32(p.Pid))
+	if err != nil {
+		return 0, err
+	}
+	if p.createTime != 0 {
+		var creation, exit, kernel, user windows.Filetime
+		if err := windows.GetProcessTimes(h, &creation, &exit, &kernel, &user); err != nil {
+			windows.CloseHandle(h)
+			return 0, err
+		}
+		if creation.Nanoseconds()/1000000 != p.createTime {
+			windows.CloseHandle(h)
+			return 0, ErrorProcessNotRunning
+		}
+	}
+	return h, nil
+}
+
 func (p *Process) SuspendWithContext(_ context.Context) error {
-	c, err := windows.OpenProcess(windows.PROCESS_SUSPEND_RESUME, false, uint32(p.Pid))
+	c, err := p.openProcess(windows.PROCESS_SUSPEND_RESUME)
 	if err != nil {
 		return err
 	}
@@ -827,7 +854,7 @@ func (p *Process) SuspendWithContext(_ context.Context) error {
 }
 
 func (p *Process) ResumeWithContext(_ context.Context) error {
-	c, err := windows.OpenProcess(windows.PROCESS_SUSPEND_RESUME, false, uint32(p.Pid))
+	c, err := p.openProcess(windows.PROCESS_SUSPEND_RESUME)
 	if err != nil {
 		return err
 	}
@@ -843,7 +870,7 @@ func (p *Process) ResumeWithContext(_ context.Context) error {
 }
 
 func (p *Process) TerminateWithContext(_ context.Context) error {
-	proc, err := windows.OpenProcess(windows.PROCESS_TERMINATE, false, uint32(p.Pid))
+	proc, err := p.openProcess(windows.PROCESS_TERMINATE)
 	if err != nil {
 		return err
 	}
@@ -853,12 +880,12 @@ func (p *Process) TerminateWithContext(_ context.Context) error {
 }
 
 func (p *Process) KillWithContext(_ context.Context) error {
-	process, err := os.FindProcess(int(p.Pid))
+	proc, err := p.openProcess(windows.PROCESS_TERMINATE)
 	if err != nil {
 		return err
 	}
-	defer process.Release()
-	return process.Kill()
+	defer windows.CloseHandle(proc)
+	return windows.TerminateProcess(proc, 1)
 }
 
 func (p *Process) EnvironWithContext(ctx context.Context) ([]string, error) {
