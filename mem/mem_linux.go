@@ -353,10 +353,9 @@ func SwapMemoryWithContext(ctx context.Context) (*SwapMemoryStat, error) {
 	if err != nil {
 		return nil, fmt.Errorf("couldn't read %s: %w", filename, err)
 	}
-	// Swap I/O counters are in pages.
+	// pswpin/pswpout are in pages of the kernel PAGE_SIZE.
 	pageSize := uint64(os.Getpagesize())
-	// Old behaviour: every vmstat value was multiplied by the page size.
-	// pswpin/pswpout are still multiplied by the page size.
+	// Old behaviour: the other vmstat values were multiplied by 4 KiB.
 	pgScale, faultScale := uint64(4*1024), uint64(4*1024)
 	if v, ok := ctx.Value(WillBeDeletedOptInLinuxSwapVmstatUnits).(bool); ok && v {
 		pgScale, faultScale = 1024, 1 // pgpgin/pgpgout are KiB, faults are counts
