@@ -110,11 +110,12 @@ func (p *Process) CmdlineSliceWithContext(ctx context.Context) ([]string, error)
 }
 
 func (p *Process) createTimeWithContext(ctx context.Context) (int64, error) {
-	_, _, _, createTime, _, _, _, err := p.fillFromStatWithContext(ctx)
+	_, _, _, startTime, _, _, _, err := p.fillFromStatWithContext(ctx)
 	if err != nil {
 		return 0, err
 	}
-	return createTime, nil
+	bootTime, _ := common.BootTimeWithContext(ctx, enableBootTimeCache)
+	return int64((startTime * 1000 / uint64(clockTicks)) + uint64(bootTime*1000)), nil
 }
 
 func (p *Process) CwdWithContext(ctx context.Context) (string, error) {
@@ -1040,11 +1041,11 @@ func (p *Process) fillFromStatusWithContext(ctx context.Context) error {
 	return nil
 }
 
-func (p *Process) fillFromTIDStat(tid int32) (uint64, int32, *cpu.TimesStat, int64, uint32, int32, *PageFaultsStat, error) {
+func (p *Process) fillFromTIDStat(tid int32) (uint64, int32, *cpu.TimesStat, uint64, uint32, int32, *PageFaultsStat, error) {
 	return p.fillFromTIDStatWithContext(context.Background(), tid)
 }
 
-func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (uint64, int32, *cpu.TimesStat, int64, uint32, int32, *PageFaultsStat, error) {
+func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (uint64, int32, *cpu.TimesStat, uint64, uint32, int32, *PageFaultsStat, error) {
 	pid := p.Pid
 	var statPath string
 
@@ -1106,12 +1107,11 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 		Iowait: iotime / float64(clockTicks),
 	}
 
-	bootTime, _ := common.BootTimeWithContext(ctx, enableBootTimeCache)
-	t, err := strconv.ParseUint(fields[22], 10, 64)
+	// start time of the process in clock ticks after boot
+	startTime, err := strconv.ParseUint(fields[22], 10, 64)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
-	createTime := int64((t * 1000 / uint64(clockTicks)) + uint64(bootTime*1000))
 
 	// Field 18 is the scheduling priority. It carries the real-time priority
 	// only for real-time tasks, where the kernel reports it as -1-<rtprio>;
@@ -1158,10 +1158,10 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 		ChildMajorFaults: cMajFault,
 	}
 
-	return terminal, int32(ppid), cpuTimes, createTime, uint32(rtpriority), int32(nice), faults, nil
+	return terminal, int32(ppid), cpuTimes, startTime, uint32(rtpriority), int32(nice), faults, nil
 }
 
-func (p *Process) fillFromStatWithContext(ctx context.Context) (uint64, int32, *cpu.TimesStat, int64, uint32, int32, *PageFaultsStat, error) {
+func (p *Process) fillFromStatWithContext(ctx context.Context) (uint64, int32, *cpu.TimesStat, uint64, uint32, int32, *PageFaultsStat, error) {
 	return p.fillFromTIDStatWithContext(ctx, -1)
 }
 
