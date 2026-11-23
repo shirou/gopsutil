@@ -79,7 +79,7 @@ var constMap = map[string]int{
 }
 
 func parseNetLine(line string) (ConnectionStat, error) {
-	f := common.FieldsASCII(line)
+	f := common.FieldsSpaceTab(line)
 	if len(f) < 8 {
 		return ConnectionStat{}, fmt.Errorf("wrong line,%s", line)
 	}

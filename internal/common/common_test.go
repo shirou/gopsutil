@@ -54,6 +54,12 @@ func TestMustParseFloat64(t *testing.T) {
 	require.InDeltaf(t, float64(11111), mustParseFloat64("11111"), 0.01, "could not parse")
 }
 
+func TestFieldsSpaceTab(t *testing.T) {
+	assert.Equal(t, []string{"a", "b", "c"}, FieldsSpaceTab(" a  b\tc \t"))
+	// Other whitespace is part of a field, not a separator.
+	assert.Equal(t, []string{"a\vb\fc\rd\u00a0e", "f"}, FieldsSpaceTab("a\vb\fc\rd\u00a0e f"))
+}
+
 func TestStringsContains(t *testing.T) {
 	target, err := ReadLines("common_test.go")
 	require.NoError(t, err)
