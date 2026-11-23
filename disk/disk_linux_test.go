@@ -177,6 +177,40 @@ func Test_parseFieldsOnMounts_escapedMountpoint(t *testing.T) {
 	assert.Equal(t, `/mnt/"quoted" dir`, actual[0].Mountpoint)
 }
 
+// Test_parseFields_escapedDevice checks that the device is decoded with the
+// same \ooo unescaping as the mount point: the kernel mangles the device,
+// mountinfo root and mountinfo source fields exactly like the mount point,
+// so a device path containing a space (e.g. a /dev/disk/by-label name or an
+// NFS export) must not be reported in its escaped form.
+func Test_parseFields_escapedDevice(t *testing.T) {
+	mounts := []string{
+		`/dev/disk/by-label/MY\040USB /mnt/usb vfat rw 0 0`,
+	}
+	actualMounts := parseFieldsOnMounts(mounts, true, nil)
+	require.Len(t, actualMounts, 1)
+	assert.Equal(t, "/dev/disk/by-label/MY USB", actualMounts[0].Device)
+
+	mountinfo := []string{
+		// device taken from the source field
+		`40 35 8:1 / /mnt/usb rw - vfat /dev/disk/by-label/MY\040USB rw`,
+		// NFS source whose export path contains a space
+		`41 35 0:99 / /mnt/share rw - nfs4 192.168.1.1:/srv/my\040share rw`,
+		// device taken from the root field (bind mount on tmpfs)
+		`42 35 0:100 /my\040dir/sub /mnt/bind rw - tmpfs tmpfs rw`,
+	}
+	expected := []string{
+		"/dev/disk/by-label/MY USB",
+		"192.168.1.1:/srv/my share",
+		"/my dir/sub",
+	}
+	actual, err := parseFieldsOnMountinfo(context.Background(), mountinfo, true, nil, "")
+	require.NoError(t, err)
+	require.Len(t, actual, len(expected))
+	for i, want := range expected {
+		assert.Equalf(t, want, actual[i].Device, "line %q", mountinfo[i])
+	}
+}
+
 func Test_parseFieldsOnMounts(t *testing.T) {
 	fs := []string{"sysfs", "tmpfs"}
 
