@@ -181,16 +181,16 @@ func usersFromLoginctlWithContext(ctx context.Context) ([]UserStat, error) {
 // loginctlShowSessionWithContext returns the session as a UserStat. The bool is
 // false for sessions that utmp would not have listed as USER_PROCESS: those whose
 // class does not start with "user" (e.g. "manager", "greeter") or that have
-// neither a seat nor a tty.
+// neither a seat, a tty nor an interactive session type.
 func loginctlShowSessionWithContext(ctx context.Context, id string) (UserStat, bool, error) {
 	out, err := invoke.CommandWithContext(ctx, "loginctl", "show-session", id,
-		"-p", "Name", "-p", "TTY", "-p", "RemoteHost", "-p", "Timestamp", "-p", "Class", "-p", "Seat")
+		"-p", "Name", "-p", "TTY", "-p", "RemoteHost", "-p", "Timestamp", "-p", "Class", "-p", "Seat", "-p", "Type")
 	if err != nil {
 		return UserStat{}, false, err
 	}
 
 	var stat UserStat
-	var class, seat string
+	var class, seat, sessionType string
 	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
 		key, value, found := strings.Cut(line, "=")
 		if !found {
@@ -207,6 +207,8 @@ func loginctlShowSessionWithContext(ctx context.Context, id string) (UserStat, b
 			class = value
 		case "Seat":
 			seat = value
+		case "Type":
+			sessionType = value
 		case "Timestamp":
 			// Format: "Mon 2026-01-22 14:51:57 CET". The zone abbreviation can be
 			// numeric (e.g. +0330), which time.Parse rejects, so only read the wall
@@ -219,7 +221,10 @@ func loginctlShowSessionWithContext(ctx context.Context, id string) (UserStat, b
 		}
 	}
 
-	if !strings.HasPrefix(class, "user") || (seat == "" && stat.Terminal == "") {
+	// Sessions opened over ssh by pam_systemd often report neither a seat nor a
+	// TTY, but have an interactive session type.
+	interactive := seat != "" || stat.Terminal != "" || isInteractiveSessionType(sessionType)
+	if !strings.HasPrefix(class, "user") || !interactive {
 		return UserStat{}, false, nil
 	}
 
@@ -229,6 +234,14 @@ func loginctlShowSessionWithContext(ctx context.Context, id string) (UserStat, b
 	}
 
 	return stat, true, nil
+}
+
+func isInteractiveSessionType(t string) bool {
+	switch t {
+	case "tty", "x11", "wayland", "mir":
+		return true
+	}
+	return false
 }
 
 func getlsbStruct(ctx context.Context) (*lsbStruct, error) {

@@ -37,7 +37,7 @@ func (f fakeLoginctlInvoke) CommandWithContext(_ context.Context, name string, a
 		}
 		return []byte(f.sessions), nil
 	case "show-session":
-		want := []string{"-p", "Name", "-p", "TTY", "-p", "RemoteHost", "-p", "Timestamp", "-p", "Class", "-p", "Seat"}
+		want := []string{"-p", "Name", "-p", "TTY", "-p", "RemoteHost", "-p", "Timestamp", "-p", "Class", "-p", "Seat", "-p", "Type"}
 		if len(arg) != 2+len(want) || !slices.Equal(arg[2:], want) {
 			return nil, fmt.Errorf("unexpected show-session args: %v", arg)
 		}
@@ -248,4 +248,25 @@ func TestGetlsbStruct(t *testing.T) {
 			t.Log(v)
 		})
 	}
+}
+
+// ssh sessions on Ubuntu 26.04 report an empty Seat and TTY but Type=tty and
+// Remote=yes; they must still count as users, unlike Type=unspecified ones.
+func TestUsersFromLoginctlSSHSessionWithoutSeatOrTTY(t *testing.T) {
+	useUTC(t)
+	useFakeLoginctl(t, fakeLoginctlInvoke{
+		sessions: "  15476 10049 hbenali - 3049677 user    - no -\n" +
+			"  15477 10049 hbenali - 3049689 manager - no -\n" +
+			"  15478 10049 hbenali - 3049700 user    - no -\n",
+		sessionOutputs: map[string]string{
+			"15476": "Name=hbenali\nTTY=\nRemoteHost=\nTimestamp=Mon 2026-11-23 22:28:38 UTC\nClass=user\nSeat=\nType=tty\n",
+			"15477": "Name=hbenali\nTTY=\nRemoteHost=\nTimestamp=Mon 2026-11-23 22:28:38 UTC\nClass=manager\nSeat=\nType=unspecified\n",
+			"15478": "Name=hbenali\nTTY=\nRemoteHost=\nTimestamp=Mon 2026-11-23 22:30:00 UTC\nClass=user\nSeat=\nType=unspecified\n",
+		},
+	})
+
+	got, err := usersFromLoginctlWithContext(context.Background())
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+	assert.Equal(t, "hbenali", got[0].User)
 }
