@@ -3,11 +3,25 @@
 
 package cpu
 
+// #include <unistd.h>
+import "C"
+
 import (
 	"context"
 
 	"github.com/power-devops/perfstat"
 )
+
+// ClocksPerSec is the number of perfstat CPU ticks per second.
+// perfstat counters are in ticks.
+var ClocksPerSec = float64(100)
+
+func init() {
+	clkTck := C.sysconf(C._SC_CLK_TCK)
+	if clkTck > 0 {
+		ClocksPerSec = float64(clkTck)
+	}
+}
 
 func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 	var ret []TimesStat
@@ -19,10 +33,10 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 		for _, c := range cpus {
 			ct := &TimesStat{
 				CPU:    c.Name,
-				Idle:   float64(c.Idle),
-				User:   float64(c.User),
-				System: float64(c.Sys),
-				Iowait: float64(c.Wait),
+				Idle:   float64(c.Idle) / ClocksPerSec,
+				User:   float64(c.User) / ClocksPerSec,
+				System: float64(c.Sys) / ClocksPerSec,
+				Iowait: float64(c.Wait) / ClocksPerSec,
 			}
 			ret = append(ret, *ct)
 		}
@@ -33,10 +47,10 @@ func TimesWithContext(ctx context.Context, percpu bool) ([]TimesStat, error) {
 		}
 		ct := &TimesStat{
 			CPU:    "cpu-total",
-			Idle:   float64(c.Idle),
-			User:   float64(c.User),
-			System: float64(c.Sys),
-			Iowait: float64(c.Wait),
+			Idle:   float64(c.Idle) / ClocksPerSec,
+			User:   float64(c.User) / ClocksPerSec,
+			System: float64(c.Sys) / ClocksPerSec,
+			Iowait: float64(c.Wait) / ClocksPerSec,
 		}
 		ret = append(ret, *ct)
 	}
