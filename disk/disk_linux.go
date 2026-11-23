@@ -304,7 +304,7 @@ func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, erro
 func parseFieldsOnMounts(lines []string, all bool, fs []string) []PartitionStat {
 	ret := make([]PartitionStat, 0, len(lines))
 	for _, line := range lines {
-		fields := strings.Fields(line)
+		fields := common.FieldsSpaceTab(line)
 		if len(fields) < 4 {
 			continue
 		}
@@ -346,7 +346,7 @@ func parseFieldsOnMountinfo(ctx context.Context, lines []string, all bool, fs []
 			return nil, fmt.Errorf("found invalid mountinfo line in file %s (bad parts len): %s ", filename, line)
 		}
 
-		fields := strings.Fields(parts[0])
+		fields := common.FieldsSpaceTab(parts[0])
 		if len(fields) < 5 { // field (7) is optional, field (6) may(?) be optional
 			return nil, fmt.Errorf("found invalid mountinfo line in file %s (bad fields(1) len): %s ", filename, line)
 		}
@@ -357,7 +357,7 @@ func parseFieldsOnMountinfo(ctx context.Context, lines []string, all bool, fs []
 		if len(fields) >= 6 {
 			mountOpts = strings.Split(fields[5], ",")
 		}
-		fields = strings.Fields(parts[1])
+		fields = common.FieldsSpaceTab(parts[1])
 		if len(fields) < 2 {
 			return nil, fmt.Errorf("found invalid mountinfo line in file %s (bad fields(2) len): %s ", filename, line)
 		}

@@ -280,6 +280,17 @@ func mustParseFloat64(val string) float64 {
 	return vv
 }
 
+// FieldsSpaceTab splits s around runs of ' ' and '\t' only. Use it instead of
+// strings.Fields for lines whose fields may hold a process name or a path.
+// The kernel (mountinfo) and lsof escape space and tab there, but print other
+// whitespace such as '\v', '\r' or U+00A0 as is. strings.Fields would split
+// on those too.
+func FieldsSpaceTab(s string) []string {
+	return strings.FieldsFunc(s, func(r rune) bool {
+		return r == ' ' || r == '\t'
+	})
+}
+
 // StringsHas checks the target string slice contains src or not
 func StringsHas(target []string, src string) bool {
 	for _, t := range target {
