@@ -28,6 +28,9 @@ func UsageWithContext(_ context.Context, path string) (*UsageStat, error) {
 	}
 
 	ret.Used = (uint64(stat.Blocks) - uint64(stat.Bfree)) * uint64(bsize)
+	if used, ok := volumeUsedBytes(path); ok {
+		ret.Used = used
+	}
 
 	if (ret.Used + ret.Free) == 0 {
 		ret.UsedPercent = 0

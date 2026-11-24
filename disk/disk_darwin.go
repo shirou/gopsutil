@@ -5,6 +5,7 @@ package disk
 
 import (
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -96,6 +97,33 @@ func PartitionsWithContext(_ context.Context, _ bool) ([]PartitionStat, error) {
 
 func getFsType(stat unix.Statfs_t) string {
 	return common.ByteToString(stat.Fstypename[:])
+}
+
+// volumeUsedBytes returns the space used by the volume at path, as psutil and
+// df -k report it. statfs Blocks-Bfree is not usable on APFS: every volume
+// reports the free space of the whole shared container, so it would count the
+// space of the other volumes as used.
+func volumeUsedBytes(path string) (uint64, bool) {
+	sys, err := common.NewSystemLib()
+	if err != nil {
+		return 0, false
+	}
+	defer sys.Close()
+
+	cpath, err := unix.BytePtrFromString(path)
+	if err != nil {
+		return 0, false
+	}
+	attrs := unix.Attrlist{
+		Bitmapcount: unix.ATTR_BIT_MAP_COUNT,
+		Volattr:     unix.ATTR_VOL_INFO | unix.ATTR_VOL_SPACEUSED,
+	}
+	// Returned layout: uint32 length, then uint64 space used.
+	var buf [12]byte
+	if sys.Getattrlist(unsafe.Pointer(cpath), unsafe.Pointer(&attrs), unsafe.Pointer(&buf[0]), unsafe.Sizeof(buf), 0) != 0 {
+		return 0, false
+	}
+	return binary.LittleEndian.Uint64(buf[4:]), true
 }
 
 type spnvmeDataTypeItem struct {

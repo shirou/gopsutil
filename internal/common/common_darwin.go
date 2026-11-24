@@ -350,6 +350,11 @@ func (s *SystemLib) VMDeallocate(targetTask uint32, vmAddress, vmSize uintptr) i
 	return fn(targetTask, vmAddress, vmSize)
 }
 
+func (s *SystemLib) Getattrlist(path, attrList, attrBuf unsafe.Pointer, attrBufSize uintptr, options uint32) int32 {
+	fn := getFunc[GetattrlistFunc](s.library, "getattrlist")
+	return fn(path, attrList, attrBuf, attrBufSize, options)
+}
+
 func (s *SystemLib) ProcPidPath(pid int32, buffer unsafe.Pointer, bufferSize uint32) int32 {
 	fn := getFunc[ProcPidPathFunc](s.library, "proc_pidpath")
 	return fn(pid, buffer, bufferSize)
@@ -502,6 +507,7 @@ const (
 )
 
 type (
+	GetattrlistFunc   func(path, attrList, attrBuf unsafe.Pointer, attrBufSize uintptr, options uint32) int32
 	ProcPidPathFunc   func(pid int32, buffer unsafe.Pointer, bufferSize uint32) int32
 	ProcPidInfoFunc   func(pid, flavor int32, arg uint64, buffer unsafe.Pointer, bufferSize int32) int32
 	ProcPidRusageFunc func(pid, flavor int32, buffer unsafe.Pointer) int32
