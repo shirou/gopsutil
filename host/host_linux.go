@@ -180,17 +180,20 @@ func usersFromLoginctlWithContext(ctx context.Context) ([]UserStat, error) {
 
 // loginctlShowSessionWithContext returns the session as a UserStat. The bool is
 // false for sessions that utmp would not have listed as USER_PROCESS: those whose
-// class does not start with "user" (e.g. "manager", "greeter") or that have
-// neither a seat nor a tty.
+// class does not start with "user" (e.g. "manager", "greeter") or that are local
+// and have neither a seat nor a tty. Remote sessions are kept without a tty, as
+// sshd of OpenSSH 10 (e.g. Debian 13) registers its sessions before allocating
+// the pty, so logind does not know their tty.
 func loginctlShowSessionWithContext(ctx context.Context, id string) (UserStat, bool, error) {
 	out, err := invoke.CommandWithContext(ctx, "loginctl", "show-session", id,
-		"-p", "Name", "-p", "TTY", "-p", "RemoteHost", "-p", "Timestamp", "-p", "Class", "-p", "Seat")
+		"-p", "Name", "-p", "TTY", "-p", "RemoteHost", "-p", "Timestamp", "-p", "Class", "-p", "Seat",
+		"-p", "Remote", "-p", "Service")
 	if err != nil {
 		return UserStat{}, false, err
 	}
 
 	var stat UserStat
-	var class, seat string
+	var class, seat, remote, service string
 	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
 		key, value, found := strings.Cut(line, "=")
 		if !found {
@@ -207,6 +210,10 @@ func loginctlShowSessionWithContext(ctx context.Context, id string) (UserStat, b
 			class = value
 		case "Seat":
 			seat = value
+		case "Remote":
+			remote = value
+		case "Service":
+			service = value
 		case "Timestamp":
 			// Format: "Mon 2026-01-22 14:51:57 CET". The zone abbreviation can be
 			// numeric (e.g. +0330), which time.Parse rejects, so only read the wall
@@ -219,13 +226,17 @@ func loginctlShowSessionWithContext(ctx context.Context, id string) (UserStat, b
 		}
 	}
 
-	if !strings.HasPrefix(class, "user") || (seat == "" && stat.Terminal == "") {
+	if !strings.HasPrefix(class, "user") || (seat == "" && stat.Terminal == "" && remote != "yes") {
 		return UserStat{}, false, nil
 	}
 
 	if stat.Terminal == "" {
 		// Graphical logins have no tty; utmp-based tools such as who show the seat.
 		stat.Terminal = seat
+	}
+	if stat.Terminal == "" {
+		// Remote logins without a known tty; who shows the service (e.g. "sshd").
+		stat.Terminal = service
 	}
 
 	return stat, true, nil
