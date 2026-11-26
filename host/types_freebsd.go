@@ -12,7 +12,7 @@ package host
 #include <sys/types.h>
 #include <sys/time.h>
 #include <utmpx.h>
-#include "freebsd_headers/utxdb.h"
+#include "host/freebsd_headers/utxdb.h"
 
 enum {
 	sizeofPtr = sizeof(void*),
